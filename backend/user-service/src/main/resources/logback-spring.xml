@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Register Spring Boot Logback extensions (%clr, %wEx) -->
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wEx" converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         USER SERVICE — logback-spring.xml
+         Profiles:
+           default / dev  →  Console (COLOR) + DEBUG app logs
+           prod           →  Console + Rolling File (async) + Error File
+         MDC Keys:
+           requestId  — set by request filter (UUID per HTTP request)
+           userId     — set when X-User-Id header is parsed
+    ══════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Read values from application.properties -->
+    <springProperty scope="context" name="APP_NAME"  source="spring.application.name" defaultValue="user-service"/>
+    <springProperty scope="context" name="LOG_PATH"  source="logging.file.path"       defaultValue="logs"/>
+
+    <!-- ─── Patterns ─── -->
+    <property name="CONSOLE_PATTERN"
+              value="%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr([%X{requestId:-  -}]){cyan} %clr([uid:%-5X{userId:-?}]){yellow} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"/>
+    <property name="FILE_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [req:%X{requestId:--}] [uid:%X{userId:-?}] %logger{50} - %msg%n"/>
+
+    <!-- ─── CONSOLE appender ─── -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${CONSOLE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <!-- ─── Rolling FILE appender (all levels) ─── -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${APP_NAME}.log</file>
+        <encoder>
+            <pattern>${FILE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${APP_NAME}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy
+                    class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>50MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- ─── Rolling ERROR FILE appender (ERROR only) ─── -->
+    <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${APP_NAME}-error.log</file>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder>
+            <pattern>${FILE_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${APP_NAME}-error.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy
+                    class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>20MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>60</maxHistory>
+            <totalSizeCap>500MB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- ─── Async wrappers (non-blocking file I/O) ─── -->
+    <appender name="ASYNC_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>512</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <includeCallerData>false</includeCallerData>
+        <appender-ref ref="FILE"/>
+    </appender>
+
+    <appender name="ASYNC_ERROR_FILE" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>256</queueSize>
+        <discardingThreshold>0</discardingThreshold>
+        <appender-ref ref="ERROR_FILE"/>
+    </appender>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         LOGGERS — Third-party noise reduction (all profiles)
+    ════════════════════════════════════════════════════════════════════ -->
+    <logger name="org.hibernate.SQL"                    level="WARN"/>
+    <logger name="org.hibernate.type.descriptor.sql"   level="WARN"/>
+    <logger name="com.zaxxer.hikari"                    level="WARN"/>
+    <logger name="io.lettuce"                           level="WARN"/>
+    <logger name="org.springframework.data.redis"       level="WARN"/>
+    <logger name="org.springframework.web.servlet"      level="WARN"/>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         PROFILE: default / dev
+         – Color console only, DEBUG for application code
+    ════════════════════════════════════════════════════════════════════ -->
+    <springProfile name="default,dev">
+        <logger name="health.tracker.services.user"    level="DEBUG" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+        <logger name="org.springframework.security"    level="INFO"  additivity="false">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- ════════════════════════════════════════════════════════════════════
+         PROFILE: prod
+         – Console (INFO) + async rolling files, minimal noise
+    ════════════════════════════════════════════════════════════════════ -->
+    <springProfile name="prod">
+        <logger name="health.tracker.services.user"    level="INFO"  additivity="false">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="ASYNC_FILE"/>
+            <appender-ref ref="ASYNC_ERROR_FILE"/>
+        </logger>
+        <logger name="org.springframework.security"    level="WARN"  additivity="false">
+            <appender-ref ref="ASYNC_FILE"/>
+            <appender-ref ref="ASYNC_ERROR_FILE"/>
+        </logger>
+        <root level="WARN">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="ASYNC_FILE"/>
+            <appender-ref ref="ASYNC_ERROR_FILE"/>
+        </root>
+    </springProfile>
+
+</configuration>
+

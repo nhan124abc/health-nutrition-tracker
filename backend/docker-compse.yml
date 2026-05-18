@@ -1,0 +1,401 @@
+# =============================================================
+#  Health Nutrition Tracker — Docker Compose
+#  Infrastructure : MySQL 8, Redis 7, Kafka (KRaft)
+#  Services       : api-gateway + 6 microservices
+#  Profiles:
+#    (none)  → tất cả services + infra  (local dev)
+#    infra   → chỉ MySQL, Redis, Kafka  (chạy Spring Boot locally)
+# =============================================================
+
+name: health-nutrition-tracker
+
+# ─────────────────────────────────────────────────────────────
+# Shared environment snippets (YAML anchors)
+# ─────────────────────────────────────────────────────────────
+x-db-common: &db-common
+  DB_HOST: mysql
+  DB_PORT: "3306"
+  DB_USERNAME: ${DB_USERNAME:-root}
+  DB_PASSWORD: ${DB_PASSWORD:-secret}
+
+x-redis-common: &redis-common
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+
+x-kafka-common: &kafka-common
+  KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+
+x-jwt-common: &jwt-common
+  JWT_SECRET: ${JWT_SECRET:-H3@lthNutrit10nTrackerSuperSecretKey!MustBe256BitsLong}
+  JWT_EXPIRATION_MS: "86400000"
+  JWT_REFRESH_EXPIRATION_MS: "604800000"
+
+x-internal-secret: &internal-secret
+  INTERNAL_SECRET: ${INTERNAL_SECRET:-Ht!InternalS3cret#OnlyGateway2Service}
+
+x-spring-common: &spring-common
+  SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+
+x-java-opts: &java-opts
+  JAVA_TOOL_OPTIONS: >-
+    -XX:+UseContainerSupport
+    -XX:MaxRAMPercentage=75.0
+    -Djava.security.egd=file:/dev/./urandom
+
+# ─────────────────────────────────────────────────────────────
+# Networks
+# ─────────────────────────────────────────────────────────────
+networks:
+  backend:
+    driver: bridge
+
+# ─────────────────────────────────────────────────────────────
+# Volumes
+# ─────────────────────────────────────────────────────────────
+volumes:
+  mysql_data:
+  redis_data:
+  kafka_data:
+  # Không dùng named volume cho logs —
+  # thay bằng bind mount vào ./logs/<service>/ để xem trực tiếp trên host
+
+# =============================================================
+services:
+
+  # ───────────────────────────────────────────────────────────
+  # INFRASTRUCTURE
+  # ───────────────────────────────────────────────────────────
+
+  # ── MySQL 8 ──────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: ht-mysql
+    profiles: ["", "infra"]
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_ROOT_HOST: "%"
+      TZ: Asia/Ho_Chi_Minh
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Khởi tạo 6 databases khi container lần đầu chạy
+      - ./db/00_init_all_databases.sql:/docker-entrypoint-initdb.d/00_init.sql:ro
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-authentication-plugin=mysql_native_password
+      - --max_connections=300
+      - --innodb_buffer_pool_size=256M
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-secret}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - backend
+
+  # ── Redis 7 ──────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: ht-redis
+    profiles: ["", "infra"]
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-}
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --save 900 1
+      --save 300 10
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - backend
+
+  # ── Kafka (KRaft — không cần Zookeeper) ──────────────────
+  kafka:
+    image: bitnami/kafka:3.7
+    container_name: ht-kafka
+    profiles: ["", "infra"]
+    restart: unless-stopped
+    environment:
+      # KRaft mode
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_PROCESS_ROLES: controller,broker
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # Listeners
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      # Topic defaults
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_CFG_DEFAULT_REPLICATION_FACTOR: "1"
+      KAFKA_CFG_NUM_PARTITIONS: "3"
+      KAFKA_CFG_LOG_RETENTION_HOURS: "168"   # 7 ngày
+      KAFKA_CFG_LOG_SEGMENT_BYTES: "67108864" # 64 MB
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports:
+      - "${KAFKA_PORT:-9092}:9092"
+    volumes:
+      - kafka_data:/bitnami/kafka
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - backend
+
+  # ── Kafka UI (tuỳ chọn — chỉ dùng khi dev) ──────────────
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: ht-kafka-ui
+    profiles: ["dev-tools"]
+    restart: unless-stopped
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    ports:
+      - "8090:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - backend
+
+  # ───────────────────────────────────────────────────────────
+  # APPLICATION SERVICES
+  # ───────────────────────────────────────────────────────────
+
+  # ── API Gateway ──────────────────────────────────────────────────
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    image: ht/api-gateway:latest
+    container_name: ht-api-gateway
+    restart: unless-stopped
+    environment:
+      <<: [*spring-common, *jwt-common, *internal-secret, *java-opts]
+      SERVER_PORT: "8080"
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      # Service URIs — dùng Docker service name thay vì localhost
+      AUTH_SERVICE_URI: http://auth-service:8081
+      USER_SERVICE_URI: http://user-service:8082
+      NUTRITION_SERVICE_URI: http://nutrition-service:8083
+      MEAL_SERVICE_URI: http://meal-service:8084
+      ACTIVITY_SERVICE_URI: http://activity-service:8085
+      ANALYTICS_SERVICE_URI: http://analytics-service:8086
+    ports:
+      - "8080:8080"   # ← CHỈ gateway mới expose ra ngoài
+    volumes:
+      - ./logs/api-gateway:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - backend
+
+  # ── Auth Service ─────────────────────────────────────────────────
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    image: ht/auth-service:latest
+    container_name: ht-auth-service
+    restart: unless-stopped
+    environment:
+      <<: [*spring-common, *db-common, *redis-common, *jwt-common, *internal-secret, *java-opts]
+      DB_NAME: auth_db
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-your-google-client-id}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-your-google-client-secret}
+      FACEBOOK_CLIENT_ID: ${FACEBOOK_CLIENT_ID:-your-facebook-app-id}
+      FACEBOOK_CLIENT_SECRET: ${FACEBOOK_CLIENT_SECRET:-your-facebook-app-secret}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+    # ← KHÔNG expose port ra ngoài host, chỉ truy cập qua gateway:8080
+    expose:
+      - "8081"
+    volumes:
+      - ./logs/auth-service:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - backend
+
+  # ── User Service ─────────────────────────────────────────────────
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    image: ht/user-service:latest
+    container_name: ht-user-service
+    restart: unless-stopped
+    environment:
+      <<: [*spring-common, *db-common, *redis-common, *internal-secret, *java-opts]
+      DB_NAME: user_db
+    # ← KHÔNG expose port ra ngoài host
+    expose:
+      - "8082"
+    volumes:
+      - ./logs/user-service:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - backend
+
+  # ── Nutrition Service ────────────────────────────────────────────
+  nutrition-service:
+    build:
+      context: ./nutrition-service
+      dockerfile: Dockerfile
+    image: ht/nutrition-service:latest
+    container_name: ht-nutrition-service
+    restart: unless-stopped
+    environment:
+      <<: [*spring-common, *db-common, *internal-secret, *java-opts]
+      DB_NAME: nutrition_db
+    # ← KHÔNG expose port ra ngoài host
+    expose:
+      - "8083"
+    volumes:
+      - ./logs/nutrition-service:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - backend
+
+  # ── Meal Service ─────────────────────────────────────────────────
+  meal-service:
+    build:
+      context: ./meal-service
+      dockerfile: Dockerfile
+    image: ht/meal-service:latest
+    container_name: ht-meal-service
+    restart: unless-stopped
+    environment:
+      <<: [*spring-common, *db-common, *redis-common, *kafka-common, *internal-secret, *java-opts]
+      DB_NAME: meal_db
+    # ← KHÔNG expose port ra ngoài host
+    expose:
+      - "8084"
+    volumes:
+      - ./logs/meal-service:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+    networks:
+      - backend
+
+  # ── Activity Service ─────────────────────────────────────────────
+  activity-service:
+    build:
+      context: ./activity-service
+      dockerfile: Dockerfile
+    image: ht/activity-service:latest
+    container_name: ht-activity-service
+    restart: unless-stopped
+    environment:
+      <<: [*spring-common, *db-common, *internal-secret, *java-opts]
+      DB_NAME: activity_db
+    # ← KHÔNG expose port ra ngoài host
+    expose:
+      - "8085"
+    volumes:
+      - ./logs/activity-service:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks:
+      - backend
+
+  # ── Analytics Service ────────────────────────────────────────────
+  analytics-service:
+    build:
+      context: ./analytics-service
+      dockerfile: Dockerfile
+    image: ht/analytics-service:latest
+    container_name: ht-analytics-service
+    restart: unless-stopped
+    environment:
+      <<: [*spring-common, *db-common, *kafka-common, *internal-secret, *java-opts]
+      DB_NAME: analytics_db
+    # ← KHÔNG expose port ra ngoài host
+    expose:
+      - "8086"
+    volumes:
+      - ./logs/analytics-service:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8086/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+    networks:
+      - backend
+
