@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import AdminLayout from './layouts/AdminLayout';
 import MainLayout from './layouts/MainLayout';
 import Dashboard from './pages/Dashboard';
 import HomePage from './pages/HomePage';
@@ -9,6 +10,8 @@ import FoodDiary from './pages/FoodDiary';
 import Reports from './pages/Reports';
 import ActivityTracker from './pages/ActivityTracker';
 import PlaceholderPage from './pages/PlaceholderPage';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminManagementPage from './pages/admin/AdminManagementPage';
 
 function ProtectedRoute({ children }) {
   const isAuthDisabled = process.env.REACT_APP_DISABLE_AUTH === 'true';
@@ -57,9 +60,30 @@ function App() {
             element={<PlaceholderPage titleKey="nav.settings" descriptionKey="placeholder.settings" />}
           />
         </Route>
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="users" element={<AdminManagementPage type="users" />} />
+          <Route path="foods" element={<AdminManagementPage type="foods" />} />
+          <Route path="exercises" element={<AdminManagementPage type="exercises" />} />
+          <Route path="articles" element={<AdminManagementPage type="articles" />} />
+          <Route path="reports" element={<AdminManagementPage type="reports" />} />
+          <Route path="submissions" element={<AdminManagementPage type="submissions" />} />
+          <Route path="plans" element={<AdminManagementPage type="plans" />} />
+          <Route path="settings" element={<AdminManagementPage type="settings" />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
 }
 
 export default App;
+
+
