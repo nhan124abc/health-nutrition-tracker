@@ -168,5 +168,289 @@
     "normalMessage": "Your BMI is in the healthy range.",
     "overweightMessage": "You should manage calories and maintain regular activity.",
     "obeseMessage": "You should consult a health professional for a suitable plan."
+  },
+  "admin": {
+    "nav": {
+      "dashboard": "Overview",
+      "users": "Users",
+      "foods": "Foods & meals",
+      "exercises": "Exercises",
+      "articles": "Health articles",
+      "reports": "System reports",
+      "submissions": "User submissions",
+      "plans": "Goals & plans",
+      "settings": "Roles & settings"
+    },
+    "layout": {
+      "brand": "Health Admin",
+      "logoAlt": "Health Nutrition Admin",
+      "sidebarCaption": "System administration",
+      "badge": "Admin",
+      "title": "Admin dashboard",
+      "toggleSidebar": "Collapse or expand admin menu",
+      "searchPlaceholder": "Search users, foods, reports...",
+      "searchLabel": "Search admin data",
+      "notifications": "Admin notifications",
+      "backToUser": "Back to user app"
+    },
+    "common": {
+      "food": "Food",
+      "nutrition": "Nutrition",
+      "report": "Report",
+      "news": "News",
+      "health": "Health",
+      "activity": "Activity",
+      "article": "Article",
+      "system": "System",
+      "goal": "Goal",
+      "servicePlan": "Service plan",
+      "permission": "Permission",
+      "security": "Security",
+      "viewAll": "View all"
+    },
+    "status": {
+      "active": "Active",
+      "locked": "Locked",
+      "pending": "Pending review",
+      "approved": "Approved",
+      "completed": "Completed",
+      "published": "Published",
+      "draft": "Draft",
+      "ready": "Ready",
+      "processing": "Processing",
+      "needsEdit": "Needs edits",
+      "inUse": "In use",
+      "selling": "Selling",
+      "enabled": "Enabled"
+    },
+    "roles": {
+      "user": "User",
+      "coach": "Coach"
+    },
+    "intensity": {
+      "light": "Light",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "actions": {
+      "view": "View details",
+      "edit": "Edit",
+      "approve": "Approve",
+      "delete": "Delete"
+    },
+    "table": {
+      "listTitle": "Data list",
+      "listDescription": "Search, view, edit, approve, or manage data.",
+      "searchPlaceholder": "Search this table...",
+      "searchLabel": "Search admin table",
+      "content": "Content",
+      "type": "Type",
+      "status": "Status",
+      "actions": "Actions",
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "food": "Food",
+      "portion": "Portion",
+      "calories": "Calories",
+      "macro": "Macro",
+      "exercise": "Exercise",
+      "duration": "Duration",
+      "caloriesBurned": "Calories burned",
+      "intensity": "Intensity",
+      "title": "Title",
+      "category": "Category",
+      "author": "Author",
+      "report": "Report",
+      "period": "Data period",
+      "creator": "Creator",
+      "data": "Data",
+      "submitter": "Submitter",
+      "value": "Value",
+      "setting": "Setting",
+      "group": "Group"
+    },
+    "dashboard": {
+      "badge": "Overview",
+      "title": "System overview",
+      "description": "Track users, foods, workouts, and content across the whole system.",
+      "quickExport": "Quick export",
+      "recentTitle": "Recent activity",
+      "recentDescription": "Changes and records that need admin attention.",
+      "dataHealthTitle": "Data health",
+      "dataHealthDescription": "Completion status of the main data groups.",
+      "stats": {
+        "users": "Users",
+        "foods": "Foods",
+        "pending": "Pending submissions",
+        "todayLogs": "Today logs"
+      },
+      "trends": {
+        "users": "+8.2%",
+        "foods": "+124 new",
+        "pending": "Needs action",
+        "todayLogs": "+14.5%"
+      },
+      "activities": {
+        "foodAdded": "Nguyen An added \"Pan-seared chicken breast\"",
+        "macroUpdated": "Admin updated macro data for oats",
+        "weeklyReport": "Week 20 report was generated automatically",
+        "articleSubmitted": "Article \"How to drink water properly\" was submitted for review"
+      },
+      "progress": {
+        "foods": "Standardized foods",
+        "exercises": "Exercises with burn data",
+        "content": "Approved content"
+      }
+    },
+    "pages": {
+      "users": {
+        "title": "User management",
+        "description": "Monitor accounts, activity status, and actions to lock or update users.",
+        "action": "Add user",
+        "stats": {
+          "total": "Total users",
+          "active": "Active users",
+          "locked": "Locked accounts"
+        },
+        "badge": "Users"
+      },
+      "foods": {
+        "title": "Food, meal, calorie and macro management",
+        "description": "Standardize foods, calories, protein, carbs, fat, and portion conversions.",
+        "action": "Add food",
+        "stats": {
+          "total": "Foods",
+          "pending": "Pending standardization",
+          "macroFull": "Complete macro data"
+        },
+        "badge": "Nutrition"
+      },
+      "exercises": {
+        "title": "Exercise and calorie burn management",
+        "description": "Update exercises, MET values, suggested duration, and estimated calories burned.",
+        "action": "Add exercise",
+        "stats": {
+          "total": "Exercises",
+          "hasMet": "With MET",
+          "needsReview": "Needs review"
+        },
+        "badge": "Workout"
+      },
+      "articles": {
+        "title": "Health article and news management",
+        "description": "Write, review, and publish content about nutrition, activity, and healthy living.",
+        "action": "Create article",
+        "stats": {
+          "total": "Articles",
+          "published": "Published",
+          "draftPending": "Drafts/pending"
+        },
+        "badge": "Content"
+      },
+      "reports": {
+        "title": "System reports",
+        "description": "View usage, user growth, nutrition data, and system performance metrics.",
+        "action": "Export report",
+        "stats": {
+          "logs": "Diary logs",
+          "calories": "Recorded calories",
+          "retention": "Retention rate"
+        },
+        "badge": "Reports"
+      },
+      "submissions": {
+        "title": "Review and edit user-submitted data",
+        "description": "Check foods, exercises, images, or content submitted by users before publishing.",
+        "action": "Bulk approve",
+        "stats": {
+          "pending": "Pending review",
+          "approvedToday": "Approved today",
+          "rejected": "Rejected"
+        },
+        "badge": "Review"
+      },
+      "plans": {
+        "title": "Goal and service plan management",
+        "description": "Configure goal templates, service plans, benefits, and recommendation logic.",
+        "action": "Add plan",
+        "stats": {
+          "goals": "Goal templates",
+          "plans": "Service plans",
+          "activeUsers": "Active users"
+        },
+        "badge": "Plans"
+      },
+      "settings": {
+        "title": "Roles and system settings",
+        "description": "Manage admin roles, access rights, security settings, notifications, and backend integrations.",
+        "action": "Add role",
+        "stats": {
+          "roles": "Roles",
+          "permissions": "Permissions",
+          "enabledSettings": "Enabled settings"
+        },
+        "badge": "System"
+      }
+    },
+    "data": {
+      "users": {
+        "an": "Nguyen Minh An",
+        "nam": "Tran Hoai Nam",
+        "mai": "Le Thanh Mai"
+      },
+      "foods": {
+        "chicken": "Pan-seared chicken breast",
+        "rice": "White rice",
+        "smoothie": "Banana oatmeal smoothie"
+      },
+      "portions": {
+        "bowl": "1 bowl",
+        "glass": "1 glass"
+      },
+      "exercises": {
+        "running": "Running",
+        "gym": "Full-body gym",
+        "yoga": "Yoga"
+      },
+      "duration": {
+        "thirty": "30 minutes",
+        "forty": "40 minutes",
+        "fortyFive": "45 minutes"
+      },
+      "articles": {
+        "macro": "How to balance macros during the day",
+        "water": "How to drink water properly when training",
+        "breakfast": "High-protein breakfast ideas"
+      },
+      "reports": {
+        "users": "User overview",
+        "popularFoods": "Popular food data",
+        "goals": "Calorie goal performance"
+      },
+      "periods": {
+        "may2026": "May 2026",
+        "thisWeek": "This week",
+        "thirtyDays": "30 days"
+      },
+      "submissions": {
+        "noodle": "Small beef noodle portion",
+        "stairs": "Stair climbing exercise",
+        "dinnerTip": "Light dinner tip"
+      },
+      "plans": {
+        "weightLoss": "Healthy weight loss",
+        "weightLossValue": "-300 kcal/day",
+        "premiumPrice": "99,000 VND/month",
+        "coachPrice": "299,000 VND/month"
+      },
+      "settings": {
+        "fullAdmin": "Super admin",
+        "foodReview": "Food review",
+        "fullAccess": "Full access",
+        "jwtTimeout": "JWT timeout",
+        "twentyFourHours": "24 hours"
+      }
+    }
   }
 }
