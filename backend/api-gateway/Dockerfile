@@ -1,46 +1,24 @@
-# ─────────────────────────────────────────────
-# Stage 1 – Build
-# ─────────────────────────────────────────────
-FROM eclipse-temurin:17-jdk-alpine AS builder
+FROM maven:3.9-eclipse-temurin-17 AS builder
 
 WORKDIR /app
+COPY parent-pom.xml ./pom.xml
+RUN mvn install -N -B -q
 
-# Copy Maven wrapper and POM first (layer-cache friendly)
-COPY mvnw mvnw.cmd ./
-COPY .mvn .mvn
-COPY pom.xml ./
+WORKDIR /app/api-gateway
+COPY api-gateway/pom.xml ./pom.xml
+RUN mvn dependency:go-offline -B -q
 
-# Download dependencies (cached unless pom.xml changes)
-RUN ./mvnw dependency:go-offline -q
+COPY api-gateway/src ./src
+RUN mvn package -DskipTests -B -q
 
-# Copy source and build the fat JAR
-COPY src ./src
-RUN ./mvnw package -DskipTests -q
+FROM eclipse-temurin:17-jre-alpine
 
-# ─────────────────────────────────────────────
-# Stage 2 – Runtime
-# ─────────────────────────────────────────────
-FROM eclipse-temurin:17-jre-alpine AS runtime
-
-# Security: run as non-root user
+WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+COPY --from=builder /app/api-gateway/target/*.jar app.jar
 USER appuser
 
-WORKDIR /app
-
-# Copy only the fat JAR from the builder stage
-COPY --from=builder /app/target/*.jar app.jar
-
-# Expose gateway port
 EXPOSE 8080
-
-# Health-check using Actuator
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-  CMD wget -qO- http://localhost:8080/actuator/health | grep -q '"status":"UP"' || exit 1
-
-ENTRYPOINT ["java", \
-  "-XX:+UseContainerSupport", \
-  "-XX:MaxRAMPercentage=75.0", \
-  "-Djava.security.egd=file:/dev/./urandom", \
-  "-jar", "app.jar"]
-
+    CMD wget -qO- http://localhost:8080/actuator/health | grep -q '"status":"UP"' || exit 1
+ENTRYPOINT ["java","-XX:+UseContainerSupport","-XX:MaxRAMPercentage=75.0","-Djava.security.egd=file:/dev/./urandom","-jar","app.jar"]
