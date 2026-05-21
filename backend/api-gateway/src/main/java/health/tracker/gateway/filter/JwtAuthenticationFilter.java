@@ -60,12 +60,12 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     /** Paths accessible without a JWT token. */
     private static final List<String> PUBLIC_PATHS = List.of(
-            "/api/auth/login",
-            "/api/auth/register",
-            "/api/auth/refresh-token",
-            "/api/auth/forgot-password",
-            "/api/auth/reset-password",
-            "/api/auth/verify-email",
+            "/api/v1/auth/login",
+            "/api/v1/auth/register",
+            "/api/v1/auth/refresh",
+            "/api/v1/auth/password/forgot",
+            "/api/v1/auth/password/reset",
+            "/api/v1/auth/verify-email",
             "/actuator",
             // Swagger UI & OpenAPI docs (aggregated at gateway)
             "/swagger-ui",
@@ -76,9 +76,9 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     /** Paths restricted to ADMIN role only. */
     private static final List<String> ADMIN_PATHS = List.of(
-            "/api/analytics/admin",
-            "/api/users/admin",
-            "/api/nutrition/admin"
+            "/api/v1/analytics/admin",
+            "/api/v1/users/admin",
+            "/api/v1/nutrition/admin"
     );
 
     // -------------------------------------------------------------------------

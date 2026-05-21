@@ -1,5 +1,3 @@
-# application.yml created 
-
 server:
   port: 8080
 
@@ -10,8 +8,6 @@ spring:
   cloud:
     gateway:
       routes:
-        # ── API Docs proxy routes (springdoc aggregation) ──────────────────
-        # Gateway proxies /v3/api-docs/{service} → each service's /v3/api-docs
         - id: auth-service-api-docs
           uri: ${AUTH_SERVICE_URI:http://localhost:8081}
           predicates:
@@ -54,37 +50,35 @@ spring:
           filters:
             - RewritePath=/v3/api-docs/analytics-service, /v3/api-docs
 
-        # ── Main service routes ────────────────────────────────────────────
-        # URI dùng env var: Docker = http://auth-service:8081 | local dev = http://localhost:8081
         - id: auth-service
           uri: ${AUTH_SERVICE_URI:http://localhost:8081}
           predicates:
-            - Path=/api/auth/**
+            - Path=/api/v1/auth/**
 
         - id: user-service
           uri: ${USER_SERVICE_URI:http://localhost:8082}
           predicates:
-            - Path=/api/users/**
+            - Path=/api/v1/users/**
 
         - id: nutrition-service
           uri: ${NUTRITION_SERVICE_URI:http://localhost:8083}
           predicates:
-            - Path=/api/nutrition/**
+            - Path=/api/v1/nutrition/**
 
         - id: meal-service
           uri: ${MEAL_SERVICE_URI:http://localhost:8084}
           predicates:
-            - Path=/api/meals/**
+            - Path=/api/v1/meals/**
 
         - id: activity-service
           uri: ${ACTIVITY_SERVICE_URI:http://localhost:8085}
           predicates:
-            - Path=/api/activities/**
+            - Path=/api/v1/activities/**
 
         - id: analytics-service
           uri: ${ANALYTICS_SERVICE_URI:http://localhost:8086}
           predicates:
-            - Path=/api/analytics/**
+            - Path=/api/v1/analytics/**
 
       globalcors:
         add-to-simple-url-handler-mapping: true
@@ -110,52 +104,39 @@ spring:
       default-filters:
         - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
 
-# ── SpringDoc OpenAPI — Aggregated Swagger UI ────────────────────────────
-# Truy cập: http://localhost:8080/swagger-ui.html
-# Dùng dropdown góc trên phải để switch giữa các service
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
-    # Dropdown danh sách tất cả services
     urls:
-      - name: 🔐 Auth Service
+      - name: Auth Service
         url: /v3/api-docs/auth-service
-      - name: 👤 User Service
+      - name: User Service
         url: /v3/api-docs/user-service
-      - name: 🍎 Nutrition Service
+      - name: Nutrition Service
         url: /v3/api-docs/nutrition-service
-      - name: 🍽️ Meal Service
+      - name: Meal Service
         url: /v3/api-docs/meal-service
-      - name: 🏃 Activity Service
+      - name: Activity Service
         url: /v3/api-docs/activity-service
-      - name: 📊 Analytics Service
+      - name: Analytics Service
         url: /v3/api-docs/analytics-service
-    # Hiện dropdown selector service
-    urls-primary-name: 🔐 Auth Service
-    # Mở rộng tất cả operations
+    urls-primary-name: Auth Service
     operations-sorter: alpha
     tags-sorter: alpha
     display-request-duration: true
-  # Gateway không expose api-docs của chính nó
   api-docs:
     enabled: false
-  # Đường dẫn webjars cho swagger UI resources
   webjars:
     prefix:
 
-# JWT Configuration
 jwt:
   secret: ${JWT_SECRET:H3@lthNutrit10nTrackerSuperSecretKey!MustBe256BitsLongForHS256Algorithm}
-  expiration: 86400000         # 1 day  (ms)
-  refresh-expiration: 604800000 # 7 days (ms)
+  expiration: 86400000
+  refresh-expiration: 604800000
 
-# Internal service-to-service secret
-# Gateway thêm header X-Internal-Secret vào mọi request chuyển tiếp đến các service
-# Mỗi service sẽ validate header này để từ chối request không qua gateway
 internal:
   secret: ${INTERNAL_SECRET:Ht!InternalS3cret#OnlyGateway2Service}
 
-# Actuator
 management:
   endpoints:
     web:
@@ -175,67 +156,6 @@ info:
     name: Health Nutrition Tracker - API Gateway
     version: 1.0.0
 
-# Logging – levels & appenders are configured in logback-spring.xml
 logging:
   file:
-    path: logs   # directory used by the rolling-file appender in logback-spring.xml
-
-        add-to-simple-url-handler-mapping: true
-        cors-configurations:
-          '[/**]':
-            allowed-origin-patterns:
-              - "http://localhost:3000"
-              - "http://localhost:4200"
-            allowed-methods:
-              - GET
-              - POST
-              - PUT
-              - DELETE
-              - PATCH
-              - OPTIONS
-            allowed-headers:
-              - "*"
-            exposed-headers:
-              - Authorization
-            allow-credentials: true
-            max-age: 3600
-
-      default-filters:
-        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
-
-# JWT Configuration
-jwt:
-  secret: ${JWT_SECRET:H3@lthNutrit10nTrackerSuperSecretKey!MustBe256BitsLongForHS256Algorithm}
-  expiration: 86400000         # 1 day  (ms)
-  refresh-expiration: 604800000 # 7 days (ms)
-
-# Internal service-to-service secret
-# Gateway thêm header X-Internal-Secret vào mọi request chuyển tiếp đến các service
-# Mỗi service sẽ validate header này để từ chối request không qua gateway
-internal:
-  secret: ${INTERNAL_SECRET:Ht!InternalS3cret#OnlyGateway2Service}
-
-# Actuator
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health, info, gateway, metrics
-  endpoint:
-    health:
-      show-details: always
-    gateway:
-      enabled: true
-  info:
-    env:
-      enabled: true
-
-info:
-  app:
-    name: Health Nutrition Tracker - API Gateway
-    version: 1.0.0
-
-# Logging – levels & appenders are configured in logback-spring.xml
-logging:
-  file:
-    path: logs   # directory used by the rolling-file appender in logback-spring.xml
+    path: logs
