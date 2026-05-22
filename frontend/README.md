@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Health & Nutrition Tracker
 
 Ứng dụng frontend ReactJS cho hệ thống theo dõi sức khỏe và dinh dưỡng. Dự án đang tập trung vào giao diện quản lý các chỉ số sức khỏe, nhật ký dinh dưỡng, vận động, báo cáo và cấu trúc layout responsive.
@@ -225,3 +226,6 @@ i18nextLng
 - Popup AI hiện mới là giao diện, chưa kết nối backend hoặc API AI.
 - Một số package như `recharts`, `jspdf`, `xlsx`, `redux` hiện có trong dependency nhưng chưa phải phần chính của luồng UI mới.
 - Khi thêm module mới, nên bổ sung route trong `src/App.jsx`, menu trong `src/layouts/MainLayout.jsx` và key dịch trong 2 file JSON locale.
+=======
+# health-nutrition-tracker
+>>>>>>> af8e7f6eec3e09aab3fe0377f9ee3435d334b657
