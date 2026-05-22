@@ -1,183 +1,92 @@
-import { Badge, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Badge, Button, Card, Col, Container, Row } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import {
-  FaAppleAlt,
-  FaCalendarAlt,
-  FaChartPie,
-  FaCheckCircle,
-  FaLeaf,
-  FaShoppingBasket,
+  FaBarcode,
+  FaChartLine,
+  FaDumbbell,
+  FaHeartbeat,
+  FaLock,
+  FaUserCheck,
   FaUtensils,
+  FaWeight,
 } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
-const dietOptions = ['Anything', 'Keto', 'Mediterranean', 'Vegan', 'Vegetarian'];
-
-const benefits = [
-  {
-    icon: FaLeaf,
-    title: 'Cá nhân hóa theo lối ăn',
-    description: 'Chọn chế độ ăn yêu thích, mục tiêu calo và số bữa để tạo kế hoạch phù hợp với bạn.',
-  },
-  {
-    icon: FaCalendarAlt,
-    title: 'Lên kế hoạch cả ngày',
-    description: 'Theo dõi bữa sáng, trưa, tối và bữa phụ trong một giao diện rõ ràng.',
-  },
-  {
-    icon: FaShoppingBasket,
-    title: 'Chuẩn bị nguyên liệu dễ hơn',
-    description: 'Biết trước hôm nay cần ăn gì để mua sắm và chuẩn bị thực phẩm chủ động hơn.',
-  },
-  {
-    icon: FaChartPie,
-    title: 'Bám sát macro',
-    description: 'Theo dõi calo, carbs, fat và protein để giữ tiến độ dinh dưỡng mỗi ngày.',
-  },
+const featureCards = [
+  { icon: FaUserCheck, titleKey: 'home.features.onboarding.title', descriptionKey: 'home.features.onboarding.description' },
+  { icon: FaUtensils, titleKey: 'home.features.meals.title', descriptionKey: 'home.features.meals.description' },
+  { icon: FaBarcode, titleKey: 'home.features.database.title', descriptionKey: 'home.features.database.description' },
+  { icon: FaDumbbell, titleKey: 'home.features.activity.title', descriptionKey: 'home.features.activity.description' },
+  { icon: FaWeight, titleKey: 'home.features.metrics.title', descriptionKey: 'home.features.metrics.description' },
+  { icon: FaChartLine, titleKey: 'home.features.analytics.title', descriptionKey: 'home.features.analytics.description' },
 ];
 
-const sampleMeals = [
-  { meal: 'Breakfast', food: 'Greek yogurt bowl', calories: 420 },
-  { meal: 'Lunch', food: 'Chicken rice plate', calories: 610 },
-  { meal: 'Dinner', food: 'Salmon and vegetables', calories: 540 },
+const flowSteps = [
+  ['1', 'home.flow.steps.auth.title', 'home.flow.steps.auth.description'],
+  ['2', 'home.flow.steps.profile.title', 'home.flow.steps.profile.description'],
+  ['3', 'home.flow.steps.log.title', 'home.flow.steps.log.description'],
+  ['4', 'home.flow.steps.track.title', 'home.flow.steps.track.description'],
 ];
 
 function HomePage() {
+  const { t } = useTranslation();
+
   return (
     <div className="home-page">
       <header className="home-header">
         <Container className="d-flex align-items-center justify-content-between gap-3">
           <Link to="/" className="home-brand">
-            <img src="/logo192.png" alt="Health Nutrition" />
-            <span>Health Nutrition</span>
+            <FaHeartbeat />
+            <span>{t('app.name')}</span>
           </Link>
-
-          <nav className="home-nav d-none d-md-flex">
-            <a href="#planner">Meal Planner</a>
-            <a href="#features">Tính năng</a>
-            <a href="#reviews">Đánh giá</a>
+          <nav className="home-nav d-none d-lg-flex">
+            <a href="#features">{t('home.nav.features')}</a>
+            <a href="#flow">{t('home.nav.flow')}</a>
+            <a href="#security">{t('home.nav.security')}</a>
           </nav>
-
-          <div className="d-flex gap-2">
-            <Button as={Link} to="/login" variant="outline-success">
-              Đăng nhập
-            </Button>
-            <Button as={Link} to="/register" variant="success">
-              Đăng ký
-            </Button>
+          <div className="d-flex align-items-center gap-2">
+            <LanguageSwitcher />
+            <Button as={Link} to="/login" variant="outline-success">{t('home.actions.login')}</Button>
+            <Button as={Link} to="/register" variant="success">{t('home.actions.register')}</Button>
           </div>
         </Container>
       </header>
 
       <main>
-        <section className="home-hero">
+        <section className="home-hero product-hero">
           <Container>
             <Row className="align-items-center g-5">
-              <Col lg={6}>
-                <Badge bg="success" className="mb-3">
-                  Automatic Meal Planner
-                </Badge>
-                <h1>Đưa chế độ ăn của bạn vào chế độ tự động.</h1>
-                <p className="home-hero-text">
-                  Health Nutrition giúp tạo kế hoạch ăn uống cá nhân hóa theo mục tiêu calo, sở thích ăn uống
-                  và lịch sinh hoạt. Theo dõi bữa ăn, nước uống, vận động và macro trong một nơi duy nhất.
-                </p>
+              <Col lg={7}>
+                <Badge bg="success" className="mb-3">{t('home.hero.badge')}</Badge>
+                <h1>{t('app.name')}</h1>
+                <p className="home-hero-text">{t('home.hero.description')}</p>
+                <p className="home-hero-text home-hero-text-secondary">{t('home.hero.secondary')}</p>
                 <div className="d-flex flex-wrap gap-3">
-                  <Button as={Link} to="/register" variant="success" size="lg">
-                    Tạo kế hoạch miễn phí
-                  </Button>
-                  <Button as={Link} to="/login" variant="outline-success" size="lg">
-                    Đăng nhập
-                  </Button>
+                  <Button as={Link} to="/register" variant="success" size="lg">{t('home.actions.start')}</Button>
+                  <Button as={Link} to="/login" variant="outline-success" size="lg">{t('home.actions.login')}</Button>
                 </div>
               </Col>
-
-              <Col lg={6}>
-                <Card className="home-planner-card border-0 shadow-lg" id="planner">
-                  <Card.Body className="p-4">
-                    <div className="d-flex align-items-center gap-2 mb-3">
-                      <span className="home-planner-icon">
-                        <FaUtensils />
-                      </span>
-                      <div>
-                        <Card.Title className="h4 fw-bold mb-0">Tạo meal plan trong vài giây</Card.Title>
-                        <Card.Text className="text-secondary small mb-0">
-                          Chọn mục tiêu và xem lịch ăn mẫu trong ngày.
-                        </Card.Text>
-                      </div>
-                    </div>
-
-                    <Form>
-                      <Form.Group className="mb-3">
-                        <Form.Label>Preferred diet</Form.Label>
-                        <div className="home-diet-options">
-                          {dietOptions.map((option) => (
-                            <button type="button" className={option === 'Anything' ? 'active' : ''} key={option}>
-                              {option}
-                            </button>
-                          ))}
-                        </div>
-                      </Form.Group>
-
-                      <Row className="g-3">
-                        <Col sm={6}>
-                          <Form.Group>
-                            <Form.Label>I want to eat</Form.Label>
-                            <Form.Control type="number" defaultValue="2000" />
-                          </Form.Group>
-                        </Col>
-                        <Col sm={6}>
-                          <Form.Group>
-                            <Form.Label>Meals per day</Form.Label>
-                            <Form.Select defaultValue="4">
-                              <option value="3">3 meals</option>
-                              <option value="4">4 meals</option>
-                              <option value="5">5 meals</option>
-                            </Form.Select>
-                          </Form.Group>
-                        </Col>
-                      </Row>
-
-                      <div className="home-macro-targets">
-                        <span>90g Carbs</span>
-                        <span>60g Fat</span>
-                        <span>120g Protein</span>
-                      </div>
-
-                      <Button as={Link} to="/register" variant="success" className="w-100 mt-3">
-                        Generate plan
-                      </Button>
-                    </Form>
-                  </Card.Body>
-                </Card>
-              </Col>
-            </Row>
-          </Container>
-        </section>
-
-        <section className="home-meal-preview">
-          <Container>
-            <Row className="g-4 align-items-center">
               <Col lg={5}>
-                <h2>Ăn uống thông minh chưa bao giờ dễ hơn.</h2>
-                <p>
-                  Lập kế hoạch trước giúp bạn giảm bối rối khi chọn món, kiểm soát macro và duy trì thói quen
-                  lành mạnh dài hạn.
-                </p>
-              </Col>
-              <Col lg={7}>
-                <Card className="border-0 shadow-sm home-sample-plan">
-                  <Card.Body>
-                    {sampleMeals.map((item) => (
-                      <div className="home-sample-row" key={item.meal}>
-                        <div>
-                          <strong>{item.meal}</strong>
-                          <span>{item.food}</span>
-                        </div>
-                        <Badge bg="success">{item.calories} kcal</Badge>
-                      </div>
-                    ))}
-                  </Card.Body>
-                </Card>
+                <div className="hero-snapshot">
+                  <div className="hero-snapshot-main">
+                    <span>{t('home.snapshot.calories')}</span>
+                    <strong>1,680 / 2,000 kcal</strong>
+                    <small>{t('home.snapshot.goal')}</small>
+                  </div>
+                  <div>
+                    <span>{t('health.protein')}</span>
+                    <strong>112g</strong>
+                  </div>
+                  <div>
+                    <span>{t('home.snapshot.activeMinutes')}</span>
+                    <strong>65 {t('home.units.minutes')}</strong>
+                  </div>
+                  <div>
+                    <span>{t('home.snapshot.streak')}</span>
+                    <strong>8 {t('home.units.days')}</strong>
+                  </div>
+                </div>
               </Col>
             </Row>
           </Container>
@@ -185,25 +94,22 @@ function HomePage() {
 
         <section className="home-features" id="features">
           <Container>
-            <div className="text-center mb-4">
-              <Badge bg="light" text="success" className="mb-2">
-                Features
-              </Badge>
-              <h2 className="fw-bold">Mọi thứ bạn cần để theo dõi dinh dưỡng</h2>
+            <div className="section-heading">
+              <Badge bg="light" text="success" className="mb-2">{t('home.features.badge')}</Badge>
+              <h2>{t('home.features.title')}</h2>
+              <p>{t('home.features.description')}</p>
             </div>
             <Row className="g-4">
-              {benefits.map((feature) => {
+              {featureCards.map((feature) => {
                 const Icon = feature.icon;
 
                 return (
-                  <Col md={6} lg={3} key={feature.title}>
+                  <Col md={6} xl={4} key={feature.titleKey}>
                     <Card className="home-feature-card h-100 border-0 shadow-sm">
                       <Card.Body>
-                        <div className="home-feature-icon">
-                          <Icon />
-                        </div>
-                        <h3 className="h5 fw-bold">{feature.title}</h3>
-                        <p className="text-secondary mb-0">{feature.description}</p>
+                        <div className="home-feature-icon"><Icon /></div>
+                        <h2 className="h5 fw-bold">{t(feature.titleKey)}</h2>
+                        <p className="text-secondary mb-0">{t(feature.descriptionKey)}</p>
                       </Card.Body>
                     </Card>
                   </Col>
@@ -213,35 +119,62 @@ function HomePage() {
           </Container>
         </section>
 
-        <section className="home-proof" id="reviews">
+        <section className="home-flow" id="flow">
+          <Container>
+            <Row className="g-4 align-items-start">
+              <Col lg={5}>
+                <Badge bg="success" className="mb-3">{t('home.flow.badge')}</Badge>
+                <h2>{t('home.flow.title')}</h2>
+                <p>{t('home.flow.description')}</p>
+              </Col>
+              <Col lg={7}>
+                <div className="flow-list">
+                  {flowSteps.map(([number, titleKey, descriptionKey]) => (
+                    <div className="flow-item" key={number}>
+                      <span>{number}</span>
+                      <div>
+                        <h3>{t(titleKey)}</h3>
+                        <p>{t(descriptionKey)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Col>
+            </Row>
+          </Container>
+        </section>
+
+        <section className="home-security" id="security">
           <Container>
             <Row className="g-4">
-              {[
-                ['4.8/5', 'Điểm hài lòng từ người dùng thử nghiệm'],
-                ['2,000+', 'Mẫu bữa ăn có thể mở rộng'],
-                ['7 ngày', 'Theo dõi kế hoạch ăn uống theo tuần'],
-              ].map(([value, label]) => (
-                <Col md={4} key={value}>
-                  <Card className="border-0 shadow-sm home-proof-card">
-                    <Card.Body>
-                      <FaCheckCircle className="text-success mb-3" />
-                      <div className="home-proof-value">{value}</div>
-                      <p className="text-secondary mb-0">{label}</p>
-                    </Card.Body>
-                  </Card>
-                </Col>
-              ))}
+              <Col lg={6}>
+                <Card className="home-info-card border-0 shadow-sm h-100">
+                  <Card.Body>
+                    <FaLock className="home-info-icon" />
+                    <h2>{t('home.security.authTitle')}</h2>
+                    <p>{t('home.security.authDescription')}</p>
+                  </Card.Body>
+                </Card>
+              </Col>
+              <Col lg={6}>
+                <Card className="home-info-card border-0 shadow-sm h-100">
+                  <Card.Body>
+                    <FaHeartbeat className="home-info-icon" />
+                    <h2>{t('home.security.apiTitle')}</h2>
+                    <p>{t('home.security.apiDescription')}</p>
+                  </Card.Body>
+                </Card>
+              </Col>
             </Row>
           </Container>
         </section>
 
         <section className="home-final-cta">
           <Container className="text-center">
-            <FaAppleAlt className="home-final-icon" />
-            <h2>Hôm nay bạn ăn gì?</h2>
-            <p>Tạo tài khoản để bắt đầu xây dựng kế hoạch ăn uống và theo dõi sức khỏe của bạn.</p>
+            <h2>{t('home.cta.title')}</h2>
+            <p>{t('home.cta.description')}</p>
             <Button as={Link} to="/register" variant="success" size="lg">
-              Bắt đầu miễn phí
+              {t('home.actions.createAccount')}
             </Button>
           </Container>
         </section>

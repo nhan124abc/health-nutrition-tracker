@@ -10,6 +10,8 @@
     "water": "Water",
     "goals": "Goals",
     "reports": "Reports",
+    "analytics": "Analytics",
+    "bodyMetrics": "Body metrics",
     "news": "News",
     "settings": "Settings",
     "profile": "Profile",
@@ -74,6 +76,96 @@
     "weeklyCalories": "Weekly Calories",
     "weeklyCaloriesDescription": "Compare calories consumed and calories burned.",
     "sevenDays": "7 days"
+  },
+  "home": {
+    "nav": {
+      "features": "Features",
+      "flow": "User flow",
+      "security": "Security"
+    },
+    "actions": {
+      "login": "Log in",
+      "register": "Register",
+      "start": "Start tracking",
+      "createAccount": "Create account"
+    },
+    "hero": {
+      "badge": "Health tracking app",
+      "description": "Track nutrition and activity with daily health data: what you eat, how much you move, how your weight changes, and how closely you follow your goals.",
+      "secondary": "The frontend is designed to connect to the backend through the /api/v1 gateway, prioritizing login, profile onboarding, daily dashboard, meal logs, activity logs, and analytics."
+    },
+    "snapshot": {
+      "calories": "Today's calories",
+      "goal": "84% of goal",
+      "activeMinutes": "Active minutes",
+      "streak": "Current streak"
+    },
+    "units": {
+      "minutes": "min",
+      "days": "days"
+    },
+    "features": {
+      "badge": "Core modules",
+      "title": "All screens needed for the first frontend phase",
+      "description": "The interface focuses on workflows that users need first, keeping the product clear and ready for real API integration.",
+      "onboarding": {
+        "title": "Health profile onboarding",
+        "description": "Update height, weight, calorie goals, water goals, activity level, and health targets so the dashboard can be personalized."
+      },
+      "meals": {
+        "title": "Meal diary",
+        "description": "Create breakfast, lunch, dinner, or snacks; add multiple foods to a meal and review calories, protein, carbs, fat, fiber, and sodium."
+      },
+      "database": {
+        "title": "Food database",
+        "description": "Search food by keyword, filter categories, check barcode data, review verified or pending status, and add missing foods."
+      },
+      "activity": {
+        "title": "Physical activity",
+        "description": "Log cardio or strength sessions with duration, user weight, distance, heart rate, sets, reps, steps, and estimated calories burned."
+      },
+      "metrics": {
+        "title": "Body metrics",
+        "description": "Track weight, BMI, body fat, muscle mass, waist, hip, chest measurements, and daily notes."
+      },
+      "analytics": {
+        "title": "Weekly and monthly analytics",
+        "description": "View calories in/out, net calories, macro trends, streaks, and health progress over clear time ranges."
+      }
+    },
+    "flow": {
+      "badge": "User flow",
+      "title": "The workflow follows the right implementation order",
+      "description": "Users start with an account, complete their profile, then log daily data. Dashboard and analytics become useful after the core logs are entered regularly.",
+      "steps": {
+        "auth": {
+          "title": "Register or log in",
+          "description": "Email/password, refresh token, and OAuth2 Google/Facebook."
+        },
+        "profile": {
+          "title": "Update profile",
+          "description": "Create an empty profile if needed, then save health goals."
+        },
+        "log": {
+          "title": "Log meals and activity",
+          "description": "Record daily data through Meals and Activities."
+        },
+        "track": {
+          "title": "Track progress",
+          "description": "Use the daily dashboard, weekly/monthly analytics, and body metrics."
+        }
+      }
+    },
+    "security": {
+      "authTitle": "Auth guard and token flow are ready",
+      "authDescription": "Unauthenticated users are redirected to login. Requests attach the bearer token automatically, and expired access tokens are refreshed before retrying.",
+      "apiTitle": "Designed to connect real APIs cleanly",
+      "apiDescription": "Current sample data follows the expected backend payload shape, so each screen can swap local state for API calls when endpoints are ready."
+    },
+    "cta": {
+      "title": "Track health by daily data, not guesswork",
+      "description": "Start with your profile, log meals and activity, then use analytics to adjust calorie, hydration, and weight goals."
+    }
   },
   "dashboard": {
     "title": "Health Overview",
@@ -451,6 +543,275 @@
         "jwtTimeout": "JWT timeout",
         "twentyFourHours": "24 hours"
       }
+    }
+  },
+  "auth": {
+    "loginTitle": "Log in",
+    "loginDescription": "Track daily meals, activity, and health metrics.",
+    "password": "Password",
+    "passwordPlaceholder": "Enter password",
+    "forgotPassword": "Forgot password?",
+    "loggingIn": "Logging in...",
+    "or": "or",
+    "loginWithGoogle": "Log in with Google",
+    "loginWithFacebook": "Log in with Facebook",
+    "noAccount": "No account?",
+    "registerNow": "Register now",
+    "loginError": "Unable to log in. Please try again.",
+    "missingToken": "Backend did not return an access token.",
+    "registerTitle": "Create account",
+    "registerDescription": "Start with your email, password, and full name.",
+    "fullName": "Full name",
+    "passwordMin": "At least 8 characters",
+    "confirmPassword": "Confirm password",
+    "confirmPasswordPlaceholder": "Re-enter password",
+    "creatingAccount": "Creating account...",
+    "alreadyAccount": "Already have an account?",
+    "passwordTooShort": "Password must be at least 8 characters.",
+    "passwordMismatch": "Password confirmation does not match.",
+    "registerError": "Unable to register. Please try again.",
+    "forgotTitle": "Forgot password",
+    "forgotDescription": "Enter your email to receive an OTP, then set a new password.",
+    "otpSent": "OTP has been sent to your email if the account exists.",
+    "sendOtpError": "Unable to send OTP. Please try again.",
+    "newPassword": "New password",
+    "sending": "Sending...",
+    "sendOtp": "Send OTP",
+    "resetting": "Resetting password...",
+    "resetPassword": "Reset password",
+    "resetSuccess": "Password changed successfully. You can log in again.",
+    "resetError": "Unable to reset password. Please check your OTP.",
+    "backToLogin": "Back to login"
+  },
+  "common": {
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fat": "Fat",
+    "fiber": "Fiber",
+    "sodium": "Sodium",
+    "sugar": "Sugar",
+    "calories": "Calories",
+    "caloriesIn": "Calories in",
+    "caloriesOut": "Calories out",
+    "meals": "Meals",
+    "weight": "Weight",
+    "steps": "Steps",
+    "activeMinutes": "Active minutes",
+    "minutes": "minutes",
+    "days": "days",
+    "weekly": "Weekly",
+    "sevenDays": "7 days",
+    "thisMonth": "This month",
+    "weekdayShort": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun"
+    ],
+    "cancel": "Cancel",
+    "save": "Save",
+    "food": "Food",
+    "serving": "Serving",
+    "servingSize": "Serving size",
+    "quantity": "Quantity",
+    "quantityShort": "Qty",
+    "noNotes": "No notes",
+    "notes": "Notes",
+    "dailySummary": "Daily summary",
+    "category": "Category",
+    "status": "Status",
+    "statuses": {
+      "verified": "Verified",
+      "pending": "Pending"
+    },
+    "barcode": "Barcode",
+    "brand": "Brand",
+    "activity": "Activity",
+    "duration": "Duration",
+    "details": "Details",
+    "date": "Date",
+    "goal": "Goal",
+    "water": "Water",
+    "timezone": "Timezone",
+    "bio": "Bio"
+  },
+  "dashboardPage": {
+    "badge": "Daily dashboard",
+    "title": "Today overview",
+    "description": "Track calories, macros, activity, water, weight, and streak for the day.",
+    "weeklyTitle": "7-day calories",
+    "weeklyDescription": "Calories in/out and net calorie trend.",
+    "macroTitle": "Today macros",
+    "macroDescription": "Protein, carbs, and fat by energy.",
+    "quickTitle": "Quick metrics",
+    "stats": {
+      "consumed": "Calories consumed",
+      "burned": "Calories burned",
+      "net": "Net calories",
+      "streak": "Current streak",
+      "goalPercent": "{{percent}}% of goal",
+      "activityCount": "{{count}} activities",
+      "netHelper": "Consumed - burned",
+      "streakHelper": "Stable streak"
+    },
+    "goals": {
+      "title": "Daily goals",
+      "calorie": "Calorie goal",
+      "water": "Water intake"
+    }
+  },
+  "reportsPage": {
+    "badge": "Analytics",
+    "title": "Weekly/monthly dashboard",
+    "description": "Charts for calories in/out, net calories, macro trends, and progress overview.",
+    "caloriesTitle": "Calories in/out",
+    "macroTitle": "Macro trend",
+    "metrics": {
+      "avgIn": "Avg calories in",
+      "avgOut": "Avg calories out",
+      "avgNet": "Avg net calories",
+      "streak": "Streak label",
+      "excellent": "Excellent",
+      "streakHelper": "8 days in a row"
+    }
+  },
+  "foodDiaryPage": {
+    "badge": "Meal diary",
+    "title": "Daily meal log",
+    "description": "Create meals, add foods, view details, and review daily calorie totals.",
+    "createMeal": "Create meal",
+    "deleteMeal": "Delete meal",
+    "dailySummary": "Daily summary",
+    "mealsLogged": "{{count}} meals logged",
+    "newMealTitle": "Create new meal",
+    "saveMeal": "Save meal",
+    "customFood": "Custom food",
+    "mealTypes": {
+      "breakfast": "Breakfast",
+      "lunch": "Lunch",
+      "dinner": "Dinner",
+      "snack": "Snack"
+    },
+    "fields": {
+      "mealType": "Meal type",
+      "mealDate": "Meal date",
+      "mealTime": "Meal time",
+      "itemName": "Food name"
+    },
+    "sampleNotes": {
+      "lightBreakfast": "Light breakfast before work"
+    }
+  },
+  "nutritionPage": {
+    "badge": "Food database",
+    "title": "Nutrition and foods",
+    "description": "Search, filter categories, check barcode, review macro/micro data, and add foods.",
+    "addFood": "Add food",
+    "searchPlaceholder": "Search by name, brand...",
+    "allCategories": "All categories",
+    "resultCount": "Showing {{count}} results. Pagination is ready for /nutrition/foods.",
+    "newFoodTitle": "Add new food",
+    "savePending": "Save pending",
+    "fields": {
+      "name": "Name",
+      "nameVi": "Vietnamese name",
+      "imageUrl": "Image URL"
+    }
+  },
+  "activityPage": {
+    "badge": "Physical activity",
+    "title": "Daily activity logs",
+    "description": "Log activity, filter activity types by category, and view daily totals.",
+    "addActivity": "Log activity",
+    "listTitle": "Activity list",
+    "allCategories": "All categories",
+    "activityCount": "Activities",
+    "typeTitle": "Activity types",
+    "newLogTitle": "Log new activity",
+    "deleteLog": "Delete activity log",
+    "estimatedCalories": "Estimated calories",
+    "saveActivity": "Save activity",
+    "categories": {
+      "cardio": "Cardio",
+      "strength": "Strength"
+    },
+    "types": {
+      "running": "Running",
+      "walking": "Walking",
+      "strength": "Strength training",
+      "cycling": "Cycling"
+    },
+    "fields": {
+      "activityType": "Activity type",
+      "customName": "Custom name",
+      "logTime": "Log time",
+      "durationMinutes": "Duration minutes",
+      "userWeight": "User weight",
+      "distance": "Distance km",
+      "avgHeartRate": "Avg heart rate",
+      "maxHeartRate": "Max heart rate",
+      "sets": "sets",
+      "reps": "reps",
+      "strengthWeight": "Weight kg"
+    },
+    "sampleNotes": {
+      "morningRun": "Morning run"
+    }
+  },
+  "profilePage": {
+    "badge": "User profile",
+    "title": "Health profile",
+    "description": "View and update personal information. If the backend has no profile yet, the frontend sends a payload to create an empty profile first.",
+    "savedMessage": "Profile saved in the UI. When the API is connected, this will call /users/me/profile.",
+    "selectGender": "Select gender",
+    "fields": {
+      "username": "Username",
+      "targetWeight": "Target weight kg",
+      "dailyWaterGoal": "Daily water goal ml",
+      "healthGoal": "Health goal"
+    },
+    "selectGoal": "Select goal",
+    "goals": {
+      "lose_weight": "Lose weight",
+      "maintain": "Maintain",
+      "gain_muscle": "Gain muscle",
+      "improve_health": "Improve health",
+      "loseWeight": "Lose weight",
+      "gainMuscle": "Gain muscle",
+      "improveHealth": "Improve health"
+    },
+    "saveProfile": "Save profile",
+    "currentAccount": "Current account",
+    "backendNote": "Backend /me is still TODO, so this screen uses the profile endpoint as the primary data source."
+  },
+  "bodyMetricsPage": {
+    "badge": "Body metrics",
+    "title": "Track body metrics",
+    "description": "Record weight, body fat, muscle mass, and measurements; review progress over time.",
+    "addTitle": "Add metric",
+    "saveMetric": "Save metric",
+    "chartTitle": "Progress chart",
+    "historyTitle": "Metric history",
+    "fields": {
+      "date": "Record date",
+      "weight": "Weight kg",
+      "bodyFat": "Body fat %",
+      "muscleMass": "Muscle mass kg",
+      "waist": "Waist cm",
+      "hip": "Hip cm",
+      "chest": "Chest cm"
+    },
+    "table": {
+      "bodyFat": "Body fat",
+      "muscle": "Muscle",
+      "measurements": "Waist/Hip/Chest"
+    },
+    "sampleNotes": {
+      "startMonth": "Start of month",
+      "afterThreeWeeks": "After three weeks"
     }
   }
 }

@@ -8,11 +8,12 @@ const languages = [
 
 function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
-  const currentLanguage = i18n.language?.split('-')[0] || 'vi';
+  const currentLanguage = (i18n.resolvedLanguage || i18n.language || 'vi').split('-')[0];
 
   const handleChangeLanguage = (language) => {
     localStorage.setItem('i18nextLng', language);
     i18n.changeLanguage(language);
+    document.documentElement.lang = language;
   };
 
   return (

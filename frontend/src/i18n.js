@@ -33,4 +33,10 @@ i18n.use(initReactI18next).init({
   },
 });
 
+i18n.on('languageChanged', (language) => {
+  document.documentElement.lang = language.split('-')[0];
+});
+
+document.documentElement.lang = i18n.language.split('-')[0];
+
 export default i18n;

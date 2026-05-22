@@ -3,227 +3,127 @@ import { Alert, Badge, Button, Card, Col, Form, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 
 const initialProfile = {
-  gender: '',
+  username: '',
   birthDate: '',
+  gender: '',
   height: '',
   weight: '',
   activityLevel: '',
+  healthGoal: '',
+  targetWeight: '',
+  dailyCalorieGoal: '',
+  dailyWaterGoal: '',
+  bio: '',
+  timezone: 'Asia/Bangkok',
 };
-
-function getBmiStatus(bmi) {
-  if (bmi < 18.5) {
-    return {
-      labelKey: 'profile.underweight',
-      messageKey: 'profile.underweightMessage',
-      variant: 'warning',
-    };
-  }
-
-  if (bmi < 25) {
-    return {
-      labelKey: 'profile.normal',
-      messageKey: 'profile.normalMessage',
-      variant: 'success',
-    };
-  }
-
-  if (bmi < 30) {
-    return {
-      labelKey: 'profile.overweight',
-      messageKey: 'profile.overweightMessage',
-      variant: 'warning',
-    };
-  }
-
-  return {
-    labelKey: 'profile.obese',
-    messageKey: 'profile.obeseMessage',
-    variant: 'warning',
-  };
-}
 
 function Profile() {
   const { t } = useTranslation();
   const [profile, setProfile] = useState(initialProfile);
-  const [validated, setValidated] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  const heightValue = Number(profile.height);
-  const weightValue = Number(profile.weight);
+  const bmi = useMemo(() => {
+    const height = Number(profile.height);
+    const weight = Number(profile.weight);
 
-  const errors = {
-    gender: !profile.gender,
-    birthDate: !profile.birthDate,
-    height: profile.height === '' || heightValue <= 0,
-    weight: profile.weight === '' || weightValue <= 0,
-    activityLevel: !profile.activityLevel,
-  };
-
-  const bmiResult = useMemo(() => {
-    if (errors.height || errors.weight) {
+    if (!height || !weight) {
       return null;
     }
 
-    const heightInMeters = heightValue / 100;
-    const bmi = weightValue / (heightInMeters * heightInMeters);
-    const roundedBmi = Number(bmi.toFixed(1));
-
-    return {
-      value: roundedBmi,
-      ...getBmiStatus(roundedBmi),
-    };
-  }, [errors.height, errors.weight, heightValue, weightValue]);
+    return (weight / ((height / 100) ** 2)).toFixed(1);
+  }, [profile.height, profile.weight]);
 
   const handleChange = (event) => {
     const { name, value } = event.target;
     setProfile((current) => ({ ...current, [name]: value }));
   };
 
-  const shouldShowInvalid = (fieldName) => validated && errors[fieldName];
-
   const handleSubmit = (event) => {
     event.preventDefault();
-    event.stopPropagation();
-    setValidated(true);
+    setSaved(true);
   };
+
+  const fields = [
+    ['username', 'profilePage.fields.username', 'text'],
+    ['birthDate', 'profile.birthDate', 'date'],
+    ['height', 'profile.height', 'number'],
+    ['weight', 'profile.weight', 'number'],
+    ['targetWeight', 'profilePage.fields.targetWeight', 'number'],
+    ['dailyCalorieGoal', 'health.dailyCalorieGoal', 'number'],
+    ['dailyWaterGoal', 'profilePage.fields.dailyWaterGoal', 'number'],
+    ['timezone', 'common.timezone', 'text'],
+  ];
 
   return (
     <>
-      <div className="mb-4">
-        <Badge bg="success" className="mb-2">
-          {t('profile.title')}
-        </Badge>
-        <h1 className="h2 fw-bold mb-1">{t('profile.title')}</h1>
-        <p className="text-secondary mb-0">{t('profile.subtitle')}</p>
+      <div className="page-heading">
+        <div>
+          <Badge bg="success" className="mb-2">{t('profilePage.badge')}</Badge>
+          <h1>{t('profilePage.title')}</h1>
+          <p>{t('profilePage.description')}</p>
+        </div>
       </div>
+
+      {saved && <Alert variant="success">{t('profilePage.savedMessage')}</Alert>}
 
       <Row className="g-4">
         <Col lg={8}>
           <Card className="border-0 shadow-sm">
             <Card.Body className="p-4">
-              <Form noValidate validated={validated} onSubmit={handleSubmit}>
+              <Form onSubmit={handleSubmit}>
                 <Row className="g-3">
-                  <Col xs={12}>
+                  {fields.map(([name, labelKey, type]) => (
+                    <Col md={6} key={name}>
+                      <Form.Group>
+                        <Form.Label>{t(labelKey)}</Form.Label>
+                        <Form.Control type={type} name={name} value={profile[name]} onChange={handleChange} />
+                      </Form.Group>
+                    </Col>
+                  ))}
+                  <Col md={6}>
                     <Form.Group>
-                      <Form.Label className="fw-semibold">{t('profile.gender')}</Form.Label>
-                      <div className="d-flex flex-wrap gap-3">
-                        <Form.Check
-                          required
-                          type="radio"
-                          id="gender-male"
-                          name="gender"
-                          label={t('profile.male')}
-                          value="male"
-                          checked={profile.gender === 'male'}
-                          onChange={handleChange}
-                          isInvalid={shouldShowInvalid('gender')}
-                        />
-                        <Form.Check
-                          required
-                          type="radio"
-                          id="gender-female"
-                          name="gender"
-                          label={t('profile.female')}
-                          value="female"
-                          checked={profile.gender === 'female'}
-                          onChange={handleChange}
-                          isInvalid={shouldShowInvalid('gender')}
-                        />
-                        <Form.Check
-                          required
-                          type="radio"
-                          id="gender-other"
-                          name="gender"
-                          label={t('profile.other')}
-                          value="other"
-                          checked={profile.gender === 'other'}
-                          onChange={handleChange}
-                          isInvalid={shouldShowInvalid('gender')}
-                        />
-                      </div>
-                      {shouldShowInvalid('gender') && (
-                        <div className="invalid-feedback d-block">{t('profile.validationGender')}</div>
-                      )}
+                      <Form.Label>{t('profile.gender')}</Form.Label>
+                      <Form.Select name="gender" value={profile.gender} onChange={handleChange}>
+                        <option value="">{t('profilePage.selectGender')}</option>
+                        <option value="male">{t('profile.male')}</option>
+                        <option value="female">{t('profile.female')}</option>
+                        <option value="other">{t('profile.other')}</option>
+                      </Form.Select>
                     </Form.Group>
                   </Col>
-
                   <Col md={6}>
-                    <Form.Group controlId="birthDate">
-                      <Form.Label>{t('profile.birthDate')}</Form.Label>
-                      <Form.Control
-                        required
-                        type="date"
-                        name="birthDate"
-                        value={profile.birthDate}
-                        onChange={handleChange}
-                        isInvalid={shouldShowInvalid('birthDate')}
-                      />
-                      <Form.Control.Feedback type="invalid">{t('profile.validationBirthDate')}</Form.Control.Feedback>
-                    </Form.Group>
-                  </Col>
-
-                  <Col md={6}>
-                    <Form.Group controlId="activityLevel">
+                    <Form.Group>
                       <Form.Label>{t('profile.activityLevel')}</Form.Label>
-                      <Form.Select
-                        required
-                        name="activityLevel"
-                        value={profile.activityLevel}
-                        onChange={handleChange}
-                        isInvalid={shouldShowInvalid('activityLevel')}
-                      >
+                      <Form.Select name="activityLevel" value={profile.activityLevel} onChange={handleChange}>
                         <option value="">{t('profile.selectActivity')}</option>
                         <option value="sedentary">{t('profile.sedentary')}</option>
                         <option value="light">{t('profile.light')}</option>
                         <option value="moderate">{t('profile.moderate')}</option>
                         <option value="active">{t('profile.active')}</option>
-                        <option value="very-active">{t('profile.veryActive')}</option>
+                        <option value="very_active">{t('profile.veryActive')}</option>
                       </Form.Select>
-                      <Form.Control.Feedback type="invalid">{t('profile.validationActivity')}</Form.Control.Feedback>
                     </Form.Group>
                   </Col>
-
-                  <Col md={6}>
-                    <Form.Group controlId="height">
-                      <Form.Label>{t('profile.height')}</Form.Label>
-                      <Form.Control
-                        required
-                        min="1"
-                        type="number"
-                        name="height"
-                        value={profile.height}
-                        onChange={handleChange}
-                        placeholder={t('profile.heightPlaceholder')}
-                        isInvalid={shouldShowInvalid('height')}
-                      />
-                      <Form.Control.Feedback type="invalid">
-                        {t('profile.validationHeight')}
-                      </Form.Control.Feedback>
+                  <Col xs={12}>
+                    <Form.Group>
+                      <Form.Label>{t('profilePage.fields.healthGoal')}</Form.Label>
+                      <Form.Select name="healthGoal" value={profile.healthGoal} onChange={handleChange}>
+                        <option value="">{t('profilePage.selectGoal')}</option>
+                        <option value="lose_weight">{t('profilePage.goals.loseWeight')}</option>
+                        <option value="maintain">{t('profilePage.goals.maintain')}</option>
+                        <option value="gain_muscle">{t('profilePage.goals.gainMuscle')}</option>
+                        <option value="improve_health">{t('profilePage.goals.improveHealth')}</option>
+                      </Form.Select>
                     </Form.Group>
                   </Col>
-
-                  <Col md={6}>
-                    <Form.Group controlId="weight">
-                      <Form.Label>{t('profile.weight')}</Form.Label>
-                      <Form.Control
-                        required
-                        min="1"
-                        type="number"
-                        name="weight"
-                        value={profile.weight}
-                        onChange={handleChange}
-                        placeholder={t('profile.weightPlaceholder')}
-                        isInvalid={shouldShowInvalid('weight')}
-                      />
-                      <Form.Control.Feedback type="invalid">
-                        {t('profile.validationWeight')}
-                      </Form.Control.Feedback>
+                  <Col xs={12}>
+                    <Form.Group>
+                      <Form.Label>{t('common.bio')}</Form.Label>
+                      <Form.Control as="textarea" rows={3} name="bio" value={profile.bio} onChange={handleChange} />
                     </Form.Group>
                   </Col>
-
                   <Col xs={12} className="d-flex justify-content-end">
-                    <Button variant="success" type="submit">
-                      {t('buttons.save')}
-                    </Button>
+                    <Button variant="success" type="submit">{t('profilePage.saveProfile')}</Button>
                   </Col>
                 </Row>
               </Form>
@@ -232,22 +132,21 @@ function Profile() {
         </Col>
 
         <Col lg={4}>
-          <Alert variant={bmiResult?.variant || 'warning'} className="health-result-alert shadow-sm">
-            <Alert.Heading className="h5">{t('profile.resultTitle')}</Alert.Heading>
-            {bmiResult ? (
-              <>
-                <div className="health-result-value">{bmiResult.value}</div>
-                <p className="mb-2">
-                  {t('profile.status')}: <strong>{t(bmiResult.labelKey)}</strong>
-                </p>
-                <p className="mb-0">{t(bmiResult.messageKey)}</p>
-              </>
-            ) : (
-              <p className="mb-0">
-                {t('profile.resultEmpty')}
-              </p>
-            )}
-          </Alert>
+          <Card className="border-0 shadow-sm sticky-panel">
+            <Card.Body>
+              <Card.Title className="fw-bold mb-3">{t('profilePage.currentAccount')}</Card.Title>
+              <Alert variant="warning" className="small">
+                {t('profilePage.backendNote')}
+              </Alert>
+              <div className="nutrition-detail-grid">
+                <div><span>BMI</span><strong>{bmi || '-'}</strong></div>
+                <div><span>{t('common.goal')}</span><strong>{profile.healthGoal ? t(`profilePage.goals.${profile.healthGoal}`) : '-'}</strong></div>
+                <div><span>{t('common.calories')}</span><strong>{profile.dailyCalorieGoal || '-'} kcal</strong></div>
+                <div><span>{t('common.water')}</span><strong>{profile.dailyWaterGoal || '-'} ml</strong></div>
+                <div><span>{t('common.timezone')}</span><strong>{profile.timezone}</strong></div>
+              </div>
+            </Card.Body>
+          </Card>
         </Col>
       </Row>
     </>

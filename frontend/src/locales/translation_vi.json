@@ -10,6 +10,8 @@
     "water": "Nước",
     "goals": "Mục tiêu",
     "reports": "Báo cáo",
+    "analytics": "Phân tích",
+    "bodyMetrics": "Chỉ số cơ thể",
     "news": "Tin tức",
     "settings": "Cài đặt",
     "profile": "Hồ sơ",
@@ -21,12 +23,12 @@
     "aiPlaceholder": "Hỏi AI về dinh dưỡng...",
     "aiLabel": "Trò chuyện với AI",
     "aiTitle": "Trợ lý AI dinh dưỡng",
-    "aiWelcome": "Xin chào, bạn muốn hỏi gì về dinh dưỡng, calo hoặc kế hoạch ăn uống hôm nay?",
+    "aiWelcome": "Bạn có thể hỏi AI về calories, macro, gợi ý bữa ăn, hoạt động hoặc tiến trình sức khỏe.",
     "aiSend": "Gửi câu hỏi cho AI",
     "toggleSidebar": "Thu gọn hoặc mở rộng thanh điều hướng"
   },
   "sidebar": {
-    "title": "Điều hướng"
+    "title": "Theo dõi sức khỏe"
   },
   "user": {
     "name": "Người dùng",
@@ -57,6 +59,61 @@
     "addFood": "Thêm món",
     "lookup": "Tra cứu"
   },
+  "common": {
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fat": "Fat",
+    "fiber": "Fiber",
+    "sodium": "Sodium",
+    "sugar": "Sugar",
+    "calories": "Calories",
+    "caloriesIn": "Calories nạp vào",
+    "caloriesOut": "Calories tiêu hao",
+    "meals": "Bữa ăn",
+    "weight": "Cân nặng",
+    "steps": "Bước chân",
+    "activeMinutes": "Phút vận động",
+    "minutes": "phút",
+    "days": "ngày",
+    "weekly": "Hằng tuần",
+    "sevenDays": "7 ngày",
+    "thisMonth": "Tháng này",
+    "weekdayShort": [
+      "T2",
+      "T3",
+      "T4",
+      "T5",
+      "T6",
+      "T7",
+      "CN"
+    ],
+    "cancel": "Hủy",
+    "save": "Lưu",
+    "food": "Thực phẩm",
+    "serving": "Khẩu phần",
+    "servingSize": "Khẩu phần",
+    "quantity": "Số lượng",
+    "quantityShort": "SL",
+    "noNotes": "Không có ghi chú",
+    "notes": "Ghi chú",
+    "dailySummary": "Tổng kết ngày",
+    "category": "Danh mục",
+    "status": "Trạng thái",
+    "statuses": {
+      "verified": "Đã xác thực",
+      "pending": "Chờ duyệt"
+    },
+    "barcode": "Barcode",
+    "brand": "Thương hiệu",
+    "activity": "Hoạt động",
+    "duration": "Thời lượng",
+    "details": "Chi tiết",
+    "date": "Ngày",
+    "goal": "Mục tiêu",
+    "water": "Nước",
+    "timezone": "Múi giờ",
+    "bio": "Giới thiệu"
+  },
   "health": {
     "bmi": "BMI",
     "tdee": "TDEE",
@@ -66,7 +123,7 @@
     "normalBody": "Thể trạng bình thường",
     "dailyEnergyBurn": "Năng lượng tiêu hao mỗi ngày",
     "calorieDeficitHint": "Giảm nhẹ 280 kcal so với TDEE",
-    "macroRatio": "Tỷ lệ Macro",
+    "macroRatio": "Tỷ lệ macro",
     "macroDescription": "Đạm, đường và béo trong ngày.",
     "protein": "Đạm",
     "carbs": "Đường",
@@ -120,7 +177,7 @@
     "kcal": "kcal",
     "edit": "Sửa số lượng",
     "remove": "Xóa món",
-    "regenerate": "Regenerate",
+    "regenerate": "Tạo lại",
     "macros": "Thành phần dinh dưỡng",
     "carbs": "Carbs",
     "fat": "Fat",
@@ -168,6 +225,310 @@
     "normalMessage": "Chỉ số BMI của bạn đang trong vùng khỏe mạnh.",
     "overweightMessage": "Bạn nên kiểm soát calo và duy trì vận động đều đặn.",
     "obeseMessage": "Bạn nên tham khảo chuyên gia sức khỏe để có kế hoạch phù hợp."
+  },
+  "home": {
+    "nav": {
+      "features": "Tính năng",
+      "flow": "Luồng sử dụng",
+      "security": "Bảo mật"
+    },
+    "actions": {
+      "login": "Đăng nhập",
+      "register": "Đăng ký",
+      "start": "Bắt đầu theo dõi",
+      "createAccount": "Tạo tài khoản"
+    },
+    "hero": {
+      "badge": "Ứng dụng theo dõi sức khỏe",
+      "description": "Theo dõi dinh dưỡng và vận động bằng dữ liệu hằng ngày: bạn ăn gì, vận động bao nhiêu, cân nặng thay đổi thế nào và mức độ bám mục tiêu ra sao.",
+      "secondary": "Frontend được thiết kế để gọi backend qua gateway /api/v1, ưu tiên đăng nhập, onboarding hồ sơ, dashboard ngày, log bữa ăn, log hoạt động và analytics."
+    },
+    "snapshot": {
+      "calories": "Calories hôm nay",
+      "goal": "84% mục tiêu",
+      "activeMinutes": "Phút vận động",
+      "streak": "Streak hiện tại"
+    },
+    "units": {
+      "minutes": "phút",
+      "days": "ngày"
+    },
+    "features": {
+      "badge": "Core modules",
+      "title": "Đủ các màn hình cần thiết cho phase frontend đầu tiên",
+      "description": "Giao diện tập trung vào các luồng người dùng cần trước, giữ sản phẩm gọn và sẵn sàng nối API thật.",
+      "onboarding": {
+        "title": "Onboarding hồ sơ sức khỏe",
+        "description": "Cập nhật chiều cao, cân nặng, mục tiêu calo, nước uống, mức độ vận động và mục tiêu sức khỏe để cá nhân hóa dashboard."
+      },
+      "meals": {
+        "title": "Nhật ký bữa ăn",
+        "description": "Tạo breakfast, lunch, dinner hoặc snack; thêm nhiều món trong cùng một bữa và xem calories, protein, carbs, fat, fiber, sodium."
+      },
+      "database": {
+        "title": "Food database",
+        "description": "Tìm thực phẩm theo keyword, lọc danh mục, tra barcode, xem trạng thái verified/pending và thêm thực phẩm mới khi chưa có dữ liệu."
+      },
+      "activity": {
+        "title": "Hoạt động thể chất",
+        "description": "Ghi cardio hoặc strength với thời lượng, cân nặng user, distance, heart rate, sets, reps, steps và calories burned ước tính."
+      },
+      "metrics": {
+        "title": "Chỉ số cơ thể",
+        "description": "Theo dõi cân nặng, BMI, body fat, muscle mass, vòng eo, vòng hông, vòng ngực và ghi chú theo từng ngày."
+      },
+      "analytics": {
+        "title": "Analytics tuần/tháng",
+        "description": "Xem calories in/out, net calories, macro trend, streak và tiến trình sức khỏe theo khoảng thời gian rõ ràng."
+      }
+    },
+    "flow": {
+      "badge": "User flow",
+      "title": "Luồng sử dụng được sắp theo đúng thứ tự triển khai",
+      "description": "Người dùng bắt đầu từ tài khoản, hoàn thiện hồ sơ, sau đó ghi dữ liệu ngày. Dashboard và analytics chỉ có ý nghĩa khi các log chính được nhập đều.",
+      "steps": {
+        "auth": {
+          "title": "Đăng ký hoặc đăng nhập",
+          "description": "Email/password, refresh token và OAuth2 Google/Facebook."
+        },
+        "profile": {
+          "title": "Cập nhật hồ sơ",
+          "description": "Tạo profile trống nếu chưa có, sau đó lưu các mục tiêu sức khỏe."
+        },
+        "log": {
+          "title": "Ghi bữa ăn và hoạt động",
+          "description": "Log dữ liệu mỗi ngày qua Meals và Activities."
+        },
+        "track": {
+          "title": "Theo dõi tiến trình",
+          "description": "Dashboard ngày, analytics tuần/tháng và body metrics."
+        }
+      }
+    },
+    "security": {
+      "authTitle": "Auth guard và token flow đã sẵn sàng",
+      "authDescription": "Chưa đăng nhập sẽ chuyển về login. Request tự gắn bearer token, và access token hết hạn sẽ được refresh trước khi retry.",
+      "apiTitle": "Thiết kế gọn để nối API thật",
+      "apiDescription": "Dữ liệu mẫu hiện có cấu trúc giống payload backend dự kiến, nên từng màn có thể thay state local bằng API call khi endpoint sẵn sàng."
+    },
+    "cta": {
+      "title": "Theo dõi sức khỏe theo từng ngày, không theo cảm tính",
+      "description": "Bắt đầu bằng hồ sơ cá nhân, ghi lại bữa ăn và hoạt động, sau đó dùng analytics để điều chỉnh mục tiêu calo, nước uống và cân nặng."
+    }
+  },
+  "auth": {
+    "loginTitle": "Đăng nhập",
+    "loginDescription": "Theo dõi bữa ăn, vận động và chỉ số sức khỏe hằng ngày.",
+    "password": "Mật khẩu",
+    "passwordPlaceholder": "Nhập mật khẩu",
+    "forgotPassword": "Quên mật khẩu?",
+    "loggingIn": "Đang đăng nhập...",
+    "or": "hoặc",
+    "loginWithGoogle": "Đăng nhập với Google",
+    "loginWithFacebook": "Đăng nhập với Facebook",
+    "noAccount": "Chưa có tài khoản?",
+    "registerNow": "Đăng ký ngay",
+    "loginError": "Không thể đăng nhập. Vui lòng thử lại.",
+    "missingToken": "Backend chưa trả access token.",
+    "registerTitle": "Tạo tài khoản",
+    "registerDescription": "Bắt đầu bằng email, mật khẩu và họ tên đầy đủ.",
+    "fullName": "Họ tên",
+    "passwordMin": "Tối thiểu 8 ký tự",
+    "confirmPassword": "Xác nhận mật khẩu",
+    "confirmPasswordPlaceholder": "Nhập lại mật khẩu",
+    "creatingAccount": "Đang tạo tài khoản...",
+    "alreadyAccount": "Đã có tài khoản?",
+    "passwordTooShort": "Mật khẩu cần tối thiểu 8 ký tự.",
+    "passwordMismatch": "Mật khẩu xác nhận không khớp.",
+    "registerError": "Không thể đăng ký. Vui lòng thử lại.",
+    "forgotTitle": "Quên mật khẩu",
+    "forgotDescription": "Nhập email để nhận OTP, sau đó đặt mật khẩu mới.",
+    "otpSent": "OTP đã được gửi tới email nếu tài khoản tồn tại.",
+    "sendOtpError": "Không thể gửi OTP. Vui lòng thử lại.",
+    "newPassword": "Mật khẩu mới",
+    "sending": "Đang gửi...",
+    "sendOtp": "Gửi OTP",
+    "resetting": "Đang đổi mật khẩu...",
+    "resetPassword": "Đổi mật khẩu",
+    "resetSuccess": "Đổi mật khẩu thành công. Bạn có thể đăng nhập lại.",
+    "resetError": "Không thể đổi mật khẩu. Vui lòng kiểm tra OTP.",
+    "backToLogin": "Quay lại đăng nhập"
+  },
+  "dashboardPage": {
+    "badge": "Dashboard ngày",
+    "title": "Tổng quan hôm nay",
+    "description": "Theo dõi calories, macro, vận động, nước uống, cân nặng và streak trong ngày.",
+    "weeklyTitle": "Calories 7 ngày",
+    "weeklyDescription": "Calories in/out và xu hướng net calories.",
+    "macroTitle": "Macro hôm nay",
+    "macroDescription": "Protein, carbs và fat theo năng lượng.",
+    "quickTitle": "Chỉ số nhanh",
+    "stats": {
+      "consumed": "Calories nạp vào",
+      "burned": "Calories tiêu hao",
+      "net": "Net calories",
+      "streak": "Streak hiện tại",
+      "goalPercent": "{{percent}}% mục tiêu",
+      "activityCount": "{{count}} hoạt động",
+      "netHelper": "Nạp vào - tiêu hao",
+      "streakHelper": "Streak ổn định"
+    },
+    "goals": {
+      "title": "Mục tiêu trong ngày",
+      "calorie": "Mục tiêu calorie",
+      "water": "Nước đã uống"
+    }
+  },
+  "reportsPage": {
+    "badge": "Analytics",
+    "title": "Dashboard tuần/tháng",
+    "description": "Biểu đồ calories in/out, net calories, macro trend và tổng quan tiến trình.",
+    "caloriesTitle": "Calories in/out",
+    "macroTitle": "Macro trend",
+    "metrics": {
+      "avgIn": "Calories in TB",
+      "avgOut": "Calories out TB",
+      "avgNet": "Net calories TB",
+      "streak": "Streak label",
+      "excellent": "Excellent",
+      "streakHelper": "8 ngày liên tục"
+    }
+  },
+  "foodDiaryPage": {
+    "badge": "Nhật ký bữa ăn",
+    "title": "Meal log trong ngày",
+    "description": "Tạo bữa ăn, thêm nhiều món, xem chi tiết và tổng kết calories theo ngày.",
+    "createMeal": "Tạo bữa ăn",
+    "deleteMeal": "Xóa bữa ăn",
+    "dailySummary": "Tổng kết ngày",
+    "mealsLogged": "{{count}} bữa ăn đã ghi nhận",
+    "newMealTitle": "Tạo bữa ăn mới",
+    "saveMeal": "Lưu bữa ăn",
+    "customFood": "Món tùy chỉnh",
+    "mealTypes": {
+      "breakfast": "Breakfast",
+      "lunch": "Lunch",
+      "dinner": "Dinner",
+      "snack": "Snack"
+    },
+    "fields": {
+      "mealType": "Loại bữa",
+      "mealDate": "Ngày ăn",
+      "mealTime": "Giờ ăn",
+      "itemName": "Tên món"
+    },
+    "sampleNotes": {
+      "lightBreakfast": "Ăn nhẹ trước khi đi làm"
+    }
+  },
+  "nutritionPage": {
+    "badge": "Food database",
+    "title": "Dinh dưỡng và thực phẩm",
+    "description": "Tìm kiếm, lọc danh mục, tra barcode, xem macro/micro và thêm thực phẩm mới.",
+    "addFood": "Thêm thực phẩm",
+    "searchPlaceholder": "Tìm theo tên, brand...",
+    "allCategories": "Tất cả danh mục",
+    "resultCount": "Hiển thị {{count}} kết quả. Pagination sẵn sàng gắn API /nutrition/foods.",
+    "newFoodTitle": "Thêm thực phẩm mới",
+    "savePending": "Lưu pending",
+    "fields": {
+      "name": "Tên",
+      "nameVi": "Tên tiếng Việt",
+      "imageUrl": "Image URL"
+    }
+  },
+  "activityPage": {
+    "badge": "Hoạt động thể chất",
+    "title": "Activity logs trong ngày",
+    "description": "Ghi hoạt động mới, lọc loại hoạt động theo category và xem tổng kết ngày.",
+    "addActivity": "Ghi hoạt động",
+    "listTitle": "Danh sách hoạt động",
+    "allCategories": "Tất cả category",
+    "activityCount": "Số hoạt động",
+    "typeTitle": "Loại hoạt động",
+    "newLogTitle": "Ghi hoạt động mới",
+    "deleteLog": "Xóa activity log",
+    "estimatedCalories": "Calories ước tính",
+    "saveActivity": "Lưu activity",
+    "categories": {
+      "cardio": "Cardio",
+      "strength": "Strength"
+    },
+    "types": {
+      "running": "Running",
+      "walking": "Walking",
+      "strength": "Strength training",
+      "cycling": "Cycling"
+    },
+    "fields": {
+      "activityType": "Activity type",
+      "customName": "Tên custom",
+      "logTime": "Thời gian log",
+      "durationMinutes": "Duration phút",
+      "userWeight": "Cân nặng user",
+      "distance": "Distance km",
+      "avgHeartRate": "Heart rate TB",
+      "maxHeartRate": "Heart rate max",
+      "sets": "sets",
+      "reps": "reps",
+      "strengthWeight": "Weight kg"
+    },
+    "sampleNotes": {
+      "morningRun": "Chạy sáng"
+    }
+  },
+  "profilePage": {
+    "badge": "Hồ sơ người dùng",
+    "title": "Profile sức khỏe",
+    "description": "Xem và cập nhật thông tin cá nhân. Nếu backend chưa có profile, frontend gửi payload để tạo hồ sơ trống trước.",
+    "savedMessage": "Đã lưu hồ sơ ở UI. Khi gắn API sẽ gọi /users/me/profile.",
+    "selectGender": "Chọn giới tính",
+    "fields": {
+      "username": "Username",
+      "targetWeight": "Cân nặng mục tiêu kg",
+      "dailyWaterGoal": "Mục tiêu nước/ngày ml",
+      "healthGoal": "Mục tiêu sức khỏe"
+    },
+    "selectGoal": "Chọn mục tiêu",
+    "goals": {
+      "lose_weight": "Giảm cân",
+      "maintain": "Duy trì",
+      "gain_muscle": "Tăng cơ",
+      "improve_health": "Cải thiện sức khỏe",
+      "loseWeight": "Giảm cân",
+      "gainMuscle": "Tăng cơ",
+      "improveHealth": "Cải thiện sức khỏe"
+    },
+    "saveProfile": "Lưu hồ sơ",
+    "currentAccount": "Tài khoản hiện tại",
+    "backendNote": "Backend /me đang TODO, nên màn hình này dùng profile endpoint làm nguồn dữ liệu chính."
+  },
+  "bodyMetricsPage": {
+    "badge": "Chỉ số cơ thể",
+    "title": "Theo dõi body metrics",
+    "description": "Ghi nhận cân nặng, body fat, muscle mass và các vòng đo; xem tiến trình theo thời gian.",
+    "addTitle": "Thêm chỉ số",
+    "saveMetric": "Lưu chỉ số",
+    "chartTitle": "Biểu đồ tiến trình",
+    "historyTitle": "Lịch sử chỉ số",
+    "fields": {
+      "date": "Ngày ghi nhận",
+      "weight": "Cân nặng kg",
+      "bodyFat": "Body fat %",
+      "muscleMass": "Muscle mass kg",
+      "waist": "Vòng eo cm",
+      "hip": "Vòng hông cm",
+      "chest": "Vòng ngực cm"
+    },
+    "table": {
+      "bodyFat": "Body fat",
+      "muscle": "Muscle",
+      "measurements": "Eo/Hông/Ngực"
+    },
+    "sampleNotes": {
+      "startMonth": "Bắt đầu tháng",
+      "afterThreeWeeks": "Sau 3 tuần"
+    }
   },
   "admin": {
     "nav": {

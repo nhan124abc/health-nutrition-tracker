@@ -1,10 +1,16 @@
 import { useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
+import { FaFacebookF, FaGoogle } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
-import api from '../api/api';
+import api, { saveAuthTokens } from '../api/api';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1';
 
 function Login() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,31 +27,35 @@ function Login() {
 
     try {
       const response = await api.post('/auth/login', form);
-      const token = response.data?.token || response.data?.accessToken;
+      saveAuthTokens(response.data);
 
-      if (!token) {
-        throw new Error('Backend không trả về JWT token.');
+      if (!response.data?.accessToken && !response.data?.token) {
+        throw new Error(t('auth.missingToken'));
       }
 
-      localStorage.setItem('jwtToken', token);
       navigate('/dashboard');
     } catch (err) {
-      setError(err.message || 'Không thể đăng nhập. Vui lòng thử lại.');
+      setError(err.response?.data?.message || err.message || t('auth.loginError'));
     } finally {
       setLoading(false);
     }
   };
 
+  const oauthUrl = (provider) => `${API_BASE_URL}/auth/oauth2/${provider}`;
+
   return (
-    <Container fluid className="login-page">
+    <Container fluid className="auth-page">
       <Row className="min-vh-100 align-items-center justify-content-center px-3">
-        <Col xs={12} sm={10} md={7} lg={5} xl={4}>
-          <Card className="border-0 shadow-lg">
+        <Col xs={12} md={8} lg={5} xl={4}>
+          <Card className="auth-card border-0 shadow-sm">
             <Card.Body className="p-4 p-md-5">
-              <div className="mb-4 text-center">
-                <img src="/logo192.png" alt="Health Nutrition" className="auth-logo mb-3" />
-                <h1 className="h3 fw-bold mb-2">Đăng nhập</h1>
-                <p className="text-secondary mb-0">Theo dõi sức khỏe và dinh dưỡng hằng ngày.</p>
+              <div className="d-flex justify-content-end mb-3">
+                <LanguageSwitcher />
+              </div>
+              <div className="mb-4">
+                <div className="auth-brand">{t('app.name')}</div>
+                <h1 className="h3 fw-bold mb-2">{t('auth.loginTitle')}</h1>
+                <p className="text-secondary mb-0">{t('auth.loginDescription')}</p>
               </div>
 
               {error && <Alert variant="danger">{error}</Alert>}
@@ -63,25 +73,42 @@ function Login() {
                   />
                 </Form.Group>
 
-                <Form.Group className="mb-4" controlId="password">
-                  <Form.Label>Mật khẩu</Form.Label>
+                <Form.Group className="mb-2" controlId="password">
+                  <Form.Label>{t('auth.password')}</Form.Label>
                   <Form.Control
                     type="password"
                     name="password"
                     value={form.password}
                     onChange={handleChange}
-                    placeholder="Nhập mật khẩu"
+                    placeholder={t('auth.passwordPlaceholder')}
                     required
                   />
                 </Form.Group>
 
+                <div className="text-end mb-4">
+                  <Link to="/forgot-password">{t('auth.forgotPassword')}</Link>
+                </div>
+
                 <Button className="w-100" variant="success" type="submit" disabled={loading}>
-                  {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
+                  {loading ? t('auth.loggingIn') : t('auth.loginTitle')}
                 </Button>
               </Form>
 
+              <div className="auth-divider">{t('auth.or')}</div>
+
+              <div className="d-grid gap-2">
+                <Button as="a" href={oauthUrl('google')} variant="outline-secondary">
+                  <FaGoogle className="me-2" />
+                  {t('auth.loginWithGoogle')}
+                </Button>
+                <Button as="a" href={oauthUrl('facebook')} variant="outline-secondary">
+                  <FaFacebookF className="me-2" />
+                  {t('auth.loginWithFacebook')}
+                </Button>
+              </div>
+
               <p className="text-center text-secondary mt-4 mb-0">
-                Chưa có tài khoản? <Link to="/register">Đăng ký ngay</Link>
+                {t('auth.noAccount')} <Link to="/register">{t('auth.registerNow')}</Link>
               </p>
             </Card.Body>
           </Card>

@@ -8,130 +8,97 @@ import {
   Tooltip,
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
-import { Badge, Card, Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import { Badge, Card, Col, ProgressBar, Row } from 'react-bootstrap';
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-const macroOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      position: 'bottom',
-      labels: {
-        usePointStyle: true,
-        padding: 18,
-      },
-    },
-    tooltip: {
-      callbacks: {
-        label: (context) => `${context.label}: ${context.raw}%`,
-      },
-    },
-  },
-};
-
-const calorieOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: {
-      beginAtZero: true,
-      ticks: {
-        callback: (value) => `${value} kcal`,
-      },
-    },
-    x: {
-      grid: {
-        display: false,
-      },
-    },
-  },
-  plugins: {
-    legend: {
-      position: 'bottom',
-      labels: {
-        usePointStyle: true,
-        padding: 18,
-      },
-    },
-  },
+const dailySummary = {
+  caloriesConsumed: 1680,
+  caloriesBurned: 430,
+  calorieGoal: 2000,
+  protein: 112,
+  carbs: 188,
+  fat: 54,
+  fiber: 24,
+  sodium: 1780,
+  mealCount: 4,
+  activityCount: 2,
+  activeMinutes: 65,
+  steps: 8420,
+  waterIntake: 1750,
+  weight: 67.4,
+  streak: 8,
 };
 
 function Dashboard() {
   const { t } = useTranslation();
-
-  const healthStats = [
-    {
-      title: t('health.bmi'),
-      value: '22.4',
-      helper: t('health.normalBody'),
-      tone: 'success',
-    },
-    {
-      title: t('health.tdee'),
-      value: '2,180 kcal',
-      helper: t('health.dailyEnergyBurn'),
-      tone: 'primary',
-    },
-    {
-      title: t('health.dailyCalorieGoal'),
-      value: '1,900 kcal',
-      helper: t('health.calorieDeficitHint'),
-      tone: 'warning',
-    },
-  ];
+  const netCalories = dailySummary.caloriesConsumed - dailySummary.caloriesBurned;
+  const goalPercent = Math.round((dailySummary.caloriesConsumed / dailySummary.calorieGoal) * 100);
 
   const macroData = {
-    labels: [t('health.protein'), t('health.carbs'), t('health.fat')],
+    labels: [t('common.protein'), t('common.carbs'), t('common.fat')],
     datasets: [
       {
-        data: [30, 45, 25],
-        backgroundColor: ['#198754', '#0d6efd', '#ffc107'],
+        data: [dailySummary.protein * 4, dailySummary.carbs * 4, dailySummary.fat * 9],
+        backgroundColor: ['#2f8f6b', '#4f7cac', '#e0a458'],
         borderColor: '#ffffff',
         borderWidth: 4,
-        hoverOffset: 8,
       },
     ],
   };
 
-  const calorieData = {
-    labels: ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'],
+  const weeklyData = {
+    labels: t('common.weekdayShort', { returnObjects: true }),
     datasets: [
       {
-        label: t('health.caloriesIn'),
-        data: [1850, 1980, 1750, 2100, 1920, 2300, 2050],
-        backgroundColor: '#198754',
+        label: t('common.caloriesIn'),
+        data: [1820, 1960, 1740, 1680, 1900, 2100, 1650],
+        backgroundColor: '#2f8f6b',
         borderRadius: 6,
       },
       {
-        label: t('health.caloriesOut'),
-        data: [2150, 2250, 2050, 2350, 2200, 2500, 2180],
-        backgroundColor: '#0d6efd',
+        label: t('common.caloriesOut'),
+        data: [380, 520, 300, 430, 460, 650, 280],
+        backgroundColor: '#4f7cac',
         borderRadius: 6,
       },
     ],
   };
+
+  const statCards = [
+    [t('dashboardPage.stats.consumed'), `${dailySummary.caloriesConsumed} kcal`, t('dashboardPage.stats.goalPercent', { percent: goalPercent }), 'success'],
+    [t('dashboardPage.stats.burned'), `${dailySummary.caloriesBurned} kcal`, t('dashboardPage.stats.activityCount', { count: dailySummary.activityCount }), 'primary'],
+    [t('dashboardPage.stats.net'), `${netCalories} kcal`, t('dashboardPage.stats.netHelper'), 'warning'],
+    [t('dashboardPage.stats.streak'), `${dailySummary.streak} ${t('common.days')}`, t('dashboardPage.stats.streakHelper'), 'danger'],
+  ];
+
+  const goals = [
+    [t('dashboardPage.goals.calorie'), dailySummary.caloriesConsumed, dailySummary.calorieGoal, 'kcal'],
+    [t('dashboardPage.goals.water'), dailySummary.waterIntake, 2500, 'ml'],
+    [t('common.steps'), dailySummary.steps, 10000, t('common.steps')],
+    [t('common.activeMinutes'), dailySummary.activeMinutes, 60, t('common.minutes')],
+  ];
 
   return (
     <>
-      <div className="dashboard-heading mb-4">
-        <Badge bg="success" className="mb-2">
-          {t('nav.dashboard')}
-        </Badge>
-        <h1 className="h2 fw-bold mb-1">{t('dashboard.title')}</h1>
-        <p className="text-secondary mb-0">{t('dashboard.subtitle')}</p>
+      <div className="page-heading">
+        <div>
+          <Badge bg="success" className="mb-2">{t('dashboardPage.badge')}</Badge>
+          <h1>{t('dashboardPage.title')}</h1>
+          <p>{t('dashboardPage.description')}</p>
+        </div>
+        <input className="form-control page-date-input" type="date" defaultValue="2026-05-21" />
       </div>
 
-      <Row className="g-3 g-lg-4 mb-4">
-        {healthStats.map((stat) => (
-          <Col xs={12} md={4} key={stat.title}>
-            <Card className="dashboard-stat-card h-100 border-0 shadow-sm">
+      <Row className="g-3 mb-4">
+        {statCards.map(([title, value, helper, variant]) => (
+          <Col xs={12} md={6} xl={3} key={title}>
+            <Card className="metric-card border-0 shadow-sm h-100">
               <Card.Body>
-                <div className={`small fw-semibold text-${stat.tone} mb-2`}>{stat.title}</div>
-                <div className="display-6 fw-bold mb-2">{stat.value}</div>
-                <p className="text-secondary mb-0">{stat.helper}</p>
+                <div className={`small fw-semibold text-${variant} mb-2`}>{title}</div>
+                <div className="metric-value">{value}</div>
+                <div className="text-secondary small">{helper}</div>
               </Card.Body>
             </Card>
           </Col>
@@ -139,43 +106,63 @@ function Dashboard() {
       </Row>
 
       <Row className="g-4">
-        <Col xs={12} lg={5}>
-          <Card className="h-100 border-0 shadow-sm">
+        <Col lg={8}>
+          <Card className="border-0 shadow-sm h-100">
             <Card.Body>
-              <div className="d-flex justify-content-between align-items-start gap-3 mb-3">
+              <div className="d-flex justify-content-between gap-3 mb-3">
                 <div>
-                  <Card.Title className="fw-bold mb-1">{t('health.macroRatio')}</Card.Title>
-                  <Card.Text className="text-secondary small mb-0">{t('health.macroDescription')}</Card.Text>
+                  <Card.Title className="fw-bold mb-1">{t('dashboardPage.weeklyTitle')}</Card.Title>
+                  <Card.Text className="text-secondary small mb-0">{t('dashboardPage.weeklyDescription')}</Card.Text>
                 </div>
-                <Badge bg="light" text="dark">
-                  %
-                </Badge>
+                <Badge bg="light" text="dark">{t('common.weekly')}</Badge>
               </div>
-
-              <div className="dashboard-chart dashboard-chart-doughnut">
-                <Doughnut data={macroData} options={macroOptions} />
+              <div className="dashboard-chart dashboard-chart-bar">
+                <Bar data={weeklyData} options={{ responsive: true, maintainAspectRatio: false }} />
               </div>
             </Card.Body>
           </Card>
         </Col>
 
-        <Col xs={12} lg={7}>
-          <Card className="h-100 border-0 shadow-sm">
+        <Col lg={4}>
+          <Card className="border-0 shadow-sm h-100">
             <Card.Body>
-              <div className="d-flex flex-column flex-sm-row justify-content-between gap-2 mb-3">
-                <div>
-                  <Card.Title className="fw-bold mb-1">{t('health.weeklyCalories')}</Card.Title>
-                  <Card.Text className="text-secondary small mb-0">
-                    {t('health.weeklyCaloriesDescription')}
-                  </Card.Text>
-                </div>
-                <Badge bg="success" className="align-self-start">
-                  {t('health.sevenDays')}
-                </Badge>
+              <Card.Title className="fw-bold mb-1">{t('dashboardPage.macroTitle')}</Card.Title>
+              <Card.Text className="text-secondary small">{t('dashboardPage.macroDescription')}</Card.Text>
+              <div className="dashboard-chart dashboard-chart-doughnut">
+                <Doughnut data={macroData} options={{ responsive: true, maintainAspectRatio: false }} />
               </div>
+            </Card.Body>
+          </Card>
+        </Col>
 
-              <div className="dashboard-chart dashboard-chart-bar">
-                <Bar data={calorieData} options={calorieOptions} />
+        <Col lg={7}>
+          <Card className="border-0 shadow-sm">
+            <Card.Body>
+              <Card.Title className="fw-bold mb-3">{t('dashboardPage.goals.title')}</Card.Title>
+              {goals.map(([label, value, goal, unit]) => (
+                <div className="goal-row" key={label}>
+                  <div className="d-flex justify-content-between">
+                    <span>{label}</span>
+                    <strong>{value} / {goal} {unit}</strong>
+                  </div>
+                  <ProgressBar now={Math.min((value / goal) * 100, 100)} />
+                </div>
+              ))}
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col lg={5}>
+          <Card className="border-0 shadow-sm">
+            <Card.Body>
+              <Card.Title className="fw-bold mb-3">{t('dashboardPage.quickTitle')}</Card.Title>
+              <div className="quick-grid">
+                <span>{t('common.meals')}<strong>{dailySummary.mealCount}</strong></span>
+                <span>{t('common.protein')}<strong>{dailySummary.protein}g</strong></span>
+                <span>{t('common.fiber')}<strong>{dailySummary.fiber}g</strong></span>
+                <span>{t('common.sodium')}<strong>{dailySummary.sodium}mg</strong></span>
+                <span>{t('common.weight')}<strong>{dailySummary.weight}kg</strong></span>
+                <span>{t('common.steps')}<strong>{dailySummary.steps}</strong></span>
               </div>
             </Card.Body>
           </Card>
