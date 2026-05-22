@@ -28,16 +28,23 @@ public class JwtUtil {
     }
 
     public String generateAccessToken(UserPrincipal userPrincipal) {
-        return generateToken(userPrincipal.getEmail(), jwtExpirationMs);
+        return generateToken(userPrincipal, jwtExpirationMs);
     }
 
     public String generateRefreshToken(UserPrincipal userPrincipal) {
-        return generateToken(userPrincipal.getEmail(), refreshExpirationMs);
+        return generateToken(userPrincipal, refreshExpirationMs);
     }
 
-    private String generateToken(String subject, long expirationMs) {
+    private String generateToken(UserPrincipal userPrincipal, long expirationMs) {
+        String role = userPrincipal.getAuthorities().stream()
+                .findFirst()
+                .map(authority -> authority.getAuthority().replace("ROLE_", ""))
+                .orElse("USER");
+
         return Jwts.builder()
-                .subject(subject)
+                .subject(userPrincipal.getEmail())
+                .claim("userId", String.valueOf(userPrincipal.getId()))
+                .claim("role", role)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSigningKey())
