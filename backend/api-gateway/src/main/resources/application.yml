@@ -1,0 +1,161 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service-api-docs
+          uri: ${AUTH_SERVICE_URI:http://localhost:8081}
+          predicates:
+            - Path=/v3/api-docs/auth-service
+          filters:
+            - RewritePath=/v3/api-docs/auth-service, /v3/api-docs
+
+        - id: user-service-api-docs
+          uri: ${USER_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/v3/api-docs/user-service
+          filters:
+            - RewritePath=/v3/api-docs/user-service, /v3/api-docs
+
+        - id: nutrition-service-api-docs
+          uri: ${NUTRITION_SERVICE_URI:http://localhost:8083}
+          predicates:
+            - Path=/v3/api-docs/nutrition-service
+          filters:
+            - RewritePath=/v3/api-docs/nutrition-service, /v3/api-docs
+
+        - id: meal-service-api-docs
+          uri: ${MEAL_SERVICE_URI:http://localhost:8084}
+          predicates:
+            - Path=/v3/api-docs/meal-service
+          filters:
+            - RewritePath=/v3/api-docs/meal-service, /v3/api-docs
+
+        - id: activity-service-api-docs
+          uri: ${ACTIVITY_SERVICE_URI:http://localhost:8085}
+          predicates:
+            - Path=/v3/api-docs/activity-service
+          filters:
+            - RewritePath=/v3/api-docs/activity-service, /v3/api-docs
+
+        - id: analytics-service-api-docs
+          uri: ${ANALYTICS_SERVICE_URI:http://localhost:8086}
+          predicates:
+            - Path=/v3/api-docs/analytics-service
+          filters:
+            - RewritePath=/v3/api-docs/analytics-service, /v3/api-docs
+
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URI:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/auth/**
+
+        - id: user-service
+          uri: ${USER_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/api/v1/users/**
+
+        - id: nutrition-service
+          uri: ${NUTRITION_SERVICE_URI:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/nutrition/**
+
+        - id: meal-service
+          uri: ${MEAL_SERVICE_URI:http://localhost:8084}
+          predicates:
+            - Path=/api/v1/meals/**
+
+        - id: activity-service
+          uri: ${ACTIVITY_SERVICE_URI:http://localhost:8085}
+          predicates:
+            - Path=/api/v1/activities/**
+
+        - id: analytics-service
+          uri: ${ANALYTICS_SERVICE_URI:http://localhost:8086}
+          predicates:
+            - Path=/api/v1/analytics/**
+
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowed-origin-patterns:
+              - "http://localhost:3000"
+              - "http://localhost:4200"
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowed-headers:
+              - "*"
+            exposed-headers:
+              - Authorization
+            allow-credentials: true
+            max-age: 3600
+
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: Auth Service
+        url: /v3/api-docs/auth-service
+      - name: User Service
+        url: /v3/api-docs/user-service
+      - name: Nutrition Service
+        url: /v3/api-docs/nutrition-service
+      - name: Meal Service
+        url: /v3/api-docs/meal-service
+      - name: Activity Service
+        url: /v3/api-docs/activity-service
+      - name: Analytics Service
+        url: /v3/api-docs/analytics-service
+    urls-primary-name: Auth Service
+    operations-sorter: alpha
+    tags-sorter: alpha
+    display-request-duration: true
+  api-docs:
+    enabled: false
+  webjars:
+    prefix:
+
+jwt:
+  secret: ${JWT_SECRET:H3@lthNutrit10nTrackerSuperSecretKey!MustBe256BitsLongForHS256Algorithm}
+  expiration: 86400000
+  refresh-expiration: 604800000
+
+internal:
+  secret: ${INTERNAL_SECRET:Ht!InternalS3cret#OnlyGateway2Service}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, gateway, metrics
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: Health Nutrition Tracker - API Gateway
+    version: 1.0.0
+
+logging:
+  file:
+    path: logs

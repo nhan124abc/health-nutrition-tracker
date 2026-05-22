@@ -1,0 +1,456 @@
+{
+  "app": {
+    "name": "Health Nutrition"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "nutrition": "Nutrition",
+    "diary": "Nutrition Diary",
+    "activity": "Activity",
+    "water": "Water",
+    "goals": "Goals",
+    "reports": "Reports",
+    "news": "News",
+    "settings": "Settings",
+    "profile": "Profile",
+    "logout": "Logout"
+  },
+  "header": {
+    "searchPlaceholder": "Quick search foods, reports, goals...",
+    "searchLabel": "Quick search",
+    "aiPlaceholder": "Ask AI about nutrition...",
+    "aiLabel": "Chat with AI",
+    "aiTitle": "AI Nutrition Assistant",
+    "aiWelcome": "Hi, what would you like to ask about nutrition, calories, or today's meal plan?",
+    "aiSend": "Send question to AI",
+    "toggleSidebar": "Collapse or expand navigation"
+  },
+  "sidebar": {
+    "title": "Navigation"
+  },
+  "user": {
+    "name": "User",
+    "profile": "User profile",
+    "settings": "Account settings"
+  },
+  "footer": {
+    "copyright": "© {{year}} Health & Nutrition Tracker. All rights reserved.",
+    "reports": "Reports",
+    "settings": "Settings",
+    "news": "News"
+  },
+  "placeholder": {
+    "message": "This module is wired into the layout and ready for detailed implementation.",
+    "water": "Track daily water intake, hydration goals and drinking reminders.",
+    "goals": "Manage calorie, weight, macro and health habit goals.",
+    "news": "Read nutrition updates, health knowledge and practical wellness tips.",
+    "settings": "Configure account, notifications, security and system preferences."
+  },
+  "language": {
+    "label": "Language",
+    "vi": "Vietnamese",
+    "en": "English"
+  },
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "addFood": "Add food",
+    "lookup": "Lookup"
+  },
+  "health": {
+    "bmi": "BMI",
+    "tdee": "TDEE",
+    "dailyCalorieGoal": "Daily calorie goal",
+    "caloriesIn": "Calories consumed",
+    "caloriesOut": "Calories burned",
+    "normalBody": "Healthy body range",
+    "dailyEnergyBurn": "Estimated daily energy expenditure",
+    "calorieDeficitHint": "A light 280 kcal deficit from TDEE",
+    "macroRatio": "Macro Ratio",
+    "macroDescription": "Protein, carbs and fat for the day.",
+    "protein": "Protein",
+    "carbs": "Carbs",
+    "fat": "Fat",
+    "weeklyCalories": "Weekly Calories",
+    "weeklyCaloriesDescription": "Compare calories consumed and calories burned.",
+    "sevenDays": "7 days"
+  },
+  "dashboard": {
+    "title": "Health Overview",
+    "subtitle": "Track body metrics, macro ratio and calorie balance for the week."
+  },
+  "foodDiary": {
+    "title": "Nutrition Diary",
+    "subtitle": "Track foods, portions and calories by meal throughout the day.",
+    "meal": "Meal",
+    "breakfast": "Breakfast",
+    "lunch": "Lunch",
+    "afternoon": "Afternoon",
+    "dinner": "Dinner",
+    "totalCalories": "Total calories",
+    "foodName": "Food name",
+    "amount": "Amount",
+    "calories": "Calories",
+    "addToMeal": "Add food to {{meal}}",
+    "searchFood": "Search food",
+    "searchPlaceholder": "Enter food name...",
+    "noFood": "No matching food found.",
+    "portionInfo": "Portion details",
+    "quantity": "Quantity",
+    "unit": "Conversion unit",
+    "food": "Food",
+    "converted": "Converted",
+    "instantCalories": "Instant calories",
+    "notSelected": "Not selected",
+    "addToDiary": "Add to diary"
+  },
+  "planner": {
+    "badge": "Daily Meal Planner",
+    "todayDate": "Today, {{date}}",
+    "previousDay": "Previous day",
+    "nextDay": "Next day",
+    "breakfast": "Breakfast",
+    "lunch": "Lunch",
+    "dinner": "Dinner",
+    "snacks": "Snacks",
+    "items": "items",
+    "food": "Food",
+    "quantity": "Quantity",
+    "calories": "Calories",
+    "kcal": "kcal",
+    "edit": "Edit quantity",
+    "remove": "Remove food",
+    "regenerate": "Regenerate",
+    "macros": "Macronutrient Tracker",
+    "carbs": "Carbs",
+    "fat": "Fat",
+    "protein": "Protein",
+    "waterTracker": "Water Tracker",
+    "workoutTracker": "Workout Tracker",
+    "addFood": "Add Food",
+    "editFood": "Edit Food",
+    "searchFood": "Search food",
+    "grams": "Amount in grams",
+    "estimatedCalories": "Estimated calories"
+  },
+  "profile": {
+    "title": "Health Profile",
+    "subtitle": "Update body information so the system can calculate BMI and assess your health status.",
+    "gender": "Gender",
+    "male": "Male",
+    "female": "Female",
+    "other": "Other",
+    "birthDate": "Date of birth",
+    "activityLevel": "Activity level",
+    "selectActivity": "Select activity level",
+    "sedentary": "Sedentary",
+    "light": "Light activity",
+    "moderate": "Moderate activity",
+    "active": "Active",
+    "veryActive": "Very active",
+    "height": "Height cm",
+    "weight": "Weight kg",
+    "heightPlaceholder": "Example: 170",
+    "weightPlaceholder": "Example: 65",
+    "validationGender": "Please select a gender.",
+    "validationBirthDate": "Please enter your date of birth.",
+    "validationActivity": "Please select an activity level.",
+    "validationHeight": "Please enter a height greater than 0.",
+    "validationWeight": "Please enter a weight greater than 0.",
+    "resultTitle": "Calculated Result",
+    "status": "Status",
+    "resultEmpty": "Enter a valid height and weight to view BMI and health status.",
+    "underweight": "Underweight",
+    "normal": "Normal",
+    "overweight": "Overweight",
+    "obese": "Obese",
+    "underweightMessage": "You should monitor your diet and increase energy intake appropriately.",
+    "normalMessage": "Your BMI is in the healthy range.",
+    "overweightMessage": "You should manage calories and maintain regular activity.",
+    "obeseMessage": "You should consult a health professional for a suitable plan."
+  },
+  "admin": {
+    "nav": {
+      "dashboard": "Overview",
+      "users": "Users",
+      "foods": "Foods & meals",
+      "exercises": "Exercises",
+      "articles": "Health articles",
+      "reports": "System reports",
+      "submissions": "User submissions",
+      "plans": "Goals & plans",
+      "settings": "Roles & settings"
+    },
+    "layout": {
+      "brand": "Health Admin",
+      "logoAlt": "Health Nutrition Admin",
+      "sidebarCaption": "System administration",
+      "badge": "Admin",
+      "title": "Admin dashboard",
+      "toggleSidebar": "Collapse or expand admin menu",
+      "searchPlaceholder": "Search users, foods, reports...",
+      "searchLabel": "Search admin data",
+      "notifications": "Admin notifications",
+      "backToUser": "Back to user app"
+    },
+    "common": {
+      "food": "Food",
+      "nutrition": "Nutrition",
+      "report": "Report",
+      "news": "News",
+      "health": "Health",
+      "activity": "Activity",
+      "article": "Article",
+      "system": "System",
+      "goal": "Goal",
+      "servicePlan": "Service plan",
+      "permission": "Permission",
+      "security": "Security",
+      "viewAll": "View all"
+    },
+    "status": {
+      "active": "Active",
+      "locked": "Locked",
+      "pending": "Pending review",
+      "approved": "Approved",
+      "completed": "Completed",
+      "published": "Published",
+      "draft": "Draft",
+      "ready": "Ready",
+      "processing": "Processing",
+      "needsEdit": "Needs edits",
+      "inUse": "In use",
+      "selling": "Selling",
+      "enabled": "Enabled"
+    },
+    "roles": {
+      "user": "User",
+      "coach": "Coach"
+    },
+    "intensity": {
+      "light": "Light",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "actions": {
+      "view": "View details",
+      "edit": "Edit",
+      "approve": "Approve",
+      "delete": "Delete"
+    },
+    "table": {
+      "listTitle": "Data list",
+      "listDescription": "Search, view, edit, approve, or manage data.",
+      "searchPlaceholder": "Search this table...",
+      "searchLabel": "Search admin table",
+      "content": "Content",
+      "type": "Type",
+      "status": "Status",
+      "actions": "Actions",
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "food": "Food",
+      "portion": "Portion",
+      "calories": "Calories",
+      "macro": "Macro",
+      "exercise": "Exercise",
+      "duration": "Duration",
+      "caloriesBurned": "Calories burned",
+      "intensity": "Intensity",
+      "title": "Title",
+      "category": "Category",
+      "author": "Author",
+      "report": "Report",
+      "period": "Data period",
+      "creator": "Creator",
+      "data": "Data",
+      "submitter": "Submitter",
+      "value": "Value",
+      "setting": "Setting",
+      "group": "Group"
+    },
+    "dashboard": {
+      "badge": "Overview",
+      "title": "System overview",
+      "description": "Track users, foods, workouts, and content across the whole system.",
+      "quickExport": "Quick export",
+      "recentTitle": "Recent activity",
+      "recentDescription": "Changes and records that need admin attention.",
+      "dataHealthTitle": "Data health",
+      "dataHealthDescription": "Completion status of the main data groups.",
+      "stats": {
+        "users": "Users",
+        "foods": "Foods",
+        "pending": "Pending submissions",
+        "todayLogs": "Today logs"
+      },
+      "trends": {
+        "users": "+8.2%",
+        "foods": "+124 new",
+        "pending": "Needs action",
+        "todayLogs": "+14.5%"
+      },
+      "activities": {
+        "foodAdded": "Nguyen An added \"Pan-seared chicken breast\"",
+        "macroUpdated": "Admin updated macro data for oats",
+        "weeklyReport": "Week 20 report was generated automatically",
+        "articleSubmitted": "Article \"How to drink water properly\" was submitted for review"
+      },
+      "progress": {
+        "foods": "Standardized foods",
+        "exercises": "Exercises with burn data",
+        "content": "Approved content"
+      }
+    },
+    "pages": {
+      "users": {
+        "title": "User management",
+        "description": "Monitor accounts, activity status, and actions to lock or update users.",
+        "action": "Add user",
+        "stats": {
+          "total": "Total users",
+          "active": "Active users",
+          "locked": "Locked accounts"
+        },
+        "badge": "Users"
+      },
+      "foods": {
+        "title": "Food, meal, calorie and macro management",
+        "description": "Standardize foods, calories, protein, carbs, fat, and portion conversions.",
+        "action": "Add food",
+        "stats": {
+          "total": "Foods",
+          "pending": "Pending standardization",
+          "macroFull": "Complete macro data"
+        },
+        "badge": "Nutrition"
+      },
+      "exercises": {
+        "title": "Exercise and calorie burn management",
+        "description": "Update exercises, MET values, suggested duration, and estimated calories burned.",
+        "action": "Add exercise",
+        "stats": {
+          "total": "Exercises",
+          "hasMet": "With MET",
+          "needsReview": "Needs review"
+        },
+        "badge": "Workout"
+      },
+      "articles": {
+        "title": "Health article and news management",
+        "description": "Write, review, and publish content about nutrition, activity, and healthy living.",
+        "action": "Create article",
+        "stats": {
+          "total": "Articles",
+          "published": "Published",
+          "draftPending": "Drafts/pending"
+        },
+        "badge": "Content"
+      },
+      "reports": {
+        "title": "System reports",
+        "description": "View usage, user growth, nutrition data, and system performance metrics.",
+        "action": "Export report",
+        "stats": {
+          "logs": "Diary logs",
+          "calories": "Recorded calories",
+          "retention": "Retention rate"
+        },
+        "badge": "Reports"
+      },
+      "submissions": {
+        "title": "Review and edit user-submitted data",
+        "description": "Check foods, exercises, images, or content submitted by users before publishing.",
+        "action": "Bulk approve",
+        "stats": {
+          "pending": "Pending review",
+          "approvedToday": "Approved today",
+          "rejected": "Rejected"
+        },
+        "badge": "Review"
+      },
+      "plans": {
+        "title": "Goal and service plan management",
+        "description": "Configure goal templates, service plans, benefits, and recommendation logic.",
+        "action": "Add plan",
+        "stats": {
+          "goals": "Goal templates",
+          "plans": "Service plans",
+          "activeUsers": "Active users"
+        },
+        "badge": "Plans"
+      },
+      "settings": {
+        "title": "Roles and system settings",
+        "description": "Manage admin roles, access rights, security settings, notifications, and backend integrations.",
+        "action": "Add role",
+        "stats": {
+          "roles": "Roles",
+          "permissions": "Permissions",
+          "enabledSettings": "Enabled settings"
+        },
+        "badge": "System"
+      }
+    },
+    "data": {
+      "users": {
+        "an": "Nguyen Minh An",
+        "nam": "Tran Hoai Nam",
+        "mai": "Le Thanh Mai"
+      },
+      "foods": {
+        "chicken": "Pan-seared chicken breast",
+        "rice": "White rice",
+        "smoothie": "Banana oatmeal smoothie"
+      },
+      "portions": {
+        "bowl": "1 bowl",
+        "glass": "1 glass"
+      },
+      "exercises": {
+        "running": "Running",
+        "gym": "Full-body gym",
+        "yoga": "Yoga"
+      },
+      "duration": {
+        "thirty": "30 minutes",
+        "forty": "40 minutes",
+        "fortyFive": "45 minutes"
+      },
+      "articles": {
+        "macro": "How to balance macros during the day",
+        "water": "How to drink water properly when training",
+        "breakfast": "High-protein breakfast ideas"
+      },
+      "reports": {
+        "users": "User overview",
+        "popularFoods": "Popular food data",
+        "goals": "Calorie goal performance"
+      },
+      "periods": {
+        "may2026": "May 2026",
+        "thisWeek": "This week",
+        "thirtyDays": "30 days"
+      },
+      "submissions": {
+        "noodle": "Small beef noodle portion",
+        "stairs": "Stair climbing exercise",
+        "dinnerTip": "Light dinner tip"
+      },
+      "plans": {
+        "weightLoss": "Healthy weight loss",
+        "weightLossValue": "-300 kcal/day",
+        "premiumPrice": "99,000 VND/month",
+        "coachPrice": "299,000 VND/month"
+      },
+      "settings": {
+        "fullAdmin": "Super admin",
+        "foodReview": "Food review",
+        "fullAccess": "Full access",
+        "jwtTimeout": "JWT timeout",
+        "twentyFourHours": "24 hours"
+      }
+    }
+  }
+}
