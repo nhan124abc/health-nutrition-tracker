@@ -1,0 +1,6 @@
+com\example\do_an\controller\AiNutritionController.class
+com\example\do_an\controller\DemoController.class
+com\example\do_an\exception\GlobalExceptionHandler.class
+com\example\do_an\DoAnApplication.class
+com\example\do_an\exception\ErrorResponse.class
+com\example\do_an\config\SecurityConfig.class
