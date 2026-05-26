@@ -1,12 +1,8 @@
 import axios from 'axios';
+import authConfig from '../config/authConfig';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1';
-
-const TOKEN_KEYS = {
-  access: 'accessToken',
-  refresh: 'refreshToken',
-  legacy: 'jwtToken',
-};
+const API_BASE_URL = authConfig.apiBaseUrl;
+const TOKEN_KEYS = authConfig.tokenKeys;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -48,7 +44,7 @@ export async function logout() {
 
   try {
     if (refreshToken) {
-      await api.post('/auth/logout', { refreshToken });
+      await api.post(authConfig.endpoints.logout, { refreshToken });
     }
   } catch {
     // Local logout must still succeed when backend logout is unavailable.
@@ -90,7 +86,7 @@ api.interceptors.response.use(
     try {
       refreshPromise =
         refreshPromise ||
-        axios.post(`${API_BASE_URL}/auth/refresh`, {
+        axios.post(`${API_BASE_URL}${authConfig.endpoints.refresh}`, {
           refreshToken,
         });
 

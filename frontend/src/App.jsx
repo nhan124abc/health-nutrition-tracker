@@ -3,23 +3,22 @@ import AdminLayout from './layouts/AdminLayout';
 import MainLayout from './layouts/MainLayout';
 import Dashboard from './pages/Dashboard';
 import HomePage from './pages/HomePage';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
+import Login from './features/auth/Login';
+import Register from './features/auth/Register';
+import ForgotPassword from './features/auth/ForgotPassword';
 import Profile from './pages/Profile';
-import Nutrition from './pages/Nutrition';
-import FoodDiary from './pages/FoodDiary';
-import ActivityTracker from './pages/ActivityTracker';
+import Nutrition from './features/nutrition/Nutrition';
+import FoodDiary from './features/meals/FoodDiary';
+import ActivityTracker from './features/activities/ActivityTracker';
 import Reports from './pages/Reports';
 import BodyMetrics from './pages/BodyMetrics';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminManagementPage from './pages/admin/AdminManagementPage';
 import { getAccessToken } from './api/api';
+import authConfig from './config/authConfig';
 
 function ProtectedRoute({ children }) {
-  const isAuthDisabled = process.env.REACT_APP_DISABLE_AUTH === 'true';
-
-  if (!isAuthDisabled && !getAccessToken()) {
+  if (!authConfig.disableAuth && !getAccessToken()) {
     return <Navigate to="/login" replace />;
   }
 
