@@ -189,6 +189,12 @@ body {
   color: var(--health-ink);
 }
 
+.ai-message-user {
+  align-self: flex-end;
+  background: var(--health-green);
+  color: #fff;
+}
+
 .layout-user-toggle {
   align-items: center;
   background: transparent !important;

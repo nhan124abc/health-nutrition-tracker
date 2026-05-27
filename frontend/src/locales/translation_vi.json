@@ -25,7 +25,9 @@
     "aiTitle": "Trợ lý AI dinh dưỡng",
     "aiWelcome": "Bạn có thể hỏi AI về calories, macro, gợi ý bữa ăn, hoạt động hoặc tiến trình sức khỏe.",
     "aiSend": "Gửi câu hỏi cho AI",
-    "toggleSidebar": "Thu gọn hoặc mở rộng thanh điều hướng"
+    "toggleSidebar": "Thu gọn hoặc mở rộng thanh điều hướng",
+    "aiThinking": "Đang suy nghĩ...",
+    "aiError": "Không thể lấy phản hồi AI. Vui lòng thử lại."
   },
   "sidebar": {
     "title": "Theo dõi sức khỏe"
@@ -480,8 +482,8 @@
   "profilePage": {
     "badge": "Hồ sơ người dùng",
     "title": "Profile sức khỏe",
-    "description": "Xem và cập nhật thông tin cá nhân. Nếu backend chưa có profile, frontend gửi payload để tạo hồ sơ trống trước.",
-    "savedMessage": "Đã lưu hồ sơ ở UI. Khi gắn API sẽ gọi /users/me/profile.",
+    "description": "Xem và cập nhật thông tin sức khỏe cá nhân từ profile endpoint.",
+    "savedMessage": "Đã lưu hồ sơ thành công.",
     "selectGender": "Chọn giới tính",
     "fields": {
       "username": "Username",
@@ -501,7 +503,12 @@
     },
     "saveProfile": "Lưu hồ sơ",
     "currentAccount": "Tài khoản hiện tại",
-    "backendNote": "Backend /me đang TODO, nên màn hình này dùng profile endpoint làm nguồn dữ liệu chính."
+    "backendNote": "Màn hình này dùng profile endpoint làm nguồn dữ liệu chính.",
+    "loading": "Đang tải hồ sơ...",
+    "saving": "Đang lưu...",
+    "loadError": "Không thể tải hồ sơ.",
+    "saveError": "Không thể lưu hồ sơ.",
+    "localModeNote": "Auth đang tắt và chưa có token, nên hồ sơ này được lưu local để phát triển. Đăng nhập hoặc bật lại auth để lưu vào backend."
   },
   "bodyMetricsPage": {
     "badge": "Chỉ số cơ thể",

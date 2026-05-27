@@ -25,7 +25,9 @@
     "aiTitle": "AI Nutrition Assistant",
     "aiWelcome": "Hi, what would you like to ask about nutrition, calories, or today's meal plan?",
     "aiSend": "Send question to AI",
-    "toggleSidebar": "Collapse or expand navigation"
+    "toggleSidebar": "Collapse or expand navigation",
+    "aiThinking": "Thinking...",
+    "aiError": "Unable to get an AI response. Please try again."
   },
   "sidebar": {
     "title": "Navigation"
@@ -764,8 +766,8 @@
   "profilePage": {
     "badge": "User profile",
     "title": "Health profile",
-    "description": "View and update personal information. If the backend has no profile yet, the frontend sends a payload to create an empty profile first.",
-    "savedMessage": "Profile saved in the UI. When the API is connected, this will call /users/me/profile.",
+    "description": "View and update personal health information from your profile endpoint.",
+    "savedMessage": "Profile saved successfully.",
     "selectGender": "Select gender",
     "fields": {
       "username": "Username",
@@ -785,7 +787,12 @@
     },
     "saveProfile": "Save profile",
     "currentAccount": "Current account",
-    "backendNote": "Backend /me is still TODO, so this screen uses the profile endpoint as the primary data source."
+    "backendNote": "This screen uses the profile endpoint as the primary data source.",
+    "loading": "Loading profile...",
+    "saving": "Saving...",
+    "loadError": "Unable to load profile.",
+    "saveError": "Unable to save profile.",
+    "localModeNote": "Auth is disabled and no token is available, so this profile is saved locally for development. Log in or turn auth back on to save to the backend."
   },
   "bodyMetricsPage": {
     "badge": "Body metrics",

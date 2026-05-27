@@ -31,6 +31,7 @@ import {
   FaUsers,
   FaUtensils,
 } from 'react-icons/fa';
+import { logout } from '../api/api';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const adminMenuItems = [
@@ -72,8 +73,8 @@ function AdminLayout() {
     setIsSidebarCollapsed((current) => !current);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('jwtToken');
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 

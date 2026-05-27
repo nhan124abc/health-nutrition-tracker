@@ -7,6 +7,7 @@ const authConfig = {
     refresh: 'refreshToken',
     legacy: 'jwtToken',
   },
+  userKey: 'authUser',
 
   endpoints: {
     login: '/auth/login',
@@ -16,6 +17,8 @@ const authConfig = {
     forgotPassword: '/auth/password/forgot',
     resetPassword: '/auth/password/reset',
     me: '/auth/me',
+    profile: '/users/me/profile',
+    aiChat: '/ai/chat',
     oauthAuthorize: (provider) => `/auth/oauth2/authorize/${provider}`,
   },
 };

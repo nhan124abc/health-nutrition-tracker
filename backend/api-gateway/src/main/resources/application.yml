@@ -50,6 +50,13 @@ spring:
           filters:
             - RewritePath=/v3/api-docs/analytics-service, /v3/api-docs
 
+        - id: ai-service-api-docs
+          uri: ${AI_SERVICE_URI:http://localhost:8087}
+          predicates:
+            - Path=/v3/api-docs/ai-service
+          filters:
+            - RewritePath=/v3/api-docs/ai-service, /v3/api-docs
+
         - id: auth-service
           uri: ${AUTH_SERVICE_URI:http://localhost:8081}
           predicates:
@@ -79,6 +86,11 @@ spring:
           uri: ${ANALYTICS_SERVICE_URI:http://localhost:8086}
           predicates:
             - Path=/api/v1/analytics/**
+
+        - id: ai-service
+          uri: ${AI_SERVICE_URI:http://localhost:8087}
+          predicates:
+            - Path=/api/v1/ai/**
 
       globalcors:
         add-to-simple-url-handler-mapping: true
@@ -120,6 +132,8 @@ springdoc:
         url: /v3/api-docs/activity-service
       - name: Analytics Service
         url: /v3/api-docs/analytics-service
+      - name: AI Service
+        url: /v3/api-docs/ai-service
     urls-primary-name: Auth Service
     operations-sorter: alpha
     tags-sorter: alpha
