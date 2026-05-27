@@ -105,18 +105,17 @@ services:
     profiles: ["", "infra"]
     restart: unless-stopped
     command: >
-      redis-server
-      --requirepass ${REDIS_PASSWORD:-}
-      --maxmemory 256mb
-      --maxmemory-policy allkeys-lru
-      --save 900 1
-      --save 300 10
+      sh -c 'if [ -n "$$REDIS_PASSWORD" ]; then
+        redis-server --requirepass "$$REDIS_PASSWORD" --maxmemory 256mb --maxmemory-policy allkeys-lru --save 900 1 --save 300 10;
+      else
+        redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --save 900 1 --save 300 10;
+      fi'
     ports:
       - "${REDIS_PORT:-6379}:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-}", "ping"]
+      test: ["CMD-SHELL", "if [ -n \"$REDIS_PASSWORD\" ]; then redis-cli -a \"$REDIS_PASSWORD\" ping; else redis-cli ping; fi"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -202,6 +201,7 @@ services:
       MEAL_SERVICE_URI: http://meal-service:8084
       ACTIVITY_SERVICE_URI: http://activity-service:8085
       ANALYTICS_SERVICE_URI: http://analytics-service:8086
+      AI_SERVICE_URI: http://ai-service:8087
     ports:
       - "8080:8080"   # ← CHỈ gateway mới expose ra ngoài
     volumes:
@@ -398,6 +398,33 @@ services:
       timeout: 5s
       retries: 5
       start_period: 45s
+    networks:
+      - backend
+
+  ai-service:
+    build:
+      context: .
+      dockerfile: ai-service/Dockerfile
+    image: ht/ai-service:latest
+    container_name: ht-ai-service
+    restart: unless-stopped
+    environment:
+      <<: [*spring-common, *internal-secret, *java-opts]
+      SERVER_PORT: "8087"
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      AI_BASE_URL: ${AI_BASE_URL:-https://api.groq.com/openai}
+      AI_MODEL: ${AI_MODEL:-llama-3.1-8b-instant}
+      AI_TEMPERATURE: ${AI_TEMPERATURE:-0.5}
+    expose:
+      - "8087"
+    volumes:
+      - ./logs/ai-service:/app/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8087/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
     networks:
       - backend
 

@@ -3,11 +3,13 @@ import authConfig from '../config/authConfig';
 
 const API_BASE_URL = authConfig.apiBaseUrl;
 const TOKEN_KEYS = authConfig.tokenKeys;
+const USER_KEY = authConfig.userKey;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Authorization': `Bearer ${getAccessToken()}`,
   },
 });
 
@@ -17,6 +19,58 @@ export function getAccessToken() {
 
 export function getRefreshToken() {
   return localStorage.getItem(TOKEN_KEYS.refresh);
+}
+
+function decodeJwtPayload(token) {
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const [, payload] = token.split('.');
+    const normalizedPayload = payload
+      .replace(/-/g, '+')
+      .replace(/_/g, '/')
+      .padEnd(Math.ceil(payload.length / 4) * 4, '=');
+    const jsonPayload = decodeURIComponent(
+      atob(normalizedPayload)
+        .split('')
+        .map((character) => `%${`00${character.charCodeAt(0).toString(16)}`.slice(-2)}`)
+        .join('')
+    );
+
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+}
+
+export function getCurrentUser() {
+  try {
+    const storedUser = localStorage.getItem(USER_KEY);
+
+    if (storedUser) {
+      return JSON.parse(storedUser);
+    }
+  } catch {
+    localStorage.removeItem(USER_KEY);
+  }
+
+  const tokenPayload = decodeJwtPayload(getAccessToken());
+
+  if (!tokenPayload) {
+    return null;
+  }
+
+  return {
+    id: tokenPayload.userId,
+    email: tokenPayload.sub,
+    role: tokenPayload.role,
+  };
+}
+
+export function getCurrentUserRole() {
+  return getCurrentUser()?.role?.toUpperCase() || null;
 }
 
 export function saveAuthTokens(payload = {}) {
@@ -31,12 +85,17 @@ export function saveAuthTokens(payload = {}) {
   if (refreshToken) {
     localStorage.setItem(TOKEN_KEYS.refresh, refreshToken);
   }
+
+  if (payload.user) {
+    localStorage.setItem(USER_KEY, JSON.stringify(payload.user));
+  }
 }
 
 export function clearAuthTokens() {
   localStorage.removeItem(TOKEN_KEYS.access);
   localStorage.removeItem(TOKEN_KEYS.refresh);
   localStorage.removeItem(TOKEN_KEYS.legacy);
+  localStorage.removeItem(USER_KEY);
 }
 
 export async function logout() {

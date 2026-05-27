@@ -18,6 +18,7 @@ import {
 } from 'react-icons/fa';
 import { logout } from '../api/api';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { sendChatMessage } from '../features/ai/aiService';
 
 const menuItems = [
   { to: '/dashboard', labelKey: 'nav.dashboard', icon: FaHome },
@@ -33,6 +34,9 @@ function MainLayout() {
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [showAiChat, setShowAiChat] = useState(false);
   const [aiMessage, setAiMessage] = useState('');
+  const [aiMessages, setAiMessages] = useState([]);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     () => localStorage.getItem('sidebarCollapsed') === 'true'
   );
@@ -62,9 +66,36 @@ function MainLayout() {
     navigate('/login');
   };
 
-  const handleAiSubmit = (event) => {
+  const handleAiSubmit = async (event) => {
     event.preventDefault();
+    const message = aiMessage.trim();
+
+    if (!message || aiLoading) {
+      return;
+    }
+
     setAiMessage('');
+    setAiError('');
+    setAiLoading(true);
+
+    const userMessage = { role: 'user', content: message };
+    setAiMessages((current) => [...current, userMessage]);
+
+    try {
+      const response = await sendChatMessage({
+        message,
+        context: `Current route: ${location.pathname}`,
+      });
+
+      setAiMessages((current) => [
+        ...current,
+        { role: 'assistant', content: response.data?.reply || '' },
+      ]);
+    } catch (err) {
+      setAiError(err.response?.data?.message || t('header.aiError'));
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const renderSidebarNav = () => (
@@ -166,7 +197,18 @@ function MainLayout() {
             <div className="ai-message ai-message-assistant">
               {t('header.aiWelcome')}
             </div>
+            {aiMessages.map((message, index) => (
+              <div className={`ai-message ai-message-${message.role}`} key={`${message.role}-${index}`}>
+                {message.content}
+              </div>
+            ))}
+            {aiLoading && (
+              <div className="ai-message ai-message-assistant">
+                {t('header.aiThinking')}
+              </div>
+            )}
           </div>
+          {aiError && <div className="text-danger small mt-2">{aiError}</div>}
           <Form className="ai-chat-form mt-3" onSubmit={handleAiSubmit}>
             <InputGroup>
               <Form.Control
@@ -174,8 +216,9 @@ function MainLayout() {
                 onChange={(event) => setAiMessage(event.target.value)}
                 placeholder={t('header.aiPlaceholder')}
                 aria-label={t('header.aiLabel')}
+                disabled={aiLoading}
               />
-              <Button variant="success" type="submit" aria-label={t('header.aiSend')}>
+              <Button variant="success" type="submit" aria-label={t('header.aiSend')} disabled={aiLoading}>
                 <FaPaperPlane />
               </Button>
             </InputGroup>
