@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { FaFacebookF, FaGoogle } from 'react-icons/fa';
+import { FaArrowLeft, FaFacebookF, FaGoogle } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import api, { saveAuthTokens } from '../api/api';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -45,11 +45,15 @@ function Login() {
 
   return (
     <Container fluid className="auth-page">
+      <Button as={Link} to="/" variant="outline-secondary" className="auth-page-back">
+        <FaArrowLeft />
+        {t('auth.backToHome')}
+      </Button>
       <Row className="min-vh-100 align-items-center justify-content-center px-3">
         <Col xs={12} md={8} lg={5} xl={4}>
           <Card className="auth-card border-0 shadow-sm">
             <Card.Body className="p-4 p-md-5">
-              <div className="d-flex justify-content-end mb-3">
+              <div className="d-flex align-items-center justify-content-end mb-3">
                 <LanguageSwitcher />
               </div>
               <div className="mb-4">

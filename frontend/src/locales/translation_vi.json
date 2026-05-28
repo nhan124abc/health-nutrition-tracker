@@ -231,8 +231,8 @@
   "home": {
     "nav": {
       "features": "Tính năng",
-      "flow": "Luồng sử dụng",
-      "security": "Bảo mật"
+      "flow": "Cách sử dụng",
+      "security": "An toàn & riêng tư"
     },
     "actions": {
       "login": "Đăng nhập",
@@ -241,81 +241,81 @@
       "createAccount": "Tạo tài khoản"
     },
     "hero": {
-      "badge": "Ứng dụng theo dõi sức khỏe",
-      "description": "Theo dõi dinh dưỡng và vận động bằng dữ liệu hằng ngày: bạn ăn gì, vận động bao nhiêu, cân nặng thay đổi thế nào và mức độ bám mục tiêu ra sao.",
-      "secondary": "Frontend được thiết kế để gọi backend qua gateway /api/v1, ưu tiên đăng nhập, onboarding hồ sơ, dashboard ngày, log bữa ăn, log hoạt động và analytics."
+      "badge": "Ứng dụng theo dõi sức khỏe mỗi ngày",
+      "description": "Health Nutrition giúp bạn ghi lại bữa ăn, lượng nước, vận động và cân nặng trong một nơi. Từ đó bạn dễ nhìn thấy mình đang ăn uống ra sao và cần điều chỉnh điều gì.",
+      "secondary": "Phù hợp cho người muốn giảm cân, tăng cân, duy trì vóc dáng hoặc đơn giản là xây dựng thói quen sống lành mạnh hơn."
     },
     "snapshot": {
-      "calories": "Calories hôm nay",
+      "calories": "Calo hôm nay",
       "goal": "84% mục tiêu",
       "activeMinutes": "Phút vận động",
-      "streak": "Streak hiện tại"
+      "streak": "Chuỗi ngày duy trì"
     },
     "units": {
       "minutes": "phút",
       "days": "ngày"
     },
     "features": {
-      "badge": "Core modules",
-      "title": "Đủ các màn hình cần thiết cho phase frontend đầu tiên",
-      "description": "Giao diện tập trung vào các luồng người dùng cần trước, giữ sản phẩm gọn và sẵn sàng nối API thật.",
+      "badge": "Tính năng nổi bật",
+      "title": "Tất cả những gì bạn cần để theo dõi sức khỏe",
+      "description": "Website được thiết kế để bạn dễ ghi chép, dễ xem lại và dễ hiểu tình trạng của mình qua từng ngày.",
       "onboarding": {
-        "title": "Onboarding hồ sơ sức khỏe",
-        "description": "Cập nhật chiều cao, cân nặng, mục tiêu calo, nước uống, mức độ vận động và mục tiêu sức khỏe để cá nhân hóa dashboard."
+        "title": "Hồ sơ sức khỏe cá nhân",
+        "description": "Lưu chiều cao, cân nặng, mục tiêu calo, lượng nước và mức độ vận động để gợi ý phù hợp hơn với bạn."
       },
       "meals": {
         "title": "Nhật ký bữa ăn",
-        "description": "Tạo breakfast, lunch, dinner hoặc snack; thêm nhiều món trong cùng một bữa và xem calories, protein, carbs, fat, fiber, sodium."
+        "description": "Ghi lại bữa sáng, trưa, tối và bữa phụ; xem nhanh calo, đạm, đường và chất béo trong ngày."
       },
       "database": {
-        "title": "Food database",
-        "description": "Tìm thực phẩm theo keyword, lọc danh mục, tra barcode, xem trạng thái verified/pending và thêm thực phẩm mới khi chưa có dữ liệu."
+        "title": "Kho thực phẩm",
+        "description": "Tìm món ăn quen thuộc, xem lượng calo ước tính và thêm món mới khi bạn chưa tìm thấy trong danh sách."
       },
       "activity": {
-        "title": "Hoạt động thể chất",
-        "description": "Ghi cardio hoặc strength với thời lượng, cân nặng user, distance, heart rate, sets, reps, steps và calories burned ước tính."
+        "title": "Theo dõi vận động",
+        "description": "Ghi lại bài tập, thời gian tập và lượng calo ước tính đã tiêu hao trong ngày."
       },
       "metrics": {
         "title": "Chỉ số cơ thể",
-        "description": "Theo dõi cân nặng, BMI, body fat, muscle mass, vòng eo, vòng hông, vòng ngực và ghi chú theo từng ngày."
+        "description": "Theo dõi cân nặng, BMI, vòng eo và các ghi chú sức khỏe để thấy sự thay đổi theo thời gian."
       },
       "analytics": {
-        "title": "Analytics tuần/tháng",
-        "description": "Xem calories in/out, net calories, macro trend, streak và tiến trình sức khỏe theo khoảng thời gian rõ ràng."
+        "title": "Báo cáo tuần/tháng",
+        "description": "Xem xu hướng calo, dinh dưỡng, vận động và tiến trình mục tiêu qua các mốc thời gian rõ ràng."
       }
     },
     "flow": {
-      "badge": "User flow",
-      "title": "Luồng sử dụng được sắp theo đúng thứ tự triển khai",
-      "description": "Người dùng bắt đầu từ tài khoản, hoàn thiện hồ sơ, sau đó ghi dữ liệu ngày. Dashboard và analytics chỉ có ý nghĩa khi các log chính được nhập đều.",
+      "badge": "Cách sử dụng",
+      "title": "Bắt đầu theo dõi sức khỏe chỉ trong vài bước",
+      "description": "Bạn chỉ cần tạo tài khoản, nhập thông tin cơ bản, sau đó ghi lại bữa ăn và hoạt động mỗi ngày. Hệ thống sẽ tổng hợp để bạn dễ theo dõi hơn.",
       "steps": {
         "auth": {
           "title": "Đăng ký hoặc đăng nhập",
-          "description": "Email/password, refresh token và OAuth2 Google/Facebook."
+          "description": "Tạo tài khoản bằng email và mật khẩu để lưu lại thông tin cá nhân của bạn."
         },
         "profile": {
           "title": "Cập nhật hồ sơ",
-          "description": "Tạo profile trống nếu chưa có, sau đó lưu các mục tiêu sức khỏe."
+          "description": "Nhập chiều cao, cân nặng, giới tính, mức vận động và mục tiêu cá nhân."
         },
         "log": {
-          "title": "Ghi bữa ăn và hoạt động",
-          "description": "Log dữ liệu mỗi ngày qua Meals và Activities."
+          "title": "Ghi bữa ăn và vận động",
+          "description": "Thêm món ăn, lượng nước và bài tập đã thực hiện trong ngày."
         },
         "track": {
-          "title": "Theo dõi tiến trình",
-          "description": "Dashboard ngày, analytics tuần/tháng và body metrics."
+          "title": "Xem tiến trình",
+          "description": "Theo dõi bảng tổng quan, báo cáo tuần/tháng và sự thay đổi của cơ thể."
         }
       }
     },
     "security": {
-      "authTitle": "Auth guard và token flow đã sẵn sàng",
-      "authDescription": "Chưa đăng nhập sẽ chuyển về login. Request tự gắn bearer token, và access token hết hạn sẽ được refresh trước khi retry.",
-      "apiTitle": "Thiết kế gọn để nối API thật",
-      "apiDescription": "Dữ liệu mẫu hiện có cấu trúc giống payload backend dự kiến, nên từng màn có thể thay state local bằng API call khi endpoint sẵn sàng."
+      "authTitle": "Đăng nhập an toàn và tiện lợi",
+      "authDescription": "Thông tin cá nhân của bạn được gắn với tài khoản riêng. Khi chưa đăng nhập, website sẽ yêu cầu bạn vào trang đăng nhập trước khi xem nội dung cá nhân.",
+      "apiTitle": "Dữ liệu được sắp xếp rõ ràng",
+      "apiDescription": "Mỗi phần như bữa ăn, vận động, nước uống và chỉ số cơ thể được tách riêng, giúp bạn dễ xem lại và quản lý hơn."
     },
     "cta": {
       "title": "Theo dõi sức khỏe theo từng ngày, không theo cảm tính",
-      "description": "Bắt đầu bằng hồ sơ cá nhân, ghi lại bữa ăn và hoạt động, sau đó dùng analytics để điều chỉnh mục tiêu calo, nước uống và cân nặng."
+      "description": "Bắt đầu bằng hồ sơ cá nhân, ghi lại bữa ăn và vận động, sau đó xem báo cáo để điều chỉnh mục tiêu calo, nước uống và cân nặng."
     }
   },
   "auth": {
@@ -354,7 +354,8 @@
     "resetPassword": "Đổi mật khẩu",
     "resetSuccess": "Đổi mật khẩu thành công. Bạn có thể đăng nhập lại.",
     "resetError": "Không thể đổi mật khẩu. Vui lòng kiểm tra OTP.",
-    "backToLogin": "Quay lại đăng nhập"
+    "backToLogin": "Quay lại đăng nhập",
+    "backToHome": "V? trang ch?"
   },
   "dashboardPage": {
     "badge": "Dashboard ngày",
