@@ -82,8 +82,8 @@
   "home": {
     "nav": {
       "features": "Features",
-      "flow": "User flow",
-      "security": "Security"
+      "flow": "How it works",
+      "security": "Safety & privacy"
     },
     "actions": {
       "login": "Log in",
@@ -92,12 +92,12 @@
       "createAccount": "Create account"
     },
     "hero": {
-      "badge": "Health tracking app",
-      "description": "Track nutrition and activity with daily health data: what you eat, how much you move, how your weight changes, and how closely you follow your goals.",
-      "secondary": "The frontend is designed to connect to the backend through the /api/v1 gateway, prioritizing login, profile onboarding, daily dashboard, meal logs, activity logs, and analytics."
+      "badge": "Daily health tracking website",
+      "description": "Health Nutrition helps you record meals, water, activity, and weight in one place. It makes it easier to understand your daily habits and see what you may need to adjust.",
+      "secondary": "Built for people who want to lose weight, gain weight, maintain their shape, or simply build healthier everyday habits."
     },
     "snapshot": {
-      "calories": "Today's calories",
+      "calories": "Calories today",
       "goal": "84% of goal",
       "activeMinutes": "Active minutes",
       "streak": "Current streak"
@@ -107,66 +107,66 @@
       "days": "days"
     },
     "features": {
-      "badge": "Core modules",
-      "title": "All screens needed for the first frontend phase",
-      "description": "The interface focuses on workflows that users need first, keeping the product clear and ready for real API integration.",
+      "badge": "Key features",
+      "title": "Everything you need to keep track of your health",
+      "description": "The website is designed to make daily tracking simple, easy to review, and easy to understand.",
       "onboarding": {
-        "title": "Health profile onboarding",
-        "description": "Update height, weight, calorie goals, water goals, activity level, and health targets so the dashboard can be personalized."
+        "title": "Personal health profile",
+        "description": "Save your height, weight, calorie goal, water goal, and activity level so the experience fits you better."
       },
       "meals": {
         "title": "Meal diary",
-        "description": "Create breakfast, lunch, dinner, or snacks; add multiple foods to a meal and review calories, protein, carbs, fat, fiber, and sodium."
+        "description": "Record breakfast, lunch, dinner, and snacks; quickly review calories, protein, carbs, and fat for the day."
       },
       "database": {
-        "title": "Food database",
-        "description": "Search food by keyword, filter categories, check barcode data, review verified or pending status, and add missing foods."
+        "title": "Food library",
+        "description": "Search common foods, check estimated calories, and add a new food when it is not already available."
       },
       "activity": {
-        "title": "Physical activity",
-        "description": "Log cardio or strength sessions with duration, user weight, distance, heart rate, sets, reps, steps, and estimated calories burned."
+        "title": "Activity tracking",
+        "description": "Record workouts, exercise time, and estimated calories burned during the day."
       },
       "metrics": {
         "title": "Body metrics",
-        "description": "Track weight, BMI, body fat, muscle mass, waist, hip, chest measurements, and daily notes."
+        "description": "Track weight, BMI, waist measurements, and health notes so you can see changes over time."
       },
       "analytics": {
-        "title": "Weekly and monthly analytics",
-        "description": "View calories in/out, net calories, macro trends, streaks, and health progress over clear time ranges."
+        "title": "Weekly and monthly reports",
+        "description": "Review calorie, nutrition, activity, and goal progress across clear time periods."
       }
     },
     "flow": {
-      "badge": "User flow",
-      "title": "The workflow follows the right implementation order",
-      "description": "Users start with an account, complete their profile, then log daily data. Dashboard and analytics become useful after the core logs are entered regularly.",
+      "badge": "How it works",
+      "title": "Start tracking your health in a few steps",
+      "description": "Create an account, enter your basic health information, then record meals and activity each day. The website brings everything together so it is easier to follow your progress.",
       "steps": {
         "auth": {
           "title": "Register or log in",
-          "description": "Email/password, refresh token, and OAuth2 Google/Facebook."
+          "description": "Create an account with your email and password to save your personal information."
         },
         "profile": {
-          "title": "Update profile",
-          "description": "Create an empty profile if needed, then save health goals."
+          "title": "Update your profile",
+          "description": "Enter height, weight, gender, activity level, and personal goals."
         },
         "log": {
-          "title": "Log meals and activity",
-          "description": "Record daily data through Meals and Activities."
+          "title": "Record meals and activity",
+          "description": "Add foods, water intake, and workouts completed during the day."
         },
         "track": {
-          "title": "Track progress",
-          "description": "Use the daily dashboard, weekly/monthly analytics, and body metrics."
+          "title": "Review progress",
+          "description": "Use the overview, weekly/monthly reports, and body metrics to understand your progress."
         }
       }
     },
     "security": {
-      "authTitle": "Auth guard and token flow are ready",
-      "authDescription": "Unauthenticated users are redirected to login. Requests attach the bearer token automatically, and expired access tokens are refreshed before retrying.",
-      "apiTitle": "Designed to connect real APIs cleanly",
-      "apiDescription": "Current sample data follows the expected backend payload shape, so each screen can swap local state for API calls when endpoints are ready."
+      "authTitle": "Safe and convenient sign-in",
+      "authDescription": "Your personal information is connected to your own account. If you are not signed in, the website asks you to log in before viewing personal pages.",
+      "apiTitle": "Clear and organized health records",
+      "apiDescription": "Meals, activity, water intake, and body metrics are kept in separate sections so you can review and manage them easily."
     },
     "cta": {
-      "title": "Track health by daily data, not guesswork",
-      "description": "Start with your profile, log meals and activity, then use analytics to adjust calorie, hydration, and weight goals."
+      "title": "Track health day by day, not by guesswork",
+      "description": "Start with your personal profile, record meals and activity, then use reports to adjust calorie, hydration, and weight goals."
     }
   },
   "dashboard": {
@@ -583,7 +583,8 @@
     "resetPassword": "Reset password",
     "resetSuccess": "Password changed successfully. You can log in again.",
     "resetError": "Unable to reset password. Please check your OTP.",
-    "backToLogin": "Back to login"
+    "backToLogin": "Back to login",
+    "backToHome": "Back to home"
   },
   "common": {
     "protein": "Protein",
