@@ -1,7 +1,7 @@
 import axios from 'axios';
 import authConfig from '../config/authConfig';
 
-const API_BASE_URL = authConfig.apiBaseUrl;
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
 const TOKEN_KEYS = authConfig.tokenKeys;
 const USER_KEY = authConfig.userKey;
 
