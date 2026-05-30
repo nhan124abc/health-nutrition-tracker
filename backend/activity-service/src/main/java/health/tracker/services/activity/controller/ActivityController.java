@@ -56,6 +56,13 @@ public class ActivityController {
         return ResponseEntity.ok(activityService.getDailyLogs(userId, targetDate));
     }
 
+    @GetMapping("types/{id}") 
+        public ResponseEntity<ActivityType> getTypeById(@PathVariable Long id) {
+            ActivityType type = typeRepository.findById(id);
+            return ResponseEntity.ok(type);
+        };
+    
+
     /**
      * POST /api/v1/activities
      * Log hoạt động thể chất.
