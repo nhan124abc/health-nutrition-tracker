@@ -243,6 +243,7 @@ services:
       FACEBOOK_CLIENT_ID: ${FACEBOOK_CLIENT_ID:-your-facebook-app-id}
       FACEBOOK_CLIENT_SECRET: ${FACEBOOK_CLIENT_SECRET:-your-facebook-app-secret}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      OAUTH2_REDIRECT_BASE_URL: ${OAUTH2_REDIRECT_BASE_URL:-http://localhost:8080}
     # ← KHÔNG expose port ra ngoài host, chỉ truy cập qua gateway:8080
     expose:
       - "8081"
@@ -301,7 +302,7 @@ services:
     container_name: ht-nutrition-service
     restart: unless-stopped
     environment:
-      <<: [*spring-common, *db-common, *internal-secret, *java-opts]
+      <<: [*spring-common, *db-common, *redis-common, *internal-secret, *java-opts]
       DB_NAME: nutrition_db
     # ← KHÔNG expose port ra ngoài host
     expose:
@@ -310,6 +311,8 @@ services:
       - ./logs/nutrition-service:/app/logs
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
@@ -361,7 +364,7 @@ services:
     container_name: ht-activity-service
     restart: unless-stopped
     environment:
-      <<: [*spring-common, *db-common, *internal-secret, *java-opts]
+      <<: [*spring-common, *db-common, *redis-common, *internal-secret, *java-opts]
       DB_NAME: activity_db
     # ← KHÔNG expose port ra ngoài host
     expose:
@@ -370,6 +373,8 @@ services:
       - ./logs/activity-service:/app/logs
     depends_on:
       mysql:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
@@ -461,7 +466,7 @@ services:
       api-gateway:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/health | grep -q 'ok' || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health | grep -q 'ok' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5

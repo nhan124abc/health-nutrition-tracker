@@ -19,6 +19,7 @@ const authConfig = {
     me: '/auth/me',
     profile: '/users/me/profile',
     aiChat: '/ai/chat',
+    aiChatHistory: '/ai/chat/history',
     oauthAuthorize: (provider) => `/auth/oauth2/authorize/${provider}`,
   },
 };

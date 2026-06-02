@@ -16,6 +16,7 @@ function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const oauthError = new URLSearchParams(location.search).get('oauthError');
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -61,7 +62,9 @@ function Login() {
                 <p className="text-secondary mb-0">{t('auth.loginDescription')}</p>
               </div>
 
-              {error && <Alert variant="danger">{error}</Alert>}
+              {(error || oauthError) && (
+                <Alert variant="danger">{error || t('auth.oauthLoginError')}</Alert>
+              )}
 
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="email">

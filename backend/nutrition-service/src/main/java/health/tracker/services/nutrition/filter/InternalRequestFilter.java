@@ -30,6 +30,11 @@ public class InternalRequestFilter extends OncePerRequestFilter {
     private String internalSecret;
 
     @Override
+    protected boolean shouldNotFilter(@NonNull HttpServletRequest request) {
+        return "/actuator/health".equals(request.getRequestURI());
+    }
+
+    @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest  request,
             @NonNull HttpServletResponse response,

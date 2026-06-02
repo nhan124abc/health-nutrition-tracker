@@ -8,8 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.Map;
 
@@ -38,9 +40,35 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private User processOAuth2User(String registrationId, OAuth2UserInfo userInfo) {
         User.AuthProvider provider = User.AuthProvider.valueOf(registrationId.toUpperCase());
 
+        if (!StringUtils.hasText(userInfo.getEmail())) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("email_not_provided"),
+                    "OAuth2 provider did not return an email address"
+            );
+        }
+
         return userRepository.findByProviderIdAndAuthProvider(userInfo.getId(), provider)
                 .map(existing -> updateExistingUser(existing, userInfo))
-                .orElseGet(() -> registerNewOAuth2User(provider, userInfo));
+                .orElseGet(() -> userRepository.findByEmail(userInfo.getEmail())
+                        .map(existing -> handleExistingEmail(existing, provider, userInfo))
+                        .orElseGet(() -> registerNewOAuth2User(provider, userInfo)));
+    }
+
+    private User handleExistingEmail(User user,
+                                     User.AuthProvider provider,
+                                     OAuth2UserInfo userInfo) {
+        if (user.getAuthProvider() == User.AuthProvider.LOCAL) {
+            log.info("Linking {} OAuth2 login to existing local user: {}", provider, user.getEmail());
+            user.setAuthProvider(provider);
+        } else if (user.getAuthProvider() != provider) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("email_already_registered"),
+                    "Email is already registered with " + user.getAuthProvider()
+            );
+        }
+
+        user.setProviderId(userInfo.getId());
+        return updateExistingUser(user, userInfo);
     }
 
     private User registerNewOAuth2User(User.AuthProvider provider, OAuth2UserInfo userInfo) {

@@ -160,7 +160,7 @@ management:
     health:
       show-details: always
     gateway:
-      enabled: true
+      access: unrestricted
   info:
     env:
       enabled: true

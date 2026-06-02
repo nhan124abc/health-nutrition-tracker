@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button, Container, Form, InputGroup, Modal, Nav, Navbar, Offcanvas } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -18,7 +18,7 @@ import {
 } from 'react-icons/fa';
 import { logout } from '../api/api';
 import LanguageSwitcher from '../components/LanguageSwitcher';
-import { sendChatMessage } from '../features/ai/aiService';
+import { clearChatHistory, getChatHistory, sendChatMessage } from '../features/ai/aiService';
 
 const menuItems = [
   { to: '/dashboard', labelKey: 'nav.dashboard', icon: FaHome },
@@ -36,6 +36,7 @@ function MainLayout() {
   const [aiMessage, setAiMessage] = useState('');
   const [aiMessages, setAiMessages] = useState([]);
   const [aiLoading, setAiLoading] = useState(false);
+  const [aiHistoryLoading, setAiHistoryLoading] = useState(false);
   const [aiError, setAiError] = useState('');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     () => localStorage.getItem('sidebarCollapsed') === 'true'
@@ -43,6 +44,7 @@ function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const aiChatWindowRef = useRef(null);
 
   useEffect(() => {
     setShowMobileSidebar(false);
@@ -51,6 +53,52 @@ function MainLayout() {
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', String(isSidebarCollapsed));
   }, [isSidebarCollapsed]);
+
+  useEffect(() => {
+    if (!showAiChat) {
+      return;
+    }
+
+    let isActive = true;
+    setAiHistoryLoading(true);
+    setAiError('');
+
+    getChatHistory()
+      .then((response) => {
+        if (!isActive) {
+          return;
+        }
+
+        setAiMessages(
+          (response.data || []).map((message) => ({
+            role: message.role,
+            content: message.content,
+          }))
+        );
+      })
+      .catch((err) => {
+        if (isActive) {
+          setAiError(err.response?.data?.message || t('header.aiHistoryError'));
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setAiHistoryLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [showAiChat, t]);
+
+  useEffect(() => {
+    if (!showAiChat || !aiChatWindowRef.current) {
+      return;
+    }
+
+    aiChatWindowRef.current.scrollTop = aiChatWindowRef.current.scrollHeight;
+  }, [showAiChat, aiMessages, aiLoading, aiHistoryLoading]);
 
   const handleMenuClick = () => {
     if (window.innerWidth < 992) {
@@ -95,6 +143,21 @@ function MainLayout() {
       setAiError(err.response?.data?.message || t('header.aiError'));
     } finally {
       setAiLoading(false);
+    }
+  };
+
+  const handleClearAiHistory = async () => {
+    if (aiLoading || aiHistoryLoading) {
+      return;
+    }
+
+    setAiError('');
+
+    try {
+      await clearChatHistory();
+      setAiMessages([]);
+    } catch (err) {
+      setAiError(err.response?.data?.message || t('header.aiClearError'));
     }
   };
 
@@ -191,12 +254,29 @@ function MainLayout() {
             <FaRobot className="text-success" />
             {t('header.aiTitle')}
           </Modal.Title>
+          {aiMessages.length > 0 && (
+            <Button
+              type="button"
+              variant="outline-secondary"
+              size="sm"
+              className="ms-auto me-3"
+              onClick={handleClearAiHistory}
+              disabled={aiLoading || aiHistoryLoading}
+            >
+              {t('header.aiClear')}
+            </Button>
+          )}
         </Modal.Header>
         <Modal.Body>
-          <div className="ai-chat-window">
+          <div className="ai-chat-window" ref={aiChatWindowRef}>
             <div className="ai-message ai-message-assistant">
               {t('header.aiWelcome')}
             </div>
+            {aiHistoryLoading && (
+              <div className="ai-message ai-message-assistant">
+                {t('header.aiLoadingHistory')}
+              </div>
+            )}
             {aiMessages.map((message, index) => (
               <div className={`ai-message ai-message-${message.role}`} key={`${message.role}-${index}`}>
                 {message.content}

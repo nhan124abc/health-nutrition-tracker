@@ -481,13 +481,13 @@ Client          Meal Service       Kafka           Analytics Service      DB
 ```
 Client          API Gateway      Auth Service       Google/Facebook
   │                  │                │                    │
-  ├─GET /api/auth/oauth2/authorize/google                  │
+  ├─GET /api/v1/auth/oauth2/authorize/google               │
   │◄────redirected to────────────────────────────────────► │
   │                                                        │
   │              user grants permission                    │
   │◄──────────── callback with authorization code ──────── ┤
   │                  │                │                    │
-  ├─GET /api/auth/oauth2/callback/google?code=xxx          │
+  ├─GET /api/v1/auth/oauth2/callback/google?code=xxx       │
   │                  ├─forward────────►                    │
   │                  │                ├─exchange code for user profile
   │                  │                ├─find or create User in DB
@@ -637,6 +637,22 @@ FACEBOOK_CLIENT_SECRET=your-facebook-app-secret
 FRONTEND_URL=http://localhost:3000
 SPRING_PROFILES_ACTIVE=dev
 INTERNAL_SECRET=Ht!InternalS3cret#OnlyGateway2Service
+```
+
+Khai báo callback URL trên trang quản trị OAuth của từng nền tảng:
+
+```text
+Google Authorized redirect URI:
+http://localhost:8080/api/v1/auth/oauth2/callback/google
+
+Facebook Valid OAuth Redirect URI:
+http://localhost:8080/api/v1/auth/oauth2/callback/facebook
+```
+
+Sau khi đăng nhập thành công, backend chuyển trình duyệt về:
+
+```text
+http://localhost:3000/oauth2/redirect
 ```
 
 ---
