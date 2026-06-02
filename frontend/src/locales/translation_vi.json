@@ -27,7 +27,11 @@
     "aiSend": "Gửi câu hỏi cho AI",
     "toggleSidebar": "Thu gọn hoặc mở rộng thanh điều hướng",
     "aiThinking": "Đang suy nghĩ...",
-    "aiError": "Không thể lấy phản hồi AI. Vui lòng thử lại."
+    "aiError": "Không thể lấy phản hồi AI. Vui lòng thử lại.",
+    "aiLoadingHistory": "Đang tải lịch sử chat...",
+    "aiHistoryError": "Không thể tải lịch sử chat.",
+    "aiClear": "Xóa lịch sử",
+    "aiClearError": "Không thể xóa lịch sử chat."
   },
   "sidebar": {
     "title": "Theo dõi sức khỏe"
@@ -331,6 +335,7 @@
     "noAccount": "Chưa có tài khoản?",
     "registerNow": "Đăng ký ngay",
     "loginError": "Không thể đăng nhập. Vui lòng thử lại.",
+    "oauthLoginError": "Không thể đăng nhập bằng Google hoặc Facebook. Vui lòng kiểm tra tài khoản và thử lại.",
     "missingToken": "Backend chưa trả access token.",
     "registerTitle": "Tạo tài khoản",
     "registerDescription": "Bắt đầu bằng email, mật khẩu và họ tên đầy đủ.",

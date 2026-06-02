@@ -27,7 +27,11 @@
     "aiSend": "Send question to AI",
     "toggleSidebar": "Collapse or expand navigation",
     "aiThinking": "Thinking...",
-    "aiError": "Unable to get an AI response. Please try again."
+    "aiError": "Unable to get an AI response. Please try again.",
+    "aiLoadingHistory": "Loading chat history...",
+    "aiHistoryError": "Unable to load chat history.",
+    "aiClear": "Clear history",
+    "aiClearError": "Unable to clear chat history."
   },
   "sidebar": {
     "title": "Navigation"
@@ -560,6 +564,7 @@
     "noAccount": "No account?",
     "registerNow": "Register now",
     "loginError": "Unable to log in. Please try again.",
+    "oauthLoginError": "Unable to log in with Google or Facebook. Please check your account and try again.",
     "missingToken": "Backend did not return an access token.",
     "registerTitle": "Create account",
     "registerDescription": "Start with your email, password, and full name.",

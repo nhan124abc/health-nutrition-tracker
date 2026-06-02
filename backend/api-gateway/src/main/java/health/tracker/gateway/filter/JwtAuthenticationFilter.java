@@ -66,6 +66,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             "/api/v1/auth/password/forgot",
             "/api/v1/auth/password/reset",
             "/api/v1/auth/verify-email",
+            "/api/v1/auth/oauth2",
             "/actuator",
             // Swagger UI & OpenAPI docs (aggregated at gateway)
             "/swagger-ui",
@@ -79,6 +80,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             "/api/v1/analytics/admin",
             "/api/v1/users/admin",
             "/api/v1/nutrition/admin"
+    );
+
+    private static final List<String> OPTIONAL_AUTH_PATHS = List.of(
+            "/api/v1/ai"
     );
 
     // -------------------------------------------------------------------------
@@ -100,15 +105,25 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         if (isPublicPath(path)) {
             // Vẫn thêm X-Internal-Secret cho public paths (auth-service cần validate)
             ServerHttpRequest publicRequest = request.mutate()
+                    .headers(this::removeTrustedHeaders)
                     .header("X-Internal-Secret", internalSecret)
-                    .headers(h -> h.remove("X-Forwarded-User"))
                     .build();
             return chain.filter(exchange.mutate().request(publicRequest).build());
         }
 
+        boolean optionalAuth = isOptionalAuthPath(path);
+
         // Require Authorization header
         String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            if (optionalAuth) {
+                ServerHttpRequest guestRequest = request.mutate()
+                        .headers(this::removeTrustedHeaders)
+                        .header("X-Internal-Secret", internalSecret)
+                        .build();
+                return chain.filter(exchange.mutate().request(guestRequest).build());
+            }
+
             log.warn("Missing or invalid Authorization header for path: {}", path);
             return onUnauthorized(exchange, "Missing or invalid Authorization header");
         }
@@ -136,12 +151,11 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         }
 
         ServerHttpRequest mutatedRequest = request.mutate()
+                .headers(this::removeTrustedHeaders)
                 .header("X-User-Id",         userId   != null ? userId   : "")
                 .header("X-User-Name",       username != null ? username : "")
                 .header("X-User-Role",       role     != null ? role     : "")
                 .header("X-Internal-Secret", internalSecret)   // ← service sẽ validate header này
-                // Prevent clients from spoofing these headers
-                .headers(h -> h.remove("X-Forwarded-User"))
                 .build();
 
         return chain.filter(exchange.mutate().request(mutatedRequest).build());
@@ -162,6 +176,18 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private boolean isAdminPath(String path) {
         return ADMIN_PATHS.stream().anyMatch(path::startsWith);
+    }
+
+    private boolean isOptionalAuthPath(String path) {
+        return OPTIONAL_AUTH_PATHS.stream().anyMatch(path::startsWith);
+    }
+
+    private void removeTrustedHeaders(HttpHeaders headers) {
+        headers.remove("X-User-Id");
+        headers.remove("X-User-Name");
+        headers.remove("X-User-Role");
+        headers.remove("X-Internal-Secret");
+        headers.remove("X-Forwarded-User");
     }
 
     private Mono<Void> onUnauthorized(ServerWebExchange exchange, String message) {

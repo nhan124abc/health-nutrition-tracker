@@ -31,16 +31,19 @@ public class User {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private Role role = Role.USER;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "auth_provider", nullable = false)
+    @Builder.Default
     private AuthProvider authProvider = AuthProvider.LOCAL;
 
     @Column(name = "provider_id")
     private String providerId; // ID từ Google / Facebook
 
     @Column(name = "is_active")
+    @Builder.Default
     private boolean active = true;
 
     @Column(name = "created_at", updatable = false)

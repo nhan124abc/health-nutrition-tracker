@@ -151,5 +151,26 @@ spring.datasource.url=jdbc:mysql://localhost:3306/activity_db
 
 # analytics-service
 spring.datasource.url=jdbc:mysql://localhost:3306/analytics_db
+
+# ai-service
+spring.datasource.url=jdbc:mysql://localhost:3306/ai_db
+```
+
+---
+
+## AI Service DB
+
+File schema: `07_ai_db.sql`
+
+| Bang | Mo ta |
+|------|-------|
+| `ai_chat_messages` | Luu lich su tin nhan AI cho user da dang nhap hoac guest |
+| `ai_usage_limits` | Dem so cau hoi moi ngay de gioi han usage |
+
+Chay rieng schema AI:
+
+```bash
+mysql -u root -p < db/00_init_all_databases.sql
+mysql -u root -p ai_db < db/07_ai_db.sql
 ```
 

@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import Login from './features/auth/Login';
 import Register from './features/auth/Register';
 import ForgotPassword from './features/auth/ForgotPassword';
+import OAuth2Redirect from './features/auth/OAuth2Redirect';
 import Profile from './pages/Profile';
 import Nutrition from './features/nutrition/Nutrition';
 import FoodDiary from './features/meals/FoodDiary';
@@ -46,6 +47,7 @@ function App() {
             </PublicRoute>
           }
         />
+        <Route path="/oauth2/redirect" element={<OAuth2Redirect />} />
         <Route
           element={
             <ProtectedRoute>

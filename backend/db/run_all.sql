@@ -13,6 +13,7 @@ SOURCE 03_nutrition_db.sql;
 SOURCE 04_meal_db.sql;
 SOURCE 05_activity_db.sql;
 SOURCE 06_analytics_db.sql;
+SOURCE 07_ai_db.sql;
 
 SELECT 'All databases and schemas created successfully!' AS status;
 
