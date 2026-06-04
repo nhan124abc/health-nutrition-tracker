@@ -74,7 +74,6 @@ function Login() {
                     name="email"
                     value={form.email}
                     onChange={handleChange}
-                    placeholder="name@example.com"
                     required
                   />
                 </Form.Group>
@@ -86,7 +85,6 @@ function Login() {
                     name="password"
                     value={form.password}
                     onChange={handleChange}
-                    placeholder={t('auth.passwordPlaceholder')}
                     required
                   />
                 </Form.Group>

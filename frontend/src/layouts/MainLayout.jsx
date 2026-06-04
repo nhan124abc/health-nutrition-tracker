@@ -243,7 +243,9 @@ function MainLayout() {
       <div className="layout-main">
         <main className="layout-content">
           <Container fluid>
-            <Outlet />
+            <div className="route-transition" key={location.pathname}>
+              <Outlet />
+            </div>
           </Container>
         </main>
       </div>
