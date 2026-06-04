@@ -88,7 +88,6 @@ function ForgotPassword() {
                       name="email"
                       value={form.email}
                       onChange={handleChange}
-                      placeholder="name@example.com"
                       required
                     />
                   </Form.Group>

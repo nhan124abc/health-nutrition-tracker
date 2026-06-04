@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Badge, Button, Card, Col, Form, Modal, ProgressBar, Row, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaPlus, FaTrash, FaUtensils } from 'react-icons/fa';
-
+import { createMeal, deleteMealById, getMealsByDate } from './mealService';
 const mealTypes = [
   { key: 'breakfast', labelKey: 'foodDiaryPage.mealTypes.breakfast' },
   { key: 'lunch', labelKey: 'foodDiaryPage.mealTypes.lunch' },
@@ -10,35 +10,19 @@ const mealTypes = [
   { key: 'snack', labelKey: 'foodDiaryPage.mealTypes.snack' },
 ];
 
-const initialMeals = [
-  {
-    id: 'M001',
-    type: 'breakfast',
-    date: '2026-05-21',
-    time: '07:30',
-    notesKey: 'foodDiaryPage.sampleNotes.lightBreakfast',
-    items: [
-      { id: 'I1', name: 'Greek yogurt', serving: '100g', quantity: 1, calories: 97, protein: 9, carbs: 4, fat: 5, fiber: 0, sodium: 36 },
-      { id: 'I2', name: 'Banana', serving: '1 fruit', quantity: 1, calories: 105, protein: 1, carbs: 27, fat: 0, fiber: 3, sodium: 1 },
-    ],
-  },
-  {
-    id: 'M002',
-    type: 'lunch',
-    date: '2026-05-21',
-    time: '12:15',
-    notesKey: '',
-    items: [
-      { id: 'I3', name: 'Chicken breast', serving: '150g', quantity: 1, calories: 248, protein: 47, carbs: 0, fat: 6, fiber: 0, sodium: 111 },
-      { id: 'I4', name: 'Brown rice', serving: '180g', quantity: 1, calories: 200, protein: 5, carbs: 41, fat: 2, fiber: 4, sodium: 9 },
-    ],
-  },
-];
+function getTodayDate() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
 
 const emptyMeal = {
   type: 'breakfast',
-  date: '2026-05-21',
-  time: '18:30',
+  date: '',
+  time: '',
   notes: '',
   itemName: '',
   serving: '100g',
@@ -51,12 +35,102 @@ const emptyMeal = {
   sodium: '',
 };
 
+const mealTypeFromApi = {
+  BREAKFAST: 'breakfast',
+  LUNCH: 'lunch',
+  DINNER: 'dinner',
+  SNACK: 'snack',
+};
+
+const mealTypeToApi = {
+  breakfast: 'BREAKFAST',
+  lunch: 'LUNCH',
+  dinner: 'DINNER',
+  snack: 'SNACK',
+};
+
+function normalizeNumber(value) {
+  return Number(value) || 0;
+}
+
+function normalizeDate(value) {
+  if (!value) {
+    return '';
+  }
+
+  return String(value).slice(0, 10);
+}
+
+function extractMealsFromApi(data) {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  return data?.data || data?.content || data?.items || data?.meals || [];
+}
+
+function normalizeMealItemFromApi(item = {}) {
+  return {
+    id: item.id || item.foodId || `I${Date.now()}-${Math.random()}`,
+    name: item.name || item.foodName || item.itemName || '',
+    serving: item.serving || item.servingSize || item.portion || '100g',
+    quantity: normalizeNumber(item.quantity || 1),
+    calories: normalizeNumber(item.calories || item.caloriesKcal),
+    protein: normalizeNumber(item.protein || item.proteinGrams),
+    carbs: normalizeNumber(item.carbs || item.carbohydrates || item.carbsGrams),
+    fat: normalizeNumber(item.fat || item.fatGrams),
+    fiber: normalizeNumber(item.fiber || item.fiberGrams),
+    sodium: normalizeNumber(item.sodium || item.sodiumMg),
+  };
+}
+
+function normalizeMealFromApi(meal = {}) {
+  const items = meal.items || meal.foodItems || meal.mealItems || [];
+
+  return {
+    id: meal.id || meal.mealId,
+    type: mealTypeFromApi[meal.mealType] || meal.type || 'breakfast',
+    date: normalizeDate(meal.date || meal.mealDate || meal.createdAt),
+    time: meal.time || meal.mealTime || '',
+    notes: meal.notes || '',
+    notesKey: '',
+    items: items.map(normalizeMealItemFromApi),
+  };
+}
+
+function mapMealToApi(form) {
+  return {
+    mealType: mealTypeToApi[form.type] || form.type,
+    date: form.date,
+    mealDate: form.date,
+    time: form.time,
+    mealTime: form.time,
+    notes: form.notes,
+    items: [
+      {
+        name: form.itemName,
+        foodName: form.itemName,
+        serving: form.serving,
+        quantity: Number(form.quantity) || 1,
+        calories: Number(form.calories) || 0,
+        protein: Number(form.protein) || 0,
+        carbs: Number(form.carbs) || 0,
+        fat: Number(form.fat) || 0,
+        fiber: Number(form.fiber) || 0,
+        sodium: Number(form.sodium) || 0,
+      },
+    ],
+  };
+}
+
 function FoodDiary() {
   const { t } = useTranslation();
-  const [selectedDate, setSelectedDate] = useState('2026-05-21');
-  const [meals, setMeals] = useState(initialMeals);
+  const [selectedDate, setSelectedDate] = useState(getTodayDate);
+  const [meals, setMeals] = useState([]);
   const [showMealModal, setShowMealModal] = useState(false);
-  const [form, setForm] = useState(emptyMeal);
+  const [form, setForm] = useState(() => ({ ...emptyMeal, date: getTodayDate() }));
+  const [loadingMeals, setLoadingMeals] = useState(false);
+  const [mealError, setMealError] = useState('');
 
   const dayMeals = meals.filter((meal) => meal.date === selectedDate);
 
@@ -79,38 +153,35 @@ function FoodDiary() {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
-  const addMeal = () => {
-    const item = {
-      id: `I${Date.now()}`,
-      name: form.itemName || t('foodDiaryPage.customFood'),
-      serving: form.serving,
-      quantity: Number(form.quantity),
-      calories: Number(form.calories) || 0,
-      protein: Number(form.protein) || 0,
-      carbs: Number(form.carbs) || 0,
-      fat: Number(form.fat) || 0,
-      fiber: Number(form.fiber) || 0,
-      sodium: Number(form.sodium) || 0,
-    };
-
-    setMeals((current) => [
-      ...current,
-      {
-        id: `M${Date.now()}`,
-        type: form.type,
-        date: form.date,
-        time: form.time,
-        notes: form.notes,
-        notesKey: '',
-        items: [item],
-      },
-    ]);
-    setShowMealModal(false);
-    setForm({ ...emptyMeal, date: selectedDate });
+  const openMealModal = () => {
+    setForm((current) => ({ ...current, date: selectedDate }));
+    setShowMealModal(true);
   };
 
-  const removeMeal = (mealId) => {
-    setMeals((current) => current.filter((meal) => meal.id !== mealId));
+  const addMeal = async () => {
+    setMealError('');
+
+    try {
+      const response = await createMeal(mapMealToApi(form));
+      setMeals((current) => [...current, normalizeMealFromApi(response.data)]);
+      setShowMealModal(false);
+      setForm({ ...emptyMeal, date: selectedDate });
+    } catch (error) {
+      console.error('[FoodDiary] Error creating meal:', error);
+      setMealError(error.response?.data?.message || 'Could not create meal.');
+    }
+  };
+
+  const removeMeal = async (mealId) => {
+    setMealError('');
+
+    try {
+      await deleteMealById(mealId);
+      setMeals((current) => current.filter((meal) => meal.id !== mealId));
+    } catch (error) {
+      console.error('[FoodDiary] Error deleting meal:', error);
+      setMealError(error.response?.data?.message || 'Could not delete meal.');
+    }
   };
 
   const fieldLabels = [
@@ -125,6 +196,42 @@ function FoodDiary() {
     ['sodium', 'common.sodium'],
   ];
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchMeals() {
+      setLoadingMeals(true);
+      setMealError('');
+
+      try {
+        const response = await getMealsByDate(selectedDate);
+        const responseMeals = extractMealsFromApi(response.data);
+        const normalizedMeals = responseMeals.map(normalizeMealFromApi);
+
+        if (isMounted) {
+          setMeals(normalizedMeals);
+        }
+      } catch (error) {
+        console.error('[FoodDiary] Error fetching meals:', error);
+
+        if (isMounted) {
+          setMeals([]);
+          setMealError(error.response?.data?.message || 'Could not load meals.');
+        }
+      } finally {
+        if (isMounted) {
+          setLoadingMeals(false);
+        }
+      }
+    }
+
+    fetchMeals();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedDate]);
+  
   return (
     <>
       <div className="page-heading">
@@ -135,7 +242,7 @@ function FoodDiary() {
         </div>
         <div className="d-flex flex-wrap gap-2">
           <input className="form-control page-date-input" type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
-          <Button variant="success" onClick={() => setShowMealModal(true)}>
+          <Button variant="success" onClick={openMealModal}>
             <FaPlus className="me-2" />
             {t('foodDiaryPage.createMeal')}
           </Button>
@@ -144,7 +251,16 @@ function FoodDiary() {
 
       <Row className="g-4">
         <Col lg={8}>
+          {mealError && <div className="alert alert-danger">{mealError}</div>}
+          {loadingMeals && <div className="alert alert-light border">Loading meals...</div>}
           <div className="meal-card-stack">
+            {!loadingMeals && dayMeals.length === 0 && (
+              <Card className="border-0 shadow-sm meal-planner-card">
+                <Card.Body className="text-secondary">
+                  No meals found for this date.
+                </Card.Body>
+              </Card>
+            )}
             {dayMeals.map((meal) => {
               const type = mealTypes.find((item) => item.key === meal.type);
               const label = type ? t(type.labelKey) : meal.type;

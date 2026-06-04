@@ -6,12 +6,11 @@ const mealEndpoints = {
   detail: (id) => `/meals/${id}`,
   delete: (id) => `/meals/${id}`,
   summary: '/meals/summary',
+  getlist: (date) => `/meals?date=${date}`,
 };
 
 export function getMealsByDate(date) {
-  return api.get(mealEndpoints.list, {
-    params: { date },
-  });
+  return api.get(mealEndpoints.getlist(date));
 }
 
 export function createMeal(payload) {

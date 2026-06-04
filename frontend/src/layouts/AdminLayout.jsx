@@ -184,7 +184,9 @@ function AdminLayout() {
 
       <main className="admin-main">
         <Container fluid>
-          <Outlet />
+          <div className="route-transition" key={location.pathname}>
+            <Outlet />
+          </div>
         </Container>
       </main>
     </div>

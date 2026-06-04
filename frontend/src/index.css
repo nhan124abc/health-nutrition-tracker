@@ -318,7 +318,7 @@ body {
   gap: 0.75rem;
   padding: 0.8rem 0.9rem;
   position: relative;
-  transition: background-color 0.18s ease, color 0.18s ease, justify-content 0.22s ease, padding 0.22s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, justify-content 0.22s ease, padding 0.22s ease, transform 0.18s ease;
 }
 
 .sidebar-collapsed .layout-sidebar-link {
@@ -330,6 +330,7 @@ body {
 .layout-sidebar-link:hover {
   background: var(--health-primary-soft);
   color: var(--health-primary) !important;
+  transform: translateX(3px);
 }
 
 .layout-sidebar-link.active {
@@ -370,6 +371,22 @@ body {
 .layout-content {
   flex: 1;
   padding: 2rem 1.5rem;
+}
+
+.route-transition {
+  animation: route-enter 0.28s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes route-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .layout-footer {
@@ -493,10 +510,23 @@ body {
 
 .page-heading {
   align-items: flex-start;
+  animation: content-rise 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both;
   display: flex;
   gap: 1rem;
   justify-content: space-between;
   margin-bottom: 1.5rem;
+}
+
+@keyframes content-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .page-heading h1 {
@@ -1027,6 +1057,93 @@ body {
   border-radius: 0.75rem;
 }
 
+.card,
+.stat-card,
+.dashboard-stat-card,
+.meal-planner-card,
+.planner-side-card,
+.admin-card,
+.admin-stat-card,
+.admin-mini-stat,
+.user-main-card,
+.user-side-card,
+.home-feature-card,
+.home-proof-card {
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+}
+
+.card:hover,
+.stat-card:hover,
+.dashboard-stat-card:hover,
+.meal-planner-card:hover,
+.planner-side-card:hover,
+.admin-card:hover,
+.admin-stat-card:hover,
+.admin-mini-stat:hover,
+.user-main-card:hover,
+.user-side-card:hover,
+.home-feature-card:hover,
+.home-proof-card:hover {
+  transform: translateY(-3px);
+}
+
+.table tbody tr,
+.list-group-item,
+.btn,
+.form-control,
+.form-select {
+  transition: background-color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+.table tbody tr:hover {
+  transform: translateX(2px);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.modal.show .modal-dialog {
+  animation: modal-enter 0.22s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.offcanvas.show {
+  animation: panel-enter 0.24s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes panel-enter {
+  from {
+    opacity: 0.85;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 .dashboard-chart {
   position: relative;
   width: 100%;
@@ -1330,13 +1447,17 @@ body {
   font-weight: 700;
   gap: 0.75rem;
   padding: 0.8rem 0.9rem;
-  transition: background-color 0.18s ease, color 0.18s ease, justify-content 0.22s ease, padding 0.22s ease;
+  transition: background-color 0.18s ease, color 0.18s ease, justify-content 0.22s ease, padding 0.22s ease, transform 0.18s ease;
 }
 
 .admin-sidebar-link:hover,
 .admin-sidebar-link.active {
   background: var(--health-primary-soft);
   color: var(--health-primary-dark) !important;
+}
+
+.admin-sidebar-link:hover {
+  transform: translateX(3px);
 }
 
 .admin-sidebar-icon {

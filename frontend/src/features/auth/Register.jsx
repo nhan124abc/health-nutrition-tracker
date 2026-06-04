@@ -71,7 +71,6 @@ function Register() {
                     name="fullName"
                     value={form.fullName}
                     onChange={handleChange}
-                    placeholder="Nguyen Van A"
                     required
                   />
                 </Form.Group>
@@ -83,7 +82,6 @@ function Register() {
                     name="email"
                     value={form.email}
                     onChange={handleChange}
-                    placeholder="name@example.com"
                     required
                   />
                 </Form.Group>
@@ -95,7 +93,6 @@ function Register() {
                     name="password"
                     value={form.password}
                     onChange={handleChange}
-                    placeholder={t('auth.passwordMin')}
                     required
                   />
                 </Form.Group>
@@ -107,7 +104,6 @@ function Register() {
                     name="confirmPassword"
                     value={form.confirmPassword}
                     onChange={handleChange}
-                    placeholder={t('auth.confirmPasswordPlaceholder')}
                     required
                   />
                 </Form.Group>
