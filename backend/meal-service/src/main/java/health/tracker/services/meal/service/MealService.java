@@ -6,6 +6,7 @@ import health.tracker.services.meal.entity.Meal;
 import health.tracker.services.meal.entity.MealItem;
 import health.tracker.services.meal.exception.AppException;
 import health.tracker.services.meal.repository.MealRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,7 @@ public class MealService {
 
     private final MealRepository               mealRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final EntityManager                 entityManager;
 
     // ─── Lấy bữa ăn trong ngày ────────────────────────────────────────────────
 
@@ -74,6 +76,29 @@ public class MealService {
         return toResponse(saved);
     }
 
+    // Cập nhật bữa ăn
+
+    @Transactional
+    public MealResponse update(Long mealId, Long userId, MealRequest request) {
+        Meal meal = mealRepository.findByIdAndUserId(mealId, userId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Meal not found: " + mealId));
+        meal.setMealType(request.getMealType());
+        meal.setMealDate(request.getMealDate());
+        meal.setMealTime(request.getMealTime());
+        meal.setNotes(request.getNotes());
+
+        meal.getItems().clear();
+        for (MealRequest.MealItemRequest itemReq : request.getItems()) {
+            MealItem item = buildItem(itemReq, meal);
+            meal.getItems().add(item);
+        }
+        recalculateTotals(meal);
+        Meal saved = mealRepository.saveAndFlush(meal);
+        entityManager.refresh(saved);
+        publishMealLoggedEvent(saved);
+
+        return toResponse(saved);
+    }
     // ─── Xoá bữa ăn ──────────────────────────────────────────────────────────
 
     @Transactional

@@ -1247,6 +1247,19 @@ body {
   border-radius: 0.85rem;
 }
 
+.meal-summary-card {
+  cursor: pointer;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.meal-summary-card:hover,
+.meal-summary-card:focus {
+  border-color: rgba(25, 135, 84, 0.28) !important;
+  box-shadow: 0 0.65rem 1.35rem rgba(33, 37, 41, 0.08) !important;
+  outline: 0;
+  transform: translateY(-1px);
+}
+
 .meal-icon,
 .water-glass,
 .workout-icon {

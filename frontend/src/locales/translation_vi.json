@@ -165,7 +165,8 @@
     "converted": "Quy đổi",
     "instantCalories": "Calo tức thời",
     "notSelected": "Chưa chọn",
-    "addToDiary": "Thêm vào nhật ký"
+    "addToDiary": "Thêm vào nhật ký",
+    "items": "Món"
   },
   "planner": {
     "badge": "Daily Meal Planner",
@@ -408,16 +409,22 @@
     "description": "Tạo bữa ăn, thêm nhiều món, xem chi tiết và tổng kết calories theo ngày.",
     "createMeal": "Tạo bữa ăn",
     "deleteMeal": "Xóa bữa ăn",
+    "updateMeal": "Cập nhật bữa ăn",
+    "confirmDeleteMeal": "Bạn có chắc muốn xóa bữa ăn này?",
+    "confirmUpdateMeal": "Bạn có chắc muốn cập nhật bữa ăn này?",
     "dailySummary": "Tổng kết ngày",
     "mealsLogged": "{{count}} bữa ăn đã ghi nhận",
     "newMealTitle": "Tạo bữa ăn mới",
+    "updateMealTitle": "Cập nhật bữa ăn",
     "saveMeal": "Lưu bữa ăn",
     "customFood": "Món tùy chỉnh",
     "mealTypes": {
-      "breakfast": "Breakfast",
-      "lunch": "Lunch",
-      "dinner": "Dinner",
-      "snack": "Snack"
+      "breakfast": "Bữa sáng",
+      "lunch": "Bữa trưa",
+      "dinner": "Bữa tối",
+      "morning_snack": "Snack buổi sáng",
+      "afternoon_snack": "Snack buổi chiều",
+      "evening_snack": "Snack buổi tối"
     },
     "fields": {
       "mealType": "Loại bữa",
@@ -427,6 +434,34 @@
     },
     "sampleNotes": {
       "lightBreakfast": "Ăn nhẹ trước khi đi làm"
+    },
+    "notFound": "Không tìm thấy bữa ăn nào cho ngày này.",
+    "loadingMeals": "Đang tải bữa ăn...",
+    "water": {
+      "title": "Nhật ký uống nước",
+      "totalToday": "{{total}} / {{goal}} ml hôm nay",
+      "goal": "Mục tiêu nước/ngày ml",
+      "addAmount": "Thêm nước ml",
+      "addLog": "Thêm",
+      "history": "Lịch sử uống nước",
+      "time": "Giờ",
+      "amount": "Lượng ml",
+      "noHistory": "Chưa có lịch sử uống nước cho ngày này.",
+      "updateLog": "Cập nhật water log",
+      "deleteLog": "Xóa water log",
+      "confirmUpdateLog": "Bạn có chắc muốn cập nhật water log này?",
+      "confirmDeleteLog": "Bạn có chắc muốn xóa water log này?",
+      "invalidAmount": "Vui lòng nhập lượng nước lớn hơn 0 ml.",
+      "invalidGoal": "Mục tiêu nước phải từ 100 đến 10.000 ml.",
+      "localGoalSaved": "Đã lưu mục tiêu nước local vì chưa cập nhật được profile API.",
+      "goalSaveError": "Không thể lưu mục tiêu nước.",
+      "backendUnavailable": "Chưa có API water log nên thao tác này chưa được lưu.",
+      "loggedMessage": "Đã ghi nhận {{amount}} ml nước.",
+      "reminderEnabled": "Nhắc uống nước",
+      "reminderInterval": "Khoảng nhắc phút",
+      "reminderStart": "Hôm nay bạn chưa ghi nhận uống nước.",
+      "reminderDue": "Đã {{minutes}} phút từ lần uống nước gần nhất.",
+      "goalReached": "Bạn đã hoàn thành mục tiêu nước hôm nay."
     }
   },
   "nutritionPage": {
