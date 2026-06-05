@@ -7,8 +7,12 @@ const mealEndpoints = {
   delete: (id) => `/meals/${id}`,
   summary: '/meals/summary',
   getlist: (date) => `/meals?date=${date}`,
+  update: (id) => `/meals/${id}`,
 };
 
+export function updateMeal(id, payload) {
+  return api.put(mealEndpoints.update(id), payload);
+}
 export function getMealsByDate(date) {
   return api.get(mealEndpoints.getlist(date));
 }

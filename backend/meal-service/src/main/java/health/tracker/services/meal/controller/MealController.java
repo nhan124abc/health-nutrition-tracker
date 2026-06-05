@@ -78,6 +78,18 @@ public class MealController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    // Cập nhật bữa ăn
+    @PutMapping("/{id}")
+    public ResponseEntity<MealResponse> update(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id,
+            @Valid @RequestBody MealRequest request ) {
+        log.debug("User {} updating meal: id={}, type={}, date={}",
+                userId, id,  request.getMealType(), request.getMealDate());
+        MealResponse response = mealService.update(id, userId, request);
+        return ResponseEntity.ok(response);
+    }
+
     /**
      * DELETE /api/v1/meals/{id}
      * Xoá bữa ăn. Chỉ chủ sở hữu mới được xoá.

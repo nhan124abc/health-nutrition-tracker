@@ -200,7 +200,8 @@
     "converted": "Converted",
     "instantCalories": "Instant calories",
     "notSelected": "Not selected",
-    "addToDiary": "Add to diary"
+    "addToDiary": "Add to diary",
+    "items": "items"
   },
   "planner": {
     "badge": "Daily Meal Planner",
@@ -692,16 +693,22 @@
     "description": "Create meals, add foods, view details, and review daily calorie totals.",
     "createMeal": "Create meal",
     "deleteMeal": "Delete meal",
+    "updateMeal": "Update meal",
+    "confirmDeleteMeal": "Delete this meal?",
+    "confirmUpdateMeal": "Update this meal?",
     "dailySummary": "Daily summary",
     "mealsLogged": "{{count}} meals logged",
     "newMealTitle": "Create new meal",
+    "updateMealTitle": "Update meal",
     "saveMeal": "Save meal",
     "customFood": "Custom food",
     "mealTypes": {
       "breakfast": "Breakfast",
       "lunch": "Lunch",
       "dinner": "Dinner",
-      "snack": "Snack"
+      "morning_snack": "Morning snack",
+      "afternoon_snack": "Afternoon snack",
+      "evening_snack": "Evening snack"
     },
     "fields": {
       "mealType": "Meal type",
@@ -711,6 +718,34 @@
     },
     "sampleNotes": {
       "lightBreakfast": "Light breakfast before work"
+    },
+    "notFound": "No meals found for this date.",
+    "loadingMeals": "Loading meals...",
+    "water": {
+      "title": "Water log",
+      "totalToday": "{{total}} / {{goal}} ml today",
+      "goal": "Daily water goal ml",
+      "addAmount": "Add water ml",
+      "addLog": "Add",
+      "history": "Water history",
+      "time": "Time",
+      "amount": "Amount ml",
+      "noHistory": "No water logs for this date.",
+      "updateLog": "Update water log",
+      "deleteLog": "Delete water log",
+      "confirmUpdateLog": "Update this water log?",
+      "confirmDeleteLog": "Delete this water log?",
+      "invalidAmount": "Please enter a water amount greater than 0 ml.",
+      "invalidGoal": "Water goal must be between 100 and 10,000 ml.",
+      "localGoalSaved": "Water goal saved locally because the profile API could not be updated.",
+      "goalSaveError": "Unable to save the water goal.",
+      "backendUnavailable": "Water log API is not available yet, so this action was not saved.",
+      "loggedMessage": "Logged {{amount}} ml of water.",
+      "reminderEnabled": "Water reminder",
+      "reminderInterval": "Reminder interval minutes",
+      "reminderStart": "You have not logged water today.",
+      "reminderDue": "It has been {{minutes}} minutes since your last water log.",
+      "goalReached": "Today's water goal is complete."
     }
   },
   "nutritionPage": {
