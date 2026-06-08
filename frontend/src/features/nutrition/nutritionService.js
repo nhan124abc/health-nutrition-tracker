@@ -3,7 +3,6 @@ import api from '../../api/api';
 const nutritionEndpoints = {
   foods: '/nutrition/foods',
   foodDetail: (id) => `/nutrition/foods/${id}`,
-  barcode: (code) => `/nutrition/foods/barcode/${code}`,
   categories: '/nutrition/categories',
 };
 
@@ -13,10 +12,6 @@ export function getFoods(params = {}) {
 
 export function getFoodById(id) {
   return api.get(nutritionEndpoints.foodDetail(id));
-}
-
-export function getFoodByBarcode(code) {
-  return api.get(nutritionEndpoints.barcode(code));
 }
 
 export function createFood(payload) {

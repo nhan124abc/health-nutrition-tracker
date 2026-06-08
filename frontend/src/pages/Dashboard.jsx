@@ -25,7 +25,6 @@ const dailySummary = {
   mealCount: 4,
   activityCount: 2,
   activeMinutes: 65,
-  steps: 8420,
   waterIntake: 1750,
   weight: 67.4,
   streak: 8,
@@ -76,7 +75,6 @@ function Dashboard() {
   const goals = [
     [t('dashboardPage.goals.calorie'), dailySummary.caloriesConsumed, dailySummary.calorieGoal, 'kcal'],
     [t('dashboardPage.goals.water'), dailySummary.waterIntake, 2500, 'ml'],
-    [t('common.steps'), dailySummary.steps, 10000, t('common.steps')],
     [t('common.activeMinutes'), dailySummary.activeMinutes, 60, t('common.minutes')],
   ];
 
@@ -162,7 +160,6 @@ function Dashboard() {
                 <span>{t('common.fiber')}<strong>{dailySummary.fiber}g</strong></span>
                 <span>{t('common.sodium')}<strong>{dailySummary.sodium}mg</strong></span>
                 <span>{t('common.weight')}<strong>{dailySummary.weight}kg</strong></span>
-                <span>{t('common.steps')}<strong>{dailySummary.steps}</strong></span>
               </div>
             </Card.Body>
           </Card>

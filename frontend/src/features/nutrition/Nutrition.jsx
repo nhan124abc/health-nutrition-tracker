@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Badge, Button, Card, Col, Form, InputGroup, Modal, Row, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { FaBarcode, FaPlus, FaSearch } from 'react-icons/fa';
+import { FaImage, FaPlus, FaSearch } from 'react-icons/fa';
 
 const foods = [
   {
@@ -78,27 +78,58 @@ function Nutrition() {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
-  const [barcode, setBarcode] = useState('');
+  const [imageSearchName, setImageSearchName] = useState('');
+  const [imagePreview, setImagePreview] = useState('');
   const [selectedFood, setSelectedFood] = useState(foods[0]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newFood, setNewFood] = useState(emptyFood);
 
   const filteredFoods = useMemo(() => {
     const keyword = query.trim().toLowerCase();
+    const imageKeyword = imageSearchName
+      .replace(/\.[^.]+$/, '')
+      .replace(/[_-]+/g, ' ')
+      .trim()
+      .toLowerCase();
 
     return foods.filter((food) => {
-      const matchesKeyword = !keyword || [food.name, food.nameVi, food.brand, food.barcode].some((value) =>
+      const searchableValues = [food.name, food.nameVi, food.brand, food.category];
+      const matchesKeyword = !keyword || searchableValues.some((value) =>
         value.toLowerCase().includes(keyword)
       );
       const matchesCategory = category === 'all' || food.category === category;
-      const matchesBarcode = !barcode || food.barcode.includes(barcode.trim());
-      return matchesKeyword && matchesCategory && matchesBarcode;
+      const matchesImage = !imageKeyword || searchableValues.some((value) =>
+        value.toLowerCase().includes(imageKeyword)
+      );
+
+      return matchesKeyword && matchesCategory && matchesImage;
     });
-  }, [barcode, category, query]);
+  }, [category, imageSearchName, query]);
 
   const handleNewFoodChange = (event) => {
     const { name, value } = event.target;
     setNewFood((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleImageSearch = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      setImageSearchName('');
+      setImagePreview('');
+      return;
+    }
+
+    setImageSearchName(file.name);
+
+    const reader = new FileReader();
+    reader.onload = () => setImagePreview(String(reader.result || ''));
+    reader.readAsDataURL(file);
+  };
+
+  const clearImageSearch = () => {
+    setImageSearchName('');
+    setImagePreview('');
   };
 
   const basicFields = [
@@ -144,10 +175,25 @@ function Nutrition() {
                   </Form.Select>
                 </Col>
                 <Col md={4}>
-                  <InputGroup>
-                    <InputGroup.Text><FaBarcode /></InputGroup.Text>
-                    <Form.Control value={barcode} onChange={(event) => setBarcode(event.target.value)} placeholder={t('common.barcode')} />
-                  </InputGroup>
+                  <Button as="label" htmlFor="nutrition-image-search" variant="outline-secondary" className="w-100">
+                    <FaImage className="me-2" />
+                    {t('nutritionPage.imageSearch')}
+                  </Button>
+                  <Form.Control
+                    id="nutrition-image-search"
+                    className="visually-hidden"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageSearch}
+                    aria-label={t('nutritionPage.imageSearch')}
+                  />
+                  {imageSearchName && (
+                    <div className="d-flex align-items-center gap-2 mt-2">
+                      {imagePreview && <img className="nutrition-image-preview" src={imagePreview} alt={imageSearchName} />}
+                      <span className="small text-secondary flex-grow-1">{t('nutritionPage.imageSelected', { name: imageSearchName })}</span>
+                      <Button variant="outline-secondary" size="sm" onClick={clearImageSearch}>{t('nutritionPage.clearImage')}</Button>
+                    </div>
+                  )}
                 </Col>
               </Row>
 

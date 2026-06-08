@@ -5,12 +5,12 @@
   "nav": {
     "dashboard": "Dashboard",
     "nutrition": "Dinh dưỡng",
-    "diary": "Nhật ký dinh dưỡng",
+    "diary": "Nhật ký bữa ăn",
     "activity": "Vận động",
-    "water": "Nước",
+    "water": "Theo dõi nước uống",
     "goals": "Mục tiêu",
     "reports": "Báo cáo",
-    "analytics": "Phân tích",
+    "statistics": "Báo cáo & thống kê",
     "bodyMetrics": "Chỉ số cơ thể",
     "news": "Tin tức",
     "settings": "Cài đặt",
@@ -284,7 +284,7 @@
         "title": "Chỉ số cơ thể",
         "description": "Theo dõi cân nặng, BMI, vòng eo và các ghi chú sức khỏe để thấy sự thay đổi theo thời gian."
       },
-      "analytics": {
+      "statistics": {
         "title": "Báo cáo tuần/tháng",
         "description": "Xem xu hướng calo, dinh dưỡng, vận động và tiến trình mục tiêu qua các mốc thời gian rõ ràng."
       }
@@ -389,9 +389,9 @@
     }
   },
   "reportsPage": {
-    "badge": "Analytics",
-    "title": "Dashboard tuần/tháng",
-    "description": "Biểu đồ calories in/out, net calories, macro trend và tổng quan tiến trình.",
+    "badge": "Báo cáo & thống kê",
+    "title": "Báo cáo & thống kê",
+    "description": "Xem calories in/out, net calories, macro trend và tổng quan tiến trình theo tuần hoặc tháng.",
     "caloriesTitle": "Calories in/out",
     "macroTitle": "Macro trend",
     "metrics": {
@@ -402,6 +402,36 @@
       "excellent": "Excellent",
       "streakHelper": "8 ngày liên tục"
     }
+  },
+  "waterPage": {
+    "badge": "Theo dõi nước uống",
+    "title": "Theo dõi nước uống",
+    "description": "Đặt mục tiêu nước hằng ngày, ghi nhận lượng nước uống, quản lý nhắc nhở và xem lịch sử uống nước.",
+    "todayTitle": "Nước hôm nay",
+    "totalToday": "{{total}} / {{goal}} ml hôm nay",
+    "goal": "Mục tiêu nước/ngày ml",
+    "addAmount": "Thêm lượng nước ml",
+    "addLog": "Thêm",
+    "history": "Lịch sử uống nước",
+    "time": "Giờ",
+    "amount": "Lượng ml",
+    "noHistory": "Chưa có lịch sử uống nước cho ngày này.",
+    "updateLog": "Cập nhật water log",
+    "deleteLog": "Xóa water log",
+    "confirmDeleteLog": "Bạn có chắc muốn xóa water log này?",
+    "invalidAmount": "Vui lòng nhập lượng nước lớn hơn 0 ml.",
+    "invalidGoal": "Mục tiêu nước phải từ 100 đến 10.000 ml.",
+    "goalSaved": "Đã lưu mục tiêu nước.",
+    "localGoalSaved": "Đã lưu mục tiêu nước local vì chưa cập nhật được profile API.",
+    "loggedMessage": "Đã ghi nhận {{amount}} ml nước.",
+    "updatedMessage": "Đã cập nhật water log.",
+    "deletedMessage": "Đã xóa water log.",
+    "notificationTitle": "Thông báo uống nước",
+    "reminderEnabled": "Nhắc uống nước",
+    "reminderInterval": "Khoảng nhắc phút",
+    "reminderStart": "Hôm nay bạn chưa ghi nhận uống nước.",
+    "reminderDue": "Đã {{minutes}} phút từ lần uống nước gần nhất.",
+    "goalReached": "Bạn đã hoàn thành mục tiêu nước hôm nay."
   },
   "foodDiaryPage": {
     "badge": "Nhật ký bữa ăn",
@@ -467,9 +497,12 @@
   "nutritionPage": {
     "badge": "Food database",
     "title": "Dinh dưỡng và thực phẩm",
-    "description": "Tìm kiếm, lọc danh mục, tra barcode, xem macro/micro và thêm thực phẩm mới.",
+    "description": "Tìm theo từ khóa hoặc hình ảnh, lọc danh mục, xem macro/micro và thêm thực phẩm mới.",
     "addFood": "Thêm thực phẩm",
     "searchPlaceholder": "Tìm theo tên, brand...",
+    "imageSearch": "Tìm kiếm bằng hình ảnh",
+    "imageSelected": "Đã chọn ảnh: {{name}}",
+    "clearImage": "Xóa",
     "allCategories": "Tất cả danh mục",
     "resultCount": "Hiển thị {{count}} kết quả. Pagination sẵn sàng gắn API /nutrition/foods.",
     "newFoodTitle": "Thêm thực phẩm mới",
@@ -490,7 +523,9 @@
     "activityCount": "Số hoạt động",
     "typeTitle": "Loại hoạt động",
     "newLogTitle": "Ghi hoạt động mới",
+    "updateLogTitle": "Cập nhật hoạt động",
     "deleteLog": "Xóa activity log",
+    "updateLog": "Cập nhật activity log",
     "estimatedCalories": "Calories ước tính",
     "saveActivity": "Lưu activity",
     "categories": {
@@ -549,6 +584,24 @@
     "saving": "Đang lưu...",
     "loadError": "Không thể tải hồ sơ.",
     "saveError": "Không thể lưu hồ sơ.",
+    "printProfile": "In hồ sơ",
+    "healthProfile": "Hồ sơ sức khỏe",
+    "updateProfile": "Cập nhật hồ sơ",
+    "metricHistory": "Lịch sử chỉ số cơ thể",
+    "notificationSettings": "Cài đặt thông báo",
+    "tabs": {
+      "overview": "Hồ sơ sức khỏe",
+      "edit": "Cập nhật hồ sơ",
+      "metrics": "Lịch sử chỉ số",
+      "notifications": "Thông báo"
+    },
+    "notifications": {
+      "mealReminder": "Nhắc bữa ăn",
+      "waterReminder": "Nhắc uống nước",
+      "weightReminder": "Nhắc kiểm tra cân nặng",
+      "weeklyReport": "Tổng kết tuần",
+      "localOnly": "Cài đặt thông báo hiện chỉ hiển thị ở frontend cho đến khi có API settings từ backend."
+    },
     "localModeNote": "Auth đang tắt và chưa có token, nên hồ sơ này được lưu local để phát triển. Đăng nhập hoặc bật lại auth để lưu vào backend."
   },
   "bodyMetricsPage": {
