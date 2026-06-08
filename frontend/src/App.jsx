@@ -9,9 +9,10 @@ import Login from './features/auth/Login';
 import Register from './features/auth/Register';
 import ForgotPassword from './features/auth/ForgotPassword';
 import OAuth2Redirect from './features/auth/OAuth2Redirect';
-import Profile from './pages/Profile';
+import Profile from './features/profile/Profile';
 import Nutrition from './features/nutrition/Nutrition';
 import FoodDiary from './features/meals/FoodDiary';
+import WaterTracker from './features/water/WaterTracker';
 import ActivityTracker from './features/activities/ActivityTracker';
 import Reports from './pages/Reports';
 import BodyMetrics from './pages/BodyMetrics';
@@ -60,9 +61,10 @@ function App() {
           <Route path="/nutrition" element={<Nutrition />} />
           <Route path="/meals" element={<FoodDiary />} />
           <Route path="/food-diary" element={<Navigate to="/meals" replace />} />
+          <Route path="/water" element={<WaterTracker />} />
           <Route path="/activity" element={<ActivityTracker />} />
-          <Route path="/analytics" element={<Reports />} />
-          <Route path="/reports" element={<Navigate to="/analytics" replace />} />
+          <Route path="/reports" element={<Reports />} />
+          <Route path="/analytics" element={<Navigate to="/reports" replace />} />
           <Route path="/body-metrics" element={<BodyMetrics />} />
         </Route>
         <Route

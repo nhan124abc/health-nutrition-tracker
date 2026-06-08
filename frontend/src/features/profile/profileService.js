@@ -8,3 +8,7 @@ export function getProfile() {
 export function updateProfile(payload) {
   return api.put(authConfig.endpoints.profile, payload);
 }
+
+export function getBodyMetrics(params = {}) {
+  return api.get('/users/me/metrics', { params });
+}

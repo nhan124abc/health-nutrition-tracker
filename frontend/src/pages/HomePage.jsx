@@ -21,7 +21,7 @@ const featureCards = [
   { icon: FaBarcode, titleKey: 'home.features.database.title', descriptionKey: 'home.features.database.description' },
   { icon: FaDumbbell, titleKey: 'home.features.activity.title', descriptionKey: 'home.features.activity.description' },
   { icon: FaWeight, titleKey: 'home.features.metrics.title', descriptionKey: 'home.features.metrics.description' },
-  { icon: FaChartLine, titleKey: 'home.features.analytics.title', descriptionKey: 'home.features.analytics.description' },
+  { icon: FaChartLine, titleKey: 'home.features.statistics.title', descriptionKey: 'home.features.statistics.description' },
 ];
 
 const flowSteps = [

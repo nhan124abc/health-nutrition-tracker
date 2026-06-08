@@ -12,6 +12,7 @@ import {
   FaRobot,
   FaSearch,
   FaSignOutAlt,
+  FaTint,
   FaUserCircle,
   FaUtensils,
   FaWeight,
@@ -23,9 +24,10 @@ import { clearChatHistory, getChatHistory, sendChatMessage } from '../features/a
 const menuItems = [
   { to: '/dashboard', labelKey: 'nav.dashboard', icon: FaHome },
   { to: '/meals', labelKey: 'nav.diary', icon: FaUtensils },
+  { to: '/water', labelKey: 'nav.water', icon: FaTint },
   { to: '/activity', labelKey: 'nav.activity', icon: FaDumbbell },
   { to: '/nutrition', labelKey: 'nav.nutrition', icon: FaSearch },
-  { to: '/analytics', labelKey: 'nav.analytics', icon: FaChartLine },
+  { to: '/reports', labelKey: 'nav.statistics', icon: FaChartLine },
   { to: '/body-metrics', labelKey: 'nav.bodyMetrics', icon: FaWeight },
   { to: '/profile', labelKey: 'nav.profile', icon: FaUserCircle },
 ];

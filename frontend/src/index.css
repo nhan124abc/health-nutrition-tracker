@@ -1201,6 +1201,39 @@ body {
   padding-bottom: 0;
 }
 
+.profile-tab-nav .nav-link {
+  border: 1px solid transparent;
+  color: var(--health-muted);
+  font-weight: 700;
+}
+
+.profile-tab-nav .nav-link:hover,
+.profile-tab-nav .nav-link:focus {
+  background: rgba(47, 143, 107, 0.08);
+  border-color: rgba(47, 143, 107, 0.16);
+  color: var(--health-primary-dark) !important;
+}
+
+.profile-tab-nav .nav-link.active {
+  background: var(--health-primary-soft) !important;
+  border-color: rgba(47, 143, 107, 0.24);
+  color: var(--health-primary-dark) !important;
+}
+
+.profile-tab-nav .nav-link:active {
+  background: rgba(47, 143, 107, 0.18) !important;
+  color: var(--health-primary-dark) !important;
+}
+
+.nutrition-image-preview {
+  aspect-ratio: 1;
+  border: 1px solid #dee2e6;
+  border-radius: 0.4rem;
+  height: 2.25rem;
+  object-fit: cover;
+  width: 2.25rem;
+}
+
 .health-result-alert {
   border: 0;
   border-radius: 0.75rem;
@@ -1329,6 +1362,13 @@ body {
 
 .meal-row-actions button:hover {
   color: var(--health-primary);
+}
+
+.crud-actions {
+  align-items: center;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .macro-calorie-progress .progress {

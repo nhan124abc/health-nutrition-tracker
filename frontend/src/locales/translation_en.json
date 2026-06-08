@@ -7,10 +7,10 @@
     "nutrition": "Nutrition",
     "diary": "Nutrition Diary",
     "activity": "Activity",
-    "water": "Water",
+    "water": "Water Tracker",
     "goals": "Goals",
     "reports": "Reports",
-    "analytics": "Analytics",
+    "statistics": "Reports & Statistics",
     "bodyMetrics": "Body metrics",
     "news": "News",
     "settings": "Settings",
@@ -134,7 +134,7 @@
         "title": "Body metrics",
         "description": "Track weight, BMI, waist measurements, and health notes so you can see changes over time."
       },
-      "analytics": {
+      "statistics": {
         "title": "Weekly and monthly reports",
         "description": "Review calorie, nutrition, activity, and goal progress across clear time periods."
       }
@@ -673,9 +673,9 @@
     }
   },
   "reportsPage": {
-    "badge": "Analytics",
-    "title": "Weekly/monthly dashboard",
-    "description": "Charts for calories in/out, net calories, macro trends, and progress overview.",
+    "badge": "Reports & Statistics",
+    "title": "Reports & Statistics",
+    "description": "Review calories in/out, net calories, macro trends, and progress overview by week or month.",
     "caloriesTitle": "Calories in/out",
     "macroTitle": "Macro trend",
     "metrics": {
@@ -686,6 +686,36 @@
       "excellent": "Excellent",
       "streakHelper": "8 days in a row"
     }
+  },
+  "waterPage": {
+    "badge": "Water tracker",
+    "title": "Water Tracker",
+    "description": "Set a daily water goal, log water intake, manage reminders, and review drinking history.",
+    "todayTitle": "Today's water",
+    "totalToday": "{{total}} / {{goal}} ml today",
+    "goal": "Daily water goal ml",
+    "addAmount": "Add water ml",
+    "addLog": "Add",
+    "history": "Water history",
+    "time": "Time",
+    "amount": "Amount ml",
+    "noHistory": "No water logs for this date.",
+    "updateLog": "Update water log",
+    "deleteLog": "Delete water log",
+    "confirmDeleteLog": "Delete this water log?",
+    "invalidAmount": "Please enter a water amount greater than 0 ml.",
+    "invalidGoal": "Water goal must be between 100 and 10,000 ml.",
+    "goalSaved": "Water goal saved.",
+    "localGoalSaved": "Water goal saved locally because the profile API could not be updated.",
+    "loggedMessage": "Logged {{amount}} ml of water.",
+    "updatedMessage": "Water log updated.",
+    "deletedMessage": "Water log deleted.",
+    "notificationTitle": "Water notifications",
+    "reminderEnabled": "Water reminder",
+    "reminderInterval": "Reminder interval minutes",
+    "reminderStart": "You have not logged water today.",
+    "reminderDue": "It has been {{minutes}} minutes since your last water log.",
+    "goalReached": "Today's water goal is complete."
   },
   "foodDiaryPage": {
     "badge": "Meal diary",
@@ -751,9 +781,12 @@
   "nutritionPage": {
     "badge": "Food database",
     "title": "Nutrition and foods",
-    "description": "Search, filter categories, check barcode, review macro/micro data, and add foods.",
+    "description": "Search by keyword or image, filter categories, review macro/micro data, and add foods.",
     "addFood": "Add food",
     "searchPlaceholder": "Search by name, brand...",
+    "imageSearch": "Search by image",
+    "imageSelected": "Image selected: {{name}}",
+    "clearImage": "Clear",
     "allCategories": "All categories",
     "resultCount": "Showing {{count}} results. Pagination is ready for /nutrition/foods.",
     "newFoodTitle": "Add new food",
@@ -774,7 +807,9 @@
     "activityCount": "Activities",
     "typeTitle": "Activity types",
     "newLogTitle": "Log new activity",
+    "updateLogTitle": "Update activity log",
     "deleteLog": "Delete activity log",
+    "updateLog": "Update activity log",
     "estimatedCalories": "Estimated calories",
     "saveActivity": "Save activity",
     "categories": {
@@ -833,6 +868,24 @@
     "saving": "Saving...",
     "loadError": "Unable to load profile.",
     "saveError": "Unable to save profile.",
+    "printProfile": "Print profile",
+    "healthProfile": "Health profile",
+    "updateProfile": "Update profile",
+    "metricHistory": "Body metrics history",
+    "notificationSettings": "Notification settings",
+    "tabs": {
+      "overview": "Health profile",
+      "edit": "Update profile",
+      "metrics": "Body metrics history",
+      "notifications": "Notifications"
+    },
+    "notifications": {
+      "mealReminder": "Meal reminders",
+      "waterReminder": "Water reminders",
+      "weightReminder": "Weight check reminders",
+      "weeklyReport": "Weekly report summary",
+      "localOnly": "Notification settings are shown in the frontend only until the backend settings API is available."
+    },
     "localModeNote": "Auth is disabled and no token is available, so this profile is saved locally for development. Log in or turn auth back on to save to the backend."
   },
   "bodyMetricsPage": {

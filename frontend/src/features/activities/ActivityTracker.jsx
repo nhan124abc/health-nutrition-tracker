@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Badge, Button, Card, Col, Form, Modal, Row, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { FaPlus, FaTrash } from 'react-icons/fa';
+import { FaEdit, FaPlus, FaTrash } from 'react-icons/fa';
 
 const activityTypes = [
   { id: 'run', nameKey: 'activityPage.types.running', category: 'cardio', met: 8.3 },
@@ -73,6 +73,7 @@ function ActivityTracker() {
   const [logs, setLogs] = useState(initialLogs);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(emptyLog);
+  const [editingLogId, setEditingLogId] = useState(null);
 
   const filteredTypes = category === 'all' ? activityTypes : activityTypes.filter((type) => type.category === category);
   const dayLogs = logs.filter((log) => log.date === selectedDate);
@@ -98,18 +99,49 @@ function ActivityTracker() {
     return Math.round(((type?.met || 4) * 3.5 * Number(form.userWeight || 0) * Number(form.duration || 0)) / 200);
   };
 
-  const addLog = () => {
-    setLogs((current) => [
-      ...current,
-      {
-        ...form,
-        id: `A${Date.now()}`,
-        calories: calculateCalories(),
-        notesKey: '',
-      },
-    ]);
-    setShowModal(false);
+  const openCreateModal = () => {
+    setEditingLogId(null);
     setForm({ ...emptyLog, date: selectedDate });
+    setShowModal(true);
+  };
+
+  const openEditModal = (log) => {
+    setEditingLogId(log.id);
+    setForm({
+      ...emptyLog,
+      ...log,
+      notes: log.notes || '',
+      notesKey: '',
+    });
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingLogId(null);
+    setForm({ ...emptyLog, date: selectedDate });
+  };
+
+  const saveLog = () => {
+    const savedLog = {
+      ...form,
+      calories: calculateCalories(),
+      notesKey: '',
+    };
+
+    if (editingLogId) {
+      setLogs((current) => current.map((log) => (log.id === editingLogId ? { ...savedLog, id: editingLogId } : log)));
+    } else {
+      setLogs((current) => [
+        ...current,
+        {
+          ...savedLog,
+          id: `A${Date.now()}`,
+        },
+      ]);
+    }
+
+    closeModal();
   };
 
   const removeLog = (id) => {
@@ -142,7 +174,7 @@ function ActivityTracker() {
         </div>
         <div className="d-flex flex-wrap gap-2">
           <input className="form-control page-date-input" type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
-          <Button variant="success" onClick={() => setShowModal(true)}>
+          <Button variant="success" onClick={openCreateModal}>
             <FaPlus className="me-2" />
             {t('activityPage.addActivity')}
           </Button>
@@ -196,6 +228,11 @@ function ActivityTracker() {
                               : `${log.distance || '-'} km - ${log.steps || '-'} ${t('common.steps')}`}
                           </td>
                           <td className="text-end">
+                            <Button variant="outline-primary" size="sm" onClick={() => openEditModal(log)} aria-label={t('activityPage.updateLog')}>
+                              <FaEdit />
+                            </Button>
+                          </td>
+                          <td className="text-end">
                             <Button variant="outline-danger" size="sm" onClick={() => removeLog(log.id)} aria-label={t('activityPage.deleteLog')}>
                               <FaTrash />
                             </Button>
@@ -235,9 +272,9 @@ function ActivityTracker() {
         </Col>
       </Row>
 
-      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg" centered>
+      <Modal show={showModal} onHide={closeModal} size="lg" centered>
         <Modal.Header closeButton>
-          <Modal.Title>{t('activityPage.newLogTitle')}</Modal.Title>
+          <Modal.Title>{editingLogId ? t('activityPage.updateLogTitle') : t('activityPage.newLogTitle')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Row className="g-3">
@@ -263,8 +300,10 @@ function ActivityTracker() {
           </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="outline-secondary" onClick={() => setShowModal(false)}>{t('common.cancel')}</Button>
-          <Button variant="success" onClick={addLog}>{t('activityPage.saveActivity')}</Button>
+          <Button variant="outline-secondary" onClick={closeModal}>{t('common.cancel')}</Button>
+          <Button variant="success" onClick={saveLog}>
+            {editingLogId ? t('activityPage.updateLog') : t('activityPage.saveActivity')}
+          </Button>
         </Modal.Footer>
       </Modal>
     </>
