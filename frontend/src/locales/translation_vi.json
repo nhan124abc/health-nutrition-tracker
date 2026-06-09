@@ -77,7 +77,6 @@
     "caloriesOut": "Calories tiêu hao",
     "meals": "Bữa ăn",
     "weight": "Cân nặng",
-    "steps": "Bước chân",
     "activeMinutes": "Phút vận động",
     "minutes": "phút",
     "days": "ngày",
@@ -109,7 +108,6 @@
       "verified": "Đã xác thực",
       "pending": "Chờ duyệt"
     },
-    "barcode": "Barcode",
     "brand": "Thương hiệu",
     "activity": "Hoạt động",
     "duration": "Thời lượng",
@@ -364,6 +362,9 @@
     "backToHome": "V? trang ch?"
   },
   "dashboardPage": {
+    "loading": "Đang tải dữ liệu dashboard...",
+    "loadError": "Không thể tải dữ liệu dashboard.",
+    "partialLoadError": "Một phần dữ liệu dashboard chưa tải được.",
     "badge": "Dashboard ngày",
     "title": "Tổng quan hôm nay",
     "description": "Theo dõi calories, macro, vận động, nước uống, cân nặng và streak trong ngày.",
@@ -389,6 +390,9 @@
     }
   },
   "reportsPage": {
+    "loading": "Đang tải dữ liệu báo cáo...",
+    "loadError": "Không thể tải dữ liệu báo cáo.",
+    "partialLoadError": "Một phần dữ liệu báo cáo chưa tải được.",
     "badge": "Báo cáo & thống kê",
     "title": "Báo cáo & thống kê",
     "description": "Xem calories in/out, net calories, macro trend và tổng quan tiến trình theo tuần hoặc tháng.",
@@ -400,7 +404,10 @@
       "avgNet": "Net calories TB",
       "streak": "Streak label",
       "excellent": "Excellent",
-      "streakHelper": "8 ngày liên tục"
+      "streakHelper": "Số ngày ghi nhật ký liên tục",
+      "mealCount": "{{count}} bữa ăn đã ghi",
+      "activityCount": "{{count}} hoạt động đã ghi",
+      "activeMinutes": "{{count}} phút vận động"
     }
   },
   "waterPage": {
@@ -499,6 +506,15 @@
     "title": "Dinh dưỡng và thực phẩm",
     "description": "Tìm theo từ khóa hoặc hình ảnh, lọc danh mục, xem macro/micro và thêm thực phẩm mới.",
     "addFood": "Thêm thực phẩm",
+    "loading": "Đang tải dữ liệu dinh dưỡng...",
+    "loadingDetail": "Đang tải chi tiết thực phẩm...",
+    "loadError": "Không thể tải dữ liệu dinh dưỡng.",
+    "detailError": "Không thể tải chi tiết thực phẩm.",
+    "saveError": "Không thể lưu thực phẩm.",
+    "savedMessage": "Đã lưu thực phẩm thành công.",
+    "saving": "Đang lưu...",
+    "selectCategory": "Chọn danh mục",
+    "noSelection": "Chưa chọn thực phẩm.",
     "searchPlaceholder": "Tìm theo tên, brand...",
     "imageSearch": "Tìm kiếm bằng hình ảnh",
     "imageSelected": "Đã chọn ảnh: {{name}}",
@@ -506,11 +522,12 @@
     "allCategories": "Tất cả danh mục",
     "resultCount": "Hiển thị {{count}} kết quả. Pagination sẵn sàng gắn API /nutrition/foods.",
     "newFoodTitle": "Thêm thực phẩm mới",
-    "savePending": "Lưu pending",
+    "savePending": "Lưu thực phẩm",
     "fields": {
       "name": "Tên",
       "nameVi": "Tên tiếng Việt",
-      "imageUrl": "Image URL"
+      "imageUrl": "URL hình ảnh",
+      "servingDescription": "Mô tả khẩu phần"
     }
   },
   "activityPage": {
@@ -523,14 +540,25 @@
     "activityCount": "Số hoạt động",
     "typeTitle": "Loại hoạt động",
     "newLogTitle": "Ghi hoạt động mới",
-    "updateLogTitle": "Cập nhật hoạt động",
     "deleteLog": "Xóa activity log",
-    "updateLog": "Cập nhật activity log",
     "estimatedCalories": "Calories ước tính",
     "saveActivity": "Lưu activity",
+    "saving": "Đang lưu...",
+    "selectType": "Chọn loại hoạt động",
+    "loading": "Đang tải hoạt động...",
+    "notFound": "Không có hoạt động trong ngày này.",
+    "loadError": "Không thể tải hoạt động.",
+    "loadTypesError": "Không thể tải danh mục hoạt động.",
+    "saveError": "Không thể lưu hoạt động.",
+    "deleteError": "Không thể xóa hoạt động.",
+    "confirmDelete": "Xóa hoạt động này?",
     "categories": {
       "cardio": "Cardio",
-      "strength": "Strength"
+      "strength": "Sức mạnh",
+      "flexibility": "Linh hoạt",
+      "sports": "Thể thao",
+      "daily": "Hoạt động hằng ngày",
+      "other": "Khác"
     },
     "types": {
       "running": "Running",
@@ -560,6 +588,8 @@
     "title": "Profile sức khỏe",
     "description": "Xem và cập nhật thông tin sức khỏe cá nhân từ profile endpoint.",
     "savedMessage": "Đã lưu hồ sơ thành công.",
+    "metricsLoadError": "Không thể tải lịch sử chỉ số cơ thể.",
+    "noMetrics": "Chưa có dữ liệu chỉ số cơ thể.",
     "selectGender": "Chọn giới tính",
     "fields": {
       "username": "Username",
@@ -610,6 +640,11 @@
     "description": "Ghi nhận cân nặng, body fat, muscle mass và các vòng đo; xem tiến trình theo thời gian.",
     "addTitle": "Thêm chỉ số",
     "saveMetric": "Lưu chỉ số",
+    "saving": "Đang lưu...",
+    "loading": "Đang tải chỉ số cơ thể...",
+    "loadError": "Không thể tải chỉ số cơ thể.",
+    "saveError": "Không thể lưu chỉ số cơ thể.",
+    "savedMessage": "Đã lưu chỉ số cơ thể.",
     "chartTitle": "Biểu đồ tiến trình",
     "historyTitle": "Lịch sử chỉ số",
     "fields": {
@@ -625,10 +660,6 @@
       "bodyFat": "Body fat",
       "muscle": "Muscle",
       "measurements": "Eo/Hông/Ngực"
-    },
-    "sampleNotes": {
-      "startMonth": "Bắt đầu tháng",
-      "afterThreeWeeks": "Sau 3 tuần"
     }
   },
   "admin": {

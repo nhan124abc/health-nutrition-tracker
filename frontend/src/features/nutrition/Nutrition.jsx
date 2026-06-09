@@ -1,110 +1,89 @@
-import { useMemo, useState } from 'react';
-import { Badge, Button, Card, Col, Form, InputGroup, Modal, Row, Table } from 'react-bootstrap';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Badge, Button, Col, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { FaImage, FaPlus, FaSearch } from 'react-icons/fa';
-
-const foods = [
-  {
-    id: 'F001',
-    name: 'Chicken breast',
-    nameVi: 'Uc ga',
-    brand: 'Fresh',
-    barcode: '893001000001',
-    category: 'Protein',
-    servingSize: '100g',
-    calories: 165,
-    protein: 31,
-    carbs: 0,
-    fat: 4,
-    fiber: 0,
-    sugar: 0,
-    sodium: 74,
-    status: 'verified',
-  },
-  {
-    id: 'F002',
-    name: 'Brown rice',
-    nameVi: 'Gao lut',
-    brand: 'Organic',
-    barcode: '893001000002',
-    category: 'Grain',
-    servingSize: '100g',
-    calories: 111,
-    protein: 3,
-    carbs: 23,
-    fat: 1,
-    fiber: 2,
-    sugar: 0,
-    sodium: 5,
-    status: 'verified',
-  },
-  {
-    id: 'F003',
-    name: 'Greek yogurt',
-    nameVi: 'Sua chua Hy Lap',
-    brand: 'Daily',
-    barcode: '893001000003',
-    category: 'Dairy',
-    servingSize: '100g',
-    calories: 97,
-    protein: 9,
-    carbs: 4,
-    fat: 5,
-    fiber: 0,
-    sugar: 3,
-    sodium: 36,
-    status: 'pending',
-  },
-];
-
-const emptyFood = {
-  name: '',
-  nameVi: '',
-  brand: '',
-  barcode: '',
-  category: 'Protein',
-  servingSize: '100g',
-  calories: '',
-  protein: '',
-  carbs: '',
-  fat: '',
-  fiber: '',
-  sugar: '',
-  sodium: '',
-  imageUrl: '',
-};
+import { FaPlus } from 'react-icons/fa';
+import FoodCatalogCard from './components/FoodCatalogCard';
+import FoodDetailCard from './components/FoodDetailCard';
+import FoodFormModal from './components/FoodFormModal';
+import { createFood, getFoodById, getFoodCategories, getFoods } from './nutritionService';
+import {
+  emptyFood,
+  extractCategoriesFromApi,
+  extractFoodFromApi,
+  extractFoodsFromApi,
+  filterFoods,
+  mapFoodToApi,
+  normalizeCategory,
+  normalizeFoodFromApi,
+} from './nutritionUtils';
 
 function Nutrition() {
   const { t } = useTranslation();
+  const [foods, setFoods] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [imageSearchName, setImageSearchName] = useState('');
   const [imagePreview, setImagePreview] = useState('');
-  const [selectedFood, setSelectedFood] = useState(foods[0]);
+  const [selectedFood, setSelectedFood] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newFood, setNewFood] = useState(emptyFood);
+  const [loading, setLoading] = useState(true);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [saved, setSaved] = useState(false);
 
-  const filteredFoods = useMemo(() => {
-    const keyword = query.trim().toLowerCase();
-    const imageKeyword = imageSearchName
-      .replace(/\.[^.]+$/, '')
-      .replace(/[_-]+/g, ' ')
-      .trim()
-      .toLowerCase();
+  const filteredFoods = useMemo(
+    () => filterFoods(foods, query, category, imageSearchName),
+    [category, foods, imageSearchName, query]
+  );
 
-    return foods.filter((food) => {
-      const searchableValues = [food.name, food.nameVi, food.brand, food.category];
-      const matchesKeyword = !keyword || searchableValues.some((value) =>
-        value.toLowerCase().includes(keyword)
-      );
-      const matchesCategory = category === 'all' || food.category === category;
-      const matchesImage = !imageKeyword || searchableValues.some((value) =>
-        value.toLowerCase().includes(imageKeyword)
-      );
+  useEffect(() => {
+    let isMounted = true;
 
-      return matchesKeyword && matchesCategory && matchesImage;
-    });
-  }, [category, imageSearchName, query]);
+    async function loadNutritionData() {
+      setLoading(true);
+      setError('');
+
+      try {
+        const [foodsResponse, categoriesResponse] = await Promise.all([
+          getFoods({ page: 0, size: 100 }),
+          getFoodCategories(),
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        const normalizedFoods = extractFoodsFromApi(foodsResponse.data).map(normalizeFoodFromApi);
+        const normalizedCategories = extractCategoriesFromApi(categoriesResponse.data).map(normalizeCategory);
+
+        setFoods(normalizedFoods);
+        setCategories(normalizedCategories);
+        setSelectedFood(normalizedFoods[0] || null);
+      } catch (requestError) {
+        console.error('[Nutrition] Error loading nutrition data:', requestError);
+
+        if (isMounted) {
+          setFoods([]);
+          setCategories([]);
+          setSelectedFood(null);
+          setError(requestError.response?.data?.message || t('nutritionPage.loadError'));
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadNutritionData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [t]);
 
   const handleNewFoodChange = (event) => {
     const { name, value } = event.target;
@@ -132,14 +111,58 @@ function Nutrition() {
     setImagePreview('');
   };
 
-  const basicFields = [
-    ['name', 'nutritionPage.fields.name'],
-    ['nameVi', 'nutritionPage.fields.nameVi'],
-    ['brand', 'common.brand'],
-    ['barcode', 'common.barcode'],
-    ['servingSize', 'common.servingSize'],
-    ['imageUrl', 'nutritionPage.fields.imageUrl'],
-  ];
+  const openCreateModal = () => {
+    setError('');
+    setSaved(false);
+    setNewFood({ ...emptyFood, categoryId: categories[0]?.id || '' });
+    setShowCreateModal(true);
+  };
+
+  const closeCreateModal = () => {
+    setShowCreateModal(false);
+    setNewFood(emptyFood);
+  };
+
+  const selectFood = async (food) => {
+    setSelectedFood(food);
+    setLoadingDetail(true);
+    setError('');
+
+    try {
+      const response = await getFoodById(food.id);
+      setSelectedFood(normalizeFoodFromApi(extractFoodFromApi(response.data)));
+    } catch (requestError) {
+      console.error('[Nutrition] Error loading food detail:', requestError);
+      setError(requestError.response?.data?.message || t('nutritionPage.detailError'));
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
+  const saveFood = async () => {
+    if (saving) {
+      return;
+    }
+
+    setSaving(true);
+    setSaved(false);
+    setError('');
+
+    try {
+      const response = await createFood(mapFoodToApi(newFood));
+      const createdFood = normalizeFoodFromApi(extractFoodFromApi(response.data));
+
+      setFoods((current) => [createdFood, ...current]);
+      setSelectedFood(createdFood);
+      closeCreateModal();
+      setSaved(true);
+    } catch (requestError) {
+      console.error('[Nutrition] Error saving food:', requestError);
+      setError(requestError.response?.data?.message || t('nutritionPage.saveError'));
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <>
@@ -149,159 +172,57 @@ function Nutrition() {
           <h1>{t('nutritionPage.title')}</h1>
           <p>{t('nutritionPage.description')}</p>
         </div>
-        <Button variant="success" onClick={() => setShowCreateModal(true)}>
+        <Button variant="success" onClick={openCreateModal} disabled={loading || categories.length === 0}>
           <FaPlus className="me-2" />
           {t('nutritionPage.addFood')}
         </Button>
       </div>
 
-      <Row className="g-4">
-        <Col lg={8}>
-          <Card className="border-0 shadow-sm">
-            <Card.Body>
-              <Row className="g-3 mb-3">
-                <Col md={5}>
-                  <InputGroup>
-                    <InputGroup.Text><FaSearch /></InputGroup.Text>
-                    <Form.Control value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('nutritionPage.searchPlaceholder')} />
-                  </InputGroup>
-                </Col>
-                <Col md={3}>
-                  <Form.Select value={category} onChange={(event) => setCategory(event.target.value)}>
-                    <option value="all">{t('nutritionPage.allCategories')}</option>
-                    <option value="Protein">Protein</option>
-                    <option value="Grain">Grain</option>
-                    <option value="Dairy">Dairy</option>
-                  </Form.Select>
-                </Col>
-                <Col md={4}>
-                  <Button as="label" htmlFor="nutrition-image-search" variant="outline-secondary" className="w-100">
-                    <FaImage className="me-2" />
-                    {t('nutritionPage.imageSearch')}
-                  </Button>
-                  <Form.Control
-                    id="nutrition-image-search"
-                    className="visually-hidden"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageSearch}
-                    aria-label={t('nutritionPage.imageSearch')}
-                  />
-                  {imageSearchName && (
-                    <div className="d-flex align-items-center gap-2 mt-2">
-                      {imagePreview && <img className="nutrition-image-preview" src={imagePreview} alt={imageSearchName} />}
-                      <span className="small text-secondary flex-grow-1">{t('nutritionPage.imageSelected', { name: imageSearchName })}</span>
-                      <Button variant="outline-secondary" size="sm" onClick={clearImageSearch}>{t('nutritionPage.clearImage')}</Button>
-                    </div>
-                  )}
-                </Col>
-              </Row>
+      {error && <Alert variant="danger">{error}</Alert>}
+      {saved && <Alert variant="success">{t('nutritionPage.savedMessage')}</Alert>}
 
-              <div className="table-responsive">
-                <Table hover className="align-middle mb-0">
-                  <thead>
-                    <tr>
-                      <th>{t('common.food')}</th>
-                      <th>{t('common.category')}</th>
-                      <th className="text-end">{t('common.calories')}</th>
-                      <th className="text-end">P/C/F</th>
-                      <th>{t('common.status')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredFoods.map((food) => (
-                      <tr key={food.id} onClick={() => setSelectedFood(food)} className="clickable-row">
-                        <td>
-                          <strong>{food.nameVi}</strong>
-                          <div className="text-secondary small">{food.name} - {food.brand}</div>
-                        </td>
-                        <td>{food.category}</td>
-                        <td className="text-end">{food.calories}</td>
-                        <td className="text-end">{food.protein}/{food.carbs}/{food.fat}g</td>
-                        <td>
-                          <Badge bg={food.status === 'verified' ? 'success' : 'warning'}>{t(`common.statuses.${food.status}`)}</Badge>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </Table>
-              </div>
-              <div className="small text-secondary mt-3">{t('nutritionPage.resultCount', { count: filteredFoods.length })}</div>
-            </Card.Body>
-          </Card>
-        </Col>
+      {loading ? (
+        <div className="py-5 text-center text-secondary">
+          <Spinner animation="border" variant="success" className="mb-3" />
+          <div>{t('nutritionPage.loading')}</div>
+        </div>
+      ) : (
+        <Row className="g-4">
+          <Col lg={8}>
+            <FoodCatalogCard
+              categories={categories}
+              category={category}
+              foods={filteredFoods}
+              imagePreview={imagePreview}
+              imageSearchName={imageSearchName}
+              onCategoryChange={setCategory}
+              onClearImage={clearImageSearch}
+              onImageSearch={handleImageSearch}
+              onQueryChange={setQuery}
+              onSelectFood={selectFood}
+              query={query}
+              t={t}
+            />
+          </Col>
 
-        <Col lg={4}>
-          <Card className="border-0 shadow-sm sticky-panel">
-            <Card.Body>
-              <Badge bg={selectedFood.status === 'verified' ? 'success' : 'warning'} className="mb-3">
-                {t(`common.statuses.${selectedFood.status}`)}
-              </Badge>
-              <h2 className="h4 fw-bold mb-1">{selectedFood.nameVi}</h2>
-              <p className="text-secondary">{selectedFood.name} - {selectedFood.servingSize}</p>
-              <div className="nutrition-detail-grid">
-                {[
-                  [t('common.calories'), `${selectedFood.calories} kcal`],
-                  [t('common.protein'), `${selectedFood.protein} g`],
-                  [t('common.carbs'), `${selectedFood.carbs} g`],
-                  [t('common.fat'), `${selectedFood.fat} g`],
-                  [t('common.fiber'), `${selectedFood.fiber} g`],
-                  [t('common.sugar'), `${selectedFood.sugar} g`],
-                  [t('common.sodium'), `${selectedFood.sodium} mg`],
-                  [t('common.barcode'), selectedFood.barcode],
-                ].map(([label, value]) => (
-                  <div key={label}>
-                    <span>{label}</span>
-                    <strong>{value}</strong>
-                  </div>
-                ))}
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+          <Col lg={4}>
+            {loadingDetail
+              ? <div className="alert alert-light border">{t('nutritionPage.loadingDetail')}</div>
+              : <FoodDetailCard food={selectedFood} t={t} />}
+          </Col>
+        </Row>
+      )}
 
-      <Modal show={showCreateModal} onHide={() => setShowCreateModal(false)} size="lg" centered>
-        <Modal.Header closeButton>
-          <Modal.Title>{t('nutritionPage.newFoodTitle')}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Row className="g-3">
-            {basicFields.map(([name, labelKey]) => (
-              <Col md={6} key={name}>
-                <Form.Group>
-                  <Form.Label>{t(labelKey)}</Form.Label>
-                  <Form.Control name={name} value={newFood[name]} onChange={handleNewFoodChange} />
-                </Form.Group>
-              </Col>
-            ))}
-            <Col md={6}>
-              <Form.Group>
-                <Form.Label>{t('common.category')}</Form.Label>
-                <Form.Select name="category" value={newFood.category} onChange={handleNewFoodChange}>
-                  <option>Protein</option>
-                  <option>Grain</option>
-                  <option>Dairy</option>
-                  <option>Vegetable</option>
-                  <option>Fruit</option>
-                </Form.Select>
-              </Form.Group>
-            </Col>
-            {['calories', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'sodium'].map((name) => (
-              <Col md={3} key={name}>
-                <Form.Group>
-                  <Form.Label>{t(`common.${name}`)}</Form.Label>
-                  <Form.Control type="number" name={name} value={newFood[name]} onChange={handleNewFoodChange} />
-                </Form.Group>
-              </Col>
-            ))}
-          </Row>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="outline-secondary" onClick={() => setShowCreateModal(false)}>{t('common.cancel')}</Button>
-          <Button variant="success" onClick={() => setShowCreateModal(false)}>{t('nutritionPage.savePending')}</Button>
-        </Modal.Footer>
-      </Modal>
+      <FoodFormModal
+        categories={categories}
+        food={newFood}
+        onChange={handleNewFoodChange}
+        onClose={closeCreateModal}
+        onSave={saveFood}
+        saving={saving}
+        show={showCreateModal}
+        t={t}
+      />
     </>
   );
 }

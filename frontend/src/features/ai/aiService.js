@@ -1,14 +1,12 @@
 import api from '../../api/api';
-import authConfig from '../../config/authConfig';
-
-const GUEST_ID_KEY = 'aiGuestId';
+import aiConfig from '../../config/aiConfig';
 
 function getGuestId() {
-  let guestId = localStorage.getItem(GUEST_ID_KEY);
+  let guestId = localStorage.getItem(aiConfig.guestIdKey);
 
   if (!guestId) {
     guestId = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    localStorage.setItem(GUEST_ID_KEY, guestId);
+    localStorage.setItem(aiConfig.guestIdKey, guestId);
   }
 
   return guestId;
@@ -25,13 +23,13 @@ function withGuestHeaders(config = {}) {
 }
 
 export function sendChatMessage(payload) {
-  return api.post(authConfig.endpoints.aiChat, payload, withGuestHeaders());
+  return api.post(aiConfig.endpoints.chat, payload, withGuestHeaders());
 }
 
 export function getChatHistory() {
-  return api.get(authConfig.endpoints.aiChatHistory, withGuestHeaders());
+  return api.get(aiConfig.endpoints.chatHistory, withGuestHeaders());
 }
 
 export function clearChatHistory() {
-  return api.delete(authConfig.endpoints.aiChatHistory, withGuestHeaders());
+  return api.delete(aiConfig.endpoints.chatHistory, withGuestHeaders());
 }

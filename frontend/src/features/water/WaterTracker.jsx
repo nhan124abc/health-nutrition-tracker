@@ -1,41 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Badge, Button, Card, Col, Form, ProgressBar, Row, Table } from 'react-bootstrap';
+import { Badge, Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { FaBell, FaEdit, FaHistory, FaPlus, FaTint, FaTrash } from 'react-icons/fa';
 import { getProfile, updateProfile } from '../profile/profileService';
-
-const defaultWaterSettings = {
-  goalMl: 2000,
-  reminderEnabled: true,
-  reminderIntervalMinutes: 90,
-};
-
-const quickWaterAmounts = [150, 250, 500, 750];
-const waterLogsStorageKey = 'healthNutritionWaterLogs';
-const waterSettingsStorageKey = 'healthNutritionWaterSettings';
-
-function getTodayDate() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
-
-function normalizeNumber(value) {
-  return Number(value) || 0;
-}
-
-function readStoredJson(key, fallback) {
-  try {
-    const storedValue = localStorage.getItem(key);
-    return storedValue ? JSON.parse(storedValue) : fallback;
-  } catch (error) {
-    console.error(`[WaterTracker] Could not read ${key}:`, error);
-    return fallback;
-  }
-}
+import WaterHistoryCard from './components/WaterHistoryCard';
+import WaterReminderCard from './components/WaterReminderCard';
+import WaterSummaryCard from './components/WaterSummaryCard';
+import {
+  defaultWaterSettings,
+  getTodayDate,
+  normalizeNumber,
+  readStoredJson,
+  waterLogsStorageKey,
+  waterSettingsStorageKey,
+} from './waterUtils';
 
 function WaterTracker() {
   const { t } = useTranslation();
@@ -213,6 +190,10 @@ function WaterTracker() {
     setWaterSettings((current) => ({ ...current, [name]: value }));
   };
 
+  const updateWaterDraftAmount = (logId, value) => {
+    setWaterDraftAmounts((current) => ({ ...current, [logId]: value }));
+  };
+
   return (
     <>
       <div className="page-heading">
@@ -226,169 +207,38 @@ function WaterTracker() {
 
       <Row className="g-4">
         <Col lg={5}>
-          <Card className="border-0 shadow-sm planner-side-card">
-            <Card.Body>
-              <div className="d-flex justify-content-between align-items-start gap-3 mb-3">
-                <div className="d-flex align-items-center gap-2">
-                  <span className="water-glass"><FaTint /></span>
-                  <div>
-                    <Card.Title className="fw-bold mb-0">{t('waterPage.todayTitle')}</Card.Title>
-                    <Card.Text className="text-secondary small mb-0">
-                      {t('waterPage.totalToday', { total: totalWaterMl, goal: waterSettings.goalMl })}
-                    </Card.Text>
-                  </div>
-                </div>
-                <Badge bg={waterProgress >= 100 ? 'success' : 'info'}>{Math.round(waterProgress)}%</Badge>
-              </div>
-
-              <ProgressBar now={waterProgress} className="mb-3" />
-
-              {waterError && <div className="alert alert-warning py-2">{waterError}</div>}
-              {waterNotice && <div className="alert alert-success py-2">{waterNotice}</div>}
-              {waterReminderMessage && (
-                <div className="alert alert-info py-2 d-flex align-items-center gap-2">
-                  <FaBell />
-                  <span>{waterReminderMessage}</span>
-                </div>
-              )}
-
-              <Form.Group className="mb-3">
-                <Form.Label>{t('waterPage.goal')}</Form.Label>
-                <div className="d-flex gap-2">
-                  <Form.Control
-                    type="number"
-                    min="100"
-                    max="10000"
-                    step="50"
-                    value={waterGoalInput}
-                    onChange={(event) => setWaterGoalInput(event.target.value)}
-                  />
-                  <Button variant="outline-success" onClick={saveWaterGoal}>{t('common.save')}</Button>
-                </div>
-              </Form.Group>
-
-              <Form.Group className="mb-3">
-                <Form.Label>{t('waterPage.addAmount')}</Form.Label>
-                <div className="d-flex gap-2">
-                  <Form.Control
-                    type="number"
-                    min="1"
-                    step="50"
-                    value={waterAmount}
-                    onChange={(event) => setWaterAmount(event.target.value)}
-                  />
-                  <Button variant="info" className="text-white" onClick={() => addWaterLog()}>
-                    <FaPlus className="me-2" />
-                    {t('waterPage.addLog')}
-                  </Button>
-                </div>
-              </Form.Group>
-
-              <div className="d-flex flex-wrap gap-2">
-                {quickWaterAmounts.map((amount) => (
-                  <Button
-                    key={amount}
-                    variant="outline-info"
-                    size="sm"
-                    onClick={() => addWaterLog(amount)}
-                  >
-                    +{amount} ml
-                  </Button>
-                ))}
-              </div>
-            </Card.Body>
-          </Card>
+          <WaterSummaryCard
+            error={waterError}
+            goalInput={waterGoalInput}
+            notice={waterNotice}
+            onAddWater={addWaterLog}
+            onGoalInputChange={setWaterGoalInput}
+            onSaveGoal={saveWaterGoal}
+            onWaterAmountChange={setWaterAmount}
+            progress={waterProgress}
+            reminderMessage={waterReminderMessage}
+            settings={waterSettings}
+            t={t}
+            totalWaterMl={totalWaterMl}
+            waterAmount={waterAmount}
+          />
         </Col>
 
         <Col lg={7}>
           <div className="planner-side-stack">
-            <Card className="border-0 shadow-sm planner-side-card">
-              <Card.Body>
-                <Card.Title className="fw-bold mb-3">{t('waterPage.notificationTitle')}</Card.Title>
-                <Form.Check
-                  type="switch"
-                  id="water-reminder-enabled"
-                  label={t('waterPage.reminderEnabled')}
-                  checked={waterSettings.reminderEnabled}
-                  onChange={(event) => updateWaterReminderSetting('reminderEnabled', event.target.checked)}
-                />
-                <Form.Group className="mt-3">
-                  <Form.Label>{t('waterPage.reminderInterval')}</Form.Label>
-                  <Form.Control
-                    type="number"
-                    min="15"
-                    step="15"
-                    value={waterSettings.reminderIntervalMinutes}
-                    onChange={(event) => updateWaterReminderSetting('reminderIntervalMinutes', Number(event.target.value) || 60)}
-                    disabled={!waterSettings.reminderEnabled}
-                  />
-                </Form.Group>
-              </Card.Body>
-            </Card>
-
-            <Card className="border-0 shadow-sm planner-side-card">
-              <Card.Body>
-                <div className="d-flex align-items-center gap-2 mb-3">
-                  <FaHistory className="text-secondary" />
-                  <Card.Title className="fw-bold mb-0">{t('waterPage.history')}</Card.Title>
-                </div>
-
-                {dayWaterLogs.length === 0 ? (
-                  <p className="text-secondary small mb-0">{t('waterPage.noHistory')}</p>
-                ) : (
-                  <div className="table-responsive">
-                    <Table size="sm" hover className="align-middle mb-0">
-                      <thead>
-                        <tr>
-                          <th>{t('waterPage.time')}</th>
-                          <th className="text-end">{t('waterPage.amount')}</th>
-                          <th className="text-end">{t('admin.table.actions')}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {dayWaterLogs.map((log) => (
-                          <tr key={log.id}>
-                            <td>{String(log.loggedAt).slice(11, 16)}</td>
-                            <td className="text-end">
-                              <Form.Control
-                                type="number"
-                                min="1"
-                                size="sm"
-                                className="text-end"
-                                value={waterDraftAmounts[log.id] ?? log.amountMl}
-                                onChange={(event) => {
-                                  const { value } = event.target;
-                                  setWaterDraftAmounts((current) => ({ ...current, [log.id]: value }));
-                                }}
-                              />
-                            </td>
-                            <td className="text-end">
-                              <Button
-                                variant="outline-success"
-                                size="sm"
-                                className="me-2"
-                                onClick={() => updateWaterLogAmount(log.id, waterDraftAmounts[log.id] ?? log.amountMl)}
-                                aria-label={t('waterPage.updateLog')}
-                              >
-                                <FaEdit />
-                              </Button>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                onClick={() => removeWaterLog(log.id)}
-                                aria-label={t('waterPage.deleteLog')}
-                              >
-                                <FaTrash />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </div>
-                )}
-              </Card.Body>
-            </Card>
+            <WaterReminderCard
+              onSettingChange={updateWaterReminderSetting}
+              settings={waterSettings}
+              t={t}
+            />
+            <WaterHistoryCard
+              draftAmounts={waterDraftAmounts}
+              logs={dayWaterLogs}
+              onDelete={removeWaterLog}
+              onDraftChange={updateWaterDraftAmount}
+              onUpdate={updateWaterLogAmount}
+              t={t}
+            />
           </div>
         </Col>
       </Row>
