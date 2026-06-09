@@ -14,8 +14,8 @@ import Nutrition from './features/nutrition/Nutrition';
 import FoodDiary from './features/meals/FoodDiary';
 import WaterTracker from './features/water/WaterTracker';
 import ActivityTracker from './features/activities/ActivityTracker';
+import BodyMetrics from './features/profile/BodyMetrics';
 import Reports from './pages/Reports';
-import BodyMetrics from './pages/BodyMetrics';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminManagementPage from './pages/admin/AdminManagementPage';
 
@@ -80,8 +80,11 @@ function App() {
           <Route path="users" element={<AdminManagementPage type="users" />} />
           <Route path="foods" element={<AdminManagementPage type="foods" />} />
           <Route path="exercises" element={<AdminManagementPage type="exercises" />} />
+          <Route path="articles" element={<AdminManagementPage type="articles" />} />
           <Route path="submissions" element={<AdminManagementPage type="submissions" />} />
           <Route path="reports" element={<AdminManagementPage type="reports" />} />
+          <Route path="plans" element={<AdminManagementPage type="plans" />} />
+          <Route path="settings" element={<AdminManagementPage type="settings" />} />
         </Route>
       </Routes>
     </BrowserRouter>

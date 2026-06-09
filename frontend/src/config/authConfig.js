@@ -1,6 +1,8 @@
 const authConfig = {
-  apiBaseUrl: process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1',
-  disableAuth: process.env.REACT_APP_DISABLE_AUTH === 'true',
+  apiBaseUrl:
+    process.env.REACT_APP_API_BASE_URL ||
+    process.env.REACT_APP_API_URL ||
+    'http://localhost:8080/api/v1',
 
   tokenKeys: {
     access: 'accessToken',
@@ -17,9 +19,6 @@ const authConfig = {
     forgotPassword: '/auth/password/forgot',
     resetPassword: '/auth/password/reset',
     me: '/auth/me',
-    profile: '/users/me/profile',
-    aiChat: '/ai/chat',
-    aiChatHistory: '/ai/chat/history',
     oauthAuthorize: (provider) => `/auth/oauth2/authorize/${provider}`,
   },
 };

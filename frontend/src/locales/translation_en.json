@@ -604,7 +604,6 @@
     "caloriesOut": "Calories out",
     "meals": "Meals",
     "weight": "Weight",
-    "steps": "Steps",
     "activeMinutes": "Active minutes",
     "minutes": "minutes",
     "days": "days",
@@ -636,7 +635,6 @@
       "verified": "Verified",
       "pending": "Pending"
     },
-    "barcode": "Barcode",
     "brand": "Brand",
     "activity": "Activity",
     "duration": "Duration",
@@ -648,6 +646,9 @@
     "bio": "Bio"
   },
   "dashboardPage": {
+    "loading": "Loading dashboard data...",
+    "loadError": "Unable to load dashboard data.",
+    "partialLoadError": "Some dashboard data could not be loaded.",
     "badge": "Daily dashboard",
     "title": "Today overview",
     "description": "Track calories, macros, activity, water, weight, and streak for the day.",
@@ -673,6 +674,9 @@
     }
   },
   "reportsPage": {
+    "loading": "Loading report data...",
+    "loadError": "Unable to load report data.",
+    "partialLoadError": "Some report data could not be loaded.",
     "badge": "Reports & Statistics",
     "title": "Reports & Statistics",
     "description": "Review calories in/out, net calories, macro trends, and progress overview by week or month.",
@@ -684,7 +688,10 @@
       "avgNet": "Avg net calories",
       "streak": "Streak label",
       "excellent": "Excellent",
-      "streakHelper": "8 days in a row"
+      "streakHelper": "Consecutive logging days",
+      "mealCount": "{{count}} meals logged",
+      "activityCount": "{{count}} activities logged",
+      "activeMinutes": "{{count}} active minutes"
     }
   },
   "waterPage": {
@@ -783,6 +790,15 @@
     "title": "Nutrition and foods",
     "description": "Search by keyword or image, filter categories, review macro/micro data, and add foods.",
     "addFood": "Add food",
+    "loading": "Loading nutrition data...",
+    "loadingDetail": "Loading food details...",
+    "loadError": "Could not load nutrition data.",
+    "detailError": "Could not load food details.",
+    "saveError": "Could not save food.",
+    "savedMessage": "Food saved successfully.",
+    "saving": "Saving...",
+    "selectCategory": "Select category",
+    "noSelection": "No food selected.",
     "searchPlaceholder": "Search by name, brand...",
     "imageSearch": "Search by image",
     "imageSelected": "Image selected: {{name}}",
@@ -790,11 +806,12 @@
     "allCategories": "All categories",
     "resultCount": "Showing {{count}} results. Pagination is ready for /nutrition/foods.",
     "newFoodTitle": "Add new food",
-    "savePending": "Save pending",
+    "savePending": "Save food",
     "fields": {
       "name": "Name",
       "nameVi": "Vietnamese name",
-      "imageUrl": "Image URL"
+      "imageUrl": "Image URL",
+      "servingDescription": "Serving description"
     }
   },
   "activityPage": {
@@ -807,14 +824,25 @@
     "activityCount": "Activities",
     "typeTitle": "Activity types",
     "newLogTitle": "Log new activity",
-    "updateLogTitle": "Update activity log",
     "deleteLog": "Delete activity log",
-    "updateLog": "Update activity log",
     "estimatedCalories": "Estimated calories",
     "saveActivity": "Save activity",
+    "saving": "Saving...",
+    "selectType": "Select activity type",
+    "loading": "Loading activities...",
+    "notFound": "No activities found for this date.",
+    "loadError": "Could not load activities.",
+    "loadTypesError": "Could not load activity types.",
+    "saveError": "Could not save activity.",
+    "deleteError": "Could not delete activity.",
+    "confirmDelete": "Delete this activity log?",
     "categories": {
       "cardio": "Cardio",
-      "strength": "Strength"
+      "strength": "Strength",
+      "flexibility": "Flexibility",
+      "sports": "Sports",
+      "daily": "Daily activity",
+      "other": "Other"
     },
     "types": {
       "running": "Running",
@@ -844,6 +872,8 @@
     "title": "Health profile",
     "description": "View and update personal health information from your profile endpoint.",
     "savedMessage": "Profile saved successfully.",
+    "metricsLoadError": "Could not load body metrics.",
+    "noMetrics": "No body metrics found.",
     "selectGender": "Select gender",
     "fields": {
       "username": "Username",
@@ -894,6 +924,11 @@
     "description": "Record weight, body fat, muscle mass, and measurements; review progress over time.",
     "addTitle": "Add metric",
     "saveMetric": "Save metric",
+    "saving": "Saving...",
+    "loading": "Loading body metrics...",
+    "loadError": "Could not load body metrics.",
+    "saveError": "Could not save body metric.",
+    "savedMessage": "Body metric saved successfully.",
     "chartTitle": "Progress chart",
     "historyTitle": "Metric history",
     "fields": {
@@ -909,10 +944,6 @@
       "bodyFat": "Body fat",
       "muscle": "Muscle",
       "measurements": "Waist/Hip/Chest"
-    },
-    "sampleNotes": {
-      "startMonth": "Start of month",
-      "afterThreeWeeks": "After three weeks"
     }
   }
 }
