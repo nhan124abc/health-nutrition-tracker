@@ -26,6 +26,9 @@ public class UserProfileResponse {
     private UserProfile.ActivityLevel activityLevel;
     private UserProfile.Goal goal;
     private BigDecimal targetWeightKg;
+    private Integer bmr;
+    private Integer tdee;
+    private BigDecimal activityFactor;
     private Integer dailyCalorieGoal;
     private Integer dailyProteinGoalG;
     private Integer dailyCarbsGoalG;

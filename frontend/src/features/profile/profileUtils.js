@@ -7,7 +7,13 @@ export const initialProfile = {
   activityLevel: '',
   healthGoal: '',
   targetWeight: '',
+  bmr: '',
+  tdee: '',
+  activityFactor: '',
   dailyCalorieGoal: '',
+  dailyProteinGoal: '',
+  dailyCarbsGoal: '',
+  dailyFatGoal: '',
   dailyWaterGoal: '',
   bio: '',
   timezone: 'Asia/Bangkok',
@@ -72,16 +78,42 @@ const activityToApi = {
 const goalFromApi = {
   LOSE_WEIGHT: 'lose_weight',
   MAINTAIN_WEIGHT: 'maintain',
+  GAIN_WEIGHT: 'gain_weight',
   GAIN_MUSCLE: 'gain_muscle',
+  CUTTING: 'cutting',
+  BODY_RECOMPOSITION: 'body_recomposition',
   IMPROVE_FITNESS: 'improve_health',
 };
 
 const goalToApi = {
   lose_weight: 'LOSE_WEIGHT',
   maintain: 'MAINTAIN_WEIGHT',
+  gain_weight: 'GAIN_WEIGHT',
   gain_muscle: 'GAIN_MUSCLE',
+  cutting: 'CUTTING',
+  body_recomposition: 'BODY_RECOMPOSITION',
   improve_health: 'IMPROVE_FITNESS',
 };
+
+export const goalFormulaKeys = {
+  lose_weight: 'profilePage.goalFormulas.loseWeight',
+  maintain: 'profilePage.goalFormulas.maintain',
+  gain_weight: 'profilePage.goalFormulas.gainWeight',
+  gain_muscle: 'profilePage.goalFormulas.gainMuscle',
+  cutting: 'profilePage.goalFormulas.cutting',
+  body_recomposition: 'profilePage.goalFormulas.bodyRecomposition',
+  improve_health: 'profilePage.goalFormulas.improveHealth',
+};
+
+export const goalOptions = [
+  { value: 'lose_weight', labelKey: 'profilePage.goals.loseWeight', formulaKey: goalFormulaKeys.lose_weight },
+  { value: 'maintain', labelKey: 'profilePage.goals.maintain', formulaKey: goalFormulaKeys.maintain },
+  { value: 'gain_weight', labelKey: 'profilePage.goals.gainWeight', formulaKey: goalFormulaKeys.gain_weight },
+  { value: 'gain_muscle', labelKey: 'profilePage.goals.gainMuscle', formulaKey: goalFormulaKeys.gain_muscle },
+  { value: 'cutting', labelKey: 'profilePage.goals.cutting', formulaKey: goalFormulaKeys.cutting },
+  { value: 'body_recomposition', labelKey: 'profilePage.goals.bodyRecomposition', formulaKey: goalFormulaKeys.body_recomposition },
+  { value: 'improve_health', labelKey: 'profilePage.goals.improveHealth', formulaKey: goalFormulaKeys.improve_health },
+];
 
 function emptyToNull(value) {
   return value === '' ? null : value;
@@ -127,7 +159,13 @@ export function mapProfileFromApi(data = {}) {
     activityLevel: activityFromApi[data.activityLevel] || '',
     healthGoal: goalFromApi[data.goal] || '',
     targetWeight: data.targetWeightKg ?? '',
+    bmr: data.bmr ?? '',
+    tdee: data.tdee ?? '',
+    activityFactor: data.activityFactor ?? '',
     dailyCalorieGoal: data.dailyCalorieGoal ?? '',
+    dailyProteinGoal: data.dailyProteinGoalG ?? '',
+    dailyCarbsGoal: data.dailyCarbsGoalG ?? '',
+    dailyFatGoal: data.dailyFatGoalG ?? '',
     dailyWaterGoal: data.dailyWaterGoalMl ?? '',
     bio: data.bio || '',
     timezone: data.timezone || initialProfile.timezone,
@@ -138,8 +176,9 @@ export function extractProfileFromApi(data) {
   return data?.data || data?.profile || data || {};
 }
 
-export function mapProfileToApi(profile) {
-  return {
+export function mapProfileToApi(profile, options = {}) {
+  const { includeManualCalorieGoal = true } = options;
+  const payload = {
     username: emptyToNull(profile.username),
     dateOfBirth: emptyToNull(profile.birthDate),
     gender: profile.gender ? profile.gender.toUpperCase() : null,
@@ -148,11 +187,16 @@ export function mapProfileToApi(profile) {
     activityLevel: activityToApi[profile.activityLevel] || null,
     goal: goalToApi[profile.healthGoal] || null,
     targetWeightKg: normalizeNumber(profile.targetWeight),
-    dailyCalorieGoal: normalizeNumber(profile.dailyCalorieGoal),
     dailyWaterGoalMl: normalizeNumber(profile.dailyWaterGoal),
     bio: profile.bio,
     timezone: emptyToNull(profile.timezone),
   };
+
+  if (includeManualCalorieGoal) {
+    payload.dailyCalorieGoal = normalizeNumber(profile.dailyCalorieGoal);
+  }
+
+  return payload;
 }
 
 export function getApiErrorMessage(error, fallback) {

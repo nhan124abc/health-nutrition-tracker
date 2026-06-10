@@ -81,7 +81,8 @@
     "fat": "Fat",
     "weeklyCalories": "Weekly Calories",
     "weeklyCaloriesDescription": "Compare calories consumed and calories burned.",
-    "sevenDays": "7 days"
+    "sevenDays": "7 days",
+    "bmr": "BMR"
   },
   "home": {
     "nav": {
@@ -910,7 +911,8 @@
       "username": "Username",
       "targetWeight": "Target weight kg",
       "dailyWaterGoal": "Daily water goal ml",
-      "healthGoal": "Health goal"
+      "healthGoal": "Health goal",
+      "activityFactor": "Activity factor"
     },
     "selectGoal": "Select goal",
     "goals": {
@@ -920,7 +922,12 @@
       "improve_health": "Improve health",
       "loseWeight": "Lose weight",
       "gainMuscle": "Gain muscle",
-      "improveHealth": "Improve health"
+      "improveHealth": "Improve health",
+      "gainWeight": "Gain weight",
+      "gain_weight": "Gain weight",
+      "cutting": "Cutting",
+      "bodyRecomposition": "Body recomposition",
+      "body_recomposition": "Body recomposition"
     },
     "saveProfile": "Save profile",
     "currentAccount": "Current account",
@@ -947,7 +954,16 @@
       "weeklyReport": "Weekly report summary",
       "localOnly": "Notification settings are shown in the frontend only until the backend settings API is available."
     },
-    "localModeNote": "Auth is disabled and no token is available, so this profile is saved locally for development. Log in or turn auth back on to save to the backend."
+    "localModeNote": "Auth is disabled and no token is available, so this profile is saved locally for development. Log in or turn auth back on to save to the backend.",
+    "goalFormulas": {
+      "loseWeight": "Weight loss: daily calories = TDEE - 500 kcal. Protein is kept high to reduce muscle loss.",
+      "maintain": "Maintain: daily calories = TDEE. Macros are balanced for stable weight.",
+      "gainWeight": "Gain weight: daily calories = TDEE + 400 kcal. Suitable when the goal is to increase body weight.",
+      "gainMuscle": "Gain muscle: daily calories = TDEE + 250 kcal with high protein.",
+      "cutting": "Cutting: daily calories = TDEE - 300 kcal with high protein to preserve muscle.",
+      "bodyRecomposition": "Body recomposition: daily calories stay near TDEE with very high protein.",
+      "improveHealth": "Improve fitness: daily calories stay near TDEE with balanced macros."
+    }
   },
   "bodyMetricsPage": {
     "badge": "Body metrics",

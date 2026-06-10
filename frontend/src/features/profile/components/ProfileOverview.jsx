@@ -3,6 +3,9 @@ import { Card, Col, Row } from 'react-bootstrap';
 function ProfileOverview({ account, bmi, profile, t }) {
   const summaryItems = [
     ['BMI', bmi || '-'],
+    [t('health.bmr', 'BMR'), profile.bmr ? `${profile.bmr} kcal` : '-'],
+    [t('health.tdee'), profile.tdee ? `${profile.tdee} kcal` : '-'],
+    [t('profilePage.fields.activityFactor', 'Activity factor'), profile.activityFactor || '-'],
     [t('common.goal'), profile.healthGoal ? t(`profilePage.goals.${profile.healthGoal}`) : '-'],
     [t('common.calories'), profile.dailyCalorieGoal ? `${profile.dailyCalorieGoal} kcal` : '-'],
     [t('common.water'), profile.dailyWaterGoal ? `${profile.dailyWaterGoal} ml` : '-'],
@@ -21,6 +24,9 @@ function ProfileOverview({ account, bmi, profile, t }) {
               <div><span>{t('profile.activityLevel')}</span><strong>{profile.activityLevel ? t(`profile.${profile.activityLevel === 'very_active' ? 'veryActive' : profile.activityLevel}`) : '-'}</strong></div>
               <div><span>{t('profile.height')}</span><strong>{profile.height || '-'} cm</strong></div>
               <div><span>{t('profile.weight')}</span><strong>{profile.weight || '-'} kg</strong></div>
+              <div><span>{t('common.protein')}</span><strong>{profile.dailyProteinGoal ? `${profile.dailyProteinGoal} g` : '-'}</strong></div>
+              <div><span>{t('common.carbs')}</span><strong>{profile.dailyCarbsGoal ? `${profile.dailyCarbsGoal} g` : '-'}</strong></div>
+              <div><span>{t('common.fat')}</span><strong>{profile.dailyFatGoal ? `${profile.dailyFatGoal} g` : '-'}</strong></div>
               <div><span>{t('common.bio')}</span><strong>{profile.bio || '-'}</strong></div>
             </div>
           </Card.Body>
