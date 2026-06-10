@@ -1,13 +1,22 @@
-import { Button, Col, Form, Modal, Row } from 'react-bootstrap';
+import { Button, Col, Form, Modal, Row, Table } from 'react-bootstrap';
 import { mealTypes } from '../mealUtils';
 
-const fieldLabels = [
-  ['itemName', 'foodDiaryPage.fields.itemName'],
-  ['serving', 'common.serving'],
-  ['quantity', 'common.quantity'],
-];
-
-function MealFormModal({ editingMealId, form, onChange, onClose, onSave, savingMeal, show, t }) {
+function MealFormModal({
+  editingMealId,
+  foodSelection,
+  foods,
+  form,
+  loadingFoods,
+  onAddFood,
+  onChange,
+  onClose,
+  onFoodSelectionChange,
+  onRemoveFood,
+  onSave,
+  savingMeal,
+  show,
+  t,
+}) {
   return (
     <Modal show={show} onHide={onClose} size="lg" centered>
       <Modal.Header closeButton>
@@ -41,24 +50,112 @@ function MealFormModal({ editingMealId, form, onChange, onClose, onSave, savingM
               <Form.Control name="notes" value={form.notes} onChange={onChange} />
             </Form.Group>
           </Col>
-          {fieldLabels.map(([name, labelKey]) => (
-            <Col md={4} key={name}>
-              <Form.Group>
-                <Form.Label>{t(labelKey)}</Form.Label>
-                <Form.Control
-                  type={['itemName', 'serving'].includes(name) ? 'text' : 'number'}
-                  name={name}
-                  value={form[name]}
-                  onChange={onChange}
-                />
-              </Form.Group>
-            </Col>
-          ))}
+          <Col md={6}>
+            <Form.Group>
+              <Form.Label>{t('foodDiaryPage.fields.food')}</Form.Label>
+              <Form.Select
+                name="foodId"
+                value={foodSelection.foodId}
+                onChange={onFoodSelectionChange}
+                disabled={loadingFoods}
+              >
+                <option value="">
+                  {loadingFoods
+                    ? t('foodDiaryPage.loadingFoods')
+                    : t('foodDiaryPage.selectFood')}
+                </option>
+                {foods.map((food) => (
+                  <option value={food.id} key={food.id}>
+                    {food.nameVi || food.name}
+                    {food.brand ? ` - ${food.brand}` : ''}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </Col>
+          <Col md={3}>
+            <Form.Group>
+              <Form.Label>{t('foodDiaryPage.fields.servingSize')}</Form.Label>
+              <Form.Control
+                min="1"
+                name="serving"
+                type="number"
+                value={foodSelection.serving}
+                onChange={onFoodSelectionChange}
+              />
+            </Form.Group>
+          </Col>
+          <Col md={3}>
+            <Form.Group>
+              <Form.Label>{t('common.quantity')}</Form.Label>
+              <Form.Control
+                min="0.1"
+                name="quantity"
+                step="0.1"
+                type="number"
+                value={foodSelection.quantity}
+                onChange={onFoodSelectionChange}
+              />
+            </Form.Group>
+          </Col>
+          <Col xs={12}>
+            <Button
+              variant="outline-success"
+              onClick={onAddFood}
+              disabled={!foodSelection.foodId || loadingFoods}
+            >
+              {t('foodDiaryPage.addFood')}
+            </Button>
+          </Col>
+          <Col xs={12}>
+            <div className="table-responsive">
+              <Table hover className="align-middle meal-food-table mb-0">
+                <thead>
+                  <tr>
+                    <th>{t('common.food')}</th>
+                    <th>{t('common.serving')}</th>
+                    <th>{t('common.quantityShort')}</th>
+                    <th className="text-end">{t('common.calories')}</th>
+                    <th className="text-end">{t('foodDiaryPage.actions')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {form.items.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="text-center text-secondary py-4">
+                        {t('foodDiaryPage.noFoodsSelected')}
+                      </td>
+                    </tr>
+                  )}
+                  {form.items.map((item, index) => (
+                    <tr key={`${item.foodId}-${index}`}>
+                      <td>
+                        <strong>{item.nameVi || item.name}</strong>
+                        {item.brand && <div className="small text-secondary">{item.brand}</div>}
+                      </td>
+                      <td>{item.serving}</td>
+                      <td>{item.quantity}</td>
+                      <td className="text-end">{Math.round(item.totalCalories)}</td>
+                      <td className="text-end">
+                        <Button
+                          size="sm"
+                          variant="outline-danger"
+                          onClick={() => onRemoveFood(index)}
+                        >
+                          {t('foodDiaryPage.removeFood')}
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </div>
+          </Col>
         </Row>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="outline-secondary" onClick={onClose}>{t('common.cancel')}</Button>
-        <Button variant="success" onClick={onSave} disabled={savingMeal}>
+        <Button variant="success" onClick={onSave} disabled={savingMeal || form.items.length === 0}>
           {editingMealId ? t('foodDiaryPage.updateMeal') : t('foodDiaryPage.saveMeal')}
         </Button>
       </Modal.Footer>

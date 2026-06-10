@@ -1,5 +1,6 @@
 import { Button, Card, Col, Form, InputGroup, Row, Table } from 'react-bootstrap';
 import { FaImage, FaSearch } from 'react-icons/fa';
+import CrudActions from '../../../components/CrudActions';
 
 function FoodCatalogCard({
   category,
@@ -10,6 +11,8 @@ function FoodCatalogCard({
   onCategoryChange,
   onClearImage,
   onImageSearch,
+  onDeleteFood,
+  onEditFood,
   onQueryChange,
   onSelectFood,
   query,
@@ -64,6 +67,7 @@ function FoodCatalogCard({
                 <th>{t('common.category')}</th>
                 <th className="text-end">{t('common.calories')}</th>
                 <th className="text-end">P/C/F</th>
+                <th className="text-end">{t('nutritionPage.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -76,6 +80,15 @@ function FoodCatalogCard({
                   <td>{food.category}</td>
                   <td className="text-end">{food.calories}</td>
                   <td className="text-end">{food.protein}/{food.carbs}/{food.fat}g</td>
+                  <td className="text-end">
+                    <CrudActions
+                      editLabel={t('nutritionPage.editAction')}
+                      deleteLabel={t('nutritionPage.deleteAction')}
+                      onEdit={() => onEditFood(food)}
+                      onDelete={() => onDeleteFood(food.id)}
+                      stopPropagation
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -6,6 +6,8 @@ import DailyMealSummary from './components/DailyMealSummary';
 import MealCard from './components/MealCard';
 import MealDetailModal from './components/MealDetailModal';
 import MealFormModal from './components/MealFormModal';
+import { getFoods } from '../nutrition/nutritionService';
+import { extractFoodsFromApi, normalizeFoodFromApi } from '../nutrition/nutritionUtils';
 import {
   buildMealFallback,
   emptyMeal,
@@ -31,6 +33,13 @@ function FoodDiary() {
   const [mealError, setMealError] = useState('');
   const [selectedMealDetail, setSelectedMealDetail] = useState(null);
   const [editingMealId, setEditingMealId] = useState(null);
+  const [foods, setFoods] = useState([]);
+  const [loadingFoods, setLoadingFoods] = useState(false);
+  const [foodSelection, setFoodSelection] = useState({
+    foodId: '',
+    serving: 100,
+    quantity: 1,
+  });
 
   const dayMeals = useMemo(
     () => meals.filter((meal) => meal.date === selectedDate),
@@ -78,23 +87,98 @@ function FoodDiary() {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
+  const loadFoods = async () => {
+    if (foods.length > 0 || loadingFoods) {
+      return;
+    }
+
+    setLoadingFoods(true);
+
+    try {
+      const response = await getFoods({ page: 0, size: 200 });
+      setFoods(extractFoodsFromApi(response.data).map(normalizeFoodFromApi));
+    } catch (error) {
+      console.error('[FoodDiary] Error fetching foods:', error);
+      setMealError(error.response?.data?.message || t('foodDiaryPage.foodLoadError'));
+    } finally {
+      setLoadingFoods(false);
+    }
+  };
+
   const openMealModal = () => {
     setEditingMealId(null);
-    setForm((current) => ({ ...current, date: selectedDate }));
+    setForm({ ...emptyMeal, date: selectedDate });
+    setFoodSelection({ foodId: '', serving: 100, quantity: 1 });
     setShowMealModal(true);
+    loadFoods();
   };
 
   const openEditMealModal = (meal) => {
     setMealError('');
     setEditingMealId(meal.id);
     setForm(mapMealToForm(meal));
+    setFoodSelection({ foodId: '', serving: 100, quantity: 1 });
     setShowMealModal(true);
+    loadFoods();
   };
 
   const closeMealModal = () => {
     setShowMealModal(false);
     setEditingMealId(null);
     setForm({ ...emptyMeal, date: selectedDate });
+    setFoodSelection({ foodId: '', serving: 100, quantity: 1 });
+  };
+
+  const handleFoodSelectionChange = (event) => {
+    const { name, value } = event.target;
+
+    setFoodSelection((current) => {
+      if (name !== 'foodId') {
+        return { ...current, [name]: value };
+      }
+
+      const food = foods.find((item) => String(item.id) === String(value));
+      return {
+        ...current,
+        foodId: value,
+        serving: food ? parseFloat(food.servingSize) || 100 : current.serving,
+      };
+    });
+  };
+
+  const addFoodToMeal = () => {
+    const food = foods.find((item) => String(item.id) === String(foodSelection.foodId));
+
+    if (!food) {
+      return;
+    }
+
+    const servingSize = Number(foodSelection.serving) || 100;
+    const quantity = Number(foodSelection.quantity) || 1;
+    const baseServingSize = parseFloat(food.servingSize) || 100;
+
+    setForm((current) => ({
+      ...current,
+      items: [
+        ...current.items,
+        {
+          ...food,
+          foodId: food.id,
+          foodServingSize: food.servingSize,
+          serving: `${servingSize}g`,
+          quantity,
+          totalCalories: food.calories * (servingSize / baseServingSize) * quantity,
+        },
+      ],
+    }));
+    setFoodSelection({ foodId: '', serving: 100, quantity: 1 });
+  };
+
+  const removeFoodFromMeal = (index) => {
+    setForm((current) => ({
+      ...current,
+      items: current.items.filter((_, itemIndex) => itemIndex !== index),
+    }));
   };
 
   const openMealDetail = async (meal) => {
@@ -142,7 +226,7 @@ function FoodDiary() {
   };
 
   const saveMeal = async () => {
-    if (savingMeal) {
+    if (savingMeal || form.items.length === 0) {
       return;
     }
 
@@ -230,9 +314,15 @@ function FoodDiary() {
 
       <MealFormModal
         editingMealId={editingMealId}
+        foodSelection={foodSelection}
+        foods={foods}
         form={form}
+        loadingFoods={loadingFoods}
+        onAddFood={addFoodToMeal}
         onChange={handleChange}
         onClose={closeMealModal}
+        onFoodSelectionChange={handleFoodSelectionChange}
+        onRemoveFood={removeFoodFromMeal}
         onSave={saveMeal}
         savingMeal={savingMeal}
         show={showMealModal}

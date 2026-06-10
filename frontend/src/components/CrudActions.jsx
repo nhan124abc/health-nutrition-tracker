@@ -10,6 +10,7 @@ function CrudActions({
   onEdit,
   onDelete,
   size = 'sm',
+  showLabels = false,
   stopPropagation = false,
 }) {
   const handleClick = (event, callback) => {
@@ -30,12 +31,14 @@ function CrudActions({
       )}
       {onEdit && (
         <Button variant="outline-success" size={size} onClick={(event) => handleClick(event, onEdit)} aria-label={editLabel}>
-          <FaEdit />
+          <FaEdit className={showLabels ? 'me-2' : ''} />
+          {showLabels && editLabel}
         </Button>
       )}
       {onDelete && (
         <Button variant="outline-danger" size={size} onClick={(event) => handleClick(event, onDelete)} aria-label={deleteLabel}>
-          <FaTrash />
+          <FaTrash className={showLabels ? 'me-2' : ''} />
+          {showLabels && deleteLabel}
         </Button>
       )}
     </div>

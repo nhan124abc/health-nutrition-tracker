@@ -12,9 +12,7 @@ export const emptyMeal = {
   date: '',
   time: '',
   notes: '',
-  itemName: '',
-  serving: '100g',
-  quantity: 1,
+  items: [],
 };
 
 const mealTypeFromApi = {
@@ -69,6 +67,7 @@ function normalizeMealItemFromApi(item = {}) {
 
   return {
     id: item.id || item.foodId || `I${Date.now()}-${Math.random()}`,
+    foodId: item.foodId || item.food?.id || '',
     name: item.name || item.foodName || item.itemName || '',
     serving: typeof servingSize === 'number' ? `${servingSize}g` : servingSize || '100g',
     quantity: normalizeNumber(item.quantity || 1),
@@ -140,7 +139,7 @@ export function getMealsTotals(meals) {
   );
 }
 
-function parseServingG(value) {
+export function parseServingG(value) {
   const parsed = Number(String(value).replace(/[^\d.]/g, ''));
   return parsed || 100;
 }
@@ -151,20 +150,25 @@ export function mapMealToApi(form) {
     mealDate: form.date,
     mealTime: form.time || null,
     notes: form.notes,
-    items: [
-      {
+    items: form.items.map((item) => {
+      const servingSizeG = parseServingG(item.serving);
+      const foodServingSizeG = parseServingG(item.foodServingSize);
+      const nutritionMultiplier = (servingSizeG / foodServingSizeG) * (Number(item.quantity) || 1);
+
+      return {
         itemType: 'FOOD',
-        foodName: form.itemName,
-        servingSizeG: parseServingG(form.serving),
-        quantity: Number(form.quantity) || 1,
-        calories: 0,
-        proteinG: 0,
-        carbsG: 0,
-        fatG: 0,
-        fiberG: 0,
-        sodiumMg: 0,
-      },
-    ],
+        foodId: Number(item.foodId),
+        foodName: item.name,
+        servingSizeG,
+        quantity: Number(item.quantity) || 1,
+        calories: Number(item.calories) * nutritionMultiplier,
+        proteinG: Number(item.protein) * nutritionMultiplier,
+        carbsG: Number(item.carbs) * nutritionMultiplier,
+        fatG: Number(item.fat) * nutritionMultiplier,
+        fiberG: Number(item.fiber) * nutritionMultiplier,
+        sodiumMg: Number(item.sodium) * nutritionMultiplier,
+      };
+    }),
   };
 }
 
@@ -176,15 +180,15 @@ export function buildMealFallback(id, form) {
 }
 
 export function mapMealToForm(meal) {
-  const firstItem = meal.items?.[0] || {};
-
   return {
     type: meal.type || emptyMeal.type,
     date: meal.date || '',
     time: meal.time || '',
     notes: meal.notes || '',
-    itemName: firstItem.name || '',
-    serving: firstItem.serving || emptyMeal.serving,
-    quantity: firstItem.quantity || emptyMeal.quantity,
+    items: (meal.items || []).map((item) => ({
+      ...item,
+      foodServingSize: item.serving,
+      totalCalories: item.calories,
+    })),
   };
 }

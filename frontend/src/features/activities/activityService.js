@@ -11,6 +11,10 @@ export function createActivityLog(payload) {
   return api.post(activityConfig.endpoints.createLog, payload);
 }
 
+export function updateActivityLog(id, payload) {
+  return api.put(activityConfig.endpoints.updateById(id), payload);
+}
+
 export function deleteActivityById(id) {
   return api.delete(activityConfig.endpoints.deleteById(id));
 }

@@ -3,6 +3,7 @@ import { activityFields } from '../activityUtils';
 
 function ActivityFormModal({
   activityTypes,
+  editingLogId,
   estimatedCalories,
   form,
   onChange,
@@ -15,7 +16,9 @@ function ActivityFormModal({
   return (
     <Modal show={show} onHide={onClose} size="lg" centered>
       <Modal.Header closeButton>
-        <Modal.Title>{t('activityPage.newLogTitle')}</Modal.Title>
+        <Modal.Title>
+          {editingLogId ? t('activityPage.updateLogTitle') : t('activityPage.newLogTitle')}
+        </Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Row className="g-3">
@@ -46,7 +49,9 @@ function ActivityFormModal({
       <Modal.Footer>
         <Button variant="outline-secondary" onClick={onClose} disabled={saving}>{t('common.cancel')}</Button>
         <Button variant="success" onClick={onSave} disabled={saving}>
-          {saving ? t('activityPage.saving') : t('activityPage.saveActivity')}
+          {saving
+            ? t('activityPage.saving')
+            : t(editingLogId ? 'activityPage.updateActivity' : 'activityPage.saveActivity')}
         </Button>
       </Modal.Footer>
     </Modal>

@@ -13,6 +13,7 @@ import {
   getActivitySummary,
   getTodayDate,
   mapActivityToApi,
+  mapActivityToForm,
   normalizeActivityFromApi,
   normalizeActivityType,
 } from './activityUtils';
@@ -21,6 +22,7 @@ import {
   deleteActivityById,
   getActivitiesByDate,
   getActivityTypes,
+  updateActivityLog,
 } from './activityService';
 
 function ActivityTracker() {
@@ -30,6 +32,7 @@ function ActivityTracker() {
   const [logs, setLogs] = useState([]);
   const [activityTypes, setActivityTypes] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [editingLogId, setEditingLogId] = useState(null);
   const [form, setForm] = useState(() => ({ ...emptyLog, date: getTodayDate() }));
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [savingLog, setSavingLog] = useState(false);
@@ -109,6 +112,7 @@ function ActivityTracker() {
 
   const openCreateModal = () => {
     setActivityError('');
+    setEditingLogId(null);
     setForm({
       ...emptyLog,
       typeId: activityTypes[0]?.id || '',
@@ -118,8 +122,16 @@ function ActivityTracker() {
     setShowModal(true);
   };
 
+  const openEditModal = (log) => {
+    setActivityError('');
+    setEditingLogId(log.id);
+    setForm(mapActivityToForm(log));
+    setShowModal(true);
+  };
+
   const closeModal = () => {
     setShowModal(false);
+    setEditingLogId(null);
     setForm({ ...emptyLog, date: selectedDate });
   };
 
@@ -132,11 +144,31 @@ function ActivityTracker() {
     setSavingLog(true);
 
     try {
-      const response = await createActivityLog(mapActivityToApi(form, activityTypes));
-      const createdLog = normalizeActivityFromApi(response.data);
+      const payload = mapActivityToApi(form, activityTypes);
 
-      if (createdLog.date === selectedDate) {
-        setLogs((current) => [createdLog, ...current]);
+      if (editingLogId) {
+        const response = await updateActivityLog(editingLogId, payload);
+        const currentLog = logs.find((log) => log.id === editingLogId);
+        const responseLog = response.data?.data || response.data || {};
+        const updatedLog = normalizeActivityFromApi({
+          ...currentLog,
+          ...payload,
+          ...responseLog,
+          id: responseLog.id ?? responseLog.activityLogId ?? editingLogId,
+        });
+
+        setLogs((current) => (
+          updatedLog.date === selectedDate
+            ? current.map((log) => (log.id === editingLogId ? updatedLog : log))
+            : current.filter((log) => log.id !== editingLogId)
+        ));
+      } else {
+        const response = await createActivityLog(payload);
+        const createdLog = normalizeActivityFromApi(response.data);
+
+        if (createdLog.date === selectedDate) {
+          setLogs((current) => [createdLog, ...current]);
+        }
       }
 
       closeModal();
@@ -174,7 +206,7 @@ function ActivityTracker() {
         </div>
         <div className="d-flex flex-wrap gap-2">
           <input className="form-control page-date-input" type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
-          <Button variant="success" onClick={openCreateModal} disabled={activityTypes.length === 0}>
+          <Button variant="success" onClick={openCreateModal}>
             <FaPlus className="me-2" />
             {t('activityPage.addActivity')}
           </Button>
@@ -191,6 +223,7 @@ function ActivityTracker() {
             logs={visibleLogs}
             onCategoryChange={setCategory}
             onDelete={removeLog}
+            onEdit={openEditModal}
             t={t}
           />
         </Col>
@@ -207,6 +240,7 @@ function ActivityTracker() {
 
       <ActivityFormModal
         activityTypes={activityTypes}
+        editingLogId={editingLogId}
         estimatedCalories={estimatedCalories}
         form={form}
         onChange={handleChange}

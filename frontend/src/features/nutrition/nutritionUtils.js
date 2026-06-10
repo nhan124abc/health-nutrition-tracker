@@ -24,8 +24,6 @@ export const basicFoodFields = [
   ['imageUrl', 'nutritionPage.fields.imageUrl'],
 ];
 
-export const nutrientFields = ['calories', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'sodium'];
-
 function normalizeNumber(value) {
   return Number(value) || 0;
 }
@@ -47,7 +45,19 @@ export function extractCategoriesFromApi(data) {
     return data;
   }
 
-  return data?.data || data?.content || data?.items || data?.categories || [];
+  const nestedData = data?.data;
+
+  if (Array.isArray(nestedData)) {
+    return nestedData;
+  }
+
+  return nestedData?.content
+    || nestedData?.items
+    || nestedData?.categories
+    || data?.content
+    || data?.items
+    || data?.categories
+    || [];
 }
 
 export function extractFoodFromApi(data) {
@@ -102,6 +112,14 @@ export function mapFoodToApi(food) {
     sugarG: optionalNumber(food.sugar),
     sodiumMg: optionalNumber(food.sodium),
     imageUrl: food.imageUrl.trim() || null,
+  };
+}
+
+export function mapFoodToForm(food) {
+  return {
+    ...emptyFood,
+    ...food,
+    servingSize: String(food.servingSize || '').replace(/[^\d.]/g, ''),
   };
 }
 
