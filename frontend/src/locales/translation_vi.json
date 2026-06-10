@@ -134,7 +134,8 @@
     "fat": "Béo",
     "weeklyCalories": "Calo trong tuần",
     "weeklyCaloriesDescription": "So sánh calo nạp vào và calo tiêu thụ.",
-    "sevenDays": "7 ngày"
+    "sevenDays": "7 ngày",
+    "bmr": "BMR"
   },
   "dashboard": {
     "title": "Tổng quan sức khỏe",
@@ -626,7 +627,8 @@
       "username": "Username",
       "targetWeight": "Cân nặng mục tiêu kg",
       "dailyWaterGoal": "Mục tiêu nước/ngày ml",
-      "healthGoal": "Mục tiêu sức khỏe"
+      "healthGoal": "Mục tiêu sức khỏe",
+      "activityFactor": "Hệ số vận động"
     },
     "selectGoal": "Chọn mục tiêu",
     "goals": {
@@ -636,7 +638,12 @@
       "improve_health": "Cải thiện sức khỏe",
       "loseWeight": "Giảm cân",
       "gainMuscle": "Tăng cơ",
-      "improveHealth": "Cải thiện sức khỏe"
+      "improveHealth": "Cải thiện sức khỏe",
+      "gainWeight": "Tăng cân",
+      "gain_weight": "Tăng cân",
+      "cutting": "Giảm mỡ giữ cơ",
+      "bodyRecomposition": "Giảm mỡ + tăng cơ",
+      "body_recomposition": "Giảm mỡ + tăng cơ"
     },
     "saveProfile": "Lưu hồ sơ",
     "currentAccount": "Tài khoản hiện tại",
@@ -663,7 +670,16 @@
       "weeklyReport": "Tổng kết tuần",
       "localOnly": "Cài đặt thông báo hiện chỉ hiển thị ở frontend cho đến khi có API settings từ backend."
     },
-    "localModeNote": "Auth đang tắt và chưa có token, nên hồ sơ này được lưu local để phát triển. Đăng nhập hoặc bật lại auth để lưu vào backend."
+    "localModeNote": "Auth đang tắt và chưa có token, nên hồ sơ này được lưu local để phát triển. Đăng nhập hoặc bật lại auth để lưu vào backend.",
+    "goalFormulas": {
+      "loseWeight": "Giảm cân: calo mỗi ngày = TDEE - 500 kcal. Protein giữ cao để hạn chế mất cơ.",
+      "maintain": "Duy trì: calo mỗi ngày = TDEE. Macro cân bằng để giữ cân ổn định.",
+      "gainWeight": "Tăng cân: calo mỗi ngày = TDEE + 400 kcal. Phù hợp khi muốn tăng cân nặng.",
+      "gainMuscle": "Tăng cơ: calo mỗi ngày = TDEE + 250 kcal, ưu tiên protein cao.",
+      "cutting": "Giảm mỡ giữ cơ: calo mỗi ngày = TDEE - 300 kcal, protein cao để giữ cơ.",
+      "bodyRecomposition": "Giảm mỡ + tăng cơ: calo gần bằng TDEE, protein rất cao.",
+      "improveHealth": "Cải thiện sức khỏe: calo gần bằng TDEE, macro cân bằng."
+    }
   },
   "bodyMetricsPage": {
     "badge": "Chỉ số cơ thể",

@@ -1,5 +1,5 @@
 import { Button, Card, Col, Form, Row } from 'react-bootstrap';
-import { profileFields } from '../profileUtils';
+import { goalFormulaKeys, goalOptions, profileFields } from '../profileUtils';
 
 function ProfileEditForm({ onChange, onSubmit, profile, saving, t }) {
   return (
@@ -45,11 +45,15 @@ function ProfileEditForm({ onChange, onSubmit, profile, saving, t }) {
                 <Form.Label>{t('profilePage.fields.healthGoal')}</Form.Label>
                 <Form.Select name="healthGoal" value={profile.healthGoal} onChange={onChange} disabled={saving}>
                   <option value="">{t('profilePage.selectGoal')}</option>
-                  <option value="lose_weight">{t('profilePage.goals.loseWeight')}</option>
-                  <option value="maintain">{t('profilePage.goals.maintain')}</option>
-                  <option value="gain_muscle">{t('profilePage.goals.gainMuscle')}</option>
-                  <option value="improve_health">{t('profilePage.goals.improveHealth')}</option>
+                  {goalOptions.map((goal) => (
+                    <option value={goal.value} key={goal.value}>{t(goal.labelKey)}</option>
+                  ))}
                 </Form.Select>
+                {profile.healthGoal && (
+                  <Form.Text className="text-secondary">
+                    {t(goalFormulaKeys[profile.healthGoal])}
+                  </Form.Text>
+                )}
               </Form.Group>
             </Col>
             <Col xs={12}>

@@ -24,6 +24,7 @@ public class UserProfileService {
 
     private final UserProfileRepository profileRepository;
     private final BodyMetricRepository  metricRepository;
+    private final NutritionGoalCalculator nutritionGoalCalculator;
 
     // ─── Profile ──────────────────────────────────────────────────────────────
 
@@ -65,10 +66,11 @@ public class UserProfileService {
         if (request.getActivityLevel()  != null) profile.setActivityLevel(request.getActivityLevel());
         if (request.getGoal()           != null) profile.setGoal(request.getGoal());
         if (request.getTargetWeightKg() != null) profile.setTargetWeightKg(request.getTargetWeightKg());
-        if (request.getDailyCalorieGoal()   != null) profile.setDailyCalorieGoal(request.getDailyCalorieGoal());
         if (request.getDailyWaterGoalMl()   != null) profile.setDailyWaterGoalMl(request.getDailyWaterGoalMl());
         if (request.getBio()            != null) profile.setBio(request.getBio());
         if (request.getTimezone()       != null) profile.setTimezone(request.getTimezone());
+
+        applyNutritionTargets(profile, request.getDailyCalorieGoal());
 
         return toProfileResponse(profileRepository.save(profile));
     }
@@ -103,6 +105,7 @@ public class UserProfileService {
                 }
                 // Cập nhật cân nặng hiện tại trong profile
                 profile.setWeightKg(request.getWeightKg());
+                applyNutritionTargets(profile, null);
                 profileRepository.save(profile);
             });
         }
@@ -122,12 +125,15 @@ public class UserProfileService {
     // ─── Mappers ──────────────────────────────────────────────────────────────
 
     private UserProfileResponse toProfileResponse(UserProfile p) {
+        NutritionGoalCalculator.NutritionTargets targets = nutritionGoalCalculator.calculate(p);
         return UserProfileResponse.builder()
                 .id(p.getId()).userId(p.getUserId())
                 .username(p.getUsername()).dateOfBirth(p.getDateOfBirth())
                 .gender(p.getGender()).heightCm(p.getHeightCm()).weightKg(p.getWeightKg())
                 .activityLevel(p.getActivityLevel()).goal(p.getGoal())
-                .targetWeightKg(p.getTargetWeightKg()).dailyCalorieGoal(p.getDailyCalorieGoal())
+                .targetWeightKg(p.getTargetWeightKg())
+                .bmr(targets.bmr()).tdee(targets.tdee()).activityFactor(targets.activityFactor())
+                .dailyCalorieGoal(p.getDailyCalorieGoal())
                 .dailyProteinGoalG(p.getDailyProteinGoalG()).dailyCarbsGoalG(p.getDailyCarbsGoalG())
                 .dailyFatGoalG(p.getDailyFatGoalG()).dailyWaterGoalMl(p.getDailyWaterGoalMl())
                 .bio(p.getBio()).timezone(p.getTimezone())
@@ -143,6 +149,21 @@ public class UserProfileService {
                 .waistCm(m.getWaistCm()).hipCm(m.getHipCm()).chestCm(m.getChestCm())
                 .notes(m.getNotes()).createdAt(m.getCreatedAt())
                 .build();
+    }
+
+    private void applyNutritionTargets(UserProfile profile, Integer manualCalorieGoal) {
+        NutritionGoalCalculator.NutritionTargets targets = nutritionGoalCalculator.calculate(profile, manualCalorieGoal);
+        if (targets.dailyCalorieGoal() == null) {
+            if (manualCalorieGoal != null) {
+                profile.setDailyCalorieGoal(manualCalorieGoal);
+            }
+            return;
+        }
+
+        profile.setDailyCalorieGoal(manualCalorieGoal != null ? manualCalorieGoal : targets.dailyCalorieGoal());
+        profile.setDailyProteinGoalG(targets.dailyProteinGoalG());
+        profile.setDailyCarbsGoalG(targets.dailyCarbsGoalG());
+        profile.setDailyFatGoalG(targets.dailyFatGoalG());
     }
 }
 
