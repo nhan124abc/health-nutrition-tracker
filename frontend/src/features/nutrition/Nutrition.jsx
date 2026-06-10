@@ -5,7 +5,14 @@ import { FaPlus } from 'react-icons/fa';
 import FoodCatalogCard from './components/FoodCatalogCard';
 import FoodDetailCard from './components/FoodDetailCard';
 import FoodFormModal from './components/FoodFormModal';
-import { createFood, getFoodById, getFoodCategories, getFoods } from './nutritionService';
+import {
+  createFood,
+  deleteFood,
+  getFoodById,
+  getFoodCategories,
+  getFoods,
+  updateFood,
+} from './nutritionService';
 import {
   emptyFood,
   extractCategoriesFromApi,
@@ -13,6 +20,7 @@ import {
   extractFoodsFromApi,
   filterFoods,
   mapFoodToApi,
+  mapFoodToForm,
   normalizeCategory,
   normalizeFoodFromApi,
 } from './nutritionUtils';
@@ -27,6 +35,7 @@ function Nutrition() {
   const [imagePreview, setImagePreview] = useState('');
   const [selectedFood, setSelectedFood] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingFoodId, setEditingFoodId] = useState(null);
   const [newFood, setNewFood] = useState(emptyFood);
   const [loading, setLoading] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
@@ -114,12 +123,22 @@ function Nutrition() {
   const openCreateModal = () => {
     setError('');
     setSaved(false);
+    setEditingFoodId(null);
     setNewFood({ ...emptyFood, categoryId: categories[0]?.id || '' });
+    setShowCreateModal(true);
+  };
+
+  const openEditModal = (food) => {
+    setError('');
+    setSaved(false);
+    setEditingFoodId(food.id);
+    setNewFood(mapFoodToForm(food));
     setShowCreateModal(true);
   };
 
   const closeCreateModal = () => {
     setShowCreateModal(false);
+    setEditingFoodId(null);
     setNewFood(emptyFood);
   };
 
@@ -149,11 +168,32 @@ function Nutrition() {
     setError('');
 
     try {
-      const response = await createFood(mapFoodToApi(newFood));
-      const createdFood = normalizeFoodFromApi(extractFoodFromApi(response.data));
+      const payload = mapFoodToApi(newFood);
 
-      setFoods((current) => [createdFood, ...current]);
-      setSelectedFood(createdFood);
+      if (editingFoodId) {
+        const response = await updateFood(editingFoodId, payload);
+        const responseFood = extractFoodFromApi(response.data) || {};
+        const updatedFood = normalizeFoodFromApi({
+          ...payload,
+          ...responseFood,
+          id: responseFood.id ?? responseFood.foodId ?? editingFoodId,
+          category: responseFood.category || categories.find(
+            (item) => String(item.id) === String(newFood.categoryId)
+          ),
+        });
+
+        setFoods((current) => current.map((food) => (
+          food.id === editingFoodId ? updatedFood : food
+        )));
+        setSelectedFood(updatedFood);
+      } else {
+        const response = await createFood(payload);
+        const createdFood = normalizeFoodFromApi(extractFoodFromApi(response.data));
+
+        setFoods((current) => [createdFood, ...current]);
+        setSelectedFood(createdFood);
+      }
+
       closeCreateModal();
       setSaved(true);
     } catch (requestError) {
@@ -161,6 +201,29 @@ function Nutrition() {
       setError(requestError.response?.data?.message || t('nutritionPage.saveError'));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const removeFood = async (foodId) => {
+    if (!window.confirm(t('nutritionPage.confirmDeleteFood'))) {
+      return;
+    }
+
+    setError('');
+
+    try {
+      await deleteFood(foodId);
+      setFoods((current) => {
+        const remainingFoods = current.filter((food) => food.id !== foodId);
+
+        setSelectedFood((selected) => (
+          selected?.id === foodId ? remainingFoods[0] || null : selected
+        ));
+        return remainingFoods;
+      });
+    } catch (requestError) {
+      console.error('[Nutrition] Error deleting food:', requestError);
+      setError(requestError.response?.data?.message || t('nutritionPage.deleteError'));
     }
   };
 
@@ -172,7 +235,7 @@ function Nutrition() {
           <h1>{t('nutritionPage.title')}</h1>
           <p>{t('nutritionPage.description')}</p>
         </div>
-        <Button variant="success" onClick={openCreateModal} disabled={loading || categories.length === 0}>
+        <Button variant="success" onClick={openCreateModal}>
           <FaPlus className="me-2" />
           {t('nutritionPage.addFood')}
         </Button>
@@ -198,6 +261,8 @@ function Nutrition() {
               onCategoryChange={setCategory}
               onClearImage={clearImageSearch}
               onImageSearch={handleImageSearch}
+              onDeleteFood={removeFood}
+              onEditFood={openEditModal}
               onQueryChange={setQuery}
               onSelectFood={selectFood}
               query={query}
@@ -215,6 +280,7 @@ function Nutrition() {
 
       <FoodFormModal
         categories={categories}
+        editingFoodId={editingFoodId}
         food={newFood}
         onChange={handleNewFoodChange}
         onClose={closeCreateModal}

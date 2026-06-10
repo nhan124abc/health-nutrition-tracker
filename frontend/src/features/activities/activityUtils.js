@@ -53,7 +53,19 @@ export function extractActivitiesFromApi(data) {
     return data;
   }
 
-  return data?.data || data?.content || data?.items || data?.activities || [];
+  const nestedData = data?.data;
+
+  if (Array.isArray(nestedData)) {
+    return nestedData;
+  }
+
+  return nestedData?.content
+    || nestedData?.items
+    || nestedData?.activities
+    || data?.content
+    || data?.items
+    || data?.activities
+    || [];
 }
 
 export function extractActivityTypesFromApi(data) {
@@ -61,7 +73,19 @@ export function extractActivityTypesFromApi(data) {
     return data;
   }
 
-  return data?.data || data?.content || data?.items || data?.activityTypes || [];
+  const nestedData = data?.data;
+
+  if (Array.isArray(nestedData)) {
+    return nestedData;
+  }
+
+  return nestedData?.content
+    || nestedData?.items
+    || nestedData?.activityTypes
+    || data?.content
+    || data?.items
+    || data?.activityTypes
+    || [];
 }
 
 export function normalizeActivityType(type = {}) {
@@ -75,24 +99,26 @@ export function normalizeActivityType(type = {}) {
 }
 
 export function normalizeActivityFromApi(activity = {}) {
-  const loggedAt = activity.loggedAt || activity.createdAt || '';
+  const loggedAt = activity.loggedAt
+    || activity.createdAt
+    || (activity.date && activity.time ? `${activity.date}T${activity.time}:00` : '');
 
   return {
     id: activity.id ?? activity.activityLogId,
-    typeId: activity.activityTypeId ?? '',
-    customName: activity.activityName || '',
+    typeId: activity.activityTypeId ?? activity.typeId ?? '',
+    customName: activity.activityName || activity.customName || '',
     category: String(activity.category || 'OTHER').toLowerCase(),
     date: String(loggedAt).slice(0, 10),
     time: String(loggedAt).slice(11, 16),
-    duration: normalizeNumber(activity.durationMinutes),
-    userWeight: '',
-    calories: Number(activity.caloriesBurned || 0),
-    distance: normalizeNumber(activity.distanceKm),
+    duration: normalizeNumber(activity.durationMinutes ?? activity.duration),
+    userWeight: normalizeNumber(activity.userWeightKg ?? activity.userWeight),
+    calories: Number(activity.caloriesBurned ?? activity.calories ?? 0),
+    distance: normalizeNumber(activity.distanceKm ?? activity.distance),
     avgHeartRate: normalizeNumber(activity.avgHeartRate),
     maxHeartRate: normalizeNumber(activity.maxHeartRate),
     sets: normalizeNumber(activity.sets),
-    reps: normalizeNumber(activity.repsPerSet),
-    strengthWeight: normalizeNumber(activity.weightKg),
+    reps: normalizeNumber(activity.repsPerSet ?? activity.reps),
+    strengthWeight: normalizeNumber(activity.weightKg ?? activity.strengthWeight),
     notes: activity.notes || '',
   };
 }
@@ -113,6 +139,13 @@ export function mapActivityToApi(form, types) {
     repsPerSet: emptyToNull(form.reps),
     weightKg: emptyToNull(form.strengthWeight),
     userWeightKg: emptyToNull(form.userWeight),
+  };
+}
+
+export function mapActivityToForm(activity) {
+  return {
+    ...emptyLog,
+    ...activity,
   };
 }
 

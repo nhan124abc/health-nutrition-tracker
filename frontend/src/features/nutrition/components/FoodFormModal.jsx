@@ -1,11 +1,13 @@
 import { Button, Col, Form, Modal, Row } from 'react-bootstrap';
-import { basicFoodFields, nutrientFields } from '../nutritionUtils';
+import { basicFoodFields } from '../nutritionUtils';
 
-function FoodFormModal({ categories, food, onChange, onClose, onSave, saving, show, t }) {
+function FoodFormModal({ categories, editingFoodId, food, onChange, onClose, onSave, saving, show, t }) {
   return (
     <Modal show={show} onHide={onClose} size="lg" centered>
       <Modal.Header closeButton>
-        <Modal.Title>{t('nutritionPage.newFoodTitle')}</Modal.Title>
+        <Modal.Title>
+          {editingFoodId ? t('nutritionPage.updateFoodTitle') : t('nutritionPage.newFoodTitle')}
+        </Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Row className="g-3">
@@ -36,29 +38,14 @@ function FoodFormModal({ categories, food, onChange, onClose, onSave, saving, sh
               </Form.Select>
             </Form.Group>
           </Col>
-          {nutrientFields.map((name) => (
-            <Col md={3} key={name}>
-              <Form.Group>
-                <Form.Label>{t(`common.${name}`)}</Form.Label>
-                <Form.Control
-                  type="number"
-                  min="0"
-                  step="0.1"
-                  name={name}
-                  value={food[name]}
-                  onChange={onChange}
-                  disabled={saving}
-                  required={['calories', 'protein', 'carbs', 'fat'].includes(name)}
-                />
-              </Form.Group>
-            </Col>
-          ))}
         </Row>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="outline-secondary" onClick={onClose} disabled={saving}>{t('common.cancel')}</Button>
         <Button variant="success" onClick={onSave} disabled={saving}>
-          {saving ? t('nutritionPage.saving') : t('nutritionPage.savePending')}
+          {saving
+            ? t('nutritionPage.saving')
+            : t(editingFoodId ? 'nutritionPage.updateFood' : 'nutritionPage.savePending')}
         </Button>
       </Modal.Footer>
     </Modal>

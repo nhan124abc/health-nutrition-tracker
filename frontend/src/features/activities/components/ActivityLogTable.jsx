@@ -1,8 +1,8 @@
-import { Button, Card, Form, Table } from 'react-bootstrap';
-import { FaTrash } from 'react-icons/fa';
+import { Card, Form, Table } from 'react-bootstrap';
+import CrudActions from '../../../components/CrudActions';
 import { activityCategories } from '../activityUtils';
 
-function ActivityLogTable({ category, loading, logs, onCategoryChange, onDelete, t }) {
+function ActivityLogTable({ category, loading, logs, onCategoryChange, onDelete, onEdit, t }) {
   return (
     <Card className="border-0 shadow-sm">
       <Card.Body>
@@ -25,7 +25,7 @@ function ActivityLogTable({ category, loading, logs, onCategoryChange, onDelete,
                 <th className="text-end">{t('common.calories')}</th>
                 <th className="text-end">HR</th>
                 <th className="text-end">{t('common.details')}</th>
-                <th />
+                <th className="text-end">{t('activityPage.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -47,9 +47,12 @@ function ActivityLogTable({ category, loading, logs, onCategoryChange, onDelete,
                       : `${log.distance || '-'} km`}
                   </td>
                   <td className="text-end">
-                    <Button variant="outline-danger" size="sm" onClick={() => onDelete(log.id)} aria-label={t('activityPage.deleteLog')}>
-                      <FaTrash />
-                    </Button>
+                    <CrudActions
+                      editLabel={t('activityPage.editAction')}
+                      deleteLabel={t('activityPage.deleteAction')}
+                      onEdit={() => onEdit(log)}
+                      onDelete={() => onDelete(log.id)}
+                    />
                   </td>
                 </tr>
               ))}

@@ -13,6 +13,14 @@ export function createFood(payload) {
   return api.post(nutritionConfig.endpoints.foods, payload);
 }
 
+export function updateFood(id, payload) {
+  return api.put(nutritionConfig.endpoints.foodDetail(id), payload);
+}
+
+export function deleteFood(id) {
+  return api.delete(nutritionConfig.endpoints.foodDetail(id));
+}
+
 export function getFoodCategories() {
   return api.get(nutritionConfig.endpoints.categories);
 }
