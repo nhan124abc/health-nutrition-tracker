@@ -10,7 +10,9 @@ import {
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
-import { Badge, Card, Col, ProgressBar, Row } from 'react-bootstrap';
+import { Badge, Button, Card, Col, ProgressBar, Row } from 'react-bootstrap';
+import { FaBullseye } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
 import { getActivitySummary } from '../features/activities/activityService';
 import { getMealsByDate } from '../features/meals/mealService';
 import {
@@ -47,6 +49,8 @@ const emptySummary = {
   waterIntake: 0,
   waterGoal: 2000,
   weight: 0,
+  targetWeight: 0,
+  healthGoal: '',
   streak: 0,
 };
 
@@ -170,6 +174,8 @@ function Dashboard() {
         waterIntake: getWaterIntake(selectedDate),
         waterGoal: normalizeNumber(profile.dailyWaterGoal) || emptySummary.waterGoal,
         weight: normalizeNumber(latestWeight),
+        targetWeight: normalizeNumber(profile.targetWeight),
+        healthGoal: profile.healthGoal || '',
         streak: getStreak(days),
       });
 
@@ -194,6 +200,10 @@ function Dashboard() {
 
   const netCalories = dailySummary.caloriesConsumed - dailySummary.caloriesBurned;
   const goalPercent = Math.round((dailySummary.caloriesConsumed / Math.max(dailySummary.calorieGoal, 1)) * 100);
+  const waterPercent = Math.round((dailySummary.waterIntake / Math.max(dailySummary.waterGoal, 1)) * 100);
+  const healthGoalLabel = dailySummary.healthGoal
+    ? t(`profilePage.goals.${dailySummary.healthGoal}`)
+    : t('dashboardPage.goalBanner.notSet');
   const dateFormatter = useMemo(
     () => new Intl.DateTimeFormat(i18n.language, { weekday: 'short', day: '2-digit' }),
     [i18n.language]
@@ -236,12 +246,6 @@ function Dashboard() {
     [t('dashboardPage.stats.streak'), `${dailySummary.streak} ${t('common.days')}`, t('dashboardPage.stats.streakHelper'), 'danger'],
   ];
 
-  const goals = [
-    [t('dashboardPage.goals.calorie'), dailySummary.caloriesConsumed, dailySummary.calorieGoal, 'kcal'],
-    [t('dashboardPage.goals.water'), dailySummary.waterIntake, dailySummary.waterGoal, 'ml'],
-    [t('common.activeMinutes'), dailySummary.activeMinutes, 60, t('common.minutes')],
-  ];
-
   return (
     <>
       <div className="page-heading">
@@ -260,6 +264,56 @@ function Dashboard() {
 
       {loading && <div className="alert alert-light border">{t('dashboardPage.loading')}</div>}
       {loadError && <div className="alert alert-warning">{loadError}</div>}
+
+      {!loading && (
+        <Card className="dashboard-goal-card border-0 shadow-sm mb-4">
+          <Card.Body>
+            <div className="dashboard-goal-header">
+              <div className="dashboard-goal-icon"><FaBullseye /></div>
+              <div className="flex-grow-1">
+                <div className="dashboard-goal-eyebrow">{t('dashboardPage.goalBanner.eyebrow')}</div>
+                <h2>{healthGoalLabel}</h2>
+                <p>{t('dashboardPage.goalBanner.description')}</p>
+              </div>
+              <Button as={Link} to="/profile" variant="light">
+                {t('dashboardPage.goalBanner.update')}
+              </Button>
+            </div>
+
+            <Row className="g-3 dashboard-goal-metrics">
+              <Col md={4}>
+                <div className="dashboard-goal-metric">
+                  <span>{t('dashboardPage.goalBanner.targetWeight')}</span>
+                  <strong>
+                    {dailySummary.weight || '-'} kg
+                    <small> → {dailySummary.targetWeight || '-'} kg</small>
+                  </strong>
+                </div>
+              </Col>
+              <Col md={4}>
+                <div className="dashboard-goal-metric">
+                  <div className="d-flex justify-content-between gap-2">
+                    <span>{t('dashboardPage.goals.calorie')}</span>
+                    <b>{Math.min(goalPercent, 100)}%</b>
+                  </div>
+                  <strong>{dailySummary.caloriesConsumed} / {dailySummary.calorieGoal} kcal</strong>
+                  <ProgressBar now={Math.min(goalPercent, 100)} />
+                </div>
+              </Col>
+              <Col md={4}>
+                <div className="dashboard-goal-metric">
+                  <div className="d-flex justify-content-between gap-2">
+                    <span>{t('dashboardPage.goals.water')}</span>
+                    <b>{Math.min(waterPercent, 100)}%</b>
+                  </div>
+                  <strong>{dailySummary.waterIntake} / {dailySummary.waterGoal} ml</strong>
+                  <ProgressBar now={Math.min(waterPercent, 100)} />
+                </div>
+              </Col>
+            </Row>
+          </Card.Body>
+        </Card>
+      )}
 
       <Row className="g-3 mb-4">
         {statCards.map(([title, value, helper, variant]) => (
@@ -305,24 +359,7 @@ function Dashboard() {
           </Card>
         </Col>
 
-        <Col lg={7}>
-          <Card className="border-0 shadow-sm">
-            <Card.Body>
-              <Card.Title className="fw-bold mb-3">{t('dashboardPage.goals.title')}</Card.Title>
-              {goals.map(([label, value, goal, unit]) => (
-                <div className="goal-row" key={label}>
-                  <div className="d-flex justify-content-between">
-                    <span>{label}</span>
-                    <strong>{value} / {goal} {unit}</strong>
-                  </div>
-                  <ProgressBar now={Math.min((value / Math.max(goal, 1)) * 100, 100)} />
-                </div>
-              ))}
-            </Card.Body>
-          </Card>
-        </Col>
-
-        <Col lg={5}>
+        <Col xs={12}>
           <Card className="border-0 shadow-sm">
             <Card.Body>
               <Card.Title className="fw-bold mb-3">{t('dashboardPage.quickTitle')}</Card.Title>

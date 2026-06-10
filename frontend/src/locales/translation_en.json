@@ -657,6 +657,13 @@
     "macroTitle": "Today macros",
     "macroDescription": "Protein, carbs, and fat by energy.",
     "quickTitle": "Quick metrics",
+    "goalBanner": {
+      "eyebrow": "Your main goal",
+      "description": "Keep your personal target visible and track today's progress toward it.",
+      "targetWeight": "Weight progress",
+      "update": "Update goal",
+      "notSet": "Set your health goal"
+    },
     "stats": {
       "consumed": "Calories consumed",
       "burned": "Calories burned",

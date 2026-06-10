@@ -550,6 +550,87 @@ body {
   border-radius: 0.75rem;
 }
 
+.dashboard-goal-card {
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.22), transparent 34%),
+    linear-gradient(135deg, #176b50, #2f8f6b);
+  color: #fff;
+  overflow: hidden;
+}
+
+.dashboard-goal-card .card-body {
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.dashboard-goal-header {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+}
+
+.dashboard-goal-icon {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 1rem;
+  display: flex;
+  flex: 0 0 3.5rem;
+  font-size: 1.5rem;
+  height: 3.5rem;
+  justify-content: center;
+}
+
+.dashboard-goal-eyebrow {
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+  text-transform: uppercase;
+}
+
+.dashboard-goal-header h2 {
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-weight: 850;
+  margin: 0.15rem 0;
+}
+
+.dashboard-goal-header p {
+  margin: 0;
+  opacity: 0.82;
+}
+
+.dashboard-goal-metrics {
+  margin-top: 0.75rem;
+}
+
+.dashboard-goal-metric {
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.85rem;
+  display: grid;
+  gap: 0.35rem;
+  height: 100%;
+  padding: 0.9rem 1rem;
+}
+
+.dashboard-goal-metric span,
+.dashboard-goal-metric small {
+  opacity: 0.82;
+}
+
+.dashboard-goal-metric strong {
+  font-size: 1.05rem;
+}
+
+.dashboard-goal-metric .progress {
+  background: rgba(255, 255, 255, 0.2);
+  height: 0.45rem;
+}
+
+.dashboard-goal-metric .progress-bar {
+  background: #fff;
+}
+
 .metric-value {
   color: var(--health-ink);
   font-size: 2rem;
@@ -1754,6 +1835,15 @@ body {
   }
 
   .page-date-input {
+    width: 100%;
+  }
+
+  .dashboard-goal-header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .dashboard-goal-header .btn {
     width: 100%;
   }
 

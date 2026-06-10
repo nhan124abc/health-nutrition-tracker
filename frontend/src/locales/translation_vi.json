@@ -373,6 +373,13 @@
     "macroTitle": "Macro hôm nay",
     "macroDescription": "Protein, carbs và fat theo năng lượng.",
     "quickTitle": "Chỉ số nhanh",
+    "goalBanner": {
+      "eyebrow": "Mục tiêu chính của bạn",
+      "description": "Luôn theo dõi mục tiêu cá nhân và tiến độ hoàn thành trong hôm nay.",
+      "targetWeight": "Tiến độ cân nặng",
+      "update": "Cập nhật mục tiêu",
+      "notSet": "Thiết lập mục tiêu sức khỏe"
+    },
     "stats": {
       "consumed": "Calories nạp vào",
       "burned": "Calories tiêu hao",
