@@ -15,7 +15,9 @@ import FoodDiary from './features/meals/FoodDiary';
 import WaterTracker from './features/water/WaterTracker';
 import ActivityTracker from './features/activities/ActivityTracker';
 import BodyMetrics from './features/profile/BodyMetrics';
+import GoalPlanner from './features/profile/GoalPlanner';
 import Reports from './pages/Reports';
+import Planner from './pages/Planner';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminManagementPage from './pages/admin/AdminManagementPage';
 
@@ -66,6 +68,8 @@ function App() {
           <Route path="/reports" element={<Reports />} />
           <Route path="/analytics" element={<Navigate to="/reports" replace />} />
           <Route path="/body-metrics" element={<BodyMetrics />} />
+          <Route path="/goals" element={<GoalPlanner />} />
+          <Route path="/planner" element={<Planner />} />
         </Route>
         <Route
           path="/admin"

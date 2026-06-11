@@ -126,6 +126,27 @@ public class UserProfileService {
 
     private UserProfileResponse toProfileResponse(UserProfile p) {
         NutritionGoalCalculator.NutritionTargets targets = nutritionGoalCalculator.calculate(p);
+        
+        java.util.List<UserProfileResponse.WeightMilestone> milestones = new java.util.ArrayList<>();
+        if (p.getPlanStartDate() != null && p.getPlanDurationWeeks() != null && p.getPlanDurationWeeks() > 0
+                && p.getWeightKg() != null && p.getTargetWeightKg() != null) {
+            java.math.BigDecimal startWeight = p.getWeightKg();
+            java.math.BigDecimal endWeight = p.getTargetWeightKg();
+            java.math.BigDecimal diff = endWeight.subtract(startWeight);
+            int weeks = p.getPlanDurationWeeks();
+            java.math.BigDecimal weeklyChange = diff.divide(java.math.BigDecimal.valueOf(weeks), 4, java.math.RoundingMode.HALF_UP);
+
+            for (int i = 1; i <= weeks; i++) {
+                java.math.BigDecimal milestoneWeight = startWeight.add(weeklyChange.multiply(java.math.BigDecimal.valueOf(i)))
+                        .setScale(2, java.math.RoundingMode.HALF_UP);
+                milestones.add(UserProfileResponse.WeightMilestone.builder()
+                        .weekNumber(i)
+                        .date(p.getPlanStartDate().plusWeeks(i))
+                        .targetWeightKg(milestoneWeight)
+                        .build());
+            }
+        }
+
         return UserProfileResponse.builder()
                 .id(p.getId()).userId(p.getUserId())
                 .username(p.getUsername()).dateOfBirth(p.getDateOfBirth())
@@ -137,6 +158,10 @@ public class UserProfileService {
                 .dailyProteinGoalG(p.getDailyProteinGoalG()).dailyCarbsGoalG(p.getDailyCarbsGoalG())
                 .dailyFatGoalG(p.getDailyFatGoalG()).dailyWaterGoalMl(p.getDailyWaterGoalMl())
                 .bio(p.getBio()).timezone(p.getTimezone())
+                .planStartDate(p.getPlanStartDate())
+                .planDurationWeeks(p.getPlanDurationWeeks())
+                .dailyActivityGoalKcal(p.getDailyActivityGoalKcal())
+                .weeklyWeightMilestones(milestones)
                 .createdAt(p.getCreatedAt()).updatedAt(p.getUpdatedAt())
                 .build();
     }

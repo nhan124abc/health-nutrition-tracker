@@ -32,6 +32,21 @@ import org.springframework.web.bind.annotation.*;
 public class UserProfileController {
 
     private final UserProfileService profileService;
+    private final health.tracker.services.user.service.GoalPlanService goalPlanService;
+
+    @PostMapping("/goal-plans/suggestions")
+    public ResponseEntity<GoalPlanResponse> suggestGoalPlan(
+            @RequestHeader("X-User-Id") Long userId,
+            @Valid @RequestBody GoalPlanRequest request) {
+        return ResponseEntity.ok(goalPlanService.suggest(userId, request));
+    }
+
+    @PostMapping("/goal-plans/apply")
+    public ResponseEntity<GoalPlanResponse.Option> applyGoalPlan(
+            @RequestHeader("X-User-Id") Long userId,
+            @Valid @RequestBody GoalPlanRequest request) {
+        return ResponseEntity.ok(goalPlanService.apply(userId, request));
+    }
 
     // ─── Profile ──────────────────────────────────────────────────────────────
 

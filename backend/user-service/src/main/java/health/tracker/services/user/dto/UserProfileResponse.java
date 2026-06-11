@@ -37,10 +37,27 @@ public class UserProfileResponse {
     private String bio;
     private String timezone;
 
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate planStartDate;
+    private Integer planDurationWeeks;
+    private Integer dailyActivityGoalKcal;
+    private java.util.List<WeightMilestone> weeklyWeightMilestones;
+
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
+
+    @Data
+    @Builder
+    @lombok.AllArgsConstructor
+    @lombok.NoArgsConstructor
+    public static class WeightMilestone {
+        private int weekNumber;
+        @JsonFormat(pattern = "yyyy-MM-dd")
+        private LocalDate date;
+        private BigDecimal targetWeightKg;
+    }
 }
 

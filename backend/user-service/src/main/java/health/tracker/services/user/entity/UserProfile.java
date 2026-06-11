@@ -79,6 +79,15 @@ public class UserProfile {
     @Builder.Default
     private String timezone = "UTC";
 
+    @Column(name = "plan_start_date")
+    private LocalDate planStartDate;
+
+    @Column(name = "plan_duration_weeks")
+    private Integer planDurationWeeks;
+
+    @Column(name = "daily_activity_goal_kcal")
+    private Integer dailyActivityGoalKcal;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
