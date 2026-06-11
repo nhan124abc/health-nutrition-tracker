@@ -16,6 +16,7 @@ import {
   FaUserCircle,
   FaUtensils,
   FaWeight,
+  FaBullseye,
 } from 'react-icons/fa';
 import { logout } from '../api/api';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -23,6 +24,8 @@ import { clearChatHistory, getChatHistory, sendChatMessage } from '../features/a
 
 const menuItems = [
   { to: '/dashboard', labelKey: 'nav.dashboard', icon: FaHome },
+  { to: '/goals', labelKey: 'nav.goals', icon: FaBullseye },
+  { to: '/planner', labelKey: 'nav.planner', icon: FaRobot },
   { to: '/meals', labelKey: 'nav.diary', icon: FaUtensils },
   { to: '/water', labelKey: 'nav.water', icon: FaTint },
   { to: '/activity', labelKey: 'nav.activity', icon: FaDumbbell },

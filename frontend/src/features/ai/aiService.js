@@ -33,3 +33,7 @@ export function getChatHistory() {
 export function clearChatHistory() {
   return api.delete(aiConfig.endpoints.chatHistory, withGuestHeaders());
 }
+
+export function getAiPlanSuggestions(payload) {
+  return api.post(aiConfig.endpoints.plannerSuggest, payload, withGuestHeaders());
+}

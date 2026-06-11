@@ -37,6 +37,9 @@ function ActivityTracker() {
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [savingLog, setSavingLog] = useState(false);
   const [activityError, setActivityError] = useState('');
+  const [activityGoal] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('activeGoalPlan'))?.dailyActivityGoalKcal || 0; } catch { return 0; }
+  });
 
   const filteredTypes = category === 'all' ? activityTypes : activityTypes.filter((type) => type.category === category);
   const visibleLogs = category === 'all' ? logs : logs.filter((log) => log.category === category);
@@ -230,6 +233,7 @@ function ActivityTracker() {
 
         <Col lg={4}>
           <ActivitySummaryCard
+            activityGoal={activityGoal}
             activityTypes={filteredTypes}
             logCount={visibleLogs.length}
             summary={summary}

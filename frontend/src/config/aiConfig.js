@@ -3,6 +3,7 @@ const aiConfig = {
   endpoints: {
     chat: '/ai/chat',
     chatHistory: '/ai/chat/history',
+    plannerSuggest: '/ai/planner/suggest',
   },
 };
 

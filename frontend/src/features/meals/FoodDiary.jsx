@@ -20,6 +20,8 @@ import {
   normalizeMealFromApi,
 } from './mealUtils';
 import { createMeal, deleteMealById, getMealById, getMealsByDate, updateMeal } from './mealService';
+import { getProfile } from '../profile/profileService';
+import { extractProfileFromApi, mapProfileFromApi } from '../profile/profileUtils';
 
 function FoodDiary() {
   const { t } = useTranslation();
@@ -40,6 +42,14 @@ function FoodDiary() {
     serving: 100,
     quantity: 1,
   });
+  const [calorieGoal, setCalorieGoal] = useState(2000);
+
+  useEffect(() => {
+    getProfile().then((response) => {
+      const value = mapProfileFromApi(extractProfileFromApi(response.data)).dailyCalorieGoal;
+      if (Number(value) > 0) setCalorieGoal(Number(value));
+    }).catch(() => {});
+  }, []);
 
   const dayMeals = useMemo(
     () => meals.filter((meal) => meal.date === selectedDate),
@@ -308,7 +318,7 @@ function FoodDiary() {
         </Col>
 
         <Col lg={4}>
-          <DailyMealSummary mealCount={dayMeals.length} t={t} totals={totals} />
+          <DailyMealSummary calorieGoal={calorieGoal} mealCount={dayMeals.length} t={t} totals={totals} />
         </Col>
       </Row>
 

@@ -17,6 +17,10 @@ export const initialProfile = {
   dailyWaterGoal: '',
   bio: '',
   timezone: 'Asia/Bangkok',
+  planStartDate: '',
+  planDurationWeeks: '',
+  dailyActivityGoalKcal: '',
+  weeklyWeightMilestones: [],
 };
 
 export const profileFields = [
@@ -169,6 +173,10 @@ export function mapProfileFromApi(data = {}) {
     dailyWaterGoal: data.dailyWaterGoalMl ?? '',
     bio: data.bio || '',
     timezone: data.timezone || initialProfile.timezone,
+    planStartDate: data.planStartDate || '',
+    planDurationWeeks: data.planDurationWeeks ?? '',
+    dailyActivityGoalKcal: data.dailyActivityGoalKcal ?? '',
+    weeklyWeightMilestones: data.weeklyWeightMilestones || [],
   };
 }
 

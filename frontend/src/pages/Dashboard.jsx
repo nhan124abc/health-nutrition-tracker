@@ -52,6 +52,10 @@ const emptySummary = {
   targetWeight: 0,
   healthGoal: '',
   streak: 0,
+  planStartDate: '',
+  planDurationWeeks: '',
+  dailyActivityGoalKcal: 0,
+  weeklyWeightMilestones: [],
 };
 
 function toLocalDate(date) {
@@ -183,6 +187,10 @@ function Dashboard() {
         targetWeight: normalizeNumber(profile.targetWeight),
         healthGoal: profile.healthGoal || '',
         streak: getStreak(days),
+        planStartDate: profile.planStartDate || '',
+        planDurationWeeks: profile.planDurationWeeks || '',
+        dailyActivityGoalKcal: profile.dailyActivityGoalKcal || 0,
+        weeklyWeightMilestones: profile.weeklyWeightMilestones || [],
       });
 
       if (failedRequests.length > 0) {
@@ -207,6 +215,51 @@ function Dashboard() {
   const netCalories = dailySummary.caloriesConsumed - dailySummary.caloriesBurned;
   const goalPercent = Math.round((dailySummary.caloriesConsumed / Math.max(dailySummary.calorieGoal, 1)) * 100);
   const waterPercent = Math.round((dailySummary.waterIntake / Math.max(dailySummary.waterGoal, 1)) * 100);
+
+  const calorieProgressVariant = goalPercent > 100 
+    ? 'danger' 
+    : goalPercent >= 90 
+    ? 'warning' 
+    : 'success';
+
+  const currentHour = new Date().getHours();
+  const isLate = currentHour >= 20;
+
+  const getCalorieStatusLabel = () => {
+    if (goalPercent > 100) return <span className="text-danger small fw-bold">⚠ Vượt hạn mức ({goalPercent}%)</span>;
+    if (goalPercent >= 90) return <span className="text-warning small fw-bold">⚠ Sắp đạt giới hạn ({goalPercent}%)</span>;
+    if (isLate && goalPercent < 70) return <span className="text-info small fw-semibold">ℹ Nạp thiếu, bổ sung bữa phụ</span>;
+    return <span className="text-success small fw-semibold">✓ Hợp lý ({goalPercent}%)</span>;
+  };
+
+  const activityPercent = dailySummary.dailyActivityGoalKcal > 0
+    ? Math.round((dailySummary.caloriesBurned / dailySummary.dailyActivityGoalKcal) * 100)
+    : 0;
+
+  const activityProgressVariant = activityPercent >= 100 
+    ? 'success' 
+    : 'primary';
+
+  const getActivityStatusLabel = () => {
+    if (!dailySummary.dailyActivityGoalKcal) {
+      return <span className="text-secondary small">Chưa có mục tiêu</span>;
+    }
+    if (activityPercent >= 120) return <span className="text-success small fw-bold">🎉 Vượt mục tiêu tốt! ({activityPercent}%)</span>;
+    if (activityPercent >= 100) return <span className="text-success small fw-bold">✓ Đạt mục tiêu ({activityPercent}%)</span>;
+    return <span className="text-primary small fw-semibold">🏃 Cần đốt thêm {Math.max(0, dailySummary.dailyActivityGoalKcal - dailySummary.caloriesBurned)} kcal</span>;
+  };
+
+  const getNextWeightMilestone = () => {
+    if (!dailySummary.planStartDate || !dailySummary.weeklyWeightMilestones || dailySummary.weeklyWeightMilestones.length === 0) {
+      return null;
+    }
+    const today = new Date();
+    const nextMilestone = dailySummary.weeklyWeightMilestones.find(m => new Date(m.date) >= today);
+    return nextMilestone || dailySummary.weeklyWeightMilestones[dailySummary.weeklyWeightMilestones.length - 1];
+  };
+
+  const nextMilestone = getNextWeightMilestone();
+
   const healthGoalLabel = dailySummary.healthGoal
     ? t(`profilePage.goals.${dailySummary.healthGoal}`)
     : t('dashboardPage.goalBanner.notSet');
@@ -308,33 +361,48 @@ function Dashboard() {
             </div>
 
             <Row className="g-3 dashboard-goal-metrics">
-              <Col md={4}>
+              <Col lg={3} md={6}>
                 <div className="dashboard-goal-metric">
                   <span>{t('dashboardPage.goalBanner.targetWeight')}</span>
                   <strong>
                     {dailySummary.weight || '-'} kg
                     <small> → {dailySummary.targetWeight || '-'} kg</small>
                   </strong>
+                  {nextMilestone && (
+                    <div className="text-secondary small mt-1" style={{ fontSize: '0.82rem' }}>
+                      Tuần {nextMilestone.weekNumber}: <strong>{nextMilestone.targetWeightKg} kg</strong> ({new Date(`${nextMilestone.date}T12:00:00`).toLocaleDateString('vi-VN', { month: '2-digit', day: '2-digit' })})
+                    </div>
+                  )}
                 </div>
               </Col>
-              <Col md={4}>
+              <Col lg={3} md={6}>
                 <div className="dashboard-goal-metric">
                   <div className="d-flex justify-content-between gap-2">
                     <span>{t('dashboardPage.goals.calorie')}</span>
-                    <b>{Math.min(goalPercent, 100)}%</b>
+                    {getCalorieStatusLabel()}
                   </div>
                   <strong>{dailySummary.caloriesConsumed} / {dailySummary.calorieGoal} kcal</strong>
-                  <ProgressBar now={Math.min(goalPercent, 100)} />
+                  <ProgressBar now={Math.min(goalPercent, 100)} variant={calorieProgressVariant} />
                 </div>
               </Col>
-              <Col md={4}>
+              <Col lg={3} md={6}>
                 <div className="dashboard-goal-metric">
                   <div className="d-flex justify-content-between gap-2">
                     <span>{t('dashboardPage.goals.water')}</span>
-                    <b>{Math.min(waterPercent, 100)}%</b>
+                    <b>{waterPercent}%</b>
                   </div>
                   <strong>{dailySummary.waterIntake} / {dailySummary.waterGoal} ml</strong>
-                  <ProgressBar now={Math.min(waterPercent, 100)} />
+                  <ProgressBar now={Math.min(waterPercent, 100)} variant="info" />
+                </div>
+              </Col>
+              <Col lg={3} md={6}>
+                <div className="dashboard-goal-metric">
+                  <div className="d-flex justify-content-between gap-2">
+                    <span>Mục tiêu vận động</span>
+                    {getActivityStatusLabel()}
+                  </div>
+                  <strong>{dailySummary.caloriesBurned} / {dailySummary.dailyActivityGoalKcal || 300} kcal</strong>
+                  <ProgressBar now={Math.min(activityPercent, 100)} variant={activityProgressVariant} />
                 </div>
               </Col>
             </Row>

@@ -3,11 +3,13 @@ package health.tracker.services.ai.service;
 import health.tracker.services.ai.dto.ChatRequest;
 import health.tracker.services.ai.dto.ChatMessageDto;
 import health.tracker.services.ai.dto.ChatResponse;
+import health.tracker.services.ai.dto.PlannerSuggestRequest;
 import health.tracker.services.ai.entity.AiUsageLimit;
 import health.tracker.services.ai.entity.ChatMessage;
 import health.tracker.services.ai.exception.AppException;
 import health.tracker.services.ai.repository.AiUsageLimitRepository;
 import health.tracker.services.ai.repository.ChatMessageRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +21,7 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
+@Slf4j
 @Service
 public class AiChatService {
 
@@ -224,5 +227,11 @@ public class AiChatService {
         boolean isAuthenticated() {
             return userId != null;
         }
+    }
+
+    @Transactional
+    public String generateDailyPlan(String userId, String guestId, PlannerSuggestRequest context) {
+        log.info("Generating daily plan using PlannerRuleEngine for userId={}, goal={}", userId, context.getGoal());
+        return PlannerRuleEngine.generatePlan(context);
     }
 }

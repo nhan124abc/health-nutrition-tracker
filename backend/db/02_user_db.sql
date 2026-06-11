@@ -40,6 +40,9 @@ CREATE TABLE IF NOT EXISTS user_profiles (
     daily_water_goal_ml INT             NULL DEFAULT 2000 COMMENT 'Mục tiêu nước uống (ml)',
     bio                 TEXT            NULL,
     timezone            VARCHAR(50)     NULL DEFAULT 'UTC',
+    plan_start_date     DATE            NULL COMMENT 'Ngày bắt đầu kế hoạch',
+    plan_duration_weeks INT             NULL COMMENT 'Thời hạn kế hoạch (số tuần)',
+    daily_activity_goal_kcal INT        NULL COMMENT 'Mục tiêu calo vận động hằng ngày (kcal)',
     created_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at          DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
