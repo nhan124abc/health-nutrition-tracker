@@ -93,5 +93,17 @@ public class UserProfileController {
         );
         return ResponseEntity.ok(result);
     }
+    @PostMapping("/water")
+    public ResponseEntity<WaterLogResponse> logWater(
+            @RequestHeader("X-User-Id") Long userId,
+            @Valid @RequestBody WaterLogRequest request) {
+        WaterLogResponse response = profileService.logWater(userId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+    @GetMapping("/water/today")
+    public ResponseEntity<DailyWaterResponse> getTodayWater(
+            @RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(profileService.getTodayWater(userId));
+    }
 }
 

@@ -6,6 +6,7 @@ import health.tracker.services.user.entity.UserProfile;
 import health.tracker.services.user.exception.AppException;
 import health.tracker.services.user.repository.BodyMetricRepository;
 import health.tracker.services.user.repository.UserProfileRepository;
+import health.tracker.services.user.repository.WaterLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -13,6 +14,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import health.tracker.services.user.entity.WaterLog;
+import java.util.List;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -25,6 +30,7 @@ public class UserProfileService {
     private final UserProfileRepository profileRepository;
     private final BodyMetricRepository  metricRepository;
     private final NutritionGoalCalculator nutritionGoalCalculator;
+    private final WaterLogRepository waterLogRepository;
 
     // ─── Profile ──────────────────────────────────────────────────────────────
 
@@ -81,6 +87,39 @@ public class UserProfileService {
      * Ghi chỉ số cơ thể. Tự động tính BMI nếu có chiều cao trong hồ sơ.
      */
     @Transactional
+    public WaterLogResponse logWater(Long userId, WaterLogRequest request) {
+        WaterLog waterlog = WaterLog.builder()
+                .userId(userId)
+                .amountMl(request.getAmountMl())
+                .loggedAt(request.getLoggedAt())
+                .build();
+        WaterLog savedWaterlog = waterLogRepository.save(waterlog);
+        return toWaterLogResponse(savedWaterlog);
+    }
+
+    @Transactional
+        public DailyWaterResponse getTodayWater(Long userId) {
+            LocalDate today = LocalDate.now();
+            LocalDateTime start = today.atStartOfDay();
+            LocalDateTime end = today.plusDays(1).atStartOfDay();
+
+            List<WaterLog> waterLogs =
+                    waterLogRepository.findByUserIdAndLoggedAtGreaterThanEqualAndLoggedAtLessThan(userId, start, end);
+
+            int totalAmountMl = waterLogs.stream().mapToInt(WaterLog::getAmountMl).sum();
+
+            UserProfile profile = profileRepository.findByUserId(userId)
+                    .orElseGet(()-> profileRepository.save(UserProfile.builder().userId(userId).build()));
+
+            return DailyWaterResponse.builder()
+                    .date(today)
+                    .totalAmountMl(totalAmountMl)
+                    .goalMl(profile.getDailyWaterGoalMl())
+                    .build();
+        }
+
+
+    @Transactional
     public BodyMetricResponse addMetric(Long userId, BodyMetricRequest request) {
         BodyMetric metric = BodyMetric.builder()
                 .userId(userId)
@@ -123,6 +162,14 @@ public class UserProfileService {
     }
 
     // ─── Mappers ──────────────────────────────────────────────────────────────
+    private WaterLogResponse toWaterLogResponse(WaterLog waterLog) {
+        return WaterLogResponse.builder()
+                .id(waterLog.getId())
+                .userId(waterLog.getUserId())
+                .amountMl(waterLog.getAmountMl())
+                .loggedAt(waterLog.getLoggedAt())
+                .build();
+    }
 
     private UserProfileResponse toProfileResponse(UserProfile p) {
         NutritionGoalCalculator.NutritionTargets targets = nutritionGoalCalculator.calculate(p);
