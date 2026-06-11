@@ -11,7 +11,7 @@ import {
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
 import { Badge, Button, Card, Col, ProgressBar, Row } from 'react-bootstrap';
-import { FaBullseye } from 'react-icons/fa';
+import { FaBullseye, FaFire } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { getActivitySummary } from '../features/activities/activityService';
 import { getMealsByDate } from '../features/meals/mealService';
@@ -88,8 +88,14 @@ function getWaterIntake(date) {
 
 function getStreak(days) {
   let streak = 0;
+  let index = days.length - 1;
 
-  for (let index = days.length - 1; index >= 0; index -= 1) {
+  // Keep the existing streak during the current day until that day has ended.
+  if (index >= 0 && days[index].mealCount === 0 && days[index].activityCount === 0) {
+    index -= 1;
+  }
+
+  for (; index >= 0; index -= 1) {
     if (days[index].mealCount === 0 && days[index].activityCount === 0) {
       break;
     }
@@ -293,10 +299,31 @@ function Dashboard() {
   };
 
   const statCards = [
-    [t('dashboardPage.stats.consumed'), `${dailySummary.caloriesConsumed} kcal`, t('dashboardPage.stats.goalPercent', { percent: goalPercent }), 'success'],
-    [t('dashboardPage.stats.burned'), `${dailySummary.caloriesBurned} kcal`, t('dashboardPage.stats.activityCount', { count: dailySummary.activityCount }), 'primary'],
-    [t('dashboardPage.stats.net'), `${netCalories} kcal`, t('dashboardPage.stats.netHelper'), 'warning'],
-    [t('dashboardPage.stats.streak'), `${dailySummary.streak} ${t('common.days')}`, t('dashboardPage.stats.streakHelper'), 'danger'],
+    {
+      title: t('dashboardPage.stats.consumed'),
+      value: `${dailySummary.caloriesConsumed} kcal`,
+      helper: t('dashboardPage.stats.goalPercent', { percent: goalPercent }),
+      variant: 'success',
+    },
+    {
+      title: t('dashboardPage.stats.burned'),
+      value: `${dailySummary.caloriesBurned} kcal`,
+      helper: t('dashboardPage.stats.activityCount', { count: dailySummary.activityCount }),
+      variant: 'primary',
+    },
+    {
+      title: t('dashboardPage.stats.net'),
+      value: `${netCalories} kcal`,
+      helper: t('dashboardPage.stats.netHelper'),
+      variant: 'warning',
+    },
+    {
+      title: t('dashboardPage.stats.streak'),
+      value: `${dailySummary.streak} ${t('common.days')}`,
+      helper: t('dashboardPage.stats.streakHelper'),
+      variant: 'danger',
+      isStreak: true,
+    },
   ];
 
   return (
@@ -384,12 +411,22 @@ function Dashboard() {
       )}
 
       <Row className="g-3 mb-4">
-        {statCards.map(([title, value, helper, variant]) => (
+        {statCards.map(({ title, value, helper, variant, isStreak }) => (
           <Col xs={12} md={6} xl={3} key={title}>
-            <Card className="metric-card border-0 shadow-sm h-100">
+            <Card className={`metric-card border-0 shadow-sm h-100${isStreak ? ' streak-card' : ''}`}>
               <Card.Body>
-                <div className={`small fw-semibold text-${variant} mb-2`}>{title}</div>
-                <div className="metric-value">{value}</div>
+                <div className="d-flex align-items-center justify-content-between gap-3">
+                  <div>
+                    <div className={`small fw-semibold text-${variant} mb-2`}>{title}</div>
+                    <div className="metric-value">{value}</div>
+                  </div>
+                  {isStreak && (
+                    <FaFire
+                      className={`streak-fire${dailySummary.streak > 0 ? ' streak-fire-active' : ''}`}
+                      aria-hidden="true"
+                    />
+                  )}
+                </div>
                 <div className="text-secondary small">{helper}</div>
               </Card.Body>
             </Card>
