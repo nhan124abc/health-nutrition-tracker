@@ -19,6 +19,7 @@ import BodyMetrics from './features/profile/BodyMetrics';
 import GoalPlanner from './features/profile/GoalPlanner';
 import Reports from './pages/Reports';
 import Planner from './pages/Planner';
+import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminManagementPage from './pages/admin/AdminManagementPage';
 
@@ -91,13 +92,9 @@ function App() {
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="users" element={<AdminManagementPage type="users" />} />
-          <Route path="foods" element={<AdminManagementPage type="foods" />} />
-          <Route path="exercises" element={<AdminManagementPage type="exercises" />} />
-          <Route path="articles" element={<AdminManagementPage type="articles" />} />
-          <Route path="submissions" element={<AdminManagementPage type="submissions" />} />
-          <Route path="reports" element={<AdminManagementPage type="reports" />} />
-          <Route path="plans" element={<AdminManagementPage type="plans" />} />
-          <Route path="settings" element={<AdminManagementPage type="settings" />} />
+          <Route path="catalogs/foods" element={<AdminManagementPage type="foods" />} />
+          <Route path="catalogs/activities" element={<AdminManagementPage type="exercises" />} />
+          <Route path="analytics" element={<AdminAnalytics />} />
         </Route>
       </Routes>
     </BrowserRouter>

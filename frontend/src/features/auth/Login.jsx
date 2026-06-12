@@ -3,7 +3,7 @@ import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap'
 import { useTranslation } from 'react-i18next';
 import { FaFacebookF, FaGoogle } from 'react-icons/fa';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { saveAuthTokens } from '../../api/api';
+import { getDefaultRouteForCurrentUser, saveAuthTokens } from '../../api/api';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import authConfig from '../../config/authConfig';
 import { login } from './authService';
@@ -36,7 +36,10 @@ function Login() {
         throw new Error(t('auth.missingToken'));
       }
 
-      navigate(from ? `${from.pathname}${from.search}${from.hash}` : '/dashboard', { replace: true });
+      navigate(
+        from ? `${from.pathname}${from.search}${from.hash}` : getDefaultRouteForCurrentUser(),
+        { replace: true }
+      );
     } catch (err) {
       setError(err.response?.data?.message || err.message || t('auth.loginError'));
     } finally {

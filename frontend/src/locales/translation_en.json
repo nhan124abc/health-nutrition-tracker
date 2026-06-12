@@ -301,7 +301,11 @@
   "admin": {
     "nav": {
       "dashboard": "Overview",
-      "users": "Users",
+      "users": "User management",
+      "catalogs": "System catalogs",
+      "foodCatalog": "Food catalog",
+      "activityCatalog": "Activity catalog",
+      "analytics": "System analytics",
       "foods": "Foods & meals",
       "exercises": "Exercises",
       "articles": "Health articles",
@@ -418,18 +422,45 @@
         "users": "+8.2%",
         "foods": "+124 new",
         "pending": "Needs action",
+        "exercises": "+12 new",
         "todayLogs": "+14.5%"
       },
       "activities": {
         "foodAdded": "Nguyen An added \"Pan-seared chicken breast\"",
         "macroUpdated": "Admin updated macro data for oats",
         "weeklyReport": "Week 20 report was generated automatically",
+        "activityUpdated": "Admin updated the running activity catalog",
         "articleSubmitted": "Article \"How to drink water properly\" was submitted for review"
       },
       "progress": {
         "foods": "Standardized foods",
         "exercises": "Exercises with burn data",
+        "users": "Complete user profiles",
         "content": "Approved content"
+      }
+    },
+    "analytics": {
+      "badge": "System analytics",
+      "title": "System-wide analytics",
+      "description": "Monitor user growth, feature usage, and the volume of health data recorded across the platform.",
+      "userGrowth": "User growth",
+      "userGrowthDescription": "Total registered users over the last six months.",
+      "systemUsage": "System usage",
+      "systemUsageDescription": "Recorded events by core product area.",
+      "logs": "Recorded events",
+      "featureAdoption": "Feature adoption",
+      "featureAdoptionDescription": "Percentage of active users using each feature.",
+      "stats": {
+        "totalUsers": "Total users",
+        "activeUsers": "Active users",
+        "dailyLogs": "Daily records",
+        "catalogItems": "Catalog items"
+      },
+      "features": {
+        "meals": "Meal diary",
+        "water": "Water tracking",
+        "activity": "Activity tracking",
+        "bodyMetrics": "Body metrics"
       }
     },
     "pages": {
@@ -992,6 +1023,118 @@
       "cutting": "Cutting: daily calories = TDEE - 300 kcal with high protein to preserve muscle.",
       "bodyRecomposition": "Body recomposition: daily calories stay near TDEE with very high protein.",
       "improveHealth": "Improve fitness: daily calories stay near TDEE with balanced macros."
+    }
+  },
+  "plannerPage": {
+    "badge": "Suggestions from remaining calories",
+    "title": "Choose a suitable meal",
+    "description": "The system creates two alternative options based on your remaining calories for today.",
+    "calorieBudget": "Today's calorie budget",
+    "consumed": "Consumed {{consumed}} / {{goal}} kcal",
+    "selectSlot": "Choose a meal or activity",
+    "generating": "Generating...",
+    "createOptions": "Create 2 options",
+    "createOtherOptions": "Create 2 other options",
+    "invalidTotal": "The current calorie total appears invalid because of older meal data. New suggestions will ignore it; remove the incorrect meals.",
+    "insufficientCalories": "There are not enough calories left for another meal.",
+    "loggedMealsTitle": "Meals logged for {{meal}} today:",
+    "loggedActivitiesTitle": "Activities logged today:",
+    "serving": "Serving",
+    "duration": "Duration: {{minutes}} minutes",
+    "durationLabel": "Duration",
+    "minutes": "{{minutes}} minutes",
+    "deleting": "Deleting...",
+    "removeMeal": "Remove this meal",
+    "removeActivity": "Remove this activity",
+    "deleteActivity": "Delete activity",
+    "findingOptions": "Finding the most suitable options for you...",
+    "caloriesBurned": "Burn {{calories}} kcal",
+    "selected": "Selected",
+    "chooseActivity": "Choose this activity",
+    "chooseOption": "Choose this option",
+    "activitySuggestionsTitle": "Activity suggestions for today",
+    "activitySuggestionsDescription": "Combining exercise with your plan can help you reach your goal sooner.",
+    "logged": "Logged",
+    "logging": "Logging...",
+    "logActivity": "Log exercise",
+    "noActivitySuggestions": "Choose Exercise from the list and select \"Create 2 options\" to receive activity suggestions.",
+    "mealTypes": {
+      "breakfast": "Breakfast",
+      "lunch": "Lunch",
+      "dinner": "Dinner",
+      "snack": "Snack",
+      "exercise": "Exercise"
+    },
+    "empty": {
+      "loggedActivity": "You have logged an activity today. Select \"Create 2 other options\" to make a change.",
+      "selectActivity": "Choose an activity type and select \"Create 2 options\".",
+      "loggedMeal": "You have logged food for {{meal}} today. Select \"Create 2 other options\" to make a change.",
+      "selectMeal": "Choose a meal type and select \"Create 2 options\"."
+    },
+    "suggestion": {
+      "activityMessage": "Activities are suggested based on your goal and current profile.",
+      "mealMessage": "Meals are balanced around your calorie target.",
+      "mealBudget": "Budget for this meal"
+    },
+    "savedNotes": {
+      "meal": "Meal suggested from remaining calories",
+      "activity": "Exercise suggested by AI Planner"
+    },
+    "success": {
+      "mealAdded": "Added \"{{name}}\". The alternative option will not be added.",
+      "mealDeleted": "The meal was unselected and removed from your diary.",
+      "activityAdded": "Logged exercise \"{{name}}\".",
+      "activityDeleted": "The activity was removed from your diary."
+    },
+    "errors": {
+      "load": "Unable to load today's data.",
+      "generate": "Unable to generate suggestions.",
+      "overBudget": "This option exceeds your remaining calories. Generate new suggestions.",
+      "addMeal": "Unable to add the meal to your diary.",
+      "deleteMeal": "Unable to delete the meal.",
+      "addActivity": "Unable to log the activity.",
+      "deleteActivity": "Unable to delete the activity."
+    }
+  },
+  "goalPlannerPage": {
+    "badge": "Automatic planning",
+    "title": "Set a weight goal",
+    "description": "Choose a goal and the system will calculate suitable calorie and activity targets.",
+    "empty": "Enter your goal to receive suitable timeline options.",
+    "summary": "Total energy change: {{energy}} kcal · Minimum safe duration: {{weeks}} weeks",
+    "form": {
+      "title": "Goal information",
+      "currentWeight": "Current",
+      "goal": "Goal",
+      "targetChange": "Weight change in kg",
+      "targetWeeks": "Preferred duration (weeks, optional)",
+      "calculating": "Calculating...",
+      "createOptions": "Create options"
+    },
+    "goals": {
+      "loseWeight": "Lose weight",
+      "gainWeight": "Gain weight",
+      "maintainWeight": "Maintain weight"
+    },
+    "option": {
+      "weeks_one": "{{count}} week",
+      "weeks_other": "{{count}} weeks",
+      "safe": "Suitable",
+      "unsafe": "Unsafe",
+      "activity": "Activity",
+      "change": "Change {{weight}} kg/week · {{energy}} kcal/day",
+      "choose": "Choose this option",
+      "applying": "Applying..."
+    },
+    "units": {
+      "kg": "kg",
+      "kcal": "kcal",
+      "kcalPerDay": "kcal/day"
+    },
+    "errors": {
+      "loadProfile": "Unable to load your profile.",
+      "calculate": "Unable to calculate a plan. Please complete your profile first.",
+      "apply": "Unable to apply this plan."
     }
   },
   "bodyMetricsPage": {

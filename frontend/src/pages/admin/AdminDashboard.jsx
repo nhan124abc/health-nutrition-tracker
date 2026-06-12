@@ -1,11 +1,11 @@
 import { Badge, Button, Card, Col, ProgressBar, Row, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { FaChartLine, FaClipboardCheck, FaUsers, FaUtensils } from 'react-icons/fa';
+import { FaChartLine, FaDumbbell, FaUsers, FaUtensils } from 'react-icons/fa';
 
 const overviewStats = [
   { labelKey: 'admin.dashboard.stats.users', value: '12,480', trendKey: 'admin.dashboard.trends.users', icon: FaUsers },
   { labelKey: 'admin.dashboard.stats.foods', value: '3,248', trendKey: 'admin.dashboard.trends.foods', icon: FaUtensils },
-  { labelKey: 'admin.dashboard.stats.pending', value: '38', trendKey: 'admin.dashboard.trends.pending', icon: FaClipboardCheck },
+  { labelKey: 'admin.dashboard.progress.exercises', value: '186', trendKey: 'admin.dashboard.trends.exercises', icon: FaDumbbell },
   { labelKey: 'admin.dashboard.stats.todayLogs', value: '9,820', trendKey: 'admin.dashboard.trends.todayLogs', icon: FaChartLine },
 ];
 
@@ -29,17 +29,17 @@ const recentActivities = [
     variant: 'success',
   },
   {
-    itemKey: 'admin.dashboard.activities.articleSubmitted',
-    typeKey: 'admin.common.news',
-    statusKey: 'admin.status.pending',
-    variant: 'warning',
+    itemKey: 'admin.dashboard.activities.activityUpdated',
+    typeKey: 'admin.common.activity',
+    statusKey: 'admin.status.completed',
+    variant: 'success',
   },
 ];
 
 const dataProgress = [
   { labelKey: 'admin.dashboard.progress.foods', value: 82, variant: 'success' },
   { labelKey: 'admin.dashboard.progress.exercises', value: 68, variant: 'info' },
-  { labelKey: 'admin.dashboard.progress.content', value: 74, variant: 'warning' },
+  { labelKey: 'admin.dashboard.progress.users', value: 74, variant: 'warning' },
 ];
 
 function AdminDashboard() {

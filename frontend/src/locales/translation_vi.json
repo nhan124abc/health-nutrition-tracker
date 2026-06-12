@@ -709,6 +709,117 @@
       "improveHealth": "Cải thiện sức khỏe: calo gần bằng TDEE, macro cân bằng."
     }
   },
+  "plannerPage": {
+    "badge": "Gợi ý theo calo còn lại",
+    "title": "Chọn bữa ăn phù hợp",
+    "description": "Hệ thống tạo hai phương án thay thế nhau dựa trên lượng calo bạn còn được ăn hôm nay.",
+    "calorieBudget": "Ngân sách calo hôm nay",
+    "consumed": "Đã ăn {{consumed}} / {{goal}} kcal",
+    "selectSlot": "Chọn bữa ăn hoặc hoạt động",
+    "generating": "Đang tạo...",
+    "createOptions": "Tạo 2 phương án",
+    "createOtherOptions": "Tạo 2 phương án khác",
+    "invalidTotal": "Tổng calo hiện tại bất thường do dữ liệu bữa cũ. Gợi ý mới sẽ bỏ qua tổng này; bạn nên xóa các bữa bị sai.",
+    "insufficientCalories": "Không còn đủ calo cho một bữa mới.",
+    "loggedMealsTitle": "Món ăn đã ghi nhận cho {{meal}} hôm nay:",
+    "loggedActivitiesTitle": "Hoạt động vận động đã ghi nhận hôm nay:",
+    "serving": "Định lượng",
+    "duration": "Thời lượng: {{minutes}} phút",
+    "durationLabel": "Thời lượng",
+    "minutes": "{{minutes}} phút",
+    "deleting": "Đang xóa...",
+    "removeMeal": "Hủy chọn bữa này",
+    "removeActivity": "Hủy chọn hoạt động này",
+    "deleteActivity": "Xóa hoạt động",
+    "findingOptions": "Đang tìm phương án phù hợp nhất cho bạn...",
+    "caloriesBurned": "Đốt {{calories}} kcal",
+    "selected": "Đã chọn",
+    "chooseActivity": "Chọn hoạt động này",
+    "chooseOption": "Chọn phương án này",
+    "activitySuggestionsTitle": "Gợi ý hoạt động vận động hôm nay",
+    "activitySuggestionsDescription": "Kết hợp tập luyện giúp bạn đạt mục tiêu nhanh hơn.",
+    "logged": "Đã ghi nhận",
+    "logging": "Đang ghi nhận...",
+    "logActivity": "Ghi nhận bài tập",
+    "noActivitySuggestions": "Chọn Hoạt động vận động trong danh sách và nhấn \"Tạo 2 phương án\" để nhận gợi ý bài tập.",
+    "mealTypes": {
+      "breakfast": "Bữa sáng",
+      "lunch": "Bữa trưa",
+      "dinner": "Bữa tối",
+      "snack": "Bữa phụ",
+      "exercise": "Hoạt động vận động"
+    },
+    "empty": {
+      "loggedActivity": "Bạn đã ghi nhận hoạt động vận động hôm nay. Nhấn \"Tạo 2 phương án khác\" nếu muốn thay đổi.",
+      "selectActivity": "Chọn loại hoạt động vận động rồi nhấn \"Tạo 2 phương án\".",
+      "loggedMeal": "Bạn đã ghi nhận món ăn cho {{meal}} hôm nay. Nhấn \"Tạo 2 phương án khác\" nếu muốn thay đổi.",
+      "selectMeal": "Chọn loại bữa rồi nhấn \"Tạo 2 phương án\"."
+    },
+    "suggestion": {
+      "activityMessage": "Các hoạt động được đề xuất dựa trên mục tiêu và thể trạng của bạn.",
+      "mealMessage": "Các bữa ăn được cân đối theo mục tiêu calo của bạn.",
+      "mealBudget": "Ngân sách cho bữa này"
+    },
+    "savedNotes": {
+      "meal": "Bữa ăn đề xuất theo lượng calo còn lại",
+      "activity": "Bài tập đề xuất từ AI Planner"
+    },
+    "success": {
+      "mealAdded": "Đã thêm \"{{name}}\". Phương án còn lại sẽ không được cộng thêm.",
+      "mealDeleted": "Đã hủy chọn và xóa bữa ăn khỏi nhật ký.",
+      "activityAdded": "Đã ghi nhận bài tập \"{{name}}\".",
+      "activityDeleted": "Đã xóa hoạt động khỏi nhật ký."
+    },
+    "errors": {
+      "load": "Không thể tải dữ liệu hôm nay.",
+      "generate": "Không thể tạo gợi ý.",
+      "overBudget": "Phương án vượt quá lượng calo còn lại. Vui lòng tạo lại gợi ý.",
+      "addMeal": "Không thể thêm bữa ăn vào nhật ký.",
+      "deleteMeal": "Không thể xóa bữa ăn.",
+      "addActivity": "Không thể ghi nhận hoạt động.",
+      "deleteActivity": "Không thể xóa hoạt động."
+    }
+  },
+  "goalPlannerPage": {
+    "badge": "Kế hoạch tự động",
+    "title": "Thiết lập mục tiêu cân nặng",
+    "description": "Chọn mục tiêu, hệ thống sẽ tính mức calo và vận động phù hợp.",
+    "empty": "Nhập mục tiêu để nhận các mốc thời gian phù hợp.",
+    "summary": "Tổng năng lượng cần thay đổi: {{energy}} kcal · Thời gian an toàn tối thiểu: {{weeks}} tuần",
+    "form": {
+      "title": "Thông tin mục tiêu",
+      "currentWeight": "Hiện tại",
+      "goal": "Mục tiêu",
+      "targetChange": "Số kg muốn thay đổi",
+      "targetWeeks": "Thời gian mong muốn (tuần, không bắt buộc)",
+      "calculating": "Đang tính...",
+      "createOptions": "Tạo các phương án"
+    },
+    "goals": {
+      "loseWeight": "Giảm cân",
+      "gainWeight": "Tăng cân",
+      "maintainWeight": "Duy trì cân nặng"
+    },
+    "option": {
+      "weeks": "{{count}} tuần",
+      "safe": "Phù hợp",
+      "unsafe": "Không an toàn",
+      "activity": "Vận động",
+      "change": "Thay đổi {{weight}} kg/tuần · {{energy}} kcal/ngày",
+      "choose": "Chọn phương án này",
+      "applying": "Đang áp dụng..."
+    },
+    "units": {
+      "kg": "kg",
+      "kcal": "kcal",
+      "kcalPerDay": "kcal/ngày"
+    },
+    "errors": {
+      "loadProfile": "Không thể tải hồ sơ.",
+      "calculate": "Không thể tính kế hoạch. Hãy hoàn thiện hồ sơ trước.",
+      "apply": "Không thể áp dụng kế hoạch."
+    }
+  },
   "bodyMetricsPage": {
     "badge": "Chỉ số cơ thể",
     "title": "Theo dõi body metrics",
@@ -740,7 +851,11 @@
   "admin": {
     "nav": {
       "dashboard": "Tổng quan",
-      "users": "Người dùng",
+      "users": "Quản lý người dùng",
+      "catalogs": "Quản lý danh mục",
+      "foodCatalog": "Danh mục thực phẩm",
+      "activityCatalog": "Danh mục hoạt động",
+      "analytics": "Phân tích toàn hệ thống",
       "foods": "Thực phẩm & món ăn",
       "exercises": "Bài tập",
       "articles": "Tin tức sức khỏe",
@@ -857,18 +972,45 @@
         "users": "+8.2%",
         "foods": "+124 mới",
         "pending": "Cần xử lý",
+        "exercises": "+12 mới",
         "todayLogs": "+14.5%"
       },
       "activities": {
         "foodAdded": "Nguyễn An thêm món \"Ức gà áp chảo\"",
         "macroUpdated": "Admin cập nhật bảng macro cho yến mạch",
         "weeklyReport": "Báo cáo tuần 20 được tạo tự động",
+        "activityUpdated": "Admin cập nhật danh mục chạy bộ",
         "articleSubmitted": "Bài viết \"Uống nước đúng cách\" được gửi duyệt"
       },
       "progress": {
         "foods": "Thực phẩm chuẩn hóa",
         "exercises": "Bài tập có calo tiêu hao",
+        "users": "Hồ sơ người dùng đầy đủ",
         "content": "Nội dung đã duyệt"
+      }
+    },
+    "analytics": {
+      "badge": "Phân tích hệ thống",
+      "title": "Phân tích toàn hệ thống",
+      "description": "Theo dõi tăng trưởng người dùng, mức độ sử dụng tính năng và dữ liệu sức khỏe trên toàn nền tảng.",
+      "userGrowth": "Tăng trưởng người dùng",
+      "userGrowthDescription": "Tổng số người dùng đăng ký trong 6 tháng gần nhất.",
+      "systemUsage": "Mức sử dụng hệ thống",
+      "systemUsageDescription": "Số lượt ghi nhận theo từng nhóm chức năng.",
+      "logs": "Lượt ghi nhận",
+      "featureAdoption": "Mức độ sử dụng tính năng",
+      "featureAdoptionDescription": "Tỷ lệ người dùng hoạt động có sử dụng từng tính năng.",
+      "stats": {
+        "totalUsers": "Tổng người dùng",
+        "activeUsers": "Người dùng hoạt động",
+        "dailyLogs": "Dữ liệu hôm nay",
+        "catalogItems": "Mục trong danh mục"
+      },
+      "features": {
+        "meals": "Nhật ký bữa ăn",
+        "water": "Theo dõi nước",
+        "activity": "Theo dõi hoạt động",
+        "bodyMetrics": "Chỉ số cơ thể"
       }
     },
     "pages": {

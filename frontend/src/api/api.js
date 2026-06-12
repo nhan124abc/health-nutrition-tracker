@@ -74,7 +74,12 @@ export function getCurrentUser() {
 }
 
 export function getCurrentUserRole() {
-  return getCurrentUser()?.role?.toUpperCase() || null;
+  const role = getCurrentUser()?.role?.toUpperCase();
+  return role?.replace(/^ROLE_/, '') || null;
+}
+
+export function getDefaultRouteForCurrentUser() {
+  return getCurrentUserRole() === 'ADMIN' ? '/admin/dashboard' : '/dashboard';
 }
 
 export function saveAuthTokens(payload = {}) {

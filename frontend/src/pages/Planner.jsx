@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Form, ProgressBar, Row, Spinner } from 'react-bootstrap';
-import { FaCheck, FaRobot, FaUtensils, FaDumbbell } from 'react-icons/fa';
 import { useTranslation } from 'react-i18next';
+import { FaCheck, FaRobot, FaUtensils, FaDumbbell } from 'react-icons/fa';
 import { getAiPlanSuggestions } from '../features/ai/aiService';
 import { createMeal, getMealsByDate, deleteMealById } from '../features/meals/mealService';
 import { extractMealsFromApi, getMealsTotals, normalizeMealFromApi } from '../features/meals/mealUtils';
@@ -13,17 +13,16 @@ function today() {
   return new Date().toLocaleDateString('en-CA');
 }
 
+const mealTypes = [
+  ['breakfast', 'plannerPage.mealTypes.breakfast'],
+  ['lunch', 'plannerPage.mealTypes.lunch'],
+  ['dinner', 'plannerPage.mealTypes.dinner'],
+  ['afternoon_snack', 'plannerPage.mealTypes.snack'],
+  ['exercise', 'plannerPage.mealTypes.exercise'],
+];
+
 function Planner() {
-  const { t } = useTranslation();
-
-  const mealTypes = [
-    ['breakfast', t('planner.mealTypes.breakfast')],
-    ['lunch', t('planner.mealTypes.lunch')],
-    ['dinner', t('planner.mealTypes.dinner')],
-    ['afternoon_snack', t('planner.mealTypes.afternoon_snack')],
-    ['exercise', t('planner.mealTypes.exercise')],
-  ];
-
+  const { i18n, t } = useTranslation();
   const [profile, setProfile] = useState(null);
   const [meals, setMeals] = useState([]);
   const [activities, setActivities] = useState([]);
@@ -80,12 +79,12 @@ function Planner() {
       .then(([profileResponse, mealsResponse, activitiesResponse]) => {
         setProfile(mapProfileFromApi(extractProfileFromApi(profileResponse.data)));
         setMeals(extractMealsFromApi(mealsResponse.data).map(normalizeMealFromApi));
-        const actList = Array.isArray(activitiesResponse.data)
-          ? activitiesResponse.data
+        const actList = Array.isArray(activitiesResponse.data) 
+          ? activitiesResponse.data 
           : activitiesResponse.data?.content || activitiesResponse.data?.data || [];
         setActivities(actList);
       })
-      .catch((err) => setError(err.response?.data?.message || t('planner.errorLoad')))
+      .catch((err) => setError(err.response?.data?.message || t('plannerPage.errors.load')))
       .finally(() => setLoading(false));
   }, [t]);
 
@@ -115,6 +114,7 @@ function Planner() {
         gender: profile?.gender?.toUpperCase() || 'MALE',
         excludedFoodNames: [...new Set([...existingNames, ...(suggestedNames[selectedMeal] || [])])],
         suggestionOffset: suggestionOffsets[selectedMeal] || 0,
+        locale: i18n.language,
       });
       setSuggestion(response.data);
       setSuggestedNames((current) => {
@@ -134,7 +134,7 @@ function Planner() {
         return next;
       });
     } catch (err) {
-      setError(err.response?.data?.message || t('planner.errorGenerate'));
+      setError(err.response?.data?.message || t('plannerPage.errors.generate'));
     } finally {
       setGenerating(false);
     }
@@ -146,13 +146,16 @@ function Planner() {
     try {
       const optionCalories = Number(option.calories) || 0;
       if (optionCalories <= 0 || optionCalories > remaining || optionCalories > Number(suggestion?.mealBudget || remaining)) {
-        throw new Error(t('planner.overLimitError'));
+        throw new Error(t('plannerPage.errors.overBudget'));
       }
+
+      // AI đã trả tổng dinh dưỡng cho toàn bộ phần ăn. Gửi thẳng sang Meal API,
+      // không quy đổi thêm theo servingSizeG để tránh nhân calories hai lần.
       const payload = {
         mealType: selectedMeal.toUpperCase(),
         mealDate: today(),
         mealTime: null,
-        notes: t('planner.badge'),
+        notes: t('plannerPage.savedNotes.meal'),
         items: [{
           itemType: 'FOOD',
           foodItemId: null,
@@ -171,9 +174,9 @@ function Planner() {
       const response = await createMeal(payload);
       setMeals((current) => [...current, normalizeMealFromApi(response.data)]);
       setSelectedOption(index);
-      setSuccess(t('planner.successAdd', { name: option.name }));
+      setSuccess(t('plannerPage.success.mealAdded', { name: option.name }));
     } catch (err) {
-      setError(err.response?.data?.message || err.message || t('planner.errorAdd'));
+      setError(err.response?.data?.message || err.message || t('plannerPage.errors.addMeal'));
     } finally {
       setSaving(false);
     }
@@ -188,9 +191,9 @@ function Planner() {
       await deleteMealById(mealId);
       setMeals((current) => current.filter((m) => m.id !== mealId));
       setSelectedOption(null);
-      setSuccess(t('planner.successDeleteMeal'));
+      setSuccess(t('plannerPage.success.mealDeleted'));
     } catch (err) {
-      setError(err.response?.data?.message || t('planner.errorDelete'));
+      setError(err.response?.data?.message || t('plannerPage.errors.deleteMeal'));
     } finally {
       setSaving(false);
       setDeletingId(null);
@@ -203,21 +206,23 @@ function Planner() {
     setError('');
     setSuccess('');
     const todayDate = today();
+
     const payload = {
       activityName: activity.name,
       durationMinutes: Number(activity.durationMinutes) || 30,
       caloriesBurned: Number(activity.caloriesBurned || activity.calories) || 150,
       loggedAt: `${todayDate}T12:00:00`,
-      notes: t('planner.badge'),
+      notes: t('plannerPage.savedNotes.activity'),
       category: 'CARDIO',
     };
+
     try {
       const response = await createActivityLog(payload);
       setActivities((current) => [...current, response.data]);
       setSelectedOption(idx);
-      setSuccess(t('planner.successLogActivity', { name: activity.name }));
+      setSuccess(t('plannerPage.success.activityAdded', { name: activity.name }));
     } catch (err) {
-      setError(err.response?.data?.message || t('planner.errorLogActivity'));
+      setError(err.response?.data?.message || t('plannerPage.errors.addActivity'));
     } finally {
       setSaving(false);
       setLoggingActivity(null);
@@ -233,9 +238,9 @@ function Planner() {
       await deleteActivityById(activityLogId);
       setActivities((current) => current.filter((act) => act.id !== activityLogId));
       setSelectedOption(null);
-      setSuccess(t('planner.successDeleteActivity'));
+      setSuccess(t('plannerPage.success.activityDeleted'));
     } catch (err) {
-      setError(err.response?.data?.message || t('planner.errorDeleteActivity'));
+      setError(err.response?.data?.message || t('plannerPage.errors.deleteActivity'));
     } finally {
       setSaving(false);
       setDeletingActivityId(null);
@@ -244,73 +249,41 @@ function Planner() {
 
   if (loading) return <div className="py-5 text-center"><Spinner animation="border" variant="success" /></div>;
 
-  const isExerciseSlot = selectedMeal === 'exercise';
-  const slotLabel = mealTypes.find(([k]) => k === selectedMeal)?.[1] || '';
+  const selectedMealLabel = t(mealTypes.find(([key]) => key === selectedMeal)?.[1] || '');
 
   return <>
-    <div className="page-heading"><div>
-      <Badge bg="success" className="mb-2">{t('planner.badge')}</Badge>
-      <h1>{t('planner.pageTitle')}</h1>
-      <p>{t('planner.pageSubtitle')}</p>
-    </div></div>
-
+    <div className="page-heading">
+      <div>
+        <Badge bg="success" className="mb-2">{t('plannerPage.badge')}</Badge>
+        <h1>{t('plannerPage.title')}</h1>
+        <p>{t('plannerPage.description')}</p>
+      </div>
+    </div>
     {error && <Alert variant="danger">{error}</Alert>}
     {success && <Alert variant="success">{success}</Alert>}
-
     <Row className="g-4">
-      {/* ── Left Panel ── */}
       <Col lg={4}>
         <Card className="border-0 shadow-sm"><Card.Body>
-          <h2 className="h5 fw-bold">{t('planner.calorieBudgetTitle')}</h2>
+          <h2 className="h5 fw-bold">{t('plannerPage.calorieBudget')}</h2>
           <div className="display-6 fw-bold text-success">{remaining} kcal</div>
-          <p className="text-secondary">{t('planner.eaten', { consumed: totals.calories, goal: calorieGoal })}</p>
+          <p className="text-secondary">{t('plannerPage.consumed', { consumed: totals.calories, goal: calorieGoal })}</p>
           <ProgressBar now={Math.min(progress, 100)} variant={progress > 100 ? 'danger' : 'success'} className="mb-4" />
-
-          <Form.Group className="mb-3">
-            <Form.Label>{t('planner.selectSlotLabel')}</Form.Label>
-            <Form.Select value={selectedMeal} onChange={(e) => { setSelectedMeal(e.target.value); setSuggestion(null); setSelectedOption(null); }}>
-              {mealTypes.map(([value, label]) => <option value={value} key={value}>{label}</option>)}
-            </Form.Select>
-          </Form.Group>
-
-          <Button
-            className="w-100"
-            variant={isExerciseSlot ? 'primary' : 'success'}
-            onClick={generate}
-            disabled={generating || (!isExerciseSlot && remaining < 100 && !hasInvalidDailyTotal)}
-          >
-            <FaRobot className="me-2" />{generating ? t('planner.generating') : t('planner.generate')}
-          </Button>
-
-          {suggestion && (
-            <Button
-              className="w-100 mt-2"
-              variant={isExerciseSlot ? 'outline-primary' : 'outline-success'}
-              onClick={generate}
-              disabled={generating}
-            >
-              <FaRobot className="me-2" />{t('planner.generateMore')}
-            </Button>
-          )}
-
-          {hasInvalidDailyTotal && (
-            <Alert variant="danger" className="mt-3 mb-0 py-2">{t('planner.invalidTotalWarning')}</Alert>
-          )}
-          {!hasInvalidDailyTotal && !isExerciseSlot && remaining < 100 && (
-            <Alert variant="warning" className="mt-3 mb-0 py-2">{t('planner.overCalorieWarning')}</Alert>
-          )}
+          <Form.Group className="mb-3"><Form.Label>{t('plannerPage.selectSlot')}</Form.Label><Form.Select value={selectedMeal} onChange={(e) => { setSelectedMeal(e.target.value); setSuggestion(null); setSelectedOption(null); }}>
+            {mealTypes.map(([value, labelKey]) => <option value={value} key={value}>{t(labelKey)}</option>)}
+          </Form.Select></Form.Group>
+          <Button className="w-100" variant={selectedMeal === 'exercise' ? 'primary' : 'success'} onClick={generate} disabled={generating || (selectedMeal !== 'exercise' && remaining < 100 && !hasInvalidDailyTotal)}><FaRobot className="me-2" />{generating ? t('plannerPage.generating') : t('plannerPage.createOptions')}</Button>
+          {suggestion && <Button className="w-100 mt-2" variant={selectedMeal === 'exercise' ? 'outline-primary' : 'outline-success'} onClick={generate} disabled={generating}><FaRobot className="me-2" />{t('plannerPage.createOtherOptions')}</Button>}
+          {hasInvalidDailyTotal && <Alert variant="danger" className="mt-3 mb-0 py-2">{t('plannerPage.invalidTotal')}</Alert>}
+          {!hasInvalidDailyTotal && selectedMeal !== 'exercise' && remaining < 100 && <Alert variant="warning" className="mt-3 mb-0 py-2">{t('plannerPage.insufficientCalories')}</Alert>}
         </Card.Body></Card>
       </Col>
-
-      {/* ── Right Panel ── */}
       <Col lg={8}>
-        {/* Logged meals (non-exercise slots) */}
-        {!isExerciseSlot && loggedMealsForSlot.length > 0 && (
+        {selectedMeal !== 'exercise' && loggedMealsForSlot.length > 0 && (
           <Card className="border-0 shadow-sm mb-4 bg-success bg-opacity-10 border border-success border-opacity-25">
             <Card.Body>
               <h3 className="h6 fw-bold text-success mb-3 d-flex align-items-center">
                 <FaCheck className="me-2" />
-                {t('planner.loggedMealsTitle', { slot: slotLabel.toLowerCase() })}
+                {t('plannerPage.loggedMealsTitle', { meal: selectedMealLabel.toLocaleLowerCase(i18n.language) })}
               </h3>
               <Row className="g-3">
                 {loggedMealsForSlot.map((meal) =>
@@ -322,20 +295,20 @@ function Planner() {
                             <span className="fw-bold text-dark">{item.name}</span>
                             <Badge bg="success">{item.calories} kcal</Badge>
                           </div>
-                          <div className="text-secondary small mb-3">{t('planner.serving', { amount: item.serving })}</div>
+                          <div className="text-secondary small mb-3">{t('plannerPage.serving')}: {item.serving}</div>
                           <div className="quick-grid mb-3">
-                            <span>Protein<strong>{item.protein}g</strong></span>
-                            <span>Carbs<strong>{item.carbs}g</strong></span>
-                            <span>Fat<strong>{item.fat}g</strong></span>
+                            <span>{t('common.protein')}<strong>{item.protein}g</strong></span>
+                            <span>{t('common.carbs')}<strong>{item.carbs}g</strong></span>
+                            <span>{t('common.fat')}<strong>{item.fat}g</strong></span>
                           </div>
-                          <Button
-                            variant="outline-danger"
-                            size="sm"
+                          <Button 
+                            variant="outline-danger" 
+                            size="sm" 
                             className="mt-auto w-100"
                             disabled={saving}
                             onClick={() => deleteMeal(meal.id)}
                           >
-                            {deletingId === meal.id ? t('planner.deleting') : t('planner.cancelMeal')}
+                            {deletingId === meal.id ? t('plannerPage.deleting') : t('plannerPage.removeMeal')}
                           </Button>
                         </Card.Body>
                       </Card>
@@ -347,13 +320,12 @@ function Planner() {
           </Card>
         )}
 
-        {/* Logged activities (exercise slot) */}
-        {isExerciseSlot && activities.length > 0 && (
+        {selectedMeal === 'exercise' && activities.length > 0 && (
           <Card className="border-0 shadow-sm mb-4 bg-primary bg-opacity-10 border border-primary border-opacity-25">
             <Card.Body>
               <h3 className="h6 fw-bold text-primary mb-3 d-flex align-items-center">
                 <FaCheck className="me-2" />
-                {t('planner.loggedActivitiesTitle')}
+                {t('plannerPage.loggedActivitiesTitle')}
               </h3>
               <Row className="g-3">
                 {activities.map((act) => (
@@ -364,17 +336,15 @@ function Planner() {
                           <span className="fw-bold text-dark">{act.activityName}</span>
                           <Badge bg="primary">{Math.round(act.caloriesBurned)} kcal</Badge>
                         </div>
-                        <div className="text-secondary small mb-3">
-                          {t('planner.duration', { minutes: act.durationMinutes })}
-                        </div>
-                        <Button
-                          variant="outline-danger"
-                          size="sm"
+                        <div className="text-secondary small mb-3">{t('plannerPage.duration', { minutes: act.durationMinutes })}</div>
+                        <Button 
+                          variant="outline-danger" 
+                          size="sm" 
                           className="mt-auto w-100"
                           disabled={saving}
                           onClick={() => handleDeleteActivity(act.id)}
                         >
-                          {deletingActivityId === act.id ? t('planner.deleting') : t('planner.cancelActivity')}
+                          {deletingActivityId === act.id ? t('plannerPage.deleting') : t('plannerPage.removeActivity')}
                         </Button>
                       </Card.Body>
                     </Card>
@@ -385,82 +355,93 @@ function Planner() {
           </Card>
         )}
 
-        {/* Empty state hint */}
         {!suggestion && !generating && (
           <Alert variant="light" className="border">
-            {isExerciseSlot
-              ? (activities.length > 0 ? t('planner.hintWithActivityLog') : t('planner.hintExerciseEmpty'))
-              : (loggedMealsForSlot.length > 0 ? t('planner.hintWithLog', { slot: slotLabel.toLowerCase() }) : t('planner.hintEmpty'))
-            }
+            {selectedMeal === 'exercise' ? (
+              activities.length > 0
+                ? t('plannerPage.empty.loggedActivity')
+                : t('plannerPage.empty.selectActivity')
+            ) : (
+              loggedMealsForSlot.length > 0
+                ? t('plannerPage.empty.loggedMeal', { meal: selectedMealLabel.toLocaleLowerCase(i18n.language) })
+                : t('plannerPage.empty.selectMeal')
+            )}
           </Alert>
         )}
 
-        {/* Generating spinner */}
         {generating && (
           <Card className="border-0 shadow-sm">
             <Card.Body className="py-5 text-center">
-              <Spinner animation="grow" variant={isExerciseSlot ? 'primary' : 'success'} />
-              <p className="mt-3 mb-0">{t('planner.generatingHint')}</p>
+              <Spinner animation="grow" variant={selectedMeal === 'exercise' ? 'primary' : 'success'} />
+              <p className="mt-3 mb-0">{t('plannerPage.findingOptions')}</p>
             </Card.Body>
           </Card>
         )}
 
-        {/* Suggestion cards */}
         {suggestion && (
           <>
-            <Alert variant={isExerciseSlot ? 'primary' : 'info'}>
-              {isExerciseSlot
-                ? suggestion.message
-                : `${suggestion.message} ${t('planner.mealBudget', { budget: suggestion.mealBudget })}`
-              }
-            </Alert>
-
+            {selectedMeal === 'exercise' ? (
+              <Alert variant="primary">
+                {t('plannerPage.suggestion.activityMessage')}
+              </Alert>
+            ) : (
+              <Alert variant="info">
+                {t('plannerPage.suggestion.mealMessage')} {t('plannerPage.suggestion.mealBudget')}: <strong>{suggestion.mealBudget} kcal</strong>.
+              </Alert>
+            )}
             <Row className="g-3">
               {(suggestion.options || []).map((option, index) => {
                 const logged = isOptionLogged(option.name) || selectedOption === index;
-                const isBlockedByOtherSelection = isExerciseSlot
-                  ? (hasLoggedActivityInSlot && !logged)
+                const isExercise = selectedMeal === 'exercise';
+                const isBlockedByOtherSelection = isExercise 
+                  ? (hasLoggedActivityInSlot && !logged) 
                   : (selectedOption !== null || hasLoggedMealInSlot);
                 return (
                   <Col md={6} key={`${option.name}-${index}`}>
                     <Card className="border-0 shadow-sm h-100">
                       <Card.Body className="d-flex flex-column">
                         <div className="d-flex justify-content-between gap-2">
-                          {isExerciseSlot
-                            ? <FaDumbbell className="text-primary fs-5" />
-                            : <FaUtensils className="text-success" />
-                          }
-                          <Badge bg={isExerciseSlot ? 'primary' : 'success'}>
-                            {isExerciseSlot
-                              ? t('planner.caloriesBurned', { calories: option.caloriesBurned || option.calories })
-                              : `${option.calories} kcal`
-                            }
+                          {isExercise ? (
+                            <FaDumbbell className="text-primary fs-5" />
+                          ) : (
+                            <FaUtensils className="text-success" />
+                          )}
+                          <Badge bg={isExercise ? 'primary' : 'success'}>
+                            {isExercise
+                              ? t('plannerPage.caloriesBurned', { calories: option.caloriesBurned || option.calories })
+                              : `${option.calories} kcal`}
                           </Badge>
                         </div>
                         <h3 className="h5 fw-bold mt-3">{option.name}</h3>
                         <p className="text-secondary">{option.amount}</p>
-
-                        {!isExerciseSlot && (
+                        
+                        {!isExercise && (
                           <div className="quick-grid mb-3">
-                            <span>Protein<strong>{option.proteinG}g</strong></span>
-                            <span>Carbs<strong>{option.carbsG}g</strong></span>
-                            <span>Fat<strong>{option.fatG}g</strong></span>
+                            <span>{t('common.protein')}<strong>{option.proteinG}g</strong></span>
+                            <span>{t('common.carbs')}<strong>{option.carbsG}g</strong></span>
+                            <span>{t('common.fat')}<strong>{option.fatG}g</strong></span>
                           </div>
                         )}
-
+                        
                         <Button
                           className="mt-auto"
-                          variant={logged
-                            ? (isExerciseSlot ? 'primary' : 'success')
-                            : (isExerciseSlot ? 'outline-primary' : 'outline-success')
-                          }
+                          variant={logged ? (isExercise ? 'primary' : 'success') : (isExercise ? 'outline-primary' : 'outline-success')}
                           disabled={saving || logged || isBlockedByOtherSelection}
-                          onClick={() => isExerciseSlot ? handleLogActivity(option, index) : addOption(option, index)}
+                          onClick={() => {
+                            if (isExercise) {
+                              handleLogActivity(option, index);
+                            } else {
+                              addOption(option, index);
+                            }
+                          }}
                         >
                           {logged ? (
-                            <><FaCheck className="me-2" />{t('planner.chosen')}</>
+                            <>
+                              <FaCheck className="me-2" />
+                              {t('plannerPage.selected')}
+                            </>
                           ) : (
-                            isExerciseSlot ? t('planner.chooseActivity') : t('planner.chooseOption')
+                            isExercise ? t('plannerPage.chooseActivity') : t('plannerPage.chooseOption')
                           )}
                         </Button>
                       </Card.Body>
@@ -470,22 +451,22 @@ function Planner() {
               })}
             </Row>
 
-            {/* Activity suggestions section (shown below meal options) */}
-            {!isExerciseSlot && (
+            {/* Gợi ý vận động - luôn hiện bên dưới bữa ăn */}
+            {selectedMeal !== 'exercise' && (
               <div className="mt-5 border-top pt-4">
                 <h3 className="h5 fw-bold mb-1 d-flex align-items-center gap-2">
                   <FaDumbbell className="text-primary" />
-                  {t('planner.activitySectionTitle')}
+                  {t('plannerPage.activitySuggestionsTitle')}
                 </h3>
-                <p className="text-secondary small mb-4">{t('planner.activitySectionSubtitle')}</p>
+                <p className="text-secondary small mb-4">{t('plannerPage.activitySuggestionsDescription')}</p>
 
-                {/* Already logged activities */}
+                {/* Hoạt động đã ghi nhận */}
                 {activities.length > 0 && (
                   <Card className="border-0 shadow-sm mb-4 bg-primary bg-opacity-10 border border-primary border-opacity-25">
                     <Card.Body>
                       <h4 className="h6 fw-bold text-primary mb-3 d-flex align-items-center">
                         <FaCheck className="me-2" />
-                        {t('planner.activityLoggedTitle')}
+                        {t('plannerPage.loggedActivitiesTitle')}
                       </h4>
                       <Row className="g-3">
                         {activities.map((act) => (
@@ -496,9 +477,7 @@ function Planner() {
                                   <span className="fw-bold text-dark">{act.activityName}</span>
                                   <Badge bg="primary">{Math.round(act.caloriesBurned)} kcal</Badge>
                                 </div>
-                                <div className="text-secondary small mb-3">
-                                  {t('planner.duration', { minutes: act.durationMinutes })}
-                                </div>
+                                <div className="text-secondary small mb-3">{t('plannerPage.duration', { minutes: act.durationMinutes })}</div>
                                 <Button
                                   variant="outline-danger"
                                   size="sm"
@@ -506,7 +485,7 @@ function Planner() {
                                   disabled={saving}
                                   onClick={() => handleDeleteActivity(act.id)}
                                 >
-                                  {deletingActivityId === act.id ? t('planner.deleting') : t('planner.deleteActivity')}
+                                  {deletingActivityId === act.id ? t('plannerPage.deleting') : t('plannerPage.deleteActivity')}
                                 </Button>
                               </Card.Body>
                             </Card>
@@ -517,7 +496,7 @@ function Planner() {
                   </Card>
                 )}
 
-                {/* Suggested activities from suggestion.activities */}
+                {/* 2 phương án vận động từ suggestion.activities */}
                 {suggestion.activities && suggestion.activities.length > 0 && (
                   <Row className="g-3">
                     {suggestion.activities.map((activity, idx) => {
@@ -528,24 +507,21 @@ function Planner() {
                             <Card.Body className="d-flex flex-column">
                               <div className="d-flex justify-content-between gap-2">
                                 <FaDumbbell className="text-primary fs-5" />
-                                <Badge bg="primary">
-                                  {t('planner.caloriesBurned', { calories: activity.caloriesBurned })}
-                                </Badge>
+                                <Badge bg="primary">{t('plannerPage.caloriesBurned', { calories: activity.caloriesBurned })}</Badge>
                               </div>
                               <h3 className="h5 fw-bold mt-3">{activity.name}</h3>
-                              <p className="text-secondary">
-                                {t('planner.duration', { minutes: activity.durationMinutes })}
-                              </p>
+                              <p className="text-secondary">{t('plannerPage.durationLabel')}: <strong>{t('plannerPage.minutes', { minutes: activity.durationMinutes })}</strong></p>
                               <Button
                                 className="mt-auto"
                                 variant={actLogged ? 'primary' : 'outline-primary'}
                                 disabled={saving || actLogged}
                                 onClick={() => handleLogActivity(activity, idx)}
                               >
-                                {actLogged
-                                  ? <><FaCheck className="me-2" />{t('planner.activityLogged')}</>
-                                  : t('planner.logActivity')
-                                }
+                                {actLogged ? (
+                                  <><FaCheck className="me-2" />{t('plannerPage.logged')}</>
+                                ) : (
+                                  loggingActivity === idx ? t('plannerPage.logging') : t('plannerPage.logActivity')
+                                )}
                               </Button>
                             </Card.Body>
                           </Card>
@@ -555,11 +531,11 @@ function Planner() {
                   </Row>
                 )}
 
-                {/* Hint when no activities yet */}
+                {/* Nếu suggestion không có activities, hiển thị nút để chuyển sang exercise slot */}
                 {(!suggestion.activities || suggestion.activities.length === 0) && activities.length === 0 && (
                   <Alert variant="light" className="border d-flex align-items-center gap-2">
                     <FaDumbbell className="text-primary" />
-                    <span dangerouslySetInnerHTML={{ __html: t('planner.activityHint') }} />
+                    <span>{t('plannerPage.noActivitySuggestions')}</span>
                   </Alert>
                 )}
               </div>

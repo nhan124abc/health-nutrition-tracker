@@ -6,7 +6,6 @@ import {
   FaBars,
   FaChartLine,
   FaDumbbell,
-  FaHeartbeat,
   FaHome,
   FaPaperPlane,
   FaRobot,
@@ -229,9 +228,11 @@ function MainLayout() {
 
       <aside className="layout-sidebar d-none d-lg-flex">
         <NavLink to="/dashboard" className="layout-sidebar-brand">
-          <span className="layout-sidebar-mark">
-            <FaHeartbeat />
-          </span>
+          <img
+            src="/img/Logo.jpg"
+            alt={t('app.name')}
+            className="layout-sidebar-logo"
+          />
           <span className="layout-sidebar-brand-text">{t('app.name')}</span>
         </NavLink>
         <div className="layout-sidebar-title">{t('sidebar.title')}</div>
