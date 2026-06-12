@@ -27,10 +27,10 @@ import {
   mapProfileFromApi,
 } from '../features/profile/profileUtils';
 import {
+  normalizeDailyWaterFromApi,
   normalizeNumber,
-  readStoredJson,
-  waterLogsStorageKey,
 } from '../features/water/waterUtils';
+import { getTodayWater } from '../features/water/waterService';
 
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -79,13 +79,6 @@ function getSevenDates(endDate) {
   });
 }
 
-function getWaterIntake(date) {
-  const logs = readStoredJson(waterLogsStorageKey, []);
-  return logs
-    .filter((log) => log.date === date)
-    .reduce((sum, log) => sum + normalizeNumber(log.amountMl), 0);
-}
-
 function getStreak(days) {
   let streak = 0;
   let index = days.length - 1;
@@ -125,9 +118,10 @@ function Dashboard() {
         getMealsByDate(date),
         getActivitySummary(date),
       ]);
-      const [profileResult, metricsResult, ...dayResults] = await Promise.allSettled([
+      const [profileResult, metricsResult, waterResult, ...dayResults] = await Promise.allSettled([
         getProfile(),
         getBodyMetrics({ page: 0, size: 1 }),
+        selectedDate === getTodayDate() ? getTodayWater() : Promise.resolve(null),
         ...dayRequests,
       ]);
 
@@ -164,7 +158,10 @@ function Dashboard() {
         ? extractMetricRows(metricsResult.value.data)
         : [];
       const latestWeight = metrics[0]?.weightKg ?? profile.weight ?? 0;
-      const failedRequests = [profileResult, metricsResult, ...dayResults]
+      const dailyWater = waterResult.status === 'fulfilled' && waterResult.value
+        ? normalizeDailyWaterFromApi(waterResult.value.data)
+        : { totalAmountMl: 0, goalMl: 0 };
+      const failedRequests = [profileResult, metricsResult, waterResult, ...dayResults]
         .filter((result) => result.status === 'rejected');
 
       setWeek(days);
@@ -181,8 +178,10 @@ function Dashboard() {
         mealCount: selectedDay.mealCount || 0,
         activityCount: selectedDay.activityCount || 0,
         activeMinutes: selectedDay.activeMinutes || 0,
-        waterIntake: getWaterIntake(selectedDate),
-        waterGoal: normalizeNumber(profile.dailyWaterGoal) || emptySummary.waterGoal,
+        waterIntake: dailyWater.totalAmountMl,
+        waterGoal: dailyWater.goalMl
+          || normalizeNumber(profile.dailyWaterGoal)
+          || emptySummary.waterGoal,
         weight: normalizeNumber(latestWeight),
         targetWeight: normalizeNumber(profile.targetWeight),
         healthGoal: profile.healthGoal || '',

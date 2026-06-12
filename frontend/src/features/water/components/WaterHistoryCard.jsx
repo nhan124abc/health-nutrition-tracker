@@ -1,5 +1,6 @@
-import { Button, Card, Form, Table } from 'react-bootstrap';
-import { FaEdit, FaHistory, FaTrash } from 'react-icons/fa';
+import { Card, Form, Table } from 'react-bootstrap';
+import { FaHistory } from 'react-icons/fa';
+import CrudActions from '../../../components/CrudActions';
 
 function WaterHistoryCard({
   draftAmounts,
@@ -37,6 +38,7 @@ function WaterHistoryCard({
                       <Form.Control
                         type="number"
                         min="1"
+                        max="10000"
                         size="sm"
                         className="text-end"
                         value={draftAmounts[log.id] ?? log.amountMl}
@@ -44,23 +46,12 @@ function WaterHistoryCard({
                       />
                     </td>
                     <td className="text-end">
-                      <Button
-                        variant="outline-success"
-                        size="sm"
-                        className="me-2"
-                        onClick={() => onUpdate(log.id, draftAmounts[log.id] ?? log.amountMl)}
-                        aria-label={t('waterPage.updateLog')}
-                      >
-                        <FaEdit />
-                      </Button>
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        onClick={() => onDelete(log.id)}
-                        aria-label={t('waterPage.deleteLog')}
-                      >
-                        <FaTrash />
-                      </Button>
+                      <CrudActions
+                        editLabel={t('waterPage.updateLog')}
+                        deleteLabel={t('waterPage.deleteLog')}
+                        onEdit={() => onUpdate(log, draftAmounts[log.id] ?? log.amountMl)}
+                        onDelete={() => onDelete(log)}
+                      />
                     </td>
                   </tr>
                 ))}
