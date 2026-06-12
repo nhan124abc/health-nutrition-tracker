@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Spinner } from 'react-bootstrap';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { saveAuthTokens } from '../../api/api';
+import { getDefaultRouteForCurrentUser, saveAuthTokens } from '../../api/api';
 
 function OAuth2Redirect() {
   const navigate = useNavigate();
@@ -18,7 +18,7 @@ function OAuth2Redirect() {
     }
 
     saveAuthTokens({ accessToken: token, refreshToken });
-    navigate('/dashboard', { replace: true });
+    navigate(getDefaultRouteForCurrentUser(), { replace: true });
   }, [navigate, searchParams]);
 
   return (
