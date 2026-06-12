@@ -552,9 +552,9 @@ body {
 
 .dashboard-goal-card {
   background:
-    radial-gradient(circle at top right, rgba(255, 255, 255, 0.22), transparent 34%),
-    linear-gradient(135deg, #176b50, #2f8f6b);
-  color: #fff;
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.9), transparent 38%),
+    linear-gradient(135deg, #98e2bd, #d5eee2);
+  color: #173f32;
   overflow: hidden;
 }
 
@@ -570,21 +570,23 @@ body {
 
 .dashboard-goal-icon {
   align-items: center;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: #fff;
+  border: 1px solid rgba(47, 143, 107, 0.2);
   border-radius: 1rem;
+  color: var(--health-primary-dark);
   display: flex;
   flex: 0 0 3.5rem;
   font-size: 1.5rem;
   height: 3.5rem;
   justify-content: center;
+  box-shadow: 0 0.35rem 1rem rgba(31, 111, 86, 0.1);
 }
 
 .dashboard-goal-eyebrow {
+  color: var(--health-primary-dark);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.08em;
-  opacity: 0.8;
   text-transform: uppercase;
 }
 
@@ -595,8 +597,22 @@ body {
 }
 
 .dashboard-goal-header p {
+  color: #526d63;
   margin: 0;
-  opacity: 0.82;
+}
+
+.dashboard-goal-header .btn {
+  background: #fff;
+  border-color: rgba(47, 143, 107, 0.24);
+  color: var(--health-primary-dark);
+  font-weight: 700;
+}
+
+.dashboard-goal-header .btn:hover,
+.dashboard-goal-header .btn:focus {
+  background: var(--health-primary);
+  border-color: var(--health-primary);
+  color: #fff;
 }
 
 .dashboard-goal-metrics {
@@ -604,31 +620,38 @@ body {
 }
 
 .dashboard-goal-metric {
-  background: rgba(255, 255, 255, 0.13);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(47, 143, 107, 0.16);
   border-radius: 0.85rem;
+  color: #244d3f;
   display: grid;
   gap: 0.35rem;
   height: 100%;
   padding: 0.9rem 1rem;
+  box-shadow: 0 0.25rem 0.75rem rgba(31, 111, 86, 0.06);
 }
 
 .dashboard-goal-metric span,
 .dashboard-goal-metric small {
-  opacity: 0.82;
+  color: #5c746b;
 }
 
 .dashboard-goal-metric strong {
+  color: #173f32;
   font-size: 1.05rem;
 }
 
+.dashboard-goal-metric .text-secondary {
+  color: #667c74 !important;
+}
+
 .dashboard-goal-metric .progress {
-  background: rgba(255, 255, 255, 0.2);
+  background: #dbe8e2;
   height: 0.45rem;
 }
 
-.dashboard-goal-metric .progress-bar {
-  background: #fff;
+.dashboard-goal-metric .progress-bar.bg-info {
+  background-color: #3b9fbd !important;
 }
 
 .metric-value {
@@ -1590,12 +1613,16 @@ body {
 
 .admin-sidebar-link {
   align-items: center;
+  border: 0;
   border-radius: 0.85rem;
   color: #4d5660 !important;
   display: flex;
   font-weight: 700;
   gap: 0.75rem;
   padding: 0.8rem 0.9rem;
+  text-align: left;
+  text-decoration: none;
+  width: 100%;
   transition: background-color 0.18s ease, color 0.18s ease, justify-content 0.22s ease, padding 0.22s ease, transform 0.18s ease;
 }
 
@@ -1614,10 +1641,34 @@ body {
 }
 
 .admin-sidebar-label {
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   transition: opacity 0.16s ease, width 0.22s ease;
   white-space: nowrap;
+}
+
+.admin-sidebar-group-toggle {
+  background: transparent;
+}
+
+.admin-sidebar-chevron {
+  flex: 0 0 auto;
+  font-size: 0.72rem;
+}
+
+.admin-sidebar-submenu {
+  border-left: 1px solid #dbe8e2;
+  display: grid;
+  gap: 0.2rem;
+  margin: 0.2rem 0 0.35rem 1.35rem;
+  padding-left: 0.65rem;
+}
+
+.admin-sidebar-submenu .admin-sidebar-link {
+  font-size: 0.9rem;
+  padding-bottom: 0.65rem;
+  padding-top: 0.65rem;
 }
 
 .admin-header {
@@ -1756,6 +1807,10 @@ body {
   gap: 1.35rem;
 }
 
+.admin-analytics-chart {
+  height: 320px;
+}
+
 .admin-table-toolbar {
   align-items: center;
   display: flex;
@@ -1826,6 +1881,10 @@ body {
   justify-content: center;
   padding-left: 0;
   padding-right: 0;
+}
+
+.admin-sidebar-collapsed .admin-sidebar-group {
+  display: contents;
 }
 .admin-mobile-sidebar .offcanvas-title {
   color: var(--health-primary-dark);

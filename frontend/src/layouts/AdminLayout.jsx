@@ -17,16 +17,15 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   FaBars,
   FaBell,
-  FaBullseye,
   FaChartLine,
-  FaCog,
+  FaChevronDown,
+  FaChevronRight,
   FaDumbbell,
+  FaFolderOpen,
   FaHome,
-  FaNewspaper,
   FaSearch,
   FaShieldAlt,
   FaSignOutAlt,
-  FaTasks,
   FaUserCircle,
   FaUsers,
   FaUtensils,
@@ -37,19 +36,24 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 const adminMenuItems = [
   { to: '/admin/dashboard', labelKey: 'admin.nav.dashboard', icon: FaHome },
   { to: '/admin/users', labelKey: 'admin.nav.users', icon: FaUsers },
-  { to: '/admin/foods', labelKey: 'admin.nav.foods', icon: FaUtensils },
-  { to: '/admin/exercises', labelKey: 'admin.nav.exercises', icon: FaDumbbell },
-  { to: '/admin/articles', labelKey: 'admin.nav.articles', icon: FaNewspaper },
-  { to: '/admin/reports', labelKey: 'admin.nav.reports', icon: FaChartLine },
-  { to: '/admin/submissions', labelKey: 'admin.nav.submissions', icon: FaTasks },
-  { to: '/admin/plans', labelKey: 'admin.nav.plans', icon: FaBullseye },
-  { to: '/admin/settings', labelKey: 'admin.nav.settings', icon: FaCog },
+  {
+    labelKey: 'admin.nav.catalogs',
+    icon: FaFolderOpen,
+    children: [
+      { to: '/admin/catalogs/foods', labelKey: 'admin.nav.foodCatalog', icon: FaUtensils },
+      { to: '/admin/catalogs/activities', labelKey: 'admin.nav.activityCatalog', icon: FaDumbbell },
+    ],
+  },
+  { to: '/admin/analytics', labelKey: 'admin.nav.analytics', icon: FaChartLine },
 ];
 
 function AdminLayout() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     () => localStorage.getItem('adminSidebarCollapsed') === 'true'
+  );
+  const [isCatalogOpen, setIsCatalogOpen] = useState(
+    () => window.location.pathname.startsWith('/admin/catalogs')
   );
   const [searchTerm, setSearchTerm] = useState('');
   const location = useLocation();
@@ -101,7 +105,39 @@ function AdminLayout() {
 
   const renderNav = (collapsed = false) => (
     <Nav className="admin-sidebar-nav flex-column">
-      {adminMenuItems.map((item) => renderNavLink(item, collapsed))}
+      {adminMenuItems.map((item) => {
+        if (!item.children) {
+          return renderNavLink(item, collapsed);
+        }
+
+        const Icon = item.icon;
+        const label = t(item.labelKey);
+        const isActive = location.pathname.startsWith('/admin/catalogs');
+
+        if (collapsed) {
+          return item.children.map((child) => renderNavLink(child, true));
+        }
+
+        return (
+          <div className="admin-sidebar-group" key={item.labelKey}>
+            <button
+              type="button"
+              className={`admin-sidebar-link admin-sidebar-group-toggle${isActive ? ' active' : ''}`}
+              onClick={() => setIsCatalogOpen((current) => !current)}
+              aria-expanded={isCatalogOpen}
+            >
+              <Icon className="admin-sidebar-icon" />
+              <span className="admin-sidebar-label">{label}</span>
+              {isCatalogOpen ? <FaChevronDown className="admin-sidebar-chevron" /> : <FaChevronRight className="admin-sidebar-chevron" />}
+            </button>
+            {isCatalogOpen && (
+              <div className="admin-sidebar-submenu">
+                {item.children.map((child) => renderNavLink(child, false))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </Nav>
   );
 
@@ -109,7 +145,7 @@ function AdminLayout() {
     <div className={`admin-shell ${isSidebarCollapsed ? 'admin-sidebar-collapsed' : ''}`}>
       <aside className="admin-sidebar d-none d-lg-flex">
         <NavLink to="/admin/dashboard" className="admin-brand">
-          <img src="/logo192.png" alt={t('admin.layout.logoAlt')} />
+          <img src="/img/Logo.jpg" alt={t('admin.layout.logoAlt')} />
           <span className="admin-brand-text">{t('admin.layout.brand')}</span>
         </NavLink>
         <div className="admin-sidebar-caption">

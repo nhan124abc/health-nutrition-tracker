@@ -1,9 +1,9 @@
 import { Navigate } from 'react-router-dom';
-import { getAccessToken } from '../api/api';
+import { getAccessToken, getDefaultRouteForCurrentUser } from '../api/api';
 
 function PublicRoute({ children }) {
   if (getAccessToken()) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={getDefaultRouteForCurrentUser()} replace />;
   }
 
   return children;

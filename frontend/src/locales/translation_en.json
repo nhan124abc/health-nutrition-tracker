@@ -273,7 +273,11 @@
   "admin": {
     "nav": {
       "dashboard": "Overview",
-      "users": "Users",
+      "users": "User management",
+      "catalogs": "System catalogs",
+      "foodCatalog": "Food catalog",
+      "activityCatalog": "Activity catalog",
+      "analytics": "System analytics",
       "foods": "Foods & meals",
       "exercises": "Exercises",
       "articles": "Health articles",
@@ -390,18 +394,45 @@
         "users": "+8.2%",
         "foods": "+124 new",
         "pending": "Needs action",
+        "exercises": "+12 new",
         "todayLogs": "+14.5%"
       },
       "activities": {
         "foodAdded": "Nguyen An added \"Pan-seared chicken breast\"",
         "macroUpdated": "Admin updated macro data for oats",
         "weeklyReport": "Week 20 report was generated automatically",
+        "activityUpdated": "Admin updated the running activity catalog",
         "articleSubmitted": "Article \"How to drink water properly\" was submitted for review"
       },
       "progress": {
         "foods": "Standardized foods",
         "exercises": "Exercises with burn data",
+        "users": "Complete user profiles",
         "content": "Approved content"
+      }
+    },
+    "analytics": {
+      "badge": "System analytics",
+      "title": "System-wide analytics",
+      "description": "Monitor user growth, feature usage, and the volume of health data recorded across the platform.",
+      "userGrowth": "User growth",
+      "userGrowthDescription": "Total registered users over the last six months.",
+      "systemUsage": "System usage",
+      "systemUsageDescription": "Recorded events by core product area.",
+      "logs": "Recorded events",
+      "featureAdoption": "Feature adoption",
+      "featureAdoptionDescription": "Percentage of active users using each feature.",
+      "stats": {
+        "totalUsers": "Total users",
+        "activeUsers": "Active users",
+        "dailyLogs": "Daily records",
+        "catalogItems": "Catalog items"
+      },
+      "features": {
+        "meals": "Meal diary",
+        "water": "Water tracking",
+        "activity": "Activity tracking",
+        "bodyMetrics": "Body metrics"
       }
     },
     "pages": {

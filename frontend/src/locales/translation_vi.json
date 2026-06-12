@@ -713,7 +713,11 @@
   "admin": {
     "nav": {
       "dashboard": "Tổng quan",
-      "users": "Người dùng",
+      "users": "Quản lý người dùng",
+      "catalogs": "Quản lý danh mục",
+      "foodCatalog": "Danh mục thực phẩm",
+      "activityCatalog": "Danh mục hoạt động",
+      "analytics": "Phân tích toàn hệ thống",
       "foods": "Thực phẩm & món ăn",
       "exercises": "Bài tập",
       "articles": "Tin tức sức khỏe",
@@ -830,18 +834,45 @@
         "users": "+8.2%",
         "foods": "+124 mới",
         "pending": "Cần xử lý",
+        "exercises": "+12 mới",
         "todayLogs": "+14.5%"
       },
       "activities": {
         "foodAdded": "Nguyễn An thêm món \"Ức gà áp chảo\"",
         "macroUpdated": "Admin cập nhật bảng macro cho yến mạch",
         "weeklyReport": "Báo cáo tuần 20 được tạo tự động",
+        "activityUpdated": "Admin cập nhật danh mục chạy bộ",
         "articleSubmitted": "Bài viết \"Uống nước đúng cách\" được gửi duyệt"
       },
       "progress": {
         "foods": "Thực phẩm chuẩn hóa",
         "exercises": "Bài tập có calo tiêu hao",
+        "users": "Hồ sơ người dùng đầy đủ",
         "content": "Nội dung đã duyệt"
+      }
+    },
+    "analytics": {
+      "badge": "Phân tích hệ thống",
+      "title": "Phân tích toàn hệ thống",
+      "description": "Theo dõi tăng trưởng người dùng, mức độ sử dụng tính năng và dữ liệu sức khỏe trên toàn nền tảng.",
+      "userGrowth": "Tăng trưởng người dùng",
+      "userGrowthDescription": "Tổng số người dùng đăng ký trong 6 tháng gần nhất.",
+      "systemUsage": "Mức sử dụng hệ thống",
+      "systemUsageDescription": "Số lượt ghi nhận theo từng nhóm chức năng.",
+      "logs": "Lượt ghi nhận",
+      "featureAdoption": "Mức độ sử dụng tính năng",
+      "featureAdoptionDescription": "Tỷ lệ người dùng hoạt động có sử dụng từng tính năng.",
+      "stats": {
+        "totalUsers": "Tổng người dùng",
+        "activeUsers": "Người dùng hoạt động",
+        "dailyLogs": "Dữ liệu hôm nay",
+        "catalogItems": "Mục trong danh mục"
+      },
+      "features": {
+        "meals": "Nhật ký bữa ăn",
+        "water": "Theo dõi nước",
+        "activity": "Theo dõi hoạt động",
+        "bodyMetrics": "Chỉ số cơ thể"
       }
     },
     "pages": {

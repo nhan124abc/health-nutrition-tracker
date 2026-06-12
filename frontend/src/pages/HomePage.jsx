@@ -46,7 +46,7 @@ function HomePage() {
       <header className="home-header premium-home-header">
         <Container className="d-flex align-items-center justify-content-between gap-3">
           <Link to="/" className="home-brand premium-home-brand">
-            <img src="/img/logo2.jpg" alt={t('app.name')} />
+            <img src="/img/Logo.jpg" alt={t('app.name')} />
             <span>{t('app.name')}</span>
           </Link>
           <nav className="home-nav d-none d-lg-flex">
