@@ -8,9 +8,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
 
 /**
  * User Profile & Body Metrics API
@@ -119,6 +123,30 @@ public class UserProfileController {
     public ResponseEntity<DailyWaterResponse> getTodayWater(
             @RequestHeader("X-User-Id") Long userId) {
         return ResponseEntity.ok(profileService.getTodayWater(userId));
+    }
+    @GetMapping("/water")
+    public ResponseEntity<List<WaterLogResponse>> getWaterLogs(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(profileService.getWaterLogs(userId, date));
+    }
+    @DeleteMapping("/water/{id}")
+    public ResponseEntity<Void> deleteWater(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id) {
+        profileService.delete(id, userId);
+        return ResponseEntity.noContent().build();
+    }
+    @PutMapping("/water/{id}")
+    public ResponseEntity<WaterLogResponse> updateWater(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id,
+            @Valid @RequestBody WaterLogRequest request) {
+        log.debug("User {} updating water: id={}, amountMl={}, date={}",
+                userId, id,  request.getAmountMl(), request.getLoggedAt());
+
+        WaterLogResponse response = profileService.updateWater(id, userId, request);
+        return ResponseEntity.ok(response);
     }
 }
 

@@ -84,7 +84,7 @@ public class MealController {
             @RequestHeader("X-User-Id") Long userId,
             @PathVariable Long id,
             @Valid @RequestBody MealRequest request ) {
-        log.debug("User {} updating meal: id={}, type={}, date={}",
+        log.debug("User {} updating water: id={}, type={}, date={}",
                 userId, id,  request.getMealType(), request.getMealDate());
         MealResponse response = mealService.update(id, userId, request);
         return ResponseEntity.ok(response);

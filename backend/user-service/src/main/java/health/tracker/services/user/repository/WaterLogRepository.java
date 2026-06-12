@@ -6,6 +6,8 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+
 @Repository
 public interface WaterLogRepository extends JpaRepository<WaterLog, Long> {
     List<WaterLog> findByUserIdAndLoggedAtGreaterThanEqualAndLoggedAtLessThan(
@@ -13,4 +15,12 @@ public interface WaterLogRepository extends JpaRepository<WaterLog, Long> {
             LocalDateTime start,
             LocalDateTime end
     );
+
+    List<WaterLog> findByUserIdAndLoggedAtGreaterThanEqualAndLoggedAtLessThanOrderByLoggedAtDesc(
+            Long userId,
+            LocalDateTime start,
+            LocalDateTime end
+    );
+
+    Optional<WaterLog> findByIdAndUserId(Long waterId, Long userId);
 }
