@@ -17,6 +17,14 @@ export function resetPassword(payload) {
   return api.post(authConfig.endpoints.resetPassword, payload);
 }
 
+export function sendEmailVerification(email) {
+  return api.post(authConfig.endpoints.sendEmailVerification, { email });
+}
+
+export function confirmEmailVerification(payload) {
+  return api.post(authConfig.endpoints.confirmEmailVerification, payload);
+}
+
 export function getAuthenticatedUser() {
   return api.get(authConfig.endpoints.me);
 }

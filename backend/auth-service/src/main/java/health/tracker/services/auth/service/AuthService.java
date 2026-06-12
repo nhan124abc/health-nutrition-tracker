@@ -133,7 +133,7 @@ public class AuthService {
 
     public void requestPasswordReset(String email) {
         userRepository.findByEmail(email).ifPresent(user -> {
-            if (user.getAuthProvider() == User.AuthProvider.LOCAL) {
+            if (user.isActive()) {
                 otpService.generatePasswordResetOtp(email);
             }
         });
@@ -143,11 +143,9 @@ public class AuthService {
     public void resetPassword(String email, String otp, String newPassword) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(HttpStatus.BAD_REQUEST, "Invalid password reset request"));
-        if (user.getAuthProvider() != User.AuthProvider.LOCAL) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "OAuth accounts do not have a local password");
-        }
         otpService.verifyPasswordResetOtp(email, otp);
         user.setPassword(passwordEncoder.encode(newPassword));
+        user.setEmailVerified(true);
         userRepository.save(user);
         redisTemplate.delete(REFRESH_PREFIX + email);
         userCacheService.evict(email);

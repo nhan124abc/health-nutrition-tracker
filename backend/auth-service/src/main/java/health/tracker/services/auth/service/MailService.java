@@ -3,6 +3,7 @@ package health.tracker.services.auth.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,7 @@ public class MailService {
     @Value("${app.mail.enabled:false}")
     private boolean enabled;
 
-    @Value("${spring.mail.username:no-reply@health.local}")
+    @Value("${app.mail.from:no-reply@health.local}")
     private String from;
 
     public void sendOtp(String email, String subject, String otp) {
@@ -30,6 +31,12 @@ public class MailService {
         message.setSubject(subject);
         message.setText("Your Health Nutrition verification code is " + otp
                 + ". This code expires in 5 minutes.");
-        mailSender.send(message);
+        try {
+            mailSender.send(message);
+            log.info("OTP email accepted by SMTP provider for: {}", email);
+        } catch (MailException ex) {
+            log.error("Failed to send OTP email to {}: {}", email, ex.getMessage(), ex);
+            throw ex;
+        }
     }
 }

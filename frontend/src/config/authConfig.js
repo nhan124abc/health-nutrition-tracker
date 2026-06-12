@@ -18,6 +18,8 @@ const authConfig = {
     refresh: '/auth/refresh',
     forgotPassword: '/auth/password/forgot',
     resetPassword: '/auth/password/reset',
+    sendEmailVerification: '/auth/email/verification/send',
+    confirmEmailVerification: '/auth/email/verification/confirm',
     me: '/auth/me',
     oauthAuthorize: (provider) => `/auth/oauth2/authorize/${provider}`,
   },
