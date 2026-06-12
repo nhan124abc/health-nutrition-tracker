@@ -39,7 +39,9 @@ function Register() {
         email: form.email,
         password: form.password,
       });
-      navigate('/login');
+      navigate(`/verify-email?email=${encodeURIComponent(form.email)}`, {
+        state: { email: form.email },
+      });
     } catch (err) {
       setError(err.response?.data?.message || err.message || t('auth.registerError'));
     } finally {

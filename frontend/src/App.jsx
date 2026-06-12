@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage';
 import Login from './features/auth/Login';
 import Register from './features/auth/Register';
 import ForgotPassword from './features/auth/ForgotPassword';
+import VerifyEmail from './features/auth/VerifyEmail';
 import OAuth2Redirect from './features/auth/OAuth2Redirect';
 import Profile from './features/profile/Profile';
 import Nutrition from './features/nutrition/Nutrition';
@@ -48,6 +49,14 @@ function App() {
           element={
             <PublicRoute>
               <ForgotPassword />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/verify-email"
+          element={
+            <PublicRoute>
+              <VerifyEmail />
             </PublicRoute>
           }
         />

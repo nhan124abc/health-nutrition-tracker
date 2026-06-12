@@ -244,6 +244,12 @@ services:
       FACEBOOK_CLIENT_SECRET: ${FACEBOOK_CLIENT_SECRET:-your-facebook-app-secret}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       OAUTH2_REDIRECT_BASE_URL: ${OAUTH2_REDIRECT_BASE_URL:-http://localhost:8080}
+      MAIL_ENABLED: ${MAIL_ENABLED:-false}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@health.local}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
     # ← KHÔNG expose port ra ngoài host, chỉ truy cập qua gateway:8080
     expose:
       - "8081"
@@ -364,7 +370,7 @@ services:
     container_name: ht-activity-service
     restart: unless-stopped
     environment:
-      <<: [*spring-common, *db-common, *redis-common, *internal-secret, *java-opts]
+      <<: [*spring-common, *db-common, *redis-common, *kafka-common, *internal-secret, *java-opts]
       DB_NAME: activity_db
     # ← KHÔNG expose port ra ngoài host
     expose:
@@ -375,6 +381,8 @@ services:
       mysql:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
@@ -432,6 +440,7 @@ services:
       AI_TEMPERATURE: ${AI_TEMPERATURE:-0.5}
       AI_GUEST_DAILY_LIMIT: ${AI_GUEST_DAILY_LIMIT:-5}
       AI_USER_DAILY_LIMIT: ${AI_USER_DAILY_LIMIT:-50}
+      NUTRITION_SERVICE_URL: http://nutrition-service:8083
     expose:
       - "8087"
     volumes:
@@ -444,6 +453,8 @@ services:
       start_period: 40s
     depends_on:
       mysql:
+        condition: service_healthy
+      nutrition-service:
         condition: service_healthy
     networks:
       - backend

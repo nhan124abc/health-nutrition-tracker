@@ -80,6 +80,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .authProvider(provider)
                 .providerId(userInfo.getId())
                 .role(User.Role.USER)
+                .emailVerified(true)
                 .build();
         return userRepository.save(user);
     }

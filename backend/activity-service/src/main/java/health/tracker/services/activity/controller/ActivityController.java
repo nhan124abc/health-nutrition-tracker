@@ -77,6 +77,14 @@ public class ActivityController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<ActivityLogResponse> update(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id,
+            @Valid @RequestBody ActivityLogRequest request) {
+        return ResponseEntity.ok(activityService.update(id, userId, request));
+    }
+
     /**
      * DELETE /api/v1/activities/{id}
      * Xoá một log hoạt động. Chỉ chủ sở hữu mới được xoá.
