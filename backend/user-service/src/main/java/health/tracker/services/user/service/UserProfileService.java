@@ -98,7 +98,7 @@ public class UserProfileService {
     }
 
     @Transactional
-        public DailyWaterResponse getTodayWater(Long userId) {
+    public DailyWaterResponse getTodayWater(Long userId) {
             LocalDate today = LocalDate.now();
             LocalDateTime start = today.atStartOfDay();
             LocalDateTime end = today.plusDays(1).atStartOfDay();
@@ -118,6 +118,42 @@ public class UserProfileService {
                     .build();
         }
 
+    @Transactional(readOnly = true)
+    public List<WaterLogResponse> getWaterLogs(Long userId, LocalDate date) {
+        LocalDateTime start = date.atStartOfDay();
+        LocalDateTime end = date.plusDays(1).atStartOfDay();
+
+        return waterLogRepository
+                .findByUserIdAndLoggedAtGreaterThanEqualAndLoggedAtLessThanOrderByLoggedAtDesc(
+                        userId, start, end)
+                .stream()
+                .map(this::toWaterLogResponse)
+                .toList();
+    }
+
+    @Transactional
+    public void delete(Long waterId, Long userId) {
+        WaterLog waterLog = waterLogRepository.findByIdAndUserId(waterId, userId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Water not found: " + waterId));
+
+        waterLogRepository.delete(waterLog);
+        log.info("Water deleted: id={}, userId={}", waterId, userId);
+    }
+
+    @Transactional
+    public WaterLogResponse updateWater(Long waterId, Long userId, WaterLogRequest request) {
+        WaterLog water = waterLogRepository.findByIdAndUserId(waterId, userId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Water not found: " + waterId));
+
+        water.setAmountMl(request.getAmountMl());
+        if (request.getLoggedAt() != null) {
+            water.setLoggedAt(request.getLoggedAt());
+        }
+
+        WaterLog savedWater = waterLogRepository.save(water);
+        log.info("Water updated: id={}, userId={}", waterId, userId);
+        return toWaterLogResponse(savedWater);
+    }
 
     @Transactional
     public BodyMetricResponse addMetric(Long userId, BodyMetricRequest request) {
