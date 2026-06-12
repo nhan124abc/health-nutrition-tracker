@@ -22,6 +22,7 @@ import java.time.Duration;
 public class OtpService {
 
     private final StringRedisTemplate redis;
+    private final MailService mailService;
 
     private static final String OTP_RESET_KEY  = "otp:reset:";
     private static final String OTP_VERIFY_KEY = "otp:verify:";
@@ -35,7 +36,7 @@ public class OtpService {
         String otp = generateOtp();
         redis.opsForValue().set(OTP_RESET_KEY + email, otp, Duration.ofMinutes(OTP_TTL_MINUTES));
         log.info("Password reset OTP generated for: {} (TTL={}m)", email, OTP_TTL_MINUTES);
-        // TODO: gửi OTP qua email (tích hợp mail service)
+        mailService.sendOtp(email, "Reset your Health Nutrition password", otp);
         return otp;
     }
 
@@ -66,7 +67,7 @@ public class OtpService {
         String otp = generateOtp();
         redis.opsForValue().set(OTP_VERIFY_KEY + email, otp, Duration.ofMinutes(OTP_TTL_MINUTES));
         log.info("Email verification OTP generated for: {}", email);
-        // TODO: gửi OTP qua email
+        mailService.sendOtp(email, "Verify your Health Nutrition email", otp);
         return otp;
     }
 

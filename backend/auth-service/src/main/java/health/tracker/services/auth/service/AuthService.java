@@ -34,6 +34,7 @@ public class AuthService {
     private final StringRedisTemplate  redisTemplate;
     private final LoginRateLimitService rateLimitService;
     private final UserCacheService     userCacheService;
+    private final OtpService           otpService;
 
     private static final String BLACKLIST_PREFIX = "blacklist:token:";
     private static final String REFRESH_PREFIX   = "refresh:token:";
@@ -55,6 +56,7 @@ public class AuthService {
                 .build();
 
         userRepository.save(user);
+        otpService.generateEmailVerificationOtp(user.getEmail());
         log.info("New user registered: {}", user.getEmail());
 
         // Cache user info
@@ -127,6 +129,50 @@ public class AuthService {
             );
             log.info("Token blacklisted on logout");
         }
+    }
+
+    public void requestPasswordReset(String email) {
+        userRepository.findByEmail(email).ifPresent(user -> {
+            if (user.getAuthProvider() == User.AuthProvider.LOCAL) {
+                otpService.generatePasswordResetOtp(email);
+            }
+        });
+    }
+
+    @Transactional
+    public void resetPassword(String email, String otp, String newPassword) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(HttpStatus.BAD_REQUEST, "Invalid password reset request"));
+        if (user.getAuthProvider() != User.AuthProvider.LOCAL) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "OAuth accounts do not have a local password");
+        }
+        otpService.verifyPasswordResetOtp(email, otp);
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        redisTemplate.delete(REFRESH_PREFIX + email);
+        userCacheService.evict(email);
+        rateLimitService.recordSuccess(email);
+        log.info("Password reset completed for: {}", email);
+    }
+
+    public void requestEmailVerification(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "User not found"));
+        if (!user.isEmailVerified()) {
+            otpService.generateEmailVerificationOtp(email);
+        }
+    }
+
+    @Transactional
+    public void verifyEmail(String email, String otp) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "User not found"));
+        if (user.isEmailVerified()) return;
+        otpService.verifyEmailOtp(email, otp);
+        user.setEmailVerified(true);
+        userRepository.save(user);
+        userCacheService.evict(email);
+        log.info("Email verification completed for: {}", email);
     }
 
     // ======================== Helper ========================

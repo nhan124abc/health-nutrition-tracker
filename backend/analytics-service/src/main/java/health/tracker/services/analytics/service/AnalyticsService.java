@@ -50,6 +50,7 @@ public class AnalyticsService {
     @Transactional
     public void onMealLogged(Map<String, Object> event) {
         try {
+            int direction = "DELETED".equals(event.get("eventType")) ? -1 : 1;
             Long      userId   = toLong(event.get("userId"));
             LocalDate mealDate = LocalDate.parse(event.get("mealDate").toString());
             BigDecimal calories = toBigDecimal(event.get("calories"));
@@ -60,17 +61,17 @@ public class AnalyticsService {
             DailySummary summary = summaryRepository.findByUserIdAndSummaryDate(userId, mealDate)
                     .orElseGet(() -> buildEmpty(userId, mealDate));
 
-            summary.setTotalCaloriesConsumed(summary.getTotalCaloriesConsumed().add(calories));
-            summary.setTotalProteinG(summary.getTotalProteinG().add(protein));
-            summary.setTotalCarbsG(summary.getTotalCarbsG().add(carbs));
-            summary.setTotalFatG(summary.getTotalFatG().add(fat));
-            summary.setMealCount(summary.getMealCount() + 1);
+            summary.setTotalCaloriesConsumed(nonNegative(summary.getTotalCaloriesConsumed().add(calories.multiply(BigDecimal.valueOf(direction)))));
+            summary.setTotalProteinG(nonNegative(summary.getTotalProteinG().add(protein.multiply(BigDecimal.valueOf(direction)))));
+            summary.setTotalCarbsG(nonNegative(summary.getTotalCarbsG().add(carbs.multiply(BigDecimal.valueOf(direction)))));
+            summary.setTotalFatG(nonNegative(summary.getTotalFatG().add(fat.multiply(BigDecimal.valueOf(direction)))));
+            summary.setMealCount(Math.max(0, summary.getMealCount() + direction));
 
             // Kiểm tra goal
             if (summary.getCalorieGoal() != null) {
                 summary.setCalorieGoalMet(
                         summary.getTotalCaloriesConsumed().compareTo(
-                                BigDecimal.valueOf(summary.getCalorieGoal())) >= 0
+                                BigDecimal.valueOf(summary.getCalorieGoal())) <= 0
                 );
             }
 
@@ -80,6 +81,34 @@ public class AnalyticsService {
             log.debug("Daily summary updated from meal.logged event: userId={}, date={}", userId, mealDate);
         } catch (Exception e) {
             log.error("Error processing meal.logged event: {}", e.getMessage(), e);
+        }
+    }
+
+    @KafkaListener(topics = "activity.logged", groupId = "analytics-service-group")
+    @Transactional
+    public void onActivityLogged(Map<String, Object> event) {
+        try {
+            int direction = "DELETED".equals(event.get("eventType")) ? -1 : 1;
+            Long userId = toLong(event.get("userId"));
+            LocalDate activityDate = LocalDate.parse(event.get("activityDate").toString());
+            DailySummary summary = summaryRepository.findByUserIdAndSummaryDate(userId, activityDate)
+                    .orElseGet(() -> buildEmpty(userId, activityDate));
+
+            summary.setTotalCaloriesBurned(nonNegative(summary.getTotalCaloriesBurned().add(
+                    toBigDecimal(event.get("caloriesBurned")).multiply(BigDecimal.valueOf(direction)))));
+            summary.setTotalActiveMinutes(Math.max(0, summary.getTotalActiveMinutes()
+                    + toInt(event.get("durationMinutes")) * direction));
+            summary.setTotalSteps(Math.max(0, summary.getTotalSteps()
+                    + toInt(event.get("steps")) * direction));
+            summary.setTotalDistanceKm(nonNegative(summary.getTotalDistanceKm().add(
+                    toBigDecimal(event.get("distanceKm")).multiply(BigDecimal.valueOf(direction)))));
+            summary.setActivityCount(Math.max(0, summary.getActivityCount() + direction));
+
+            summaryRepository.save(summary);
+            if (direction > 0) updateStreak(userId, activityDate);
+            log.debug("Daily summary updated from activity.logged: userId={}, date={}", userId, activityDate);
+        } catch (Exception e) {
+            log.error("Error processing activity.logged event: {}", e.getMessage(), e);
         }
     }
 
@@ -158,6 +187,16 @@ public class AnalyticsService {
         if (val == null) return BigDecimal.ZERO;
         if (val instanceof BigDecimal bd) return bd;
         return new BigDecimal(val.toString());
+    }
+
+    private int toInt(Object val) {
+        if (val == null) return 0;
+        if (val instanceof Number n) return n.intValue();
+        return Integer.parseInt(val.toString());
+    }
+
+    private BigDecimal nonNegative(BigDecimal value) {
+        return value.max(BigDecimal.ZERO);
     }
 }
 

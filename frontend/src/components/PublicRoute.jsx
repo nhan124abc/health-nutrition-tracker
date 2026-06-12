@@ -1,10 +1,12 @@
 import { Navigate } from 'react-router-dom';
-import { getAccessToken } from '../api/api';
+import { clearAuthTokens, hasUsableAccessToken } from '../api/api';
 
 function PublicRoute({ children }) {
-  if (getAccessToken()) {
+  if (hasUsableAccessToken()) {
     return <Navigate to="/dashboard" replace />;
   }
+
+  clearAuthTokens();
 
   return children;
 }

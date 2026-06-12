@@ -16,6 +16,11 @@ export function getAccessToken() {
   return localStorage.getItem(TOKEN_KEYS.access) || localStorage.getItem(TOKEN_KEYS.legacy);
 }
 
+export function hasUsableAccessToken() {
+  const payload = decodeJwtPayload(getAccessToken());
+  return Boolean(payload?.exp && payload.exp * 1000 > Date.now());
+}
+
 export function getRefreshToken() {
   return localStorage.getItem(TOKEN_KEYS.refresh);
 }

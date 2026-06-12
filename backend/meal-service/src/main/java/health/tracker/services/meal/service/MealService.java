@@ -82,6 +82,7 @@ public class MealService {
     public MealResponse update(Long mealId, Long userId, MealRequest request) {
         Meal meal = mealRepository.findByIdAndUserId(mealId, userId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Meal not found: " + mealId));
+        publishMealEvent("DELETED", meal);
         meal.setMealType(request.getMealType());
         meal.setMealDate(request.getMealDate());
         meal.setMealTime(request.getMealTime());
@@ -95,7 +96,7 @@ public class MealService {
         recalculateTotals(meal);
         Meal saved = mealRepository.saveAndFlush(meal);
         entityManager.refresh(saved);
-        publishMealLoggedEvent(saved);
+        publishMealEvent("CREATED", saved);
 
         return toResponse(saved);
     }
@@ -103,10 +104,10 @@ public class MealService {
 
     @Transactional
     public void delete(Long mealId, Long userId) {
-        if (!mealRepository.existsByIdAndUserId(mealId, userId)) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Meal not found: " + mealId);
-        }
-        mealRepository.deleteById(mealId);
+        Meal meal = mealRepository.findByIdAndUserId(mealId, userId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Meal not found: " + mealId));
+        publishMealEvent("DELETED", meal);
+        mealRepository.delete(meal);
         log.info("Meal deleted: id={}, userId={}", mealId, userId);
     }
 
@@ -148,9 +149,13 @@ public class MealService {
     }
 
     private void publishMealLoggedEvent(Meal meal) {
+        publishMealEvent("CREATED", meal);
+    }
+
+    private void publishMealEvent(String eventType, Meal meal) {
         try {
             Map<String, Object> event = Map.of(
-                    "eventType", "MEAL_LOGGED",
+                    "eventType", eventType,
                     "userId",    meal.getUserId(),
                     "mealId",    meal.getId(),
                     "mealDate",  meal.getMealDate().toString(),

@@ -65,7 +65,9 @@ public class PlannerRuleEngine {
             mealLabel = "bữa phụ";
         }
 
-        int mealBudget = (int) Math.round(goalCalories * share);
+        int caloriesConsumed = context.getCaloriesConsumed() != null ? context.getCaloriesConsumed() : 0;
+        int remainingCalories = Math.max(100, goalCalories - caloriesConsumed);
+        int mealBudget = Math.max(100, Math.min((int) Math.round(goalCalories * share), remainingCalories));
 
         // 3. Select 2 alternative options from pool
         String[] opt1 = getOptionFromPool(mealType, dayOfWeek + offset);

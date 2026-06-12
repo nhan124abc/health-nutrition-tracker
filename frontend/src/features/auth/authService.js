@@ -16,3 +16,7 @@ export function requestPasswordReset(email) {
 export function resetPassword(payload) {
   return api.post(authConfig.endpoints.resetPassword, payload);
 }
+
+export function getAuthenticatedUser() {
+  return api.get(authConfig.endpoints.me);
+}

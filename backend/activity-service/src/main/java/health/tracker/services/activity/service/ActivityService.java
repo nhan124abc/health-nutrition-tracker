@@ -10,6 +10,7 @@ import health.tracker.services.activity.repository.ActivityTypeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -29,6 +31,7 @@ public class ActivityService {
 
     private final ActivityLogRepository  logRepository;
     private final ActivityTypeRepository typeRepository;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     // ─── Lấy hoạt động trong ngày ─────────────────────────────────────────────
 
@@ -82,8 +85,41 @@ public class ActivityService {
                 .build();
 
         ActivityLog saved = logRepository.save(logEntry);
+        publishActivityEvent("CREATED", saved);
         log.info("Activity logged: userId={}, activity='{}', duration={}min, calories={}",
                 userId, activityName, request.getDurationMinutes(), caloriesBurned);
+        return toResponse(saved);
+    }
+
+    @Transactional
+    public ActivityLogResponse update(Long logId, Long userId, ActivityLogRequest request) {
+        ActivityLog activity = logRepository.findById(logId)
+                .filter(item -> item.getUserId().equals(userId))
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Activity log not found: " + logId));
+        publishActivityEvent("DELETED", activity);
+
+        ActivityType type = request.getActivityTypeId() == null ? null
+                : typeRepository.findById(request.getActivityTypeId())
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Activity type not found: " + request.getActivityTypeId()));
+        activity.setActivityType(type);
+        activity.setActivityName(type != null ? type.getName() : request.getActivityName());
+        activity.setCategory(type != null ? type.getCategory().name() : "OTHER");
+        activity.setDurationMinutes(request.getDurationMinutes());
+        activity.setCaloriesBurned(calculateCalories(type, request.getDurationMinutes(),
+                request.getUserWeightKg() != null ? request.getUserWeightKg() : DEFAULT_WEIGHT_KG));
+        activity.setNotes(request.getNotes());
+        activity.setLoggedAt(request.getLoggedAt() != null ? request.getLoggedAt() : activity.getLoggedAt());
+        activity.setDistanceKm(request.getDistanceKm());
+        activity.setAvgHeartRate(request.getAvgHeartRate());
+        activity.setMaxHeartRate(request.getMaxHeartRate());
+        activity.setSets(request.getSets());
+        activity.setRepsPerSet(request.getRepsPerSet());
+        activity.setWeightKg(request.getWeightKg());
+        activity.setSteps(request.getSteps());
+
+        ActivityLog saved = logRepository.save(activity);
+        publishActivityEvent("CREATED", saved);
         return toResponse(saved);
     }
 
@@ -91,10 +127,30 @@ public class ActivityService {
 
     @Transactional
     public void delete(Long logId, Long userId) {
-        if (!logRepository.existsByIdAndUserId(logId, userId)) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Activity log not found: " + logId);
+        ActivityLog activity = logRepository.findById(logId)
+                .filter(item -> item.getUserId().equals(userId))
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Activity log not found: " + logId));
+        publishActivityEvent("DELETED", activity);
+        logRepository.delete(activity);
+    }
+
+    private void publishActivityEvent(String eventType, ActivityLog activity) {
+        try {
+            Map<String, Object> event = Map.of(
+                    "eventType", eventType,
+                    "userId", activity.getUserId(),
+                    "activityId", activity.getId(),
+                    "activityDate", activity.getLoggedAt().toLocalDate().toString(),
+                    "caloriesBurned", activity.getCaloriesBurned(),
+                    "durationMinutes", activity.getDurationMinutes(),
+                    "steps", activity.getSteps() == null ? 0 : activity.getSteps(),
+                    "distanceKm", activity.getDistanceKm() == null ? BigDecimal.ZERO : activity.getDistanceKm()
+            );
+            kafkaTemplate.send("activity.logged", String.valueOf(activity.getUserId()), event);
+        } catch (Exception e) {
+            log.warn("Failed to publish activity.logged event for activityId={}: {}",
+                    activity.getId(), e.getMessage());
         }
-        logRepository.deleteById(logId);
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
