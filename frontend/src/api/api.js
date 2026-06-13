@@ -123,6 +123,20 @@ export async function logout() {
 
 let refreshPromise = null;
 
+function shouldSkipTokenRefresh(url = '') {
+  const authPaths = [
+    authConfig.endpoints.login,
+    authConfig.endpoints.register,
+    authConfig.endpoints.refresh,
+    authConfig.endpoints.forgotPassword,
+    authConfig.endpoints.resetPassword,
+    authConfig.endpoints.sendEmailVerification,
+    authConfig.endpoints.confirmEmailVerification,
+  ];
+
+  return authPaths.some((path) => url.includes(path));
+}
+
 api.interceptors.request.use((config) => {
   const token = getAccessToken();
 
@@ -138,7 +152,11 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status !== 401 || originalRequest?._retry) {
+    if (
+      error.response?.status !== 401 ||
+      originalRequest?._retry ||
+      shouldSkipTokenRefresh(originalRequest?.url)
+    ) {
       return Promise.reject(error);
     }
 
