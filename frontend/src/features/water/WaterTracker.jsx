@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Badge, Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import GoalFireworks from '../../components/GoalFireworks';
 import { getProfile, updateProfile } from '../profile/profileService';
 import WaterHistoryCard from './components/WaterHistoryCard';
 import WaterReminderCard from './components/WaterReminderCard';
@@ -39,6 +40,8 @@ function WaterTracker() {
   const [waterReminderMessage, setWaterReminderMessage] = useState('');
   const [waterError, setWaterError] = useState('');
   const [waterNotice, setWaterNotice] = useState('');
+  const [showFireworks, setShowFireworks] = useState(false);
+  const wasWaterGoalComplete = useRef(false);
 
   const dayWaterLogs = useMemo(
     () => waterLogs
@@ -56,6 +59,25 @@ function WaterTracker() {
   useEffect(() => {
     localStorage.setItem(waterSettingsStorageKey, JSON.stringify(waterSettings));
   }, [waterSettings]);
+
+  useEffect(() => {
+    const isComplete = selectedDate === getTodayDate()
+      && waterSettings.goalMl > 0
+      && totalWaterMl >= waterSettings.goalMl;
+    let timeoutId;
+
+    if (isComplete && !wasWaterGoalComplete.current) {
+      setShowFireworks(true);
+      timeoutId = window.setTimeout(() => setShowFireworks(false), 2400);
+    }
+
+    wasWaterGoalComplete.current = isComplete;
+    return () => {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [selectedDate, totalWaterMl, waterSettings.goalMl]);
 
   useEffect(() => {
     let isMounted = true;
@@ -283,6 +305,7 @@ function WaterTracker() {
 
   return (
     <>
+      <GoalFireworks visible={showFireworks} />
       <div className="page-heading">
         <div>
           <Badge bg="success" className="mb-2">{t('waterPage.badge')}</Badge>

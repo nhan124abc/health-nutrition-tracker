@@ -1176,6 +1176,66 @@ body {
   transform: scale(1.06);
 }
 
+.goal-fireworks {
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: fixed;
+  z-index: 2000;
+}
+
+.goal-fireworks-burst {
+  height: 0;
+  position: absolute;
+  width: 0;
+}
+
+.goal-fireworks-particle {
+  animation: goal-firework-burst 1.15s ease-out var(--firework-delay) both;
+  background: var(--firework-color);
+  border-radius: 999px;
+  box-shadow: 0 0 0.45rem var(--firework-color);
+  height: 0.65rem;
+  left: -0.12rem;
+  position: absolute;
+  top: -0.3rem;
+  transform-origin: 50% 100%;
+  width: 0.24rem;
+}
+
+@keyframes goal-firework-burst {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--firework-angle)) translateY(0) scaleY(0.3);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  75% {
+    opacity: 1;
+    transform:
+      rotate(var(--firework-angle))
+      translateY(calc(0px - var(--firework-distance)))
+      scaleY(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      rotate(var(--firework-angle))
+      translateY(calc(-24px - var(--firework-distance)))
+      scaleY(0.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .goal-fireworks {
+    display: none;
+  }
+}
+
 .card,
 .stat-card,
 .dashboard-stat-card,

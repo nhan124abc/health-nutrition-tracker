@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Badge, Button, Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaPlus } from 'react-icons/fa';
+import GoalFireworks from '../../components/GoalFireworks';
 import ActivityFormModal from './components/ActivityFormModal';
 import ActivityLogTable from './components/ActivityLogTable';
 import ActivitySummaryCard from './components/ActivitySummaryCard';
@@ -37,14 +38,36 @@ function ActivityTracker() {
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [savingLog, setSavingLog] = useState(false);
   const [activityError, setActivityError] = useState('');
+  const [showFireworks, setShowFireworks] = useState(false);
+  const wasActivityGoalComplete = useRef(false);
   const [activityGoal] = useState(() => {
     try { return JSON.parse(localStorage.getItem('activeGoalPlan'))?.dailyActivityGoalKcal || 0; } catch { return 0; }
   });
 
   const filteredTypes = category === 'all' ? activityTypes : activityTypes.filter((type) => type.category === category);
   const visibleLogs = category === 'all' ? logs : logs.filter((log) => log.category === category);
-  const summary = useMemo(() => getActivitySummary(visibleLogs), [visibleLogs]);
+  const summary = useMemo(() => getActivitySummary(logs), [logs]);
   const estimatedCalories = calculateActivityCalories(form, activityTypes);
+
+  useEffect(() => {
+    const isComplete = !loadingLogs
+      && selectedDate === getTodayDate()
+      && activityGoal > 0
+      && summary.calories >= activityGoal;
+    let timeoutId;
+
+    if (isComplete && !wasActivityGoalComplete.current) {
+      setShowFireworks(true);
+      timeoutId = window.setTimeout(() => setShowFireworks(false), 2400);
+    }
+
+    wasActivityGoalComplete.current = isComplete;
+    return () => {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [activityGoal, loadingLogs, selectedDate, summary.calories]);
 
   useEffect(() => {
     let isMounted = true;
@@ -201,6 +224,7 @@ function ActivityTracker() {
 
   return (
     <>
+      <GoalFireworks visible={showFireworks} />
       <div className="page-heading">
         <div>
           <Badge bg="success" className="mb-2">{t('activityPage.badge')}</Badge>
@@ -235,7 +259,7 @@ function ActivityTracker() {
           <ActivitySummaryCard
             activityGoal={activityGoal}
             activityTypes={filteredTypes}
-            logCount={visibleLogs.length}
+            logCount={logs.length}
             summary={summary}
             t={t}
           />

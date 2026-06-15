@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "Health Nutrition"
+    "name": "Health Nutrition",
+    "loading": "Đang tải..."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -904,7 +905,9 @@
       "needsEdit": "Cần sửa",
       "inUse": "Đang dùng",
       "selling": "Đang bán",
-      "enabled": "Bật"
+      "enabled": "Bật",
+      "system": "Hệ thống",
+      "custom": "Tùy chỉnh"
     },
     "roles": {
       "user": "User",
@@ -941,6 +944,8 @@
       "duration": "Thời lượng",
       "caloriesBurned": "Calo tiêu hao",
       "intensity": "Cường độ",
+      "met": "MET",
+      "source": "Nguồn",
       "title": "Tiêu đề",
       "category": "Chuyên mục",
       "author": "Tác giả",
@@ -951,7 +956,8 @@
       "submitter": "Người gửi",
       "value": "Giá trị",
       "setting": "Cấu hình",
-      "group": "Nhóm"
+      "group": "Nhóm",
+      "empty": "Không tìm thấy dữ liệu."
     },
     "dashboard": {
       "badge": "Tổng quan",
@@ -993,6 +999,8 @@
       "badge": "Phân tích hệ thống",
       "title": "Phân tích toàn hệ thống",
       "description": "Theo dõi tăng trưởng người dùng, mức độ sử dụng tính năng và dữ liệu sức khỏe trên toàn nền tảng.",
+      "loading": "Đang tải dữ liệu phân tích toàn hệ thống...",
+      "loadError": "Không thể tải dữ liệu phân tích toàn hệ thống.",
       "userGrowth": "Tăng trưởng người dùng",
       "userGrowthDescription": "Tổng số người dùng đăng ký trong 6 tháng gần nhất.",
       "systemUsage": "Mức sử dụng hệ thống",
@@ -1019,6 +1027,8 @@
         "title": "Quản lý người dùng",
         "description": "Theo dõi tài khoản, trạng thái hoạt động và thao tác khóa hoặc cập nhật người dùng.",
         "action": "Thêm người dùng",
+        "loading": "Đang tải người dùng từ cơ sở dữ liệu...",
+        "loadError": "Không thể tải danh sách người dùng từ cơ sở dữ liệu.",
         "stats": {
           "total": "Tổng người dùng",
           "active": "Đang hoạt động",
@@ -1030,6 +1040,8 @@
         "title": "Quản lý thực phẩm, món ăn, calo/macro",
         "description": "Chuẩn hóa dữ liệu món ăn, calo, protein, carbs, fat và khẩu phần quy đổi.",
         "action": "Thêm món ăn",
+        "loading": "Đang tải danh mục thực phẩm từ cơ sở dữ liệu...",
+        "loadError": "Không thể tải danh mục thực phẩm từ cơ sở dữ liệu.",
         "stats": {
           "total": "Món ăn",
           "pending": "Chờ chuẩn hóa",
@@ -1041,6 +1053,8 @@
         "title": "Quản lý bài tập và calo tiêu hao",
         "description": "Cập nhật danh sách bài tập, MET, thời lượng gợi ý và lượng calo đốt cháy.",
         "action": "Thêm bài tập",
+        "loading": "Đang tải danh mục hoạt động từ cơ sở dữ liệu...",
+        "loadError": "Không thể tải danh mục hoạt động từ cơ sở dữ liệu.",
         "stats": {
           "total": "Bài tập",
           "hasMet": "Có MET",

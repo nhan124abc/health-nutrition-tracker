@@ -1,49 +1,104 @@
-import { Badge, Button, Card, Col, ProgressBar, Row, Table } from 'react-bootstrap';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Badge, Button, Card, Col, ProgressBar, Row, Spinner, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaChartLine, FaDumbbell, FaUsers, FaUtensils } from 'react-icons/fa';
+import { getAdminDashboardOverview } from '../../features/admin/adminService';
 
-const overviewStats = [
-  { labelKey: 'admin.dashboard.stats.users', value: '12,480', trendKey: 'admin.dashboard.trends.users', icon: FaUsers },
-  { labelKey: 'admin.dashboard.stats.foods', value: '3,248', trendKey: 'admin.dashboard.trends.foods', icon: FaUtensils },
-  { labelKey: 'admin.dashboard.progress.exercises', value: '186', trendKey: 'admin.dashboard.trends.exercises', icon: FaDumbbell },
-  { labelKey: 'admin.dashboard.stats.todayLogs', value: '9,820', trendKey: 'admin.dashboard.trends.todayLogs', icon: FaChartLine },
+const statDefinitions = [
+  { labelKey: 'admin.dashboard.stats.users', field: 'totalUsers', trendField: 'users', icon: FaUsers },
+  { labelKey: 'admin.dashboard.stats.foods', field: 'totalFoods', trendField: 'foods', icon: FaUtensils },
+  { labelKey: 'admin.dashboard.progress.exercises', field: 'totalExercises', trendField: 'exercises', icon: FaDumbbell },
+  { labelKey: 'admin.dashboard.stats.todayLogs', field: 'todayLogs', trendField: 'todayLogs', icon: FaChartLine },
 ];
 
-const recentActivities = [
-  {
-    itemKey: 'admin.dashboard.activities.foodAdded',
-    typeKey: 'admin.common.food',
-    statusKey: 'admin.status.pending',
-    variant: 'warning',
-  },
-  {
-    itemKey: 'admin.dashboard.activities.macroUpdated',
-    typeKey: 'admin.common.nutrition',
-    statusKey: 'admin.status.approved',
-    variant: 'success',
-  },
-  {
-    itemKey: 'admin.dashboard.activities.weeklyReport',
-    typeKey: 'admin.common.report',
-    statusKey: 'admin.status.completed',
-    variant: 'success',
-  },
-  {
-    itemKey: 'admin.dashboard.activities.activityUpdated',
-    typeKey: 'admin.common.activity',
-    statusKey: 'admin.status.completed',
-    variant: 'success',
-  },
+const progressDefinitions = [
+  { labelKey: 'admin.dashboard.progress.foods', field: 'foods', variant: 'success' },
+  { labelKey: 'admin.dashboard.progress.exercises', field: 'exercises', variant: 'info' },
+  { labelKey: 'admin.dashboard.progress.users', field: 'users', variant: 'warning' },
 ];
 
-const dataProgress = [
-  { labelKey: 'admin.dashboard.progress.foods', value: 82, variant: 'success' },
-  { labelKey: 'admin.dashboard.progress.exercises', value: 68, variant: 'info' },
-  { labelKey: 'admin.dashboard.progress.users', value: 74, variant: 'warning' },
-];
+function unwrapOverview(payload) {
+  return payload?.data?.overview
+    || payload?.data
+    || payload?.overview
+    || payload
+    || {};
+}
+
+function clampPercentage(value) {
+  return Math.min(100, Math.max(0, Number(value) || 0));
+}
 
 function AdminDashboard() {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
+  const [overview, setOverview] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadOverview() {
+      setLoading(true);
+      setLoadError('');
+
+      try {
+        const response = await getAdminDashboardOverview();
+
+        if (isActive) {
+          setOverview(unwrapOverview(response.data));
+        }
+      } catch (error) {
+        console.error('[AdminDashboard] Error loading overview:', error);
+
+        if (isActive) {
+          setLoadError(error.response?.data?.message || t('dashboardPage.loadError'));
+        }
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadOverview();
+
+    return () => {
+      isActive = false;
+    };
+  }, [t]);
+
+  const numberFormatter = useMemo(
+    () => new Intl.NumberFormat(i18n.resolvedLanguage || i18n.language),
+    [i18n.language, i18n.resolvedLanguage]
+  );
+
+  const overviewStats = statDefinitions.map((definition) => ({
+    ...definition,
+    value: numberFormatter.format(Number(overview[definition.field]) || 0),
+    trend: overview.trends?.[definition.trendField] ?? overview[`${definition.trendField}Trend`],
+  }));
+
+  const recentActivities = Array.isArray(overview.recentActivities)
+    ? overview.recentActivities
+    : [];
+
+  const dataProgress = progressDefinitions.map((definition) => ({
+    ...definition,
+    value: clampPercentage(
+      overview.dataHealth?.[definition.field]
+      ?? overview.dataProgress?.[definition.field]
+      ?? overview[`${definition.field}Completion`]
+    ),
+  }));
+
+  const displayText = (value, fallback = '') => {
+    if (!value) {
+      return fallback;
+    }
+
+    return typeof value === 'string' && value.startsWith('admin.') ? t(value) : value;
+  };
 
   return (
     <>
@@ -58,6 +113,14 @@ function AdminDashboard() {
         <Button variant="success">{t('admin.dashboard.quickExport')}</Button>
       </div>
 
+      {loading && (
+        <Alert variant="light" className="border d-flex align-items-center gap-2">
+          <Spinner animation="border" size="sm" />
+          {t('dashboardPage.loading')}
+        </Alert>
+      )}
+      {loadError && <Alert variant="danger">{loadError}</Alert>}
+
       <Row className="g-4 mb-4">
         {overviewStats.map((stat) => {
           const Icon = stat.icon;
@@ -70,9 +133,11 @@ function AdminDashboard() {
                   </div>
                   <span className="text-secondary">{t(stat.labelKey)}</span>
                   <div className="admin-stat-value">{stat.value}</div>
-                  <Badge bg="light" text="success">
-                    {t(stat.trendKey)}
-                  </Badge>
+                  {stat.trend !== undefined && stat.trend !== null && (
+                    <Badge bg="light" text="success">
+                      {displayText(stat.trend)}
+                    </Badge>
+                  )}
                 </Card.Body>
               </Card>
             </Col>
@@ -103,15 +168,24 @@ function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {recentActivities.map((activity) => (
-                      <tr key={activity.itemKey}>
-                        <td>{t(activity.itemKey)}</td>
-                        <td>{t(activity.typeKey)}</td>
+                    {recentActivities.map((activity, index) => (
+                      <tr key={activity.id ?? `${activity.content || activity.itemKey}-${index}`}>
+                        <td>{displayText(activity.content || activity.itemKey)}</td>
+                        <td>{displayText(activity.type || activity.typeKey)}</td>
                         <td>
-                          <Badge bg={activity.variant}>{t(activity.statusKey)}</Badge>
+                          <Badge bg={activity.variant || activity.statusVariant || 'secondary'}>
+                            {displayText(activity.status || activity.statusKey)}
+                          </Badge>
                         </td>
                       </tr>
                     ))}
+                    {!loading && recentActivities.length === 0 && (
+                      <tr>
+                        <td colSpan={3} className="text-center text-secondary py-4">
+                          -
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </Table>
               </div>

@@ -13,7 +13,13 @@ import { useTranslation } from 'react-i18next';
 import { Badge, Button, Card, Col, ProgressBar, Row } from 'react-bootstrap';
 import { FaBullseye, FaFire } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
-import { getActivitySummary } from '../features/activities/activityService';
+import GoalFireworks from '../components/GoalFireworks';
+import { getActivitiesByDate } from '../features/activities/activityService';
+import {
+  extractActivitiesFromApi,
+  getActivitySummary,
+  normalizeActivityFromApi,
+} from '../features/activities/activityUtils';
 import { getMealsByDate } from '../features/meals/mealService';
 import {
   extractMealsFromApi,
@@ -52,6 +58,7 @@ const emptySummary = {
   targetWeight: 0,
   healthGoal: '',
   streak: 0,
+  streakActive: false,
   planStartDate: '',
   planDurationWeeks: '',
   dailyActivityGoalKcal: 0,
@@ -79,15 +86,36 @@ function getSevenDates(endDate) {
   });
 }
 
-function getStreak(days) {
+function getLatestTimestamp(records, fields) {
+  return records.reduce((latest, record) => {
+    const timestamp = fields
+      .map((field) => record?.[field])
+      .filter(Boolean)
+      .map((value) => new Date(value).getTime())
+      .filter(Number.isFinite)
+      .sort((left, right) => right - left)[0];
+
+    return timestamp && timestamp > latest ? timestamp : latest;
+  }, 0);
+}
+
+function getStreakStatus(days) {
   let streak = 0;
   let index = days.length - 1;
+  const latestActiveDay = [...days]
+    .reverse()
+    .find((day) => day.mealCount > 0 || day.activityCount > 0);
 
-  // Keep the existing streak during the current day until that day has ended.
-  if (index >= 0 && days[index].mealCount === 0 && days[index].activityCount === 0) {
-    index -= 1;
+  if (!latestActiveDay?.lastActivityAt) {
+    return { streak: 0, active: false };
   }
 
+  const hoursSinceLastActivity = (Date.now() - latestActiveDay.lastActivityAt) / (60 * 60 * 1000);
+  if (hoursSinceLastActivity >= 24) {
+    return { streak: 0, active: false };
+  }
+
+  index = days.findIndex((day) => day.date === latestActiveDay.date);
   for (; index >= 0; index -= 1) {
     if (days[index].mealCount === 0 && days[index].activityCount === 0) {
       break;
@@ -95,7 +123,10 @@ function getStreak(days) {
     streak += 1;
   }
 
-  return streak;
+  return {
+    streak,
+    active: latestActiveDay.date === getTodayDate(),
+  };
 }
 
 function Dashboard() {
@@ -105,6 +136,7 @@ function Dashboard() {
   const [week, setWeek] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
+  const [showFireworks, setShowFireworks] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -116,7 +148,7 @@ function Dashboard() {
       const dates = getSevenDates(selectedDate);
       const dayRequests = dates.flatMap((date) => [
         getMealsByDate(date),
-        getActivitySummary(date),
+        getActivitiesByDate(date),
       ]);
       const [profileResult, metricsResult, waterResult, ...dayResults] = await Promise.allSettled([
         getProfile(),
@@ -132,21 +164,29 @@ function Dashboard() {
       const days = dates.map((date, index) => {
         const mealResult = dayResults[index * 2];
         const activityResult = dayResults[index * 2 + 1];
-        const meals = mealResult.status === 'fulfilled'
-          ? extractMealsFromApi(mealResult.value.data).map(normalizeMealFromApi)
+        const rawMeals = mealResult.status === 'fulfilled'
+          ? extractMealsFromApi(mealResult.value.data)
           : [];
+        const rawActivities = activityResult.status === 'fulfilled'
+          ? extractActivitiesFromApi(activityResult.value.data)
+          : [];
+        const meals = rawMeals.map(normalizeMealFromApi);
+        const activities = rawActivities.map(normalizeActivityFromApi);
         const totals = getMealsTotals(meals);
-        const activity = activityResult.status === 'fulfilled'
-          ? activityResult.value.data || {}
-          : {};
+        const activity = getActivitySummary(activities);
+        const lastActivityAt = Math.max(
+          getLatestTimestamp(rawMeals, ['updatedAt', 'createdAt']),
+          getLatestTimestamp(rawActivities, ['createdAt', 'loggedAt'])
+        );
 
         return {
           date,
           ...totals,
           mealCount: meals.length,
-          caloriesBurned: normalizeNumber(activity.caloriesBurned),
-          activityCount: normalizeNumber(activity.activityCount),
-          activeMinutes: normalizeNumber(activity.totalActiveMinutes),
+          caloriesBurned: normalizeNumber(activity.calories),
+          activityCount: activities.length,
+          activeMinutes: normalizeNumber(activity.minutes),
+          lastActivityAt,
         };
       });
 
@@ -163,6 +203,7 @@ function Dashboard() {
         : { totalAmountMl: 0, goalMl: 0 };
       const failedRequests = [profileResult, metricsResult, waterResult, ...dayResults]
         .filter((result) => result.status === 'rejected');
+      const streakStatus = getStreakStatus(days);
 
       setWeek(days);
       setDailySummary({
@@ -185,7 +226,8 @@ function Dashboard() {
         weight: normalizeNumber(latestWeight),
         targetWeight: normalizeNumber(profile.targetWeight),
         healthGoal: profile.healthGoal || '',
-        streak: getStreak(days),
+        streak: streakStatus.streak,
+        streakActive: streakStatus.active,
         planStartDate: profile.planStartDate || '',
         planDurationWeeks: profile.planDurationWeeks || '',
         dailyActivityGoalKcal: profile.dailyActivityGoalKcal || 0,
@@ -234,6 +276,28 @@ function Dashboard() {
   const activityPercent = dailySummary.dailyActivityGoalKcal > 0
     ? Math.round((dailySummary.caloriesBurned / dailySummary.dailyActivityGoalKcal) * 100)
     : 0;
+  const completedGoals = [
+    dailySummary.waterGoal > 0 && waterPercent >= 100 ? 'water' : null,
+    dailySummary.dailyActivityGoalKcal > 0 && activityPercent >= 100 ? 'activity' : null,
+  ].filter(Boolean);
+  const completedGoalsKey = completedGoals.sort().join('-');
+
+  useEffect(() => {
+    if (loading || selectedDate !== getTodayDate() || !completedGoalsKey) {
+      return undefined;
+    }
+
+    const storageKey = `goalFireworks:${selectedDate}:${completedGoalsKey}`;
+    if (localStorage.getItem(storageKey)) {
+      return undefined;
+    }
+
+    localStorage.setItem(storageKey, 'shown');
+    setShowFireworks(true);
+    const timeoutId = window.setTimeout(() => setShowFireworks(false), 2400);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [completedGoalsKey, loading, selectedDate]);
 
   const activityProgressVariant = activityPercent >= 100 
     ? 'success' 
@@ -327,6 +391,7 @@ function Dashboard() {
 
   return (
     <>
+      <GoalFireworks visible={showFireworks} />
       <div className="page-heading">
         <div>
           <Badge bg="success" className="mb-2">{t('dashboardPage.badge')}</Badge>
@@ -421,7 +486,7 @@ function Dashboard() {
                   </div>
                   {isStreak && (
                     <FaFire
-                      className={`streak-fire${dailySummary.streak > 0 ? ' streak-fire-active' : ''}`}
+                      className={`streak-fire${dailySummary.streakActive ? ' streak-fire-active' : ''}`}
                       aria-hidden="true"
                     />
                   )}

@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
 import { clearAuthTokens, getCurrentUserRole, hasUsableAccessToken } from '../api/api';
 import { getAuthenticatedUser } from '../features/auth/authService';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const location = useLocation();
+  const { t } = useTranslation();
   const [status, setStatus] = useState(() => (
     hasUsableAccessToken() ? 'checking' : 'unauthenticated'
   ));
@@ -29,7 +31,11 @@ function ProtectedRoute({ children, allowedRoles }) {
   }, [location.pathname]);
 
   if (status === 'checking') {
-    return <div className="min-vh-100 d-flex align-items-center justify-content-center text-secondary">Đang xác thực phiên đăng nhập...</div>;
+    return (
+      <div className="min-vh-100 d-flex align-items-center justify-content-center text-secondary">
+        {t('app.loading')}
+      </div>
+    );
   }
   if (status !== 'authenticated') {
     return <Navigate to="/login" replace state={{ from: location }} />;

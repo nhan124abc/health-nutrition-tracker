@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "Health Nutrition"
+    "name": "Health Nutrition",
+    "loading": "Loading..."
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -354,7 +355,9 @@
       "needsEdit": "Needs edits",
       "inUse": "In use",
       "selling": "Selling",
-      "enabled": "Enabled"
+      "enabled": "Enabled",
+      "system": "System",
+      "custom": "Custom"
     },
     "roles": {
       "user": "User",
@@ -391,6 +394,8 @@
       "duration": "Duration",
       "caloriesBurned": "Calories burned",
       "intensity": "Intensity",
+      "met": "MET",
+      "source": "Source",
       "title": "Title",
       "category": "Category",
       "author": "Author",
@@ -401,7 +406,8 @@
       "submitter": "Submitter",
       "value": "Value",
       "setting": "Setting",
-      "group": "Group"
+      "group": "Group",
+      "empty": "No data found."
     },
     "dashboard": {
       "badge": "Overview",
@@ -443,6 +449,8 @@
       "badge": "System analytics",
       "title": "System-wide analytics",
       "description": "Monitor user growth, feature usage, and the volume of health data recorded across the platform.",
+      "loading": "Loading system-wide analytics...",
+      "loadError": "Unable to load system-wide analytics.",
       "userGrowth": "User growth",
       "userGrowthDescription": "Total registered users over the last six months.",
       "systemUsage": "System usage",
@@ -468,6 +476,8 @@
         "title": "User management",
         "description": "Monitor accounts, activity status, and actions to lock or update users.",
         "action": "Add user",
+        "loading": "Loading users from the database...",
+        "loadError": "Unable to load users from the database.",
         "stats": {
           "total": "Total users",
           "active": "Active users",
@@ -479,6 +489,8 @@
         "title": "Food, meal, calorie and macro management",
         "description": "Standardize foods, calories, protein, carbs, fat, and portion conversions.",
         "action": "Add food",
+        "loading": "Loading the food catalog from the database...",
+        "loadError": "Unable to load the food catalog from the database.",
         "stats": {
           "total": "Foods",
           "pending": "Pending standardization",
@@ -490,6 +502,8 @@
         "title": "Exercise and calorie burn management",
         "description": "Update exercises, MET values, suggested duration, and estimated calories burned.",
         "action": "Add exercise",
+        "loading": "Loading the activity catalog from the database...",
+        "loadError": "Unable to load the activity catalog from the database.",
         "stats": {
           "total": "Exercises",
           "hasMet": "With MET",
