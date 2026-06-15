@@ -9,34 +9,104 @@ import {
   Tooltip,
 } from 'chart.js';
 import { Bar, Line } from 'react-chartjs-2';
-import { Badge, Card, Col, ProgressBar, Row } from 'react-bootstrap';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Badge, Card, Col, ProgressBar, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaChartLine, FaDatabase, FaUserCheck, FaUsers } from 'react-icons/fa';
+import { getAdminSystemAnalytics } from '../../features/admin/adminService';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Tooltip, Legend);
 
-const analyticsStats = [
-  { labelKey: 'admin.analytics.stats.totalUsers', value: '12,480', helper: '+8.2%', icon: FaUsers },
-  { labelKey: 'admin.analytics.stats.activeUsers', value: '9,214', helper: '73.8%', icon: FaUserCheck },
-  { labelKey: 'admin.analytics.stats.dailyLogs', value: '9,820', helper: '+14.5%', icon: FaChartLine },
-  { labelKey: 'admin.analytics.stats.catalogItems', value: '3,434', helper: '+136', icon: FaDatabase },
+const statDefinitions = [
+  { labelKey: 'admin.analytics.stats.totalUsers', field: 'totalUsers', helperField: 'userTrend', icon: FaUsers },
+  { labelKey: 'admin.analytics.stats.activeUsers', field: 'activeUsers', helperField: 'activeRate', icon: FaUserCheck, suffix: '%' },
+  { labelKey: 'admin.analytics.stats.dailyLogs', field: 'dailyLogs', helperField: 'dailyLogsTrend', icon: FaChartLine },
+  { labelKey: 'admin.analytics.stats.catalogItems', field: 'catalogItems', helperField: 'newCatalogItems', icon: FaDatabase, prefix: '+' },
 ];
 
-const featureUsage = [
-  ['admin.analytics.features.meals', 86, 'success'],
-  ['admin.analytics.features.water', 72, 'info'],
-  ['admin.analytics.features.activity', 64, 'warning'],
-  ['admin.analytics.features.bodyMetrics', 48, 'secondary'],
+const featureDefinitions = [
+  ['meals', 'admin.analytics.features.meals', 'success'],
+  ['water', 'admin.analytics.features.water', 'info'],
+  ['activity', 'admin.analytics.features.activity', 'warning'],
+  ['bodyMetrics', 'admin.analytics.features.bodyMetrics', 'secondary'],
 ];
 
 function AdminAnalytics() {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
+  const [analytics, setAnalytics] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+
+  useEffect(() => {
+    let isActive = true;
+
+    async function loadAnalytics() {
+      setLoading(true);
+      setLoadError('');
+
+      try {
+        const response = await getAdminSystemAnalytics();
+
+        if (isActive) {
+          setAnalytics(response.data?.data ?? response.data ?? {});
+        }
+      } catch (error) {
+        console.error('[AdminAnalytics] Error loading system analytics:', error);
+
+        if (isActive) {
+          setLoadError(error.response?.data?.message || t('admin.analytics.loadError'));
+        }
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadAnalytics();
+
+    return () => {
+      isActive = false;
+    };
+  }, [t]);
+
+  const numberFormatter = useMemo(
+    () => new Intl.NumberFormat(i18n.resolvedLanguage || i18n.language),
+    [i18n.language, i18n.resolvedLanguage]
+  );
+  const monthFormatter = useMemo(
+    () => new Intl.DateTimeFormat(i18n.resolvedLanguage || i18n.language, {
+      month: 'short',
+      year: 'numeric',
+    }),
+    [i18n.language, i18n.resolvedLanguage]
+  );
+  const stats = analytics.stats ?? {};
+  const userGrowth = Array.isArray(analytics.userGrowth) ? analytics.userGrowth : [];
+  const systemUsage = analytics.systemUsage ?? {};
+  const featureAdoption = analytics.featureAdoption ?? {};
+
+  const analyticsStats = statDefinitions.map((definition) => {
+    const helperValue = stats[definition.helperField];
+    const numericHelper = typeof helperValue === 'number'
+      ? `${definition.prefix || ''}${numberFormatter.format(helperValue)}${definition.suffix || ''}`
+      : helperValue;
+
+    return {
+      ...definition,
+      value: numberFormatter.format(Number(stats[definition.field]) || 0),
+      helper: numericHelper ?? '0',
+    };
+  });
 
   const growthData = {
-    labels: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6'],
+    labels: userGrowth.map((item) => {
+      const date = new Date(`${item.month}-01T00:00:00`);
+      return Number.isNaN(date.getTime()) ? item.month : monthFormatter.format(date);
+    }),
     datasets: [{
       label: t('admin.analytics.userGrowth'),
-      data: [7280, 7960, 8540, 9680, 10840, 12480],
+      data: userGrowth.map((item) => Number(item.totalUsers) || 0),
       borderColor: '#2f8f6b',
       backgroundColor: 'rgba(47, 143, 107, 0.14)',
       tension: 0.35,
@@ -44,15 +114,10 @@ function AdminAnalytics() {
   };
 
   const systemData = {
-    labels: [
-      t('admin.analytics.features.meals'),
-      t('admin.analytics.features.water'),
-      t('admin.analytics.features.activity'),
-      t('admin.analytics.features.bodyMetrics'),
-    ],
+    labels: featureDefinitions.map(([, labelKey]) => t(labelKey)),
     datasets: [{
       label: t('admin.analytics.logs'),
-      data: [48200, 35100, 26800, 15400],
+      data: featureDefinitions.map(([field]) => Number(systemUsage[field]) || 0),
       backgroundColor: ['#2f8f6b', '#3b9fbd', '#e0a458', '#7d8ca3'],
       borderRadius: 8,
     }],
@@ -73,6 +138,14 @@ function AdminAnalytics() {
           <p>{t('admin.analytics.description')}</p>
         </div>
       </div>
+
+      {loading && (
+        <Alert variant="light" className="border d-flex align-items-center gap-2">
+          <Spinner animation="border" size="sm" />
+          {t('admin.analytics.loading')}
+        </Alert>
+      )}
+      {loadError && <Alert variant="danger">{loadError}</Alert>}
 
       <Row className="g-4 mb-4">
         {analyticsStats.map((stat) => {
@@ -122,7 +195,9 @@ function AdminAnalytics() {
           <Card.Title className="fw-bold">{t('admin.analytics.featureAdoption')}</Card.Title>
           <p className="text-secondary">{t('admin.analytics.featureAdoptionDescription')}</p>
           <Row className="g-4">
-            {featureUsage.map(([labelKey, value, variant]) => (
+            {featureDefinitions.map(([field, labelKey, variant]) => {
+              const value = Math.min(100, Math.max(0, Number(featureAdoption[field]) || 0));
+              return (
               <Col md={6} key={labelKey}>
                 <div className="d-flex justify-content-between mb-2">
                   <strong>{t(labelKey)}</strong>
@@ -130,7 +205,8 @@ function AdminAnalytics() {
                 </div>
                 <ProgressBar now={value} variant={variant} />
               </Col>
-            ))}
+              );
+            })}
           </Row>
         </Card.Body>
       </Card>

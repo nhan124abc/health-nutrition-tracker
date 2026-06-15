@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { Badge, Button, Card, Col, Form, InputGroup, Row, Table } from 'react-bootstrap';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Badge, Button, Card, Col, Form, InputGroup, Row, Spinner, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import {
   FaBullseye,
@@ -17,52 +17,32 @@ import {
   FaUsers,
   FaUtensils,
 } from 'react-icons/fa';
+import { getAdminUsers } from '../../features/admin/adminService';
+import { getActivityTypes } from '../../features/activities/activityService';
+import { getFoods } from '../../features/nutrition/nutritionService';
 
 const pageConfigs = {
   users: {
     badgeKey: 'admin.pages.users.badge',
     icon: FaUsers,
-    stats: [
-      ['total', '12,480'],
-      ['active', '9,214'],
-      ['locked', '26'],
-    ],
+    stats: [],
     columns: ['name', 'email', 'role', 'status'],
-    rows: [
-      { cells: ['admin.data.users.an', 'an.nguyen@email.com', 'admin.roles.user', 'admin.status.active'], variant: 'success' },
-      { cells: ['admin.data.users.nam', 'nam.tran@email.com', 'admin.roles.coach', 'admin.status.active'], variant: 'success' },
-      { cells: ['admin.data.users.mai', 'mai.le@email.com', 'admin.roles.user', 'admin.status.locked'], variant: 'secondary' },
-    ],
+    rows: [],
   },
   foods: {
     badgeKey: 'admin.pages.foods.badge',
     icon: FaUtensils,
-    stats: [
-      ['total', '3,248'],
-      ['pending', '42'],
-      ['macroFull', '86%'],
-    ],
+    stats: [],
     columns: ['food', 'portion', 'calories', 'macro'],
-    rows: [
-      { cells: ['admin.data.foods.chicken', '100g', '165 kcal', '31P / 0C / 3.6F'], variant: 'success' },
-      { cells: ['admin.data.foods.rice', 'admin.data.portions.bowl', '205 kcal', '4P / 45C / 0.4F'], variant: 'success' },
-      { cells: ['admin.data.foods.smoothie', 'admin.data.portions.glass', '320 kcal', '10P / 58C / 7F'], variant: 'success' },
-    ],
+    rows: [],
+    statusColumn: false,
   },
   exercises: {
     badgeKey: 'admin.pages.exercises.badge',
     icon: FaDumbbell,
-    stats: [
-      ['total', '186'],
-      ['hasMet', '151'],
-      ['needsReview', '12'],
-    ],
-    columns: ['exercise', 'duration', 'caloriesBurned', 'intensity'],
-    rows: [
-      { cells: ['admin.data.exercises.running', 'admin.data.duration.thirty', '280 kcal', 'admin.intensity.medium'], variant: 'success' },
-      { cells: ['admin.data.exercises.gym', 'admin.data.duration.fortyFive', '360 kcal', 'admin.intensity.high'], variant: 'success' },
-      { cells: ['admin.data.exercises.yoga', 'admin.data.duration.forty', '140 kcal', 'admin.intensity.light'], variant: 'success' },
-    ],
+    stats: [],
+    columns: ['exercise', 'category', 'met', 'source'],
+    rows: [],
   },
   articles: {
     badgeKey: 'admin.pages.articles.badge',
@@ -141,27 +121,245 @@ const pageConfigs = {
   },
 };
 
+function extractUsers(payload) {
+  const data = payload?.data ?? payload ?? {};
+  const users = data.content ?? data.users ?? data.items ?? data.data ?? data;
+  return Array.isArray(users) ? users : [];
+}
+
+function mapUserRow(user) {
+  const active = user.active ?? user.isActive ?? user.enabled ?? !user.locked;
+  const role = String(user.role || 'USER').replace(/^ROLE_/, '').toUpperCase();
+
+  return {
+    id: user.id ?? user.userId ?? user.email,
+    cells: [
+      user.fullName || user.name || user.username || '-',
+      user.email || '-',
+      role,
+      active ? 'admin.status.active' : 'admin.status.locked',
+    ],
+    variant: active ? 'success' : 'secondary',
+    active,
+  };
+}
+
+function extractPage(payload) {
+  const data = payload?.data ?? payload ?? {};
+  return {
+    content: Array.isArray(data.content) ? data.content : [],
+    totalPages: Number(data.totalPages) || 0,
+    totalElements: Number(data.totalElements) || 0,
+  };
+}
+
+async function loadAllFoods() {
+  const firstResponse = await getFoods({ page: 0, size: 100 });
+  const firstPage = extractPage(firstResponse.data);
+
+  if (firstPage.totalPages <= 1) {
+    return {
+      foods: firstPage.content,
+      total: firstPage.totalElements || firstPage.content.length,
+    };
+  }
+
+  const remainingResponses = await Promise.all(
+    Array.from(
+      { length: firstPage.totalPages - 1 },
+      (_, index) => getFoods({ page: index + 1, size: 100 })
+    )
+  );
+
+  return {
+    foods: [
+      ...firstPage.content,
+      ...remainingResponses.flatMap((response) => extractPage(response.data).content),
+    ],
+    total: firstPage.totalElements,
+  };
+}
+
+function hasCompleteMacro(food) {
+  return [food.calories, food.proteinG, food.carbsG, food.fatG]
+    .every((value) => value !== null && value !== undefined);
+}
+
+function mapFoodRow(food) {
+  const serving = food.servingDescription
+    || (food.servingSizeG != null ? `${food.servingSizeG}g` : '-');
+  const calories = food.calories != null ? `${food.calories} kcal` : '-';
+  const macro = hasCompleteMacro(food)
+    ? `${food.proteinG}P / ${food.carbsG}C / ${food.fatG}F`
+    : '-';
+
+  return {
+    id: food.id,
+    cells: [food.nameVi || food.name || '-', serving, calories, macro],
+    verified: Boolean(food.verified),
+    macroComplete: hasCompleteMacro(food),
+  };
+}
+
+function formatEnum(value) {
+  if (!value) {
+    return '-';
+  }
+
+  return String(value)
+    .toLowerCase()
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function mapActivityTypeRow(activityType) {
+  const metValue = Number(activityType.metValue);
+  const hasMet = Number.isFinite(metValue) && metValue > 0;
+
+  return {
+    id: activityType.id,
+    cells: [
+      activityType.nameVi || activityType.name || '-',
+      formatEnum(activityType.category),
+      hasMet ? metValue.toFixed(1) : '-',
+      activityType.system ? 'admin.status.system' : 'admin.status.custom',
+    ],
+    variant: activityType.system ? 'success' : 'secondary',
+    hasMet,
+  };
+}
+
 function AdminManagementPage({ type }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [userRows, setUserRows] = useState([]);
+  const [userSummary, setUserSummary] = useState({});
+  const [foodRows, setFoodRows] = useState([]);
+  const [foodSummary, setFoodSummary] = useState({});
+  const [activityRows, setActivityRows] = useState([]);
+  const [loading, setLoading] = useState(['users', 'foods', 'exercises'].includes(type));
+  const [loadError, setLoadError] = useState('');
   const { t } = useTranslation();
   const config = pageConfigs[type] || pageConfigs.users;
   const Icon = config.icon;
   const pageKey = `admin.pages.${type}`;
+  const rows = {
+    users: userRows,
+    foods: foodRows,
+    exercises: activityRows,
+  }[type] ?? config.rows;
+  const stats = {
+    users: [
+      ['total', userSummary.total ?? userRows.length],
+      ['active', userSummary.active ?? userRows.filter((row) => row.active).length],
+      ['locked', userSummary.locked ?? userRows.filter((row) => !row.active).length],
+    ],
+    foods: [
+      ['total', foodSummary.total ?? foodRows.length],
+      ['pending', foodRows.filter((row) => !row.verified).length],
+      [
+        'macroFull',
+        `${foodRows.length
+          ? Math.round(foodRows.filter((row) => row.macroComplete).length * 100 / foodRows.length)
+          : 0}%`,
+      ],
+    ],
+    exercises: [
+      ['total', activityRows.length],
+      ['hasMet', activityRows.filter((row) => row.hasMet).length],
+      ['needsReview', activityRows.filter((row) => !row.hasMet).length],
+    ],
+  }[type] ?? config.stats;
+
+  useEffect(() => {
+    if (!['users', 'foods', 'exercises'].includes(type)) {
+      setLoading(false);
+      return undefined;
+    }
+
+    let isActive = true;
+
+    async function loadData() {
+      setLoading(true);
+      setLoadError('');
+
+      try {
+        if (type === 'users') {
+          const response = await getAdminUsers({ page: 0, size: 100 });
+          const payload = response.data?.data ?? response.data ?? {};
+          const mappedUsers = extractUsers(response.data).map(mapUserRow);
+
+          if (!isActive) {
+            return;
+          }
+          setUserRows(mappedUsers);
+          setUserSummary({
+            total: payload.totalUsers ?? payload.totalElements,
+            active: payload.activeUsers ?? payload.active,
+            locked: payload.lockedUsers ?? payload.locked ?? payload.inactiveUsers,
+          });
+        } else if (type === 'foods') {
+          const { foods, total } = await loadAllFoods();
+
+          if (!isActive) {
+            return;
+          }
+          setFoodRows(foods.map(mapFoodRow));
+          setFoodSummary({ total });
+        } else {
+          const response = await getActivityTypes();
+          const activityTypes = response.data?.data ?? response.data ?? [];
+
+          if (!isActive) {
+            return;
+          }
+          setActivityRows(
+            Array.isArray(activityTypes) ? activityTypes.map(mapActivityTypeRow) : []
+          );
+        }
+      } catch (error) {
+        console.error(`[AdminManagementPage] Error loading ${type}:`, error);
+
+        if (isActive) {
+          setLoadError(error.response?.data?.message || t(`${pageKey}.loadError`));
+        }
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadData();
+
+    return () => {
+      isActive = false;
+    };
+  }, [pageKey, t, type]);
 
   const filteredRows = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
     if (!normalizedSearch) {
-      return config.rows;
+      return rows;
     }
 
-    return config.rows.filter((row) =>
+    return rows.filter((row) =>
       row.cells
-        .map((cell) => t(cell))
+        .map((cell) => {
+          if (typeof cell === 'string' && cell.startsWith('admin.')) {
+            return t(cell);
+          }
+          return String(cell);
+        })
         .join(' ')
         .toLowerCase()
         .includes(normalizedSearch)
     );
-  }, [config.rows, searchTerm, t]);
+  }, [rows, searchTerm, t]);
+
+  const displayCell = (cell) => (
+    typeof cell === 'string' && cell.startsWith('admin.') ? t(cell) : cell
+  );
 
   return (
     <>
@@ -180,7 +378,7 @@ function AdminManagementPage({ type }) {
       </div>
 
       <Row className="g-4 mb-4">
-        {config.stats.map(([labelKey, value]) => (
+        {stats.map(([labelKey, value]) => (
           <Col md={4} key={labelKey}>
             <Card className="admin-mini-stat border-0 shadow-sm">
               <Card.Body>
@@ -194,6 +392,14 @@ function AdminManagementPage({ type }) {
           </Col>
         ))}
       </Row>
+
+      {loading && (
+        <Alert variant="light" className="border d-flex align-items-center gap-2">
+          <Spinner animation="border" size="sm" />
+          {t(`${pageKey}.loading`)}
+        </Alert>
+      )}
+      {loadError && <Alert variant="danger">{loadError}</Alert>}
 
       <Card className="admin-card border-0 shadow-sm">
         <Card.Body>
@@ -228,15 +434,25 @@ function AdminManagementPage({ type }) {
                 </tr>
               </thead>
               <tbody>
+                {!loading && !loadError && filteredRows.length === 0 && (
+                  <tr>
+                    <td colSpan={config.columns.length + 1} className="text-center text-secondary py-4">
+                      {t('admin.table.empty')}
+                    </td>
+                  </tr>
+                )}
                 {filteredRows.map((row) => {
-                  const rowKey = row.cells.join('-');
+                  const rowKey = row.id || row.cells.join('-');
                   return (
                     <tr key={rowKey}>
                       {row.cells.map((cell, index) => {
-                        const isStatusCell = index === row.cells.length - 1;
+                        const isStatusCell = config.statusColumn !== false
+                          && index === row.cells.length - 1;
                         return (
                           <td key={`${rowKey}-${cell}`}>
-                            {isStatusCell ? <Badge bg={row.variant}>{t(cell)}</Badge> : t(cell)}
+                            {isStatusCell
+                              ? <Badge bg={row.variant}>{displayCell(cell)}</Badge>
+                              : displayCell(cell)}
                           </td>
                         );
                       })}
