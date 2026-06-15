@@ -16,6 +16,7 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY --from=builder /app/api-gateway/target/*.jar app.jar
+RUN mkdir -p logs && chown -R appuser:appgroup /app
 USER appuser
 
 EXPOSE 8080
