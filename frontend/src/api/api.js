@@ -83,6 +83,8 @@ export function getDefaultRouteForCurrentUser() {
 }
 
 export function saveAuthTokens(payload = {}) {
+  clearAuthTokens();
+
   const accessToken = payload.accessToken || payload.token || payload.jwtToken;
   const refreshToken = payload.refreshToken;
 
@@ -120,13 +122,13 @@ export async function logout() {
     clearAuthTokens();
   }
 }
-
 let refreshPromise = null;
 
 function shouldSkipTokenRefresh(url = '') {
   const authPaths = [
     authConfig.endpoints.login,
     authConfig.endpoints.register,
+    authConfig.endpoints.logout,
     authConfig.endpoints.refresh,
     authConfig.endpoints.forgotPassword,
     authConfig.endpoints.resetPassword,

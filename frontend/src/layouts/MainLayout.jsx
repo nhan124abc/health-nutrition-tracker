@@ -21,6 +21,11 @@ import { logout } from '../api/api';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { clearChatHistory, getChatHistory, sendChatMessage } from '../features/ai/aiService';
 
+const SIDEBAR_DEFAULT_WIDTH = 264;
+const SIDEBAR_MIN_WIDTH = 84;
+const SIDEBAR_MAX_WIDTH = 340;
+const SIDEBAR_COLLAPSE_THRESHOLD = 128;
+
 const menuItems = [
   { to: '/dashboard', labelKey: 'nav.dashboard', icon: FaHome },
   { to: '/goals', labelKey: 'nav.goals', icon: FaBullseye },
@@ -45,6 +50,15 @@ function MainLayout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     () => localStorage.getItem('sidebarCollapsed') === 'true'
   );
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    const storedWidth = Number(localStorage.getItem('sidebarWidth'));
+
+    if (!Number.isFinite(storedWidth) || storedWidth <= 0) {
+      return SIDEBAR_DEFAULT_WIDTH;
+    }
+
+    return Math.min(Math.max(storedWidth, SIDEBAR_MIN_WIDTH), SIDEBAR_MAX_WIDTH);
+  });
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -57,6 +71,10 @@ function MainLayout() {
   useEffect(() => {
     localStorage.setItem('sidebarCollapsed', String(isSidebarCollapsed));
   }, [isSidebarCollapsed]);
+
+  useEffect(() => {
+    localStorage.setItem('sidebarWidth', String(sidebarWidth));
+  }, [sidebarWidth]);
 
   useEffect(() => {
     if (!showAiChat) {
@@ -110,7 +128,69 @@ function MainLayout() {
       return;
     }
 
-    setIsSidebarCollapsed((current) => !current);
+    setIsSidebarCollapsed((current) => {
+      if (current && sidebarWidth <= SIDEBAR_COLLAPSE_THRESHOLD) {
+        setSidebarWidth(SIDEBAR_DEFAULT_WIDTH);
+      }
+
+      return !current;
+    });
+  };
+
+  const handleSidebarResizeStart = (event) => {
+    event.preventDefault();
+    setIsSidebarCollapsed(false);
+
+    const updateSidebarWidth = (clientX) => {
+      const nextWidth = Math.min(Math.max(clientX, SIDEBAR_MIN_WIDTH), SIDEBAR_MAX_WIDTH);
+
+      setSidebarWidth(nextWidth);
+      setIsSidebarCollapsed(nextWidth <= SIDEBAR_COLLAPSE_THRESHOLD);
+    };
+
+    const handlePointerMove = (moveEvent) => {
+      updateSidebarWidth(moveEvent.clientX);
+    };
+
+    const handlePointerUp = () => {
+      document.body.classList.remove('is-resizing-sidebar');
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerUp);
+    };
+
+    document.body.classList.add('is-resizing-sidebar');
+    updateSidebarWidth(event.clientX);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerUp);
+  };
+
+  const handleSidebarResizeKeyDown = (event) => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+      return;
+    }
+
+    event.preventDefault();
+
+    setSidebarWidth((current) => {
+      let nextWidth = current;
+
+      if (event.key === 'ArrowLeft') {
+        nextWidth = current - 16;
+      } else if (event.key === 'ArrowRight') {
+        nextWidth = current + 16;
+      } else if (event.key === 'Home') {
+        nextWidth = SIDEBAR_MIN_WIDTH;
+      } else {
+        nextWidth = SIDEBAR_MAX_WIDTH;
+      }
+
+      nextWidth = Math.min(Math.max(nextWidth, SIDEBAR_MIN_WIDTH), SIDEBAR_MAX_WIDTH);
+      setIsSidebarCollapsed(nextWidth <= SIDEBAR_COLLAPSE_THRESHOLD);
+
+      return nextWidth;
+    });
   };
 
   const handleLogout = async () => {
@@ -189,7 +269,10 @@ function MainLayout() {
   );
 
   return (
-    <div className={`app-shell layout-shell ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+    <div
+      className={`app-shell layout-shell ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}
+      style={{ '--layout-sidebar-width': `${sidebarWidth}px` }}
+    >
       <Navbar bg="white" className="layout-header border-bottom" sticky="top">
         <Container fluid className="layout-header-container">
           <div className="layout-header-left">
@@ -237,6 +320,18 @@ function MainLayout() {
         </NavLink>
         <div className="layout-sidebar-title">{t('sidebar.title')}</div>
         {renderSidebarNav()}
+        <div
+          className="layout-sidebar-resizer"
+          role="separator"
+          aria-label="Resize sidebar"
+          aria-orientation="vertical"
+          aria-valuemin={SIDEBAR_MIN_WIDTH}
+          aria-valuemax={SIDEBAR_MAX_WIDTH}
+          aria-valuenow={isSidebarCollapsed ? SIDEBAR_MIN_WIDTH : Math.round(sidebarWidth)}
+          tabIndex={0}
+          onPointerDown={handleSidebarResizeStart}
+          onKeyDown={handleSidebarResizeKeyDown}
+        />
       </aside>
 
       <Offcanvas show={showMobileSidebar} onHide={() => setShowMobileSidebar(false)} className="layout-mobile-sidebar">
