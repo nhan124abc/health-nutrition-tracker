@@ -31,7 +31,7 @@ import java.util.List;
  *   <li>Validates the JWT (signature + expiry).</li>
  *   <li>Injects {@code X-User-Id}, {@code X-User-Name}, and {@code X-User-Role}
  *       headers so downstream services can trust the caller identity.</li>
- *   <li>Restricts {@code /api/analytics/admin/**} to {@code ADMIN} role only.</li>
+ *   <li>Restricts admin endpoints to {@code ADMIN} role only.</li>
  * </ol>
  *
  * <p>Services and their base paths:
@@ -77,6 +77,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     /** Paths restricted to ADMIN role only. */
     private static final List<String> ADMIN_PATHS = List.of(
+            "/api/v1/auth/admin",
             "/api/v1/analytics/admin",
             "/api/v1/users/admin",
             "/api/v1/nutrition/admin"

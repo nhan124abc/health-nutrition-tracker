@@ -1,13 +1,11 @@
 package health.tracker.services.analytics.controller;
 
 import health.tracker.services.analytics.dto.AdminOverviewResponse;
-import health.tracker.services.analytics.dto.AdminUsersResponse;
 import health.tracker.services.analytics.dto.AdminSystemAnalyticsResponse;
 import health.tracker.services.analytics.dto.DailySummaryResponse;
 import health.tracker.services.analytics.exception.AppException;
 import health.tracker.services.analytics.repository.DailySummaryRepository;
 import health.tracker.services.analytics.service.AdminOverviewService;
-import health.tracker.services.analytics.service.AdminUserService;
 import health.tracker.services.analytics.service.AdminSystemAnalyticsService;
 import health.tracker.services.analytics.service.AnalyticsService;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +38,6 @@ public class AnalyticsController {
 
     private final AnalyticsService analyticsService;
     private final AdminOverviewService adminOverviewService;
-    private final AdminUserService adminUserService;
     private final AdminSystemAnalyticsService adminSystemAnalyticsService;
     private final DailySummaryRepository summaryRepository;
 
@@ -53,20 +50,6 @@ public class AnalyticsController {
         }
 
         return ResponseEntity.ok(adminOverviewService.getOverview());
-    }
-
-    @GetMapping("/admin/users")
-    public ResponseEntity<AdminUsersResponse> getAdminUsers(
-            @RequestHeader("X-User-Role") String role,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String search) {
-
-        if (!"ADMIN".equalsIgnoreCase(role)) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Admin role is required");
-        }
-
-        return ResponseEntity.ok(adminUserService.getUsers(page, size, search));
     }
 
     @GetMapping("/admin/system-analytics")

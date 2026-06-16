@@ -4,8 +4,8 @@ import health.tracker.services.auth.dto.*;
 import health.tracker.services.auth.entity.User;
 import health.tracker.services.auth.exception.AppException;
 import health.tracker.services.auth.repository.UserRepository;
+import health.tracker.services.auth.service.AdminUserService;
 import health.tracker.services.auth.service.AuthService;
-import health.tracker.services.auth.service.OtpService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +22,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+    private final AdminUserService adminUserService;
     private final UserRepository userRepository;
 
     @PostMapping("/register")
@@ -99,5 +100,19 @@ public class AuthController {
                 "authProvider", user.getAuthProvider().name(),
                 "emailVerified", user.isEmailVerified()
         ));
+    }
+
+    @GetMapping("/admin/users")
+    public ResponseEntity<AdminUsersResponse> adminUsers(
+            @RequestHeader("X-User-Role") String role,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String search) {
+
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Admin role is required");
+        }
+
+        return ResponseEntity.ok(adminUserService.getUsers(page, size, search));
     }
 }

@@ -1,4 +1,4 @@
-package health.tracker.services.analytics.dto;
+package health.tracker.services.auth.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
