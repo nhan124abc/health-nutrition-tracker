@@ -227,18 +227,71 @@ body {
   bottom: 0;
   flex-direction: column;
   left: 0;
+  -ms-overflow-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 1.25rem 1rem;
   position: fixed;
+  scrollbar-width: none;
   top: 0;
   transition: width 0.22s ease, padding 0.22s ease;
   width: var(--layout-sidebar-width);
   z-index: 1040;
 }
 
+.layout-sidebar::-webkit-scrollbar {
+  display: none;
+}
+
+.is-resizing-sidebar,
+.is-resizing-sidebar * {
+  cursor: col-resize !important;
+  user-select: none;
+}
+
+.is-resizing-sidebar .layout-header,
+.is-resizing-sidebar .layout-main,
+.is-resizing-sidebar .layout-sidebar {
+  transition: none;
+}
+
 .sidebar-collapsed .layout-sidebar {
   padding-left: 0.75rem;
   padding-right: 0.75rem;
   width: var(--layout-sidebar-collapsed-width);
+}
+
+.layout-sidebar-resizer {
+  bottom: 0;
+  cursor: col-resize;
+  position: absolute;
+  right: -5px;
+  top: 0;
+  width: 10px;
+  z-index: 2;
+}
+
+.layout-sidebar-resizer::after {
+  background: transparent;
+  border-radius: 999px;
+  bottom: 1rem;
+  content: '';
+  left: 4px;
+  position: absolute;
+  top: 1rem;
+  transition: background-color 0.16s ease, box-shadow 0.16s ease;
+  width: 2px;
+}
+
+.layout-sidebar-resizer:hover::after,
+.layout-sidebar-resizer:focus-visible::after,
+.is-resizing-sidebar .layout-sidebar-resizer::after {
+  background: var(--health-primary);
+  box-shadow: 0 0 0 3px var(--health-primary-soft);
+}
+
+.layout-sidebar-resizer:focus-visible {
+  outline: 0;
 }
 
 .layout-sidebar-brand {
@@ -466,6 +519,58 @@ body {
   font-size: 1.05rem;
   font-weight: 850;
   margin-bottom: 1.25rem;
+}
+
+.auth-form-meta {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+.auth-subtle-link {
+  color: var(--health-primary-dark);
+  font-size: 0.92rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.auth-subtle-link:hover,
+.auth-subtle-link:focus {
+  color: var(--health-primary);
+  text-decoration: underline;
+  text-underline-offset: 0.25rem;
+}
+
+.auth-register-prompt {
+  align-items: center;
+  color: #6c757d;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+  margin-top: 1.5rem;
+}
+
+.auth-register-link {
+  align-items: center;
+  background: var(--health-primary-soft);
+  border: 1px solid rgba(47, 143, 107, 0.18);
+  border-radius: 999px;
+  color: var(--health-primary-dark);
+  display: inline-flex;
+  font-weight: 800;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.9rem;
+  text-decoration: none;
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+}
+
+.auth-register-link:hover,
+.auth-register-link:focus {
+  background: var(--health-primary);
+  border-color: var(--health-primary);
+  color: #fff;
+  transform: translateY(-1px);
 }
 
 .auth-page-back {
@@ -2139,13 +2244,12 @@ body {
   display: flex;
   gap: 1rem;
   justify-content: space-between;
+  min-height: 64px;
 }
 
-.premium-product-top img {
-  border-radius: 1rem;
-  height: 64px;
-  object-fit: contain;
-  width: 64px;
+.premium-product-goal {
+  margin-left: auto;
+  text-align: right;
 }
 
 .premium-product-top span,

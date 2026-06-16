@@ -115,9 +115,12 @@ function Register() {
                 </Button>
               </Form>
 
-              <p className="text-center text-secondary mt-4 mb-0">
-                {t('auth.alreadyAccount')} <Link to="/login">{t('home.actions.login')}</Link>
-              </p>
+              <div className="auth-register-prompt">
+                <span>{t('auth.alreadyAccount')}</span>
+                <Link to="/login" className="auth-register-link">
+                  {t('home.actions.login')}
+                </Link>
+              </div>
             </Card.Body>
           </Card>
         </Col>

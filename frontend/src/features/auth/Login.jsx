@@ -3,7 +3,7 @@ import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap'
 import { useTranslation } from 'react-i18next';
 import { FaFacebookF, FaGoogle } from 'react-icons/fa';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { getDefaultRouteForCurrentUser, saveAuthTokens } from '../../api/api';
+import { clearAuthTokens, getDefaultRouteForCurrentUser, saveAuthTokens } from '../../api/api';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import authConfig from '../../config/authConfig';
 import { login } from './authService';
@@ -18,6 +18,22 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const oauthError = new URLSearchParams(location.search).get('oauthError');
 
+  const getSafeRedirectPath = (userRole) => {
+    const defaultRoute = getDefaultRouteForCurrentUser();
+
+    if (!from?.pathname) {
+      return defaultRoute;
+    }
+
+    const role = userRole?.toUpperCase().replace(/^ROLE_/, '');
+
+    if (from.pathname.startsWith('/admin') && role !== 'ADMIN') {
+      return defaultRoute;
+    }
+
+    return `${from.pathname}${from.search}${from.hash}`;
+  };
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
@@ -29,6 +45,7 @@ function Login() {
     setLoading(true);
 
     try {
+      clearAuthTokens();
       const response = await login(form);
       saveAuthTokens(response.data);
 
@@ -36,10 +53,7 @@ function Login() {
         throw new Error(t('auth.missingToken'));
       }
 
-      navigate(
-        from ? `${from.pathname}${from.search}${from.hash}` : getDefaultRouteForCurrentUser(),
-        { replace: true }
-      );
+      navigate(getSafeRedirectPath(response.data?.user?.role), { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || err.message || t('auth.loginError'));
     } finally {
@@ -92,8 +106,10 @@ function Login() {
                   />
                 </Form.Group>
 
-                <div className="text-end mb-4">
-                  <Link to="/forgot-password">{t('auth.forgotPassword')}</Link>
+                <div className="auth-form-meta">
+                  <Link to="/forgot-password" className="auth-subtle-link">
+                    {t('auth.forgotPassword')}
+                  </Link>
                 </div>
 
                 <Button className="w-100" variant="success" type="submit" disabled={loading}>
@@ -114,9 +130,12 @@ function Login() {
                 </Button>
               </div>
 
-              <p className="text-center text-secondary mt-4 mb-0">
-                {t('auth.noAccount')} <Link to="/register">{t('auth.registerNow')}</Link>
-              </p>
+              <div className="auth-register-prompt">
+                <span>{t('auth.noAccount')}</span>
+                <Link to="/register" className="auth-register-link">
+                  {t('auth.registerNow')}
+                </Link>
+              </div>
             </Card.Body>
           </Card>
         </Col>

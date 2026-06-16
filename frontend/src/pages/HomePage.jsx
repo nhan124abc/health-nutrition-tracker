@@ -101,8 +101,7 @@ function HomePage() {
                 <div className="premium-product-stage">
                   <div className="premium-product-card">
                     <div className="premium-product-top">
-                      <img src="/img/logo1.jpg" alt={t('app.name')} />
-                      <div>
+                      <div className="premium-product-goal">
                         <span>{t('home.snapshot.goal')}</span>
                         <strong>84%</strong>
                       </div>
