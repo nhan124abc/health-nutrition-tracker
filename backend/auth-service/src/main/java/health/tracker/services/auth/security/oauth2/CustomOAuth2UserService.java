@@ -39,19 +39,30 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private User processOAuth2User(String registrationId, OAuth2UserInfo userInfo) {
         User.AuthProvider provider = User.AuthProvider.valueOf(registrationId.toUpperCase());
-
-        if (!StringUtils.hasText(userInfo.getEmail())) {
-            throw new OAuth2AuthenticationException(
-                    new OAuth2Error("email_not_provided"),
-                    "OAuth2 provider did not return an email address"
-            );
-        }
+        String email = resolveEmail(provider, userInfo);
 
         return userRepository.findByProviderIdAndAuthProvider(userInfo.getId(), provider)
                 .map(existing -> updateExistingUser(existing, userInfo))
-                .orElseGet(() -> userRepository.findByEmail(userInfo.getEmail())
+                .orElseGet(() -> userRepository.findByEmail(email)
                         .map(existing -> handleExistingEmail(existing, provider, userInfo))
-                        .orElseGet(() -> registerNewOAuth2User(provider, userInfo)));
+                        .orElseGet(() -> registerNewOAuth2User(provider, userInfo, email)));
+    }
+
+    private String resolveEmail(User.AuthProvider provider, OAuth2UserInfo userInfo) {
+        if (StringUtils.hasText(userInfo.getEmail())) {
+            return userInfo.getEmail();
+        }
+
+        if (!StringUtils.hasText(userInfo.getId())) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("provider_id_not_provided"),
+                    "OAuth2 provider did not return an id"
+            );
+        }
+
+        String fallbackEmail = provider.name().toLowerCase() + "_" + userInfo.getId() + "@oauth.local";
+        log.warn("{} OAuth2 login did not return email. Using fallback email: {}", provider, fallbackEmail);
+        return fallbackEmail;
     }
 
     private User handleExistingEmail(User user,
@@ -71,10 +82,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return updateExistingUser(user, userInfo);
     }
 
-    private User registerNewOAuth2User(User.AuthProvider provider, OAuth2UserInfo userInfo) {
-        log.info("Registering new OAuth2 user: {}", userInfo.getEmail());
+    private User registerNewOAuth2User(User.AuthProvider provider,
+                                       OAuth2UserInfo userInfo,
+                                       String email) {
+        log.info("Registering new OAuth2 user: {}", email);
         User user = User.builder()
-                .email(userInfo.getEmail())
+                .email(email)
                 .fullName(userInfo.getName())
                 .avatarUrl(userInfo.getAvatarUrl())
                 .authProvider(provider)
