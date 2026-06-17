@@ -99,6 +99,8 @@ spring:
             allowed-origin-patterns:
               - "http://localhost:3000"
               - "http://localhost:4200"
+              - "https://caonhan.me"
+              - "https://www.caonhan.me"
             allowed-methods:
               - GET
               - POST
