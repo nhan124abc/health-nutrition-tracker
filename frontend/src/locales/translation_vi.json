@@ -388,8 +388,19 @@
     "resetPassword": "Đổi mật khẩu",
     "resetSuccess": "Đổi mật khẩu thành công. Bạn có thể đăng nhập lại.",
     "resetError": "Không thể đổi mật khẩu. Vui lòng kiểm tra OTP.",
+    "verifyTitle": "Xác minh email",
+    "verifyDescription": "Nhập mã OTP đã gửi đến email của bạn để hoàn tất xác minh tài khoản.",
+    "verifyOtpPlaceholder": "Nhập 6 chữ số",
+    "verifying": "Đang xác minh...",
+    "verifyResendOtp": "Gửi lại OTP",
+    "verifyOtpSent": "OTP đã được gửi. Vui lòng kiểm tra email.",
+    "verifyOtpResent": "Đã gửi lại OTP xác minh email.",
+    "verifySendError": "Không thể gửi OTP. Vui lòng thử lại.",
+    "verifySuccess": "Xác minh email thành công. Bạn có thể đăng nhập.",
+    "verifyError": "OTP không đúng hoặc đã hết hạn.",
+    "verifyRemembered": "Đã xác minh?",
     "backToLogin": "Quay lại đăng nhập",
-    "backToHome": "V? trang ch?"
+    "backToHome": "Về trang chủ"
   },
   "dashboardPage": {
     "loading": "Đang tải dữ liệu dashboard...",

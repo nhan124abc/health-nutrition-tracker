@@ -41,11 +41,15 @@ const heroMetrics = [
 function HomePage() {
   const { t } = useTranslation();
 
+  const handleBrandClick = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <div className="home-page premium-home">
       <header className="home-header premium-home-header">
         <Container className="d-flex align-items-center justify-content-between gap-3">
-          <Link to="/" className="home-brand premium-home-brand">
+          <Link to="/" className="home-brand premium-home-brand" onClick={handleBrandClick}>
             <img src="/img/Logo.jpg" alt={t('app.name')} />
             <span>{t('app.name')}</span>
           </Link>
