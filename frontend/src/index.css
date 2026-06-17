@@ -5,6 +5,21 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
 }
 
+html,
+body,
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
 :root {
   --health-primary: #2f8f6b;
   --health-primary-dark: #1f6f56;

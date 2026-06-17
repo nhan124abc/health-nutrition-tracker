@@ -127,9 +127,11 @@ function ForgotPassword() {
                 </Form>
               )}
 
-              <p className="text-center text-secondary mt-4 mb-0">
-                <Link to="/login">{t('auth.backToLogin')}</Link>
-              </p>
+              <div className="auth-form-meta justify-content-center mt-4 mb-0">
+                <Link to="/login" className="auth-subtle-link">
+                  {t('auth.backToLogin')}
+                </Link>
+              </div>
             </Card.Body>
           </Card>
         </Col>
