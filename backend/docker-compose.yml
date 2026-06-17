@@ -40,7 +40,9 @@ x-spring-common: &spring-common
 x-java-opts: &java-opts
   JAVA_TOOL_OPTIONS: >-
     -XX:+UseContainerSupport
-    -XX:MaxRAMPercentage=75.0
+    -XX:InitialRAMPercentage=20.0
+    -XX:MaxRAMPercentage=55.0
+    -XX:ActiveProcessorCount=1
     -Djava.security.egd=file:/dev/./urandom
 
 # ─────────────────────────────────────────────────────────────
@@ -73,6 +75,8 @@ services:
     container_name: ht-mysql
     profiles: ["", "infra"]
     restart: unless-stopped
+    mem_limit: 768m
+    cpus: "0.75"
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
       MYSQL_ROOT_HOST: "%"
@@ -96,8 +100,8 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --default-authentication-plugin=mysql_native_password
-      - --max_connections=300
-      - --innodb_buffer_pool_size=256M
+      - --max_connections=120
+      - --innodb_buffer_pool_size=128M
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-secret}"]
       interval: 10s
@@ -113,11 +117,13 @@ services:
     container_name: ht-redis
     profiles: ["", "infra"]
     restart: unless-stopped
+    mem_limit: 192m
+    cpus: "0.25"
     command: >
       sh -c 'if [ -n "$$REDIS_PASSWORD" ]; then
-        redis-server --requirepass "$$REDIS_PASSWORD" --maxmemory 256mb --maxmemory-policy allkeys-lru --save 900 1 --save 300 10;
+        redis-server --requirepass "$$REDIS_PASSWORD" --maxmemory 128mb --maxmemory-policy allkeys-lru --save 900 1 --save 300 10;
       else
-        redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --save 900 1 --save 300 10;
+        redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru --save 900 1 --save 300 10;
       fi'
     ports:
       - "${REDIS_PORT:-6379}:6379"
@@ -138,6 +144,8 @@ services:
     container_name: ht-kafka
     profiles: ["", "infra"]
     restart: unless-stopped
+    mem_limit: 768m
+    cpus: "0.75"
     environment:
       # KRaft mode
       KAFKA_NODE_ID: "1"
@@ -155,6 +163,7 @@ services:
       KAFKA_NUM_PARTITIONS: "3"
       KAFKA_LOG_RETENTION_HOURS: "168"
       KAFKA_LOG_SEGMENT_BYTES: "67108864"
+      KAFKA_HEAP_OPTS: "-Xms128m -Xmx384m"
       CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
     ports:
       - "${KAFKA_PORT:-9092}:9092"
@@ -175,6 +184,8 @@ services:
     container_name: ht-kafka-ui
     profiles: ["dev-tools"]
     restart: unless-stopped
+    mem_limit: 256m
+    cpus: "0.25"
     environment:
       KAFKA_CLUSTERS_0_NAME: local
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
@@ -199,6 +210,8 @@ services:
     image: ht/api-gateway:latest
     container_name: ht-api-gateway
     restart: unless-stopped
+    mem_limit: 512m
+    cpus: "0.60"
     environment:
       <<: [*spring-common, *jwt-common, *internal-secret, *java-opts]
       SERVER_PORT: "8080"
@@ -235,6 +248,8 @@ services:
     image: ht/auth-service:latest
     container_name: ht-auth-service
     restart: unless-stopped
+    mem_limit: 512m
+    cpus: "0.50"
     environment:
       <<: [*spring-common, *db-common, *redis-common, *jwt-common, *internal-secret, *java-opts]
       DB_NAME: auth_db
@@ -277,6 +292,8 @@ services:
     image: ht/user-service:latest
     container_name: ht-user-service
     restart: unless-stopped
+    mem_limit: 384m
+    cpus: "0.35"
     environment:
       <<: [*spring-common, *db-common, *redis-common, *internal-secret, *java-opts]
       DB_NAME: user_db
@@ -307,6 +324,8 @@ services:
     image: ht/nutrition-service:latest
     container_name: ht-nutrition-service
     restart: unless-stopped
+    mem_limit: 384m
+    cpus: "0.35"
     environment:
       <<: [*spring-common, *db-common, *redis-common, *internal-secret, *java-opts]
       DB_NAME: nutrition_db
@@ -337,6 +356,8 @@ services:
     image: ht/meal-service:latest
     container_name: ht-meal-service
     restart: unless-stopped
+    mem_limit: 384m
+    cpus: "0.35"
     environment:
       <<: [*spring-common, *db-common, *redis-common, *kafka-common, *internal-secret, *java-opts]
       DB_NAME: meal_db
@@ -369,6 +390,8 @@ services:
     image: ht/activity-service:latest
     container_name: ht-activity-service
     restart: unless-stopped
+    mem_limit: 384m
+    cpus: "0.35"
     environment:
       <<: [*spring-common, *db-common, *redis-common, *kafka-common, *internal-secret, *java-opts]
       DB_NAME: activity_db
@@ -401,6 +424,8 @@ services:
     image: ht/analytics-service:latest
     container_name: ht-analytics-service
     restart: unless-stopped
+    mem_limit: 384m
+    cpus: "0.35"
     environment:
       <<: [*spring-common, *db-common, *kafka-common, *internal-secret, *java-opts]
       DB_NAME: analytics_db
@@ -430,6 +455,8 @@ services:
     image: ht/ai-service:latest
     container_name: ht-ai-service
     restart: unless-stopped
+    mem_limit: 384m
+    cpus: "0.35"
     environment:
       <<: [*spring-common, *db-common, *internal-secret, *java-opts]
       SERVER_PORT: "8087"
@@ -469,6 +496,8 @@ services:
     image: ht/frontend:latest
     container_name: ht-frontend
     restart: unless-stopped
+    mem_limit: 128m
+    cpus: "0.15"
     environment:
       TZ: Asia/Ho_Chi_Minh
     ports:
