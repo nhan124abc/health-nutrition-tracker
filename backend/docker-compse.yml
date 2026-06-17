@@ -26,6 +26,16 @@ x-redis-common: &redis-common
 x-kafka-common: &kafka-common
   KAFKA_BOOTSTRAP_SERVERS: kafka:9092
 
+x-service-ports: &service-ports
+  API_GATEWAY_PORT: ${API_GATEWAY_PORT:-8080}
+  AUTH_SERVICE_PORT: ${AUTH_SERVICE_PORT:-8081}
+  USER_SERVICE_PORT: ${USER_SERVICE_PORT:-8082}
+  NUTRITION_SERVICE_PORT: ${NUTRITION_SERVICE_PORT:-8083}
+  MEAL_SERVICE_PORT: ${MEAL_SERVICE_PORT:-8084}
+  ACTIVITY_SERVICE_PORT: ${ACTIVITY_SERVICE_PORT:-8085}
+  ANALYTICS_SERVICE_PORT: ${ANALYTICS_SERVICE_PORT:-8086}
+  AI_SERVICE_PORT: ${AI_SERVICE_PORT:-8087}
+
 x-jwt-common: &jwt-common
   JWT_SECRET: ${JWT_SECRET:-H3@lthNutrit10nTrackerSuperSecretKey!MustBe256BitsLong}
   JWT_EXPIRATION_MS: "86400000"
@@ -213,26 +223,26 @@ services:
     mem_limit: 512m
     cpus: "0.20"
     environment:
-      <<: [*spring-common, *jwt-common, *internal-secret, *java-opts]
-      SERVER_PORT: "8080"
+      <<: [*spring-common, *jwt-common, *internal-secret, *java-opts, *service-ports]
+      SERVER_PORT: ${API_GATEWAY_PORT:-8080}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       # Service URIs — dùng Docker service name thay vì localhost
-      AUTH_SERVICE_URI: http://auth-service:8081
-      USER_SERVICE_URI: http://user-service:8082
-      NUTRITION_SERVICE_URI: http://nutrition-service:8083
-      MEAL_SERVICE_URI: http://meal-service:8084
-      ACTIVITY_SERVICE_URI: http://activity-service:8085
-      ANALYTICS_SERVICE_URI: http://analytics-service:8086
-      AI_SERVICE_URI: http://ai-service:8087
+      AUTH_SERVICE_URI: http://auth-service:${AUTH_SERVICE_PORT:-8081}
+      USER_SERVICE_URI: http://user-service:${USER_SERVICE_PORT:-8082}
+      NUTRITION_SERVICE_URI: http://nutrition-service:${NUTRITION_SERVICE_PORT:-8083}
+      MEAL_SERVICE_URI: http://meal-service:${MEAL_SERVICE_PORT:-8084}
+      ACTIVITY_SERVICE_URI: http://activity-service:${ACTIVITY_SERVICE_PORT:-8085}
+      ANALYTICS_SERVICE_URI: http://analytics-service:${ANALYTICS_SERVICE_PORT:-8086}
+      AI_SERVICE_URI: http://ai-service:${AI_SERVICE_PORT:-8087}
     ports:
-      - "8080:8080"   # ← CHỈ gateway mới expose ra ngoài
+      - "${API_GATEWAY_HOST_PORT:-8080}:${API_GATEWAY_PORT:-8080}"   # ← CHỈ gateway mới expose ra ngoài
     volumes:
       - ./logs/api-gateway:/app/logs
     depends_on:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${API_GATEWAY_PORT:-8080}/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -251,16 +261,24 @@ services:
     mem_limit: 512m
     cpus: "0.20"
     environment:
-      <<: [*spring-common, *db-common, *redis-common, *jwt-common, *internal-secret, *java-opts]
+      <<: [*spring-common, *db-common, *redis-common, *jwt-common, *internal-secret, *java-opts, *service-ports]
+      SERVER_PORT: ${AUTH_SERVICE_PORT:-8081}
       DB_NAME: auth_db
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-your-google-client-id}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-your-google-client-secret}
       FACEBOOK_CLIENT_ID: ${FACEBOOK_CLIENT_ID:-your-facebook-app-id}
       FACEBOOK_CLIENT_SECRET: ${FACEBOOK_CLIENT_SECRET:-your-facebook-app-secret}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      OAUTH2_REDIRECT_BASE_URL: ${OAUTH2_REDIRECT_BASE_URL:-http://localhost:8080}
+      MAIL_ENABLED: ${MAIL_ENABLED:-false}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_FROM: ${MAIL_FROM:-no-reply@health.local}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
     # ← KHÔNG expose port ra ngoài host, chỉ truy cập qua gateway:8080
     expose:
-      - "8081"
+      - "${AUTH_SERVICE_PORT:-8081}"
     volumes:
       - ./logs/auth-service:/app/logs
     depends_on:
@@ -269,7 +287,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${AUTH_SERVICE_PORT:-8081}/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -288,11 +306,12 @@ services:
     mem_limit: 384m
     cpus: "0.08"
     environment:
-      <<: [*spring-common, *db-common, *redis-common, *internal-secret, *java-opts]
+      <<: [*spring-common, *db-common, *redis-common, *internal-secret, *java-opts, *service-ports]
+      SERVER_PORT: ${USER_SERVICE_PORT:-8082}
       DB_NAME: user_db
     # ← KHÔNG expose port ra ngoài host
     expose:
-      - "8082"
+      - "${USER_SERVICE_PORT:-8082}"
     volumes:
       - ./logs/user-service:/app/logs
     depends_on:
@@ -301,7 +320,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${USER_SERVICE_PORT:-8082}/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -320,18 +339,21 @@ services:
     mem_limit: 384m
     cpus: "0.08"
     environment:
-      <<: [*spring-common, *db-common, *internal-secret, *java-opts]
+      <<: [*spring-common, *db-common, *redis-common, *internal-secret, *java-opts, *service-ports]
+      SERVER_PORT: ${NUTRITION_SERVICE_PORT:-8083}
       DB_NAME: nutrition_db
     # ← KHÔNG expose port ra ngoài host
     expose:
-      - "8083"
+      - "${NUTRITION_SERVICE_PORT:-8083}"
     volumes:
       - ./logs/nutrition-service:/app/logs
     depends_on:
       mysql:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${NUTRITION_SERVICE_PORT:-8083}/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -350,11 +372,12 @@ services:
     mem_limit: 384m
     cpus: "0.08"
     environment:
-      <<: [*spring-common, *db-common, *redis-common, *kafka-common, *internal-secret, *java-opts]
+      <<: [*spring-common, *db-common, *redis-common, *kafka-common, *internal-secret, *java-opts, *service-ports]
+      SERVER_PORT: ${MEAL_SERVICE_PORT:-8084}
       DB_NAME: meal_db
     # ← KHÔNG expose port ra ngoài host
     expose:
-      - "8084"
+      - "${MEAL_SERVICE_PORT:-8084}"
     volumes:
       - ./logs/meal-service:/app/logs
     depends_on:
@@ -365,7 +388,7 @@ services:
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${MEAL_SERVICE_PORT:-8084}/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -384,18 +407,23 @@ services:
     mem_limit: 384m
     cpus: "0.08"
     environment:
-      <<: [*spring-common, *db-common, *internal-secret, *java-opts]
+      <<: [*spring-common, *db-common, *redis-common, *kafka-common, *internal-secret, *java-opts, *service-ports]
+      SERVER_PORT: ${ACTIVITY_SERVICE_PORT:-8085}
       DB_NAME: activity_db
     # ← KHÔNG expose port ra ngoài host
     expose:
-      - "8085"
+      - "${ACTIVITY_SERVICE_PORT:-8085}"
     volumes:
       - ./logs/activity-service:/app/logs
     depends_on:
       mysql:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${ACTIVITY_SERVICE_PORT:-8085}/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -414,11 +442,12 @@ services:
     mem_limit: 384m
     cpus: "0.05"
     environment:
-      <<: [*spring-common, *db-common, *kafka-common, *internal-secret, *java-opts]
+      <<: [*spring-common, *db-common, *kafka-common, *internal-secret, *java-opts, *service-ports]
+      SERVER_PORT: ${ANALYTICS_SERVICE_PORT:-8086}
       DB_NAME: analytics_db
     # ← KHÔNG expose port ra ngoài host
     expose:
-      - "8086"
+      - "${ANALYTICS_SERVICE_PORT:-8086}"
     volumes:
       - ./logs/analytics-service:/app/logs
     depends_on:
@@ -427,7 +456,7 @@ services:
       kafka:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8086/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${ANALYTICS_SERVICE_PORT:-8086}/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5
@@ -445,8 +474,8 @@ services:
     mem_limit: 384m
     cpus: "0.05"
     environment:
-      <<: [*spring-common, *db-common, *internal-secret, *java-opts]
-      SERVER_PORT: "8087"
+      <<: [*spring-common, *db-common, *internal-secret, *java-opts, *service-ports]
+      SERVER_PORT: ${AI_SERVICE_PORT:-8087}
       DB_NAME: ai_db
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       AI_BASE_URL: ${AI_BASE_URL:-https://api.groq.com/openai}
@@ -454,18 +483,21 @@ services:
       AI_TEMPERATURE: ${AI_TEMPERATURE:-0.5}
       AI_GUEST_DAILY_LIMIT: ${AI_GUEST_DAILY_LIMIT:-5}
       AI_USER_DAILY_LIMIT: ${AI_USER_DAILY_LIMIT:-50}
+      NUTRITION_SERVICE_URL: http://nutrition-service:${NUTRITION_SERVICE_PORT:-8083}
     expose:
-      - "8087"
+      - "${AI_SERVICE_PORT:-8087}"
     volumes:
       - ./logs/ai-service:/app/logs
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:8087/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${AI_SERVICE_PORT:-8087}/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5
       start_period: 40s
     depends_on:
       mysql:
+        condition: service_healthy
+      nutrition-service:
         condition: service_healthy
     networks:
       - backend
@@ -475,7 +507,7 @@ services:
       context: ../frontend
       dockerfile: Dockerfile
       args:
-        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:8080/api/v1}
+        REACT_APP_API_URL: ${REACT_APP_API_URL:-http://localhost:${API_GATEWAY_HOST_PORT:-8080}/api/v1}
         REACT_APP_DISABLE_AUTH: ${REACT_APP_DISABLE_AUTH:-false}
     image: ht/frontend:latest
     container_name: ht-frontend
@@ -490,7 +522,7 @@ services:
       api-gateway:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/health | grep -q 'ok' || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/health | grep -q 'ok' || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 5
