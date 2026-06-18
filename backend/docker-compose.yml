@@ -86,7 +86,7 @@ services:
     profiles: ["", "infra"]
     restart: unless-stopped
     mem_limit: 768m
-    cpus: "0.25"
+    cpus: "0.35"
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
       MYSQL_ROOT_HOST: "%"
@@ -128,7 +128,7 @@ services:
     profiles: ["", "infra"]
     restart: unless-stopped
     mem_limit: 192m
-    cpus: "0.05"
+    cpus: "0.10"
     command: >
       sh -c 'if [ -n "$$REDIS_PASSWORD" ]; then
         redis-server --requirepass "$$REDIS_PASSWORD" --maxmemory 128mb --maxmemory-policy allkeys-lru --save 900 1 --save 300 10;
@@ -155,7 +155,7 @@ services:
     profiles: ["", "infra"]
     restart: unless-stopped
     mem_limit: 768m
-    cpus: "0.18"
+    cpus: "0.30"
     environment:
       # KRaft mode
       KAFKA_NODE_ID: "1"
@@ -220,8 +220,8 @@ services:
     image: ht/api-gateway:latest
     container_name: ht-api-gateway
     restart: unless-stopped
-    mem_limit: 512m
-    cpus: "0.20"
+    mem_limit: 768m
+    cpus: "0.50"
     environment:
       <<: [*spring-common, *jwt-common, *internal-secret, *java-opts, *service-ports]
       SERVER_PORT: ${API_GATEWAY_PORT:-8080}
@@ -258,8 +258,8 @@ services:
     image: ht/auth-service:latest
     container_name: ht-auth-service
     restart: unless-stopped
-    mem_limit: 512m
-    cpus: "0.20"
+    mem_limit: 768m
+    cpus: "0.40"
     environment:
       <<: [*spring-common, *db-common, *redis-common, *jwt-common, *internal-secret, *java-opts, *service-ports]
       SERVER_PORT: ${AUTH_SERVICE_PORT:-8081}
@@ -303,8 +303,8 @@ services:
     image: ht/user-service:latest
     container_name: ht-user-service
     restart: unless-stopped
-    mem_limit: 384m
-    cpus: "0.08"
+    mem_limit: 512m
+    cpus: "0.20"
     environment:
       <<: [*spring-common, *db-common, *redis-common, *internal-secret, *java-opts, *service-ports]
       SERVER_PORT: ${USER_SERVICE_PORT:-8082}
@@ -336,8 +336,8 @@ services:
     image: ht/nutrition-service:latest
     container_name: ht-nutrition-service
     restart: unless-stopped
-    mem_limit: 384m
-    cpus: "0.08"
+    mem_limit: 512m
+    cpus: "0.25"
     environment:
       <<: [*spring-common, *db-common, *redis-common, *internal-secret, *java-opts, *service-ports]
       SERVER_PORT: ${NUTRITION_SERVICE_PORT:-8083}
@@ -369,8 +369,8 @@ services:
     image: ht/meal-service:latest
     container_name: ht-meal-service
     restart: unless-stopped
-    mem_limit: 384m
-    cpus: "0.08"
+    mem_limit: 512m
+    cpus: "0.20"
     environment:
       <<: [*spring-common, *db-common, *redis-common, *kafka-common, *internal-secret, *java-opts, *service-ports]
       SERVER_PORT: ${MEAL_SERVICE_PORT:-8084}
@@ -404,8 +404,8 @@ services:
     image: ht/activity-service:latest
     container_name: ht-activity-service
     restart: unless-stopped
-    mem_limit: 384m
-    cpus: "0.08"
+    mem_limit: 512m
+    cpus: "0.20"
     environment:
       <<: [*spring-common, *db-common, *redis-common, *kafka-common, *internal-secret, *java-opts, *service-ports]
       SERVER_PORT: ${ACTIVITY_SERVICE_PORT:-8085}
@@ -439,8 +439,8 @@ services:
     image: ht/analytics-service:latest
     container_name: ht-analytics-service
     restart: unless-stopped
-    mem_limit: 384m
-    cpus: "0.05"
+    mem_limit: 512m
+    cpus: "0.20"
     environment:
       <<: [*spring-common, *db-common, *kafka-common, *internal-secret, *java-opts, *service-ports]
       SERVER_PORT: ${ANALYTICS_SERVICE_PORT:-8086}
@@ -471,8 +471,8 @@ services:
     image: ht/ai-service:latest
     container_name: ht-ai-service
     restart: unless-stopped
-    mem_limit: 384m
-    cpus: "0.05"
+    mem_limit: 768m
+    cpus: "0.50"
     environment:
       <<: [*spring-common, *db-common, *internal-secret, *java-opts, *service-ports]
       SERVER_PORT: ${AI_SERVICE_PORT:-8087}
