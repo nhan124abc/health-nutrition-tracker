@@ -656,6 +656,13 @@
     }
   },
   "profilePage": {
+    "completion": {
+      "title": "Ho so chua day du",
+      "description": "Mot so truong bat buoc trong ho so con thieu. Vui long cap nhat de he thong tinh muc tieu va goi y chinh xac hon.",
+      "missingTitle": "Thong tin con thieu",
+      "later": "De sau",
+      "goToProfile": "Di dien ho so"
+    },
     "badge": "Hồ sơ người dùng",
     "title": "Profile sức khỏe",
     "description": "Xem và cập nhật thông tin sức khỏe cá nhân từ profile endpoint.",
