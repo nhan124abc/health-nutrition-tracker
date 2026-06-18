@@ -989,6 +989,13 @@
     "title": "Health profile",
     "description": "View and update personal health information from your profile endpoint.",
     "savedMessage": "Profile saved successfully.",
+    "completion": {
+      "title": "Complete your profile",
+      "description": "Some required profile fields are still missing. Please update them so the app can calculate goals and suggestions correctly.",
+      "missingTitle": "Missing information",
+      "later": "Later",
+      "goToProfile": "Go to profile"
+    },
     "metricsLoadError": "Could not load body metrics.",
     "noMetrics": "No body metrics found.",
     "selectGender": "Select gender",

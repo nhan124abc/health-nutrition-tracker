@@ -41,6 +41,20 @@ export const notificationFields = [
   ['weeklyReport', 'profilePage.notifications.weeklyReport'],
 ];
 
+export const requiredProfileFields = [
+  ['username', 'profilePage.fields.username'],
+  ['birthDate', 'profile.birthDate'],
+  ['gender', 'profile.gender'],
+  ['height', 'profile.height'],
+  ['weight', 'profile.weight'],
+  ['activityLevel', 'profile.activityLevel'],
+  ['healthGoal', 'profilePage.fields.healthGoal'],
+  ['targetWeight', 'profilePage.fields.targetWeight'],
+  ['dailyCalorieGoal', 'health.dailyCalorieGoal'],
+  ['dailyWaterGoal', 'profilePage.fields.dailyWaterGoal'],
+  ['timezone', 'common.timezone'],
+];
+
 export const emptyBodyMetric = {
   date: '',
   weight: '',
@@ -182,6 +196,30 @@ export function mapProfileFromApi(data = {}) {
 
 export function extractProfileFromApi(data) {
   return data?.data || data?.profile || data || {};
+}
+
+function hasProfileValue(value) {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value > 0;
+  }
+
+  if (typeof value === 'string') {
+    return value.trim() !== '' && value.trim() !== '0';
+  }
+
+  return true;
+}
+
+export function getMissingRequiredProfileFields(profile = {}) {
+  return requiredProfileFields.filter(([name]) => !hasProfileValue(profile[name]));
+}
+
+export function isProfileComplete(profile = {}) {
+  return getMissingRequiredProfileFields(profile).length === 0;
 }
 
 export function mapProfileToApi(profile, options = {}) {

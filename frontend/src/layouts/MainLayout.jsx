@@ -20,6 +20,12 @@ import {
 import { logout } from '../api/api';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { clearChatHistory, getChatHistory, sendChatMessage } from '../features/ai/aiService';
+import { getProfile } from '../features/profile/profileService';
+import {
+  extractProfileFromApi,
+  getMissingRequiredProfileFields,
+  mapProfileFromApi,
+} from '../features/profile/profileUtils';
 
 const SIDEBAR_DEFAULT_WIDTH = 264;
 const SIDEBAR_MIN_WIDTH = 84;
@@ -47,6 +53,8 @@ function MainLayout() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiHistoryLoading, setAiHistoryLoading] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [showProfileRequiredModal, setShowProfileRequiredModal] = useState(false);
+  const [missingProfileFields, setMissingProfileFields] = useState([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     () => localStorage.getItem('sidebarCollapsed') === 'true'
   );
@@ -66,6 +74,33 @@ function MainLayout() {
 
   useEffect(() => {
     setShowMobileSidebar(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    getProfile()
+      .then((response) => {
+        if (!isActive) {
+          return;
+        }
+
+        const profile = mapProfileFromApi(extractProfileFromApi(response.data));
+        const missingFields = getMissingRequiredProfileFields(profile);
+
+        setMissingProfileFields(missingFields);
+        setShowProfileRequiredModal(missingFields.length > 0 && location.pathname !== '/profile');
+      })
+      .catch(() => {
+        if (isActive) {
+          setMissingProfileFields([]);
+          setShowProfileRequiredModal(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
   }, [location.pathname]);
 
   useEffect(() => {
@@ -196,6 +231,11 @@ function MainLayout() {
   const handleLogout = async () => {
     await logout();
     navigate('/login');
+  };
+
+  const goToProfile = () => {
+    setShowProfileRequiredModal(false);
+    navigate('/profile');
   };
 
   const handleAiSubmit = async (event) => {
@@ -407,6 +447,37 @@ function MainLayout() {
             </InputGroup>
           </Form>
         </Modal.Body>
+      </Modal>
+
+      <Modal
+        show={showProfileRequiredModal}
+        onHide={() => setShowProfileRequiredModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>{t('profilePage.completion.title')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="text-secondary mb-3">{t('profilePage.completion.description')}</p>
+          {missingProfileFields.length > 0 && (
+            <div>
+              <div className="fw-semibold mb-2">{t('profilePage.completion.missingTitle')}</div>
+              <ul className="mb-0">
+                {missingProfileFields.map(([name, labelKey]) => (
+                  <li key={name}>{t(labelKey)}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setShowProfileRequiredModal(false)}>
+            {t('profilePage.completion.later')}
+          </Button>
+          <Button variant="success" onClick={goToProfile}>
+            {t('profilePage.completion.goToProfile')}
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );
