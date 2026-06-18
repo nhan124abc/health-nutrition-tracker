@@ -13,8 +13,8 @@ name: health-nutrition-tracker
 # Shared environment snippets (YAML anchors)
 # ─────────────────────────────────────────────────────────────
 x-db-common: &db-common
-  DB_HOST: mysql
-  DB_PORT: "3306"
+  DB_HOST: ${DB_HOST:-mysql}
+  DB_PORT: ${DB_PORT:-3306}
   DB_USERNAME: ${DB_USERNAME:-root}
   DB_PASSWORD: ${DB_PASSWORD:-secret}
 
