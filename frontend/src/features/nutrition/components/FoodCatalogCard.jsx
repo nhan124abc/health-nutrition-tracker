@@ -74,7 +74,7 @@ function FoodCatalogCard({
               {foods.map((food) => (
                 <tr key={food.id} onClick={() => onSelectFood(food)} className="clickable-row">
                   <td>
-                    <strong>{food.nameVi}</strong>
+                    <strong>{food.nameVi || food.name}</strong>
                     <div className="text-secondary small">{food.name} - {food.brand}</div>
                   </td>
                   <td>{food.category}</td>

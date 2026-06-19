@@ -935,6 +935,35 @@ body::-webkit-scrollbar,
   width: 72px;
 }
 
+.profile-summary-popover {
+  border: 0;
+  border-radius: 0.75rem;
+  box-shadow: 0 16px 40px rgba(20, 45, 36, 0.14);
+  min-width: 220px;
+}
+
+.profile-summary-mini {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.profile-summary-mini div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.profile-summary-mini span {
+  color: #60706a;
+  font-size: 0.8rem;
+}
+
+.profile-summary-mini strong {
+  color: #1f2f2a;
+  font-size: 0.95rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
 .home-page {
   background: #fcf9f7;
   min-height: 100vh;
