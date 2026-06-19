@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Badge, Button, Card, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { FaPrint } from 'react-icons/fa';
 import { getCurrentUser } from '../../api/api';
 import ProfileEditForm from './components/ProfileEditForm';
@@ -20,7 +21,8 @@ import {
 
 function Profile() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState('overview');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'overview');
   const [profile, setProfile] = useState(initialProfile);
   const [account, setAccount] = useState(null);
   const [metrics, setMetrics] = useState([]);

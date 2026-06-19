@@ -68,15 +68,15 @@
     "lookup": "Tra cứu"
   },
   "common": {
-    "protein": "Protein",
-    "carbs": "Carbs",
-    "fat": "Fat",
-    "fiber": "Fiber",
-    "sodium": "Sodium",
-    "sugar": "Sugar",
-    "calories": "Calories",
-    "caloriesIn": "Calories nạp vào",
-    "caloriesOut": "Calories tiêu hao",
+    "protein": "Đạm",
+    "carbs": "Tinh bột",
+    "fat": "Chất béo",
+    "fiber": "Chất xơ",
+    "sodium": "Natri",
+    "sugar": "Đường",
+    "calories": "Calo",
+    "caloriesIn": "Calo nạp vào",
+    "caloriesOut": "Calo tiêu hao",
     "meals": "Bữa ăn",
     "weight": "Cân nặng",
     "activeMinutes": "Phút vận động",
@@ -95,6 +95,7 @@
       "CN"
     ],
     "cancel": "Hủy",
+    "close": "Đóng",
     "save": "Lưu",
     "food": "Thực phẩm",
     "serving": "Khẩu phần",
@@ -559,9 +560,9 @@
     }
   },
   "nutritionPage": {
-    "badge": "Food database",
+    "badge": "Cơ sở dữ liệu thực phẩm",
     "title": "Dinh dưỡng và thực phẩm",
-    "description": "Tìm theo từ khóa hoặc hình ảnh, lọc danh mục, xem macro/micro và thêm thực phẩm mới.",
+    "description": "Tìm theo từ khóa hoặc hình ảnh, lọc danh mục, xem dinh dưỡng đa lượng và vi lượng, rồi thêm thực phẩm mới khi cần.",
     "addFood": "Thêm thực phẩm",
     "loading": "Đang tải dữ liệu dinh dưỡng...",
     "loadingDetail": "Đang tải chi tiết thực phẩm...",
@@ -581,12 +582,12 @@
     "saving": "Đang lưu...",
     "selectCategory": "Chọn danh mục",
     "noSelection": "Chưa chọn thực phẩm.",
-    "searchPlaceholder": "Tìm theo tên, brand...",
+    "searchPlaceholder": "Tìm theo tên hoặc thương hiệu...",
     "imageSearch": "Tìm kiếm bằng hình ảnh",
     "imageSelected": "Đã chọn ảnh: {{name}}",
     "clearImage": "Xóa",
     "allCategories": "Tất cả danh mục",
-    "resultCount": "Hiển thị {{count}} kết quả. Pagination sẵn sàng gắn API /nutrition/foods.",
+    "resultCount": "Hiển thị {{count}} kết quả.",
     "newFoodTitle": "Thêm thực phẩm mới",
     "savePending": "Lưu thực phẩm",
     "fields": {
@@ -657,11 +658,15 @@
   },
   "profilePage": {
     "completion": {
-      "title": "Ho so chua day du",
-      "description": "Mot so truong bat buoc trong ho so con thieu. Vui long cap nhat de he thong tinh muc tieu va goi y chinh xac hon.",
-      "missingTitle": "Thong tin con thieu",
-      "later": "De sau",
-      "goToProfile": "Di dien ho so"
+      "title": "Hồ sơ chưa đầy đủ",
+      "description": "Một số thông tin bắt buộc trong hồ sơ còn thiếu. Vui lòng cập nhật để hệ thống tính mục tiêu và gợi ý chính xác hơn.",
+      "missingTitle": "Thông tin còn thiếu",
+      "later": "Để sau",
+      "goToProfile": "Cập nhật hồ sơ ngay"
+    },
+    "summary": {
+      "title": "Thông tin hồ sơ",
+      "empty": "Chưa tải được thông tin hồ sơ."
     },
     "badge": "Hồ sơ người dùng",
     "title": "Profile sức khỏe",

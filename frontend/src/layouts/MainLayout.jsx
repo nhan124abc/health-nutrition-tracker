@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button, Container, Form, InputGroup, Modal, Nav, Navbar, Offcanvas } from 'react-bootstrap';
+import { Button, Container, Form, InputGroup, Modal, Nav, Navbar, Offcanvas, Overlay, Popover } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -17,7 +17,7 @@ import {
   FaWeight,
   FaBullseye,
 } from 'react-icons/fa';
-import { logout } from '../api/api';
+import { getCurrentUser, logout } from '../api/api';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { clearChatHistory, getChatHistory, sendChatMessage } from '../features/ai/aiService';
 import { getProfile } from '../features/profile/profileService';
@@ -53,6 +53,9 @@ function MainLayout() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiHistoryLoading, setAiHistoryLoading] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [showProfileSummary, setShowProfileSummary] = useState(false);
+  const [currentProfile, setCurrentProfile] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
   const [showProfileRequiredModal, setShowProfileRequiredModal] = useState(false);
   const [missingProfileFields, setMissingProfileFields] = useState([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
@@ -71,9 +74,15 @@ function MainLayout() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const aiChatWindowRef = useRef(null);
+  const profileButtonRef = useRef(null);
 
   useEffect(() => {
     setShowMobileSidebar(false);
+    setShowProfileSummary(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    setCurrentUser(getCurrentUser());
   }, [location.pathname]);
 
   useEffect(() => {
@@ -88,11 +97,13 @@ function MainLayout() {
         const profile = mapProfileFromApi(extractProfileFromApi(response.data));
         const missingFields = getMissingRequiredProfileFields(profile);
 
+        setCurrentProfile(profile);
         setMissingProfileFields(missingFields);
         setShowProfileRequiredModal(missingFields.length > 0 && location.pathname !== '/profile');
       })
       .catch(() => {
         if (isActive) {
+          setCurrentProfile(null);
           setMissingProfileFields([]);
           setShowProfileRequiredModal(false);
         }
@@ -235,7 +246,7 @@ function MainLayout() {
 
   const goToProfile = () => {
     setShowProfileRequiredModal(false);
-    navigate('/profile');
+    navigate('/profile', { state: { activeTab: 'edit' } });
   };
 
   const handleAiSubmit = async (event) => {
@@ -339,9 +350,16 @@ function MainLayout() {
               <FaRobot />
             </Button>
             <LanguageSwitcher />
-            <NavLink to="/profile" className="btn btn-light layout-user-toggle" aria-label={t('nav.profile')}>
+            <button
+              type="button"
+              ref={profileButtonRef}
+              className="btn btn-light layout-user-toggle"
+              onClick={() => setShowProfileSummary((current) => !current)}
+              aria-label={t('nav.profile')}
+              title={t('nav.profile')}
+            >
               <FaUserCircle />
-            </NavLink>
+            </button>
             <button type="button" className="btn btn-light layout-user-toggle" onClick={handleLogout} aria-label={t('nav.logout')}>
               <FaSignOutAlt />
             </button>
@@ -448,6 +466,29 @@ function MainLayout() {
           </Form>
         </Modal.Body>
       </Modal>
+
+      <Overlay
+        target={profileButtonRef.current}
+        show={showProfileSummary}
+        placement="bottom-end"
+        rootClose
+        onHide={() => setShowProfileSummary(false)}
+      >
+        <Popover id="profile-summary-popover" className="profile-summary-popover">
+          <Popover.Body>
+            <div className="profile-summary-mini">
+              <div>
+                <span>{t('profilePage.fields.username')}</span>
+                <strong>{currentProfile?.username || currentUser?.username || currentUser?.fullName || '-'}</strong>
+              </div>
+              <div>
+                <span>Email</span>
+                <strong>{currentUser?.email || '-'}</strong>
+              </div>
+            </div>
+          </Popover.Body>
+        </Popover>
+      </Overlay>
 
       <Modal
         show={showProfileRequiredModal}

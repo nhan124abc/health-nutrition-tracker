@@ -706,6 +706,7 @@
       "Sun"
     ],
     "cancel": "Cancel",
+    "close": "Close",
     "save": "Save",
     "food": "Food",
     "serving": "Serving",
@@ -994,7 +995,11 @@
       "description": "Some required profile fields are still missing. Please update them so the app can calculate goals and suggestions correctly.",
       "missingTitle": "Missing information",
       "later": "Later",
-      "goToProfile": "Go to profile"
+      "goToProfile": "Update profile now"
+    },
+    "summary": {
+      "title": "Profile information",
+      "empty": "Profile information is not available yet."
     },
     "metricsLoadError": "Could not load body metrics.",
     "noMetrics": "No body metrics found.",
