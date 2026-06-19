@@ -369,7 +369,6 @@ function AdminManagementPage({ type }) {
             {t(config.badgeKey)}
           </Badge>
           <h2>{t(`${pageKey}.title`)}</h2>
-          <p>{t(`${pageKey}.description`)}</p>
         </div>
         <Button variant="success">
           <FaPlus className="me-2" />

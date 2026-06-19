@@ -195,7 +195,6 @@ function Reports() {
         <div>
           <Badge bg="success" className="mb-2">{t('reportsPage.badge')}</Badge>
           <h1>{t('reportsPage.title')}</h1>
-          <p>{t('reportsPage.description')}</p>
         </div>
         <Form.Select className="page-date-input" value={range} onChange={(event) => setRange(event.target.value)}>
           <option value="weekly">{t('common.sevenDays')}</option>

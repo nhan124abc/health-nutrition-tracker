@@ -256,7 +256,6 @@ function Planner() {
       <div>
         <Badge bg="success" className="mb-2">{t('plannerPage.badge')}</Badge>
         <h1>{t('plannerPage.title')}</h1>
-        <p>{t('plannerPage.description')}</p>
       </div>
     </div>
     {error && <Alert variant="danger">{error}</Alert>}

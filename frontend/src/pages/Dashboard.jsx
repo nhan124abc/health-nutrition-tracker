@@ -396,7 +396,6 @@ function Dashboard() {
         <div>
           <Badge bg="success" className="mb-2">{t('dashboardPage.badge')}</Badge>
           <h1>{t('dashboardPage.title')}</h1>
-          <p>{t('dashboardPage.description')}</p>
         </div>
         <input
           className="form-control page-date-input"
@@ -417,7 +416,6 @@ function Dashboard() {
               <div className="flex-grow-1">
                 <div className="dashboard-goal-eyebrow">{t('dashboardPage.goalBanner.eyebrow')}</div>
                 <h2>{healthGoalLabel}</h2>
-                <p>{t('dashboardPage.goalBanner.description')}</p>
               </div>
               <Button as={Link} to="/profile" variant="light">
                 {t('dashboardPage.goalBanner.update')}

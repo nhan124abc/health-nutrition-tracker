@@ -133,7 +133,6 @@ function Profile() {
         <div>
           <Badge bg="success" className="mb-2">{t('profilePage.badge')}</Badge>
           <h1>{t('profilePage.title')}</h1>
-          <p>{t('profilePage.description')}</p>
         </div>
         <Button variant="outline-success" onClick={printProfile}>
           <FaPrint className="me-2" />

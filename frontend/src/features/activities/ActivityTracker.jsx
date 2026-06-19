@@ -229,7 +229,6 @@ function ActivityTracker() {
         <div>
           <Badge bg="success" className="mb-2">{t('activityPage.badge')}</Badge>
           <h1>{t('activityPage.title')}</h1>
-          <p>{t('activityPage.description')}</p>
         </div>
         <div className="d-flex flex-wrap gap-2">
           <input className="form-control page-date-input" type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />

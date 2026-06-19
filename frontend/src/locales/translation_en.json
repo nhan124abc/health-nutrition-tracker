@@ -262,7 +262,6 @@
     "activityHint": "Choose <strong>Physical Activity</strong> in the dropdown and click \"Generate 2 Options\" to get workout suggestions.",
     "overLimitError": "This option exceeds your remaining calorie budget. Please generate new suggestions."
   },
-
   "profile": {
     "title": "Health Profile",
     "subtitle": "Update body information so the system can calculate BMI and assess your health status.",
@@ -412,7 +411,6 @@
     "dashboard": {
       "badge": "Overview",
       "title": "System overview",
-      "description": "Track users, foods, workouts, and content across the whole system.",
       "quickExport": "Quick export",
       "recentTitle": "Recent activity",
       "recentDescription": "Changes and records that need admin attention.",
@@ -448,7 +446,6 @@
     "analytics": {
       "badge": "System analytics",
       "title": "System-wide analytics",
-      "description": "Monitor user growth, feature usage, and the volume of health data recorded across the platform.",
       "loading": "Loading system-wide analytics...",
       "loadError": "Unable to load system-wide analytics.",
       "userGrowth": "User growth",
@@ -474,7 +471,6 @@
     "pages": {
       "users": {
         "title": "User management",
-        "description": "Monitor accounts, activity status, and actions to lock or update users.",
         "action": "Add user",
         "loading": "Loading users from the database...",
         "loadError": "Unable to load users from the database.",
@@ -487,7 +483,6 @@
       },
       "foods": {
         "title": "Food, meal, calorie and macro management",
-        "description": "Standardize foods, calories, protein, carbs, fat, and portion conversions.",
         "action": "Add food",
         "loading": "Loading the food catalog from the database...",
         "loadError": "Unable to load the food catalog from the database.",
@@ -500,7 +495,6 @@
       },
       "exercises": {
         "title": "Exercise and calorie burn management",
-        "description": "Update exercises, MET values, suggested duration, and estimated calories burned.",
         "action": "Add exercise",
         "loading": "Loading the activity catalog from the database...",
         "loadError": "Unable to load the activity catalog from the database.",
@@ -513,7 +507,6 @@
       },
       "articles": {
         "title": "Health article and news management",
-        "description": "Write, review, and publish content about nutrition, activity, and healthy living.",
         "action": "Create article",
         "stats": {
           "total": "Articles",
@@ -524,7 +517,6 @@
       },
       "reports": {
         "title": "System reports",
-        "description": "View usage, user growth, nutrition data, and system performance metrics.",
         "action": "Export report",
         "stats": {
           "logs": "Diary logs",
@@ -535,7 +527,6 @@
       },
       "submissions": {
         "title": "Review and edit user-submitted data",
-        "description": "Check foods, exercises, images, or content submitted by users before publishing.",
         "action": "Bulk approve",
         "stats": {
           "pending": "Pending review",
@@ -546,7 +537,6 @@
       },
       "plans": {
         "title": "Goal and service plan management",
-        "description": "Configure goal templates, service plans, benefits, and recommendation logic.",
         "action": "Add plan",
         "stats": {
           "goals": "Goal templates",
@@ -557,7 +547,6 @@
       },
       "settings": {
         "title": "Roles and system settings",
-        "description": "Manage admin roles, access rights, security settings, notifications, and backend integrations.",
         "action": "Add role",
         "stats": {
           "roles": "Roles",
@@ -738,7 +727,6 @@
     "partialLoadError": "Some dashboard data could not be loaded.",
     "badge": "Daily dashboard",
     "title": "Today overview",
-    "description": "Track calories, macros, activity, water, weight, and streak for the day.",
     "weeklyTitle": "7-day calories",
     "weeklyDescription": "Calories in/out and net calorie trend.",
     "macroTitle": "Today macros",
@@ -746,7 +734,6 @@
     "quickTitle": "Quick metrics",
     "goalBanner": {
       "eyebrow": "Your main goal",
-      "description": "Keep your personal target visible and track today's progress toward it.",
       "targetWeight": "Weight progress",
       "update": "Update goal",
       "notSet": "Set your health goal"
@@ -773,7 +760,6 @@
     "partialLoadError": "Some report data could not be loaded.",
     "badge": "Reports & Statistics",
     "title": "Reports & Statistics",
-    "description": "Review calories in/out, net calories, macro trends, and progress overview by week or month.",
     "caloriesTitle": "Calories in/out",
     "macroTitle": "Macro trend",
     "metrics": {
@@ -791,7 +777,6 @@
   "waterPage": {
     "badge": "Water tracker",
     "title": "Water Tracker",
-    "description": "Set a daily water goal, log water intake, manage reminders, and review drinking history.",
     "todayTitle": "Today's water",
     "totalToday": "{{total}} / {{goal}} ml today",
     "goal": "Daily water goal ml",
@@ -821,7 +806,6 @@
   "foodDiaryPage": {
     "badge": "Meal diary",
     "title": "Daily meal log",
-    "description": "Create meals, add foods, view details, and review daily calorie totals.",
     "createMeal": "Create meal",
     "deleteMeal": "Delete meal",
     "updateMeal": "Update meal",
@@ -891,7 +875,6 @@
   "nutritionPage": {
     "badge": "Food database",
     "title": "Nutrition and foods",
-    "description": "Search by keyword or image, filter categories, review macro/micro data, and add foods.",
     "addFood": "Add food",
     "loading": "Loading nutrition data...",
     "loadingDetail": "Loading food details...",
@@ -929,7 +912,6 @@
   "activityPage": {
     "badge": "Physical activity",
     "title": "Daily activity logs",
-    "description": "Log activity, filter activity types by category, and view daily totals.",
     "addActivity": "Log activity",
     "listTitle": "Activity list",
     "allCategories": "All categories",
@@ -988,7 +970,6 @@
   "profilePage": {
     "badge": "User profile",
     "title": "Health profile",
-    "description": "View and update personal health information from your profile endpoint.",
     "savedMessage": "Profile saved successfully.",
     "completion": {
       "title": "Complete your profile",
@@ -1065,7 +1046,6 @@
   "plannerPage": {
     "badge": "Suggestions from remaining calories",
     "title": "Choose a suitable meal",
-    "description": "The system creates two alternative options based on your remaining calories for today.",
     "calorieBudget": "Today's calorie budget",
     "consumed": "Consumed {{consumed}} / {{goal}} kcal",
     "selectSlot": "Choose a meal or activity",
@@ -1136,7 +1116,6 @@
   "goalPlannerPage": {
     "badge": "Automatic planning",
     "title": "Set a weight goal",
-    "description": "Choose a goal and the system will calculate suitable calorie and activity targets.",
     "empty": "Enter your goal to receive suitable timeline options.",
     "summary": "Total energy change: {{energy}} kcal · Minimum safe duration: {{weeks}} weeks",
     "form": {
@@ -1177,7 +1156,6 @@
   "bodyMetricsPage": {
     "badge": "Body metrics",
     "title": "Track body metrics",
-    "description": "Record weight, body fat, muscle mass, and measurements; review progress over time.",
     "addTitle": "Add metric",
     "saveMetric": "Save metric",
     "saving": "Saving...",
