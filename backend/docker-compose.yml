@@ -17,6 +17,8 @@ x-db-common: &db-common
   DB_PORT: ${DB_PORT:-3306}
   DB_USERNAME: ${DB_USERNAME:-root}
   DB_PASSWORD: ${DB_PASSWORD:-secret}
+  SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: ${DB_POOL_MAX_SIZE:-3}
+  SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: ${DB_POOL_MIN_IDLE:-1}
 
 x-redis-common: &redis-common
   REDIS_HOST: redis
@@ -110,7 +112,7 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --default-authentication-plugin=mysql_native_password
-      - --max_connections=120
+      - --max_connections=250
       - --innodb_buffer_pool_size=128M
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD:-secret}"]
