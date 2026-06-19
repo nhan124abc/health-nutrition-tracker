@@ -97,7 +97,6 @@ function BodyMetrics() {
         <div>
           <Badge bg="success" className="mb-2">{t('bodyMetricsPage.badge')}</Badge>
           <h1>{t('bodyMetricsPage.title')}</h1>
-          <p>{t('bodyMetricsPage.description')}</p>
         </div>
       </div>
 

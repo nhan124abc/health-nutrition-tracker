@@ -72,7 +72,6 @@ function GoalPlanner() {
         <div>
           <Badge bg="success" className="mb-2">{t('goalPlannerPage.badge')}</Badge>
           <h1>{t('goalPlannerPage.title')}</h1>
-          <p>{t('goalPlannerPage.description')}</p>
         </div>
       </div>
       {error && <Alert variant="danger">{error}</Alert>}

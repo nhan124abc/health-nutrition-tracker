@@ -233,7 +233,6 @@ function Nutrition() {
         <div>
           <Badge bg="success" className="mb-2">{t('nutritionPage.badge')}</Badge>
           <h1>{t('nutritionPage.title')}</h1>
-          <p>{t('nutritionPage.description')}</p>
         </div>
         <Button variant="success" onClick={openCreateModal}>
           <FaPlus className="me-2" />

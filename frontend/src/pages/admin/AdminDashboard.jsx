@@ -108,7 +108,6 @@ function AdminDashboard() {
             {t('admin.dashboard.badge')}
           </Badge>
           <h2>{t('admin.dashboard.title')}</h2>
-          <p>{t('admin.dashboard.description')}</p>
         </div>
         <Button variant="success">{t('admin.dashboard.quickExport')}</Button>
       </div>

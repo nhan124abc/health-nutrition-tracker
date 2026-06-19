@@ -310,7 +310,6 @@ function WaterTracker() {
         <div>
           <Badge bg="success" className="mb-2">{t('waterPage.badge')}</Badge>
           <h1>{t('waterPage.title')}</h1>
-          <p>{t('waterPage.description')}</p>
         </div>
         <input className="form-control page-date-input" type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
       </div>

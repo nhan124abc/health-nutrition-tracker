@@ -135,7 +135,6 @@ function AdminAnalytics() {
         <div>
           <Badge bg="success" className="mb-2">{t('admin.analytics.badge')}</Badge>
           <h2>{t('admin.analytics.title')}</h2>
-          <p>{t('admin.analytics.description')}</p>
         </div>
       </div>
 

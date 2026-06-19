@@ -286,7 +286,6 @@ function FoodDiary() {
         <div>
           <Badge bg="success" className="mb-2">{t('foodDiaryPage.badge')}</Badge>
           <h1>{t('foodDiaryPage.title')}</h1>
-          <p>{t('foodDiaryPage.description')}</p>
         </div>
         <div className="d-flex flex-wrap gap-2">
           <input className="form-control page-date-input" type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
