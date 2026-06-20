@@ -115,6 +115,23 @@ function MainLayout() {
   }, [location.pathname]);
 
   useEffect(() => {
+    const handleProfileUpdated = (event) => {
+      const profile = event.detail;
+      const missingFields = getMissingRequiredProfileFields(profile);
+
+      setCurrentProfile(profile);
+      setMissingProfileFields(missingFields);
+      setShowProfileRequiredModal(missingFields.length > 0 && location.pathname !== '/profile');
+    };
+
+    window.addEventListener('profile:updated', handleProfileUpdated);
+
+    return () => {
+      window.removeEventListener('profile:updated', handleProfileUpdated);
+    };
+  }, [location.pathname]);
+
+  useEffect(() => {
     localStorage.setItem('sidebarCollapsed', String(isSidebarCollapsed));
   }, [isSidebarCollapsed]);
 

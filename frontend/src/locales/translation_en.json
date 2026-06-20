@@ -301,6 +301,7 @@
   "admin": {
     "nav": {
       "dashboard": "Overview",
+      "profile": "Admin profile",
       "users": "User management",
       "catalogs": "System catalogs",
       "foodCatalog": "Food catalog",
@@ -317,14 +318,16 @@
     "layout": {
       "brand": "Health Admin",
       "logoAlt": "Health Nutrition Admin",
-      "sidebarCaption": "System administration",
-      "badge": "Admin",
-      "title": "Admin dashboard",
       "toggleSidebar": "Collapse or expand admin menu",
       "searchPlaceholder": "Search users, foods, reports...",
       "searchLabel": "Search admin data",
       "notifications": "Admin notifications",
       "backToUser": "Back to user app"
+    },
+    "profile": {
+      "badge": "Admin",
+      "title": "Admin profile",
+      "role": "Role"
     },
     "common": {
       "food": "Food",
@@ -374,8 +377,7 @@
       "delete": "Delete"
     },
     "table": {
-      "listTitle": "Data list",
-      "listDescription": "Search, view, edit, approve, or manage data.",
+      "listTitle": "User list",
       "searchPlaceholder": "Search this table...",
       "searchLabel": "Search admin table",
       "content": "Content",
@@ -618,7 +620,6 @@
   },
   "auth": {
     "loginTitle": "Log in",
-    "loginDescription": "Track daily meals, activity, and health metrics.",
     "password": "Password",
     "passwordPlaceholder": "Enter password",
     "forgotPassword": "Forgot password?",
@@ -632,7 +633,6 @@
     "oauthLoginError": "Unable to log in with Google or Facebook. Please check your account and try again.",
     "missingToken": "Backend did not return an access token.",
     "registerTitle": "Create account",
-    "registerDescription": "Start with your email, password, and full name.",
     "fullName": "Full name",
     "passwordMin": "At least 8 characters",
     "confirmPassword": "Confirm password",
@@ -643,7 +643,6 @@
     "passwordMismatch": "Password confirmation does not match.",
     "registerError": "Unable to register. Please try again.",
     "forgotTitle": "Forgot password",
-    "forgotDescription": "Enter your email to receive an OTP, then set a new password.",
     "otpSent": "OTP has been sent to your email if the account exists.",
     "sendOtpError": "Unable to send OTP. Please try again.",
     "newPassword": "New password",

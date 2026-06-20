@@ -4,7 +4,7 @@
     "loading": "Đang tải..."
   },
   "nav": {
-    "dashboard": "Dashboard",
+    "dashboard": "Tổng quan",
     "nutrition": "Dinh dưỡng",
     "diary": "Nhật ký bữa ăn",
     "activity": "Vận động",
@@ -354,7 +354,6 @@
   },
   "auth": {
     "loginTitle": "Đăng nhập",
-    "loginDescription": "Theo dõi bữa ăn, vận động và chỉ số sức khỏe hằng ngày.",
     "password": "Mật khẩu",
     "passwordPlaceholder": "Nhập mật khẩu",
     "forgotPassword": "Quên mật khẩu?",
@@ -368,7 +367,6 @@
     "oauthLoginError": "Không thể đăng nhập bằng Google hoặc Facebook. Vui lòng kiểm tra tài khoản và thử lại.",
     "missingToken": "Backend chưa trả access token.",
     "registerTitle": "Tạo tài khoản",
-    "registerDescription": "Bắt đầu bằng email, mật khẩu và họ tên đầy đủ.",
     "fullName": "Họ tên",
     "passwordMin": "Tối thiểu 8 ký tự",
     "confirmPassword": "Xác nhận mật khẩu",
@@ -379,7 +377,6 @@
     "passwordMismatch": "Mật khẩu xác nhận không khớp.",
     "registerError": "Không thể đăng ký. Vui lòng thử lại.",
     "forgotTitle": "Quên mật khẩu",
-    "forgotDescription": "Nhập email để nhận OTP, sau đó đặt mật khẩu mới.",
     "otpSent": "OTP đã được gửi tới email nếu tài khoản tồn tại.",
     "sendOtpError": "Không thể gửi OTP. Vui lòng thử lại.",
     "newPassword": "Mật khẩu mới",
@@ -668,7 +665,7 @@
     "noMetrics": "Chưa có dữ liệu chỉ số cơ thể.",
     "selectGender": "Chọn giới tính",
     "fields": {
-      "username": "Username",
+      "username": "Họ tên",
       "targetWeight": "Cân nặng mục tiêu kg",
       "dailyWaterGoal": "Mục tiêu nước/ngày ml",
       "healthGoal": "Mục tiêu sức khỏe",
@@ -864,6 +861,7 @@
   "admin": {
     "nav": {
       "dashboard": "Tổng quan",
+      "profile": "Hồ sơ Quản trị viên",
       "users": "Quản lý người dùng",
       "catalogs": "Quản lý danh mục",
       "foodCatalog": "Danh mục thực phẩm",
@@ -880,7 +878,6 @@
     "layout": {
       "brand": "Health Admin",
       "logoAlt": "Health Nutrition Admin",
-      "sidebarCaption": "Quản trị hệ thống",
       "badge": "Admin",
       "title": "Bảng quản trị",
       "toggleSidebar": "Thu gọn hoặc mở rộng menu admin",
@@ -888,6 +885,11 @@
       "searchLabel": "Tìm kiếm trong admin",
       "notifications": "Thông báo quản trị",
       "backToUser": "Về trang user"
+    },
+    "profile": {
+      "badge": "Admin",
+      "title": "Hồ sơ Quản trị viên",
+      "role": "Vai trò"
     },
     "common": {
       "food": "Thực phẩm",

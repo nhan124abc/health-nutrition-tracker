@@ -70,7 +70,7 @@ function repairMojibake(value) {
   }
 }
 
-function cleanText(value) {
+export function cleanText(value) {
   return repairMojibake(value).trim();
 }
 

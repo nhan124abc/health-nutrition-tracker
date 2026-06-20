@@ -1,19 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Badge,
   Button,
   Container,
-  Dropdown,
-  Form,
-  InputGroup,
   Nav,
   Navbar,
   Offcanvas,
+  Overlay,
   OverlayTrigger,
+  Popover,
   Tooltip,
 } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
   FaBars,
   FaBell,
@@ -23,14 +22,12 @@ import {
   FaDumbbell,
   FaFolderOpen,
   FaHome,
-  FaSearch,
   FaShieldAlt,
-  FaSignOutAlt,
   FaUserCircle,
   FaUsers,
   FaUtensils,
 } from 'react-icons/fa';
-import { logout } from '../api/api';
+import { getCurrentUser } from '../api/api';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const adminMenuItems = [
@@ -45,6 +42,7 @@ const adminMenuItems = [
     ],
   },
   { to: '/admin/analytics', labelKey: 'admin.nav.analytics', icon: FaChartLine },
+  { to: '/admin/profile', labelKey: 'admin.nav.profile', icon: FaUserCircle },
 ];
 
 function AdminLayout() {
@@ -55,13 +53,16 @@ function AdminLayout() {
   const [isCatalogOpen, setIsCatalogOpen] = useState(
     () => window.location.pathname.startsWith('/admin/catalogs')
   );
-  const [searchTerm, setSearchTerm] = useState('');
+  const [showUserPopover, setShowUserPopover] = useState(false);
+  const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
   const location = useLocation();
-  const navigate = useNavigate();
   const { t } = useTranslation();
+  const userButtonRef = useRef(null);
 
   useEffect(() => {
     setShowSidebar(false);
+    setShowUserPopover(false);
+    setCurrentUser(getCurrentUser());
   }, [location.pathname]);
 
   useEffect(() => {
@@ -75,11 +76,6 @@ function AdminLayout() {
     }
 
     setIsSidebarCollapsed((current) => !current);
-  };
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
   };
 
   const renderNavLink = (item, collapsed = false) => {
@@ -148,10 +144,6 @@ function AdminLayout() {
           <img src="/img/Logo.jpg" alt={t('admin.layout.logoAlt')} />
           <span className="admin-brand-text">{t('admin.layout.brand')}</span>
         </NavLink>
-        <div className="admin-sidebar-caption">
-          <FaShieldAlt />
-          <span>{t('admin.layout.sidebarCaption')}</span>
-        </div>
         {renderNav(isSidebarCollapsed)}
       </aside>
 
@@ -166,47 +158,46 @@ function AdminLayout() {
             >
               <FaBars />
             </Button>
-            <div>
-              <Badge bg="success" className="mb-1">
-                {t('admin.layout.badge')}
-              </Badge>
-              <h1 className="admin-header-title mb-0">{t('admin.layout.title')}</h1>
-            </div>
+            <span className="layout-header-title">{t('admin.layout.brand')}</span>
           </div>
 
           <div className="admin-header-actions">
-            <Form className="admin-search-form d-none d-md-block" onSubmit={(event) => event.preventDefault()}>
-              <InputGroup>
-                <InputGroup.Text>
-                  <FaSearch />
-                </InputGroup.Text>
-                <Form.Control
-                  value={searchTerm}
-                  onChange={(event) => setSearchTerm(event.target.value)}
-                  placeholder={t('admin.layout.searchPlaceholder')}
-                  aria-label={t('admin.layout.searchLabel')}
-                />
-              </InputGroup>
-            </Form>
             <Button variant="link" className="admin-icon-button" aria-label={t('admin.layout.notifications')}>
               <FaBell />
             </Button>
             <LanguageSwitcher />
-            <Dropdown align="end">
-              <Dropdown.Toggle variant="light" className="layout-user-toggle" id="admin-user-menu">
-                <FaUserCircle />
-              </Dropdown.Toggle>
-              <Dropdown.Menu>
-                <Dropdown.Item as={NavLink} to="/dashboard">
-                  {t('admin.layout.backToUser')}
-                </Dropdown.Item>
-                <Dropdown.Divider />
-                <Dropdown.Item onClick={handleLogout}>
-                  <FaSignOutAlt className="me-2" />
-                  {t('nav.logout')}
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
+            <button
+              type="button"
+              ref={userButtonRef}
+              className="btn btn-light layout-user-toggle"
+              onClick={() => setShowUserPopover((current) => !current)}
+              aria-label={t('admin.nav.profile')}
+              title={t('admin.nav.profile')}
+            >
+              <FaUserCircle />
+            </button>
+            <Overlay
+              target={userButtonRef.current}
+              show={showUserPopover}
+              placement="bottom-end"
+              rootClose
+              onHide={() => setShowUserPopover(false)}
+            >
+              <Popover id="admin-user-popover" className="profile-summary-popover">
+                <Popover.Body>
+                  <div className="profile-summary-mini">
+                    <div>
+                      <span>{t('profilePage.fields.username')}</span>
+                      <strong>{currentUser?.username || currentUser?.fullName || currentUser?.name || '-'}</strong>
+                    </div>
+                    <div>
+                      <span>Email</span>
+                      <strong>{currentUser?.email || '-'}</strong>
+                    </div>
+                  </div>
+                </Popover.Body>
+              </Popover>
+            </Overlay>
           </div>
         </Container>
       </Navbar>

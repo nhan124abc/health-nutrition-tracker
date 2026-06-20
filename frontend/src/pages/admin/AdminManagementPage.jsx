@@ -20,6 +20,7 @@ import {
 import { getAdminUsers } from '../../features/admin/adminService';
 import { getActivityTypes } from '../../features/activities/activityService';
 import { getFoods } from '../../features/nutrition/nutritionService';
+import { cleanText } from '../../features/nutrition/nutritionUtils';
 
 const pageConfigs = {
   users: {
@@ -186,7 +187,7 @@ function hasCompleteMacro(food) {
 }
 
 function mapFoodRow(food) {
-  const serving = food.servingDescription
+  const serving = cleanText(food.servingDescription)
     || (food.servingSizeG != null ? `${food.servingSizeG}g` : '-');
   const calories = food.calories != null ? `${food.calories} kcal` : '-';
   const macro = hasCompleteMacro(food)
@@ -195,7 +196,7 @@ function mapFoodRow(food) {
 
   return {
     id: food.id,
-    cells: [food.nameVi || food.name || '-', serving, calories, macro],
+    cells: [cleanText(food.nameVi) || cleanText(food.name) || '-', serving, calories, macro],
     verified: Boolean(food.verified),
     macroComplete: hasCompleteMacro(food),
   };
@@ -220,7 +221,7 @@ function mapActivityTypeRow(activityType) {
   return {
     id: activityType.id,
     cells: [
-      activityType.nameVi || activityType.name || '-',
+      cleanText(activityType.nameVi) || cleanText(activityType.name) || '-',
       formatEnum(activityType.category),
       hasMet ? metValue.toFixed(1) : '-',
       activityType.system ? 'admin.status.system' : 'admin.status.custom',
@@ -405,7 +406,6 @@ function AdminManagementPage({ type }) {
           <div className="admin-table-toolbar">
             <div>
               <h3 className="h5 fw-bold mb-1">{t('admin.table.listTitle')}</h3>
-              <p className="text-secondary mb-0">{t('admin.table.listDescription')}</p>
             </div>
             <Form className="admin-table-search">
               <InputGroup>

@@ -325,7 +325,7 @@ body::-webkit-scrollbar,
   height: 120px;
   object-fit: contain;
   transition: height 0.22s ease, width 0.22s ease;
-  width: 100px;
+  width: 120px;
 }
 
 .layout-sidebar-mark {
@@ -942,6 +942,35 @@ body::-webkit-scrollbar,
   min-width: 220px;
 }
 
+.profile-summary-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.profile-summary-row {
+  align-items: center;
+  border-bottom: 1px solid #eef2f1;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding-bottom: 0.85rem;
+}
+
+.profile-summary-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.profile-summary-row span {
+  color: #60706a;
+}
+
+.profile-summary-row strong {
+  color: #1f2f2a;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
 .profile-summary-mini {
   display: grid;
   gap: 0.75rem;
@@ -962,6 +991,34 @@ body::-webkit-scrollbar,
   font-size: 0.95rem;
   line-height: 1.25;
   overflow-wrap: anywhere;
+}
+
+.admin-profile-heading {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+}
+
+.admin-profile-heading h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0 0 0.2rem;
+}
+
+.admin-profile-heading span {
+  color: #60706a;
+}
+
+.admin-profile-avatar {
+  align-items: center;
+  background: #eef8f1;
+  border-radius: 1rem;
+  color: #198754;
+  display: inline-flex;
+  font-size: 2rem;
+  height: 64px;
+  justify-content: center;
+  width: 64px;
 }
 
 .home-page {

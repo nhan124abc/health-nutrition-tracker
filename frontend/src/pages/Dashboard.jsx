@@ -525,21 +525,6 @@ function Dashboard() {
             </Card.Body>
           </Card>
         </Col>
-
-        <Col xs={12}>
-          <Card className="border-0 shadow-sm">
-            <Card.Body>
-              <Card.Title className="fw-bold mb-3">{t('dashboardPage.quickTitle')}</Card.Title>
-              <div className="quick-grid">
-                <span>{t('common.meals')}<strong>{dailySummary.mealCount}</strong></span>
-                <span>{t('common.protein')}<strong>{dailySummary.protein}g</strong></span>
-                <span>{t('common.fiber')}<strong>{dailySummary.fiber}g</strong></span>
-                <span>{t('common.sodium')}<strong>{dailySummary.sodium}mg</strong></span>
-                <span>{t('common.weight')}<strong>{dailySummary.weight || '-'}kg</strong></span>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
       </Row>
     </>
   );
