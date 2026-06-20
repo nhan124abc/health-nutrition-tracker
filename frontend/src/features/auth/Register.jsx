@@ -61,7 +61,6 @@ function Register() {
               <div className="mb-4">
                 <div className="auth-brand">{t('app.name')}</div>
                 <h1 className="h3 fw-bold mb-2">{t('auth.registerTitle')}</h1>
-                <p className="text-secondary mb-0">{t('auth.registerDescription')}</p>
               </div>
 
               {error && <Alert variant="danger">{error}</Alert>}

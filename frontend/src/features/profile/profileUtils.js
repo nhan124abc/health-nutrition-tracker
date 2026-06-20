@@ -29,9 +29,7 @@ export const profileFields = [
   ['height', 'profile.height', 'number'],
   ['weight', 'profile.weight', 'number'],
   ['targetWeight', 'profilePage.fields.targetWeight', 'number'],
-  ['dailyCalorieGoal', 'health.dailyCalorieGoal', 'number'],
   ['dailyWaterGoal', 'profilePage.fields.dailyWaterGoal', 'number'],
-  ['timezone', 'common.timezone', 'text'],
 ];
 
 export const notificationFields = [
@@ -50,9 +48,7 @@ export const requiredProfileFields = [
   ['activityLevel', 'profile.activityLevel'],
   ['healthGoal', 'profilePage.fields.healthGoal'],
   ['targetWeight', 'profilePage.fields.targetWeight'],
-  ['dailyCalorieGoal', 'health.dailyCalorieGoal'],
   ['dailyWaterGoal', 'profilePage.fields.dailyWaterGoal'],
-  ['timezone', 'common.timezone'],
 ];
 
 export const emptyBodyMetric = {

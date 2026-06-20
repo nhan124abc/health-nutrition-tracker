@@ -73,7 +73,6 @@ function ForgotPassword() {
               <div className="mb-4">
                 <div className="auth-brand">{t('app.name')}</div>
                 <h1 className="h3 fw-bold mb-2">{t('auth.forgotTitle')}</h1>
-                <p className="text-secondary mb-0">{t('auth.forgotDescription')}</p>
               </div>
 
               {message && <Alert variant="success">{message}</Alert>}

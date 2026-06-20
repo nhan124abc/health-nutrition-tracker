@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Badge, Button, Card, Spinner } from 'react-bootstrap';
+import { Alert, Badge, Button, Card, Modal, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { FaPrint } from 'react-icons/fa';
@@ -114,7 +114,10 @@ function Profile() {
 
     try {
       const response = await updateProfile(mapProfileToApi(profile));
-      setProfile(mapProfileFromApi(extractProfileFromApi(response.data)));
+      const updatedProfile = mapProfileFromApi(extractProfileFromApi(response.data));
+
+      setProfile(updatedProfile);
+      window.dispatchEvent(new CustomEvent('profile:updated', { detail: updatedProfile }));
       setSaved(true);
     } catch (err) {
       setError(getApiErrorMessage(err, t('profilePage.saveError')));
@@ -141,7 +144,6 @@ function Profile() {
       </div>
 
       {error && <Alert variant="danger">{error}</Alert>}
-      {saved && <Alert variant="success">{t('profilePage.savedMessage')}</Alert>}
 
       <ProfileTabs activeTab={activeTab} onSelect={setActiveTab} t={t} />
 
@@ -181,6 +183,18 @@ function Profile() {
           )}
         </>
       )}
+
+      <Modal show={saved} onHide={() => setSaved(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{t('profilePage.updateProfile')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{t('profilePage.savedMessage')}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={() => setSaved(false)}>
+            {t('common.close')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }

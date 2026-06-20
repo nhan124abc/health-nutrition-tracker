@@ -2,7 +2,12 @@ package health.tracker.services.user.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import health.tracker.services.user.entity.UserProfile;
-import jakarta.validation.constraints.*;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -12,7 +17,6 @@ import java.time.LocalDate;
 public class UserProfileRequest {
 
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
-    @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "Username can only contain letters, numbers and underscores")
     private String username;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
