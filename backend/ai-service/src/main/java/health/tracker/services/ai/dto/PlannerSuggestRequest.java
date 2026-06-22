@@ -18,4 +18,8 @@ public class PlannerSuggestRequest {
     private Integer caloriesConsumed;
     private Integer suggestionOffset;
     private List<String> excludedFoodNames;
+    private List<Long> selectedFoodIds;
+    private List<String> selectedFoodNames;
+    private List<String> selectedActivityNames;
+    private String cookingMethod;
 }

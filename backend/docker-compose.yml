@@ -338,8 +338,8 @@ services:
     image: ht/nutrition-service:latest
     container_name: ht-nutrition-service
     restart: unless-stopped
-    mem_limit: 512m
-    cpus: "0.25"
+    mem_limit: 768m
+    cpus: "0.50"
     environment:
       <<: [*spring-common, *db-common, *redis-common, *internal-secret, *java-opts, *service-ports]
       SERVER_PORT: ${NUTRITION_SERVICE_PORT:-8083}
@@ -357,9 +357,9 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:${NUTRITION_SERVICE_PORT:-8083}/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
       interval: 30s
-      timeout: 5s
+      timeout: 15s
       retries: 5
-      start_period: 40s
+      start_period: 120s
     networks:
       - backend
 

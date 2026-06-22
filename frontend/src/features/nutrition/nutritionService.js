@@ -24,3 +24,7 @@ export function deleteFood(id) {
 export function getFoodCategories() {
   return api.get(nutritionConfig.endpoints.categories);
 }
+
+export function getRecipeSuggestions(params = {}) {
+  return api.get(nutritionConfig.endpoints.recipeSuggestions, { params });
+}

@@ -43,6 +43,11 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(List.of(
                 "http://localhost:3000",
                 "https://caonhan.me",
+                "https://www.caonhan.me",
+                "http://healthnutritiontracker.me",
+                "https://healthnutritiontracker.me",
+                "http://www.healthnutritiontracker.me",
+                "https://www.healthnutritiontracker.me",
                 "http://localhost:4200"
         ));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));

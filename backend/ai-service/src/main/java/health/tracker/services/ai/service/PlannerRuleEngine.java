@@ -17,7 +17,7 @@ public class PlannerRuleEngine {
         int dayOfWeek = LocalDate.now().getDayOfWeek().getValue();
 
         if ("exercise".equals(mealType)) {
-            List<ActivityInfo> exerciseOptions = getExerciseOptions(goal, weight, dayOfWeek + offset);
+            List<ActivityInfo> exerciseOptions = getExerciseOptions(context, goal, weight, dayOfWeek + offset);
             ActivityInfo act1 = exerciseOptions.get(0);
             ActivityInfo act2 = exerciseOptions.get(1);
 
@@ -203,8 +203,19 @@ public class PlannerRuleEngine {
         }
     }
 
-    private static List<ActivityInfo> getExerciseOptions(String goal, double weight, int index) {
+    private static List<ActivityInfo> getExerciseOptions(PlannerSuggestRequest context, String goal, double weight, int index) {
         List<ActivityInfo> pool = new ArrayList<>();
+        if (context.getSelectedActivityNames() != null && !context.getSelectedActivityNames().isEmpty()) {
+            List<String> selectedNames = context.getSelectedActivityNames().stream()
+                    .filter(name -> name != null && !name.isBlank())
+                    .distinct()
+                    .toList();
+            for (String name : selectedNames) {
+                int duration = estimateDurationMinutes(name);
+                pool.add(new ActivityInfo(name.trim(), duration, calculateCaloriesBurned(estimateMet(name), weight, duration)));
+            }
+        }
+
         if ("LOSE_WEIGHT".equals(goal)) {
             pool.add(new ActivityInfo("Chạy bộ ngoài trời (Cardio giảm mỡ)", 35, calculateCaloriesBurned(8.0, weight, 35)));
             pool.add(new ActivityInfo("Tập HIIT toàn thân đốt mỡ nhanh", 25, calculateCaloriesBurned(8.0, weight, 25)));
@@ -243,6 +254,28 @@ public class PlannerRuleEngine {
             result.add(pool.get(secondIdx));
         }
         return result;
+    }
+
+    private static int estimateDurationMinutes(String activityName) {
+        String normalized = activityName == null ? "" : activityName.toLowerCase();
+        if (normalized.contains("hiit") || normalized.contains("nhảy dây")) return 25;
+        if (normalized.contains("yoga") || normalized.contains("giãn")) return 35;
+        if (normalized.contains("đi bộ") || normalized.contains("di bo")) return 45;
+        if (normalized.contains("gym") || normalized.contains("tạ") || normalized.contains("ta")) return 45;
+        if (normalized.contains("bơi") || normalized.contains("boi") || normalized.contains("đạp") || normalized.contains("dap")) return 40;
+        return 30;
+    }
+
+    private static double estimateMet(String activityName) {
+        String normalized = activityName == null ? "" : activityName.toLowerCase();
+        if (normalized.contains("hiit") || normalized.contains("nhảy dây")) return 8.0;
+        if (normalized.contains("chạy") || normalized.contains("chay")) return 7.5;
+        if (normalized.contains("bơi") || normalized.contains("boi")) return 7.0;
+        if (normalized.contains("đạp") || normalized.contains("dap")) return 6.0;
+        if (normalized.contains("gym") || normalized.contains("tạ") || normalized.contains("ta")) return 5.0;
+        if (normalized.contains("đi bộ") || normalized.contains("di bo")) return 4.0;
+        if (normalized.contains("yoga") || normalized.contains("giãn")) return 2.5;
+        return 4.5;
     }
 
     private static List<ActivityInfo> getActivities(String goal, double weight, int index) {

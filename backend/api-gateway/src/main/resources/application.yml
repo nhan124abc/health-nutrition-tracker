@@ -101,6 +101,12 @@ spring:
               - "http://localhost:4200"
               - "https://caonhan.me"
               - "https://www.caonhan.me"
+              - "http://healthnutritiontracker.me"
+              - "http://www.healthnutritiontracker.me"
+              - "https://healthnutritiontracker.me"
+              - "https://www.healthnutritiontracker.me"
+              - "https://healthnutritiontracker.me"
+              - "https://www.healthnutritiontracker.me"
             allowed-methods:
               - GET
               - POST

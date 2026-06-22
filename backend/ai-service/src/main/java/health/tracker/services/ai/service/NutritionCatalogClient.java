@@ -57,6 +57,69 @@ public class NutritionCatalogClient {
         return foods;
     }
 
+    public List<RecipeCandidate> getRecipes(int maxCalories, int limit) {
+        return getRecipes(maxCalories, null, limit);
+    }
+
+    public List<RecipeCandidate> getRecipes(int maxCalories, String keyword, int limit) {
+        return getRecipes(maxCalories, keyword, null, limit);
+    }
+
+    public List<RecipeCandidate> getRecipes(int maxCalories, String keyword, List<Long> foodIds, int limit) {
+        JsonNode items = restClient.get()
+                .uri(uri -> uri.path("/api/v1/nutrition/recipes/suggestions")
+                        .queryParam("maxCalories", maxCalories)
+                        .queryParamIfPresent("q", java.util.Optional.ofNullable(keyword)
+                                .map(String::trim)
+                                .filter(value -> !value.isBlank()))
+                        .queryParamIfPresent("foodIds", java.util.Optional.ofNullable(foodIds)
+                                .filter(ids -> !ids.isEmpty())
+                                .map(ids -> ids.stream()
+                                        .map(String::valueOf)
+                                        .collect(java.util.stream.Collectors.joining(","))))
+                        .queryParam("limit", Math.min(limit, 20))
+                        .build())
+                .retrieve()
+                .body(JsonNode.class);
+        if (items == null || !items.isArray()) return List.of();
+
+        List<RecipeCandidate> recipes = new ArrayList<>();
+        for (JsonNode item : items) {
+            BigDecimal calories = decimal(item, "calories");
+            if (calories.signum() <= 0 || !item.path("ingredients").isArray()) continue;
+
+            List<RecipeIngredientCandidate> ingredients = new ArrayList<>();
+            for (JsonNode ingredient : item.path("ingredients")) {
+                BigDecimal quantityG = decimal(ingredient, "quantityG");
+                if (quantityG.signum() <= 0) continue;
+                ingredients.add(new RecipeIngredientCandidate(
+                        ingredient.path("foodItemId").asLong(),
+                        text(ingredient, "name", "Food"),
+                        quantityG,
+                        decimal(ingredient, "calories"),
+                        decimal(ingredient, "proteinG"),
+                        decimal(ingredient, "carbsG"),
+                        decimal(ingredient, "fatG")
+                ));
+            }
+            if (ingredients.isEmpty()) continue;
+
+            recipes.add(new RecipeCandidate(
+                    item.path("id").asLong(),
+                    text(item, "name", "Recipe"),
+                    text(item, "description", ""),
+                    item.path("servings").asInt(1),
+                    text(item, "imageUrl", ""),
+                    calories,
+                    decimal(item, "proteinG"),
+                    decimal(item, "carbsG"),
+                    decimal(item, "fatG"),
+                    ingredients
+            ));
+        }
+        return recipes;
+    }
+
     private BigDecimal decimal(JsonNode node, String field) {
         return node.path(field).isNumber() ? node.path(field).decimalValue() : BigDecimal.ZERO;
     }
@@ -70,5 +133,16 @@ public class NutritionCatalogClient {
             long id, String name, BigDecimal servingSizeG, String servingDescription,
             BigDecimal calories, BigDecimal proteinG, BigDecimal carbsG, BigDecimal fatG,
             BigDecimal fiberG, BigDecimal sodiumMg) {
+    }
+
+    public record RecipeCandidate(
+            long id, String name, String description, int servings, String imageUrl,
+            BigDecimal calories, BigDecimal proteinG, BigDecimal carbsG, BigDecimal fatG,
+            List<RecipeIngredientCandidate> ingredients) {
+    }
+
+    public record RecipeIngredientCandidate(
+            long foodItemId, String name, BigDecimal quantityG, BigDecimal calories,
+            BigDecimal proteinG, BigDecimal carbsG, BigDecimal fatG) {
     }
 }
