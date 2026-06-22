@@ -1670,6 +1670,188 @@ body {
   padding: 0.875rem 1rem;
 }
 
+.planner-mode-switch {
+  background: #fff;
+  border: 1px solid rgba(47, 143, 107, 0.14);
+  border-radius: 0.85rem;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 0.45rem;
+}
+
+.planner-mode-switch button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 0.65rem;
+  color: var(--health-muted);
+  display: inline-flex;
+  font-weight: 800;
+  gap: 0.55rem;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.8rem;
+  transition: background-color 0.16s ease, color 0.16s ease;
+}
+
+.planner-mode-switch button.is-active {
+  background: var(--health-primary-soft);
+  color: var(--health-primary-dark);
+}
+
+.planner-mode-switch svg {
+  flex: 0 0 auto;
+}
+
+.planner-section-heading > span {
+  align-items: center;
+  background: var(--health-primary-soft);
+  border-radius: 0.65rem;
+  color: var(--health-primary-dark);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-weight: 850;
+  height: 2rem;
+  justify-content: center;
+  width: 2rem;
+}
+
+.planner-control-card {
+  position: sticky;
+  top: calc(var(--layout-header-height) + 1rem);
+}
+
+.planner-control-card .card-body {
+  display: grid;
+  gap: 1rem;
+}
+
+.planner-control-section {
+  border-bottom: 1px solid #edf0f2;
+  display: grid;
+  gap: 0.9rem;
+  padding-bottom: 1rem;
+}
+
+.planner-control-section:last-of-type {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.planner-section-heading {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.planner-section-heading h2 {
+  color: var(--health-ink);
+  font-size: 1rem;
+  font-weight: 850;
+  margin: 0;
+}
+
+.planner-section-heading p {
+  color: var(--health-muted);
+  font-size: 0.88rem;
+  margin: 0.2rem 0 0;
+}
+
+.planner-budget-tile {
+  align-items: center;
+  background: linear-gradient(135deg, var(--health-primary-soft), #fff);
+  border: 1px solid rgba(47, 143, 107, 0.16);
+  border-radius: 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.9rem 1rem;
+}
+
+.planner-budget-tile span,
+.planner-budget-tile small {
+  color: var(--health-muted);
+  display: block;
+  font-size: 0.9rem;
+}
+
+.planner-budget-tile strong {
+  color: var(--health-primary-dark);
+  display: block;
+  font-size: 1.85rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.planner-budget-tile > svg {
+  color: var(--health-primary-dark);
+  font-size: 1.5rem;
+}
+
+.planner-date-control {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.planner-date-control > svg {
+  color: var(--health-primary-dark);
+  flex: 0 0 auto;
+}
+
+.planner-food-picker {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 15rem;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.planner-food-choice {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 0.65rem;
+  color: var(--health-ink);
+  display: flex;
+  gap: 0.55rem;
+  justify-content: flex-start;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  transition: border-color 0.16s ease, background-color 0.16s ease, color 0.16s ease;
+  width: 100%;
+}
+
+.planner-food-choice svg {
+  color: var(--health-primary-dark);
+  flex: 0 0 auto;
+}
+
+.planner-food-choice span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.planner-food-choice.is-selected {
+  background: var(--health-primary-soft);
+  border-color: var(--health-primary);
+  color: var(--health-primary-dark);
+  font-weight: 750;
+}
+
+.planner-food-choice:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.planner-clear-foods {
+  color: var(--health-primary-dark);
+  font-weight: 750;
+  text-decoration: none;
+}
+
 @media (max-width: 991.98px) {
   .layout-header {
     margin-left: 0;
@@ -2068,6 +2250,14 @@ body {
 }
 
 @media (max-width: 767.98px) {
+  .planner-mode-switch {
+    grid-template-columns: 1fr;
+  }
+
+  .planner-control-card {
+    position: static;
+  }
+
   .page-heading {
     align-items: stretch;
     flex-direction: column;
