@@ -131,6 +131,7 @@ function shouldSkipTokenRefresh(url = '') {
     authConfig.endpoints.logout,
     authConfig.endpoints.refresh,
     authConfig.endpoints.forgotPassword,
+    authConfig.endpoints.verifyPasswordResetOtp,
     authConfig.endpoints.resetPassword,
     authConfig.endpoints.sendEmailVerification,
     authConfig.endpoints.confirmEmailVerification,

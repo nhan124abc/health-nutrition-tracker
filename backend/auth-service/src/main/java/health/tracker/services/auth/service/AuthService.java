@@ -132,11 +132,21 @@ public class AuthService {
     }
 
     public void requestPasswordReset(String email) {
-        userRepository.findByEmail(email).ifPresent(user -> {
-            if (user.isActive()) {
-                otpService.generatePasswordResetOtp(email);
-            }
-        });
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Email không tồn tại"));
+        if (!user.isActive()) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Tài khoản đã bị khóa hoặc không hoạt động");
+        }
+        otpService.generatePasswordResetOtp(email);
+    }
+
+    public void verifyPasswordResetOtp(String email, String otp) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Email không tồn tại"));
+        if (!user.isActive()) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Tài khoản đã bị khóa hoặc không hoạt động");
+        }
+        otpService.validatePasswordResetOtp(email, otp);
     }
 
     @Transactional

@@ -13,6 +13,10 @@ export function requestPasswordReset(email) {
   return api.post(authConfig.endpoints.forgotPassword, { email });
 }
 
+export function verifyPasswordResetOtp(payload) {
+  return api.post(authConfig.endpoints.verifyPasswordResetOtp, payload);
+}
+
 export function resetPassword(payload) {
   return api.post(authConfig.endpoints.resetPassword, payload);
 }

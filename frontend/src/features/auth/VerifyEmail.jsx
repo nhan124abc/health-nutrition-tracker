@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import { confirmEmailVerification, sendEmailVerification } from './authService';
 
 function VerifyEmail() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const initialEmail = useMemo(() => {
@@ -13,9 +15,7 @@ function VerifyEmail() {
   }, [location.search, location.state]);
 
   const [form, setForm] = useState({ email: initialEmail, otp: '' });
-  const [message, setMessage] = useState(
-    initialEmail ? 'OTP da duoc gui. Vui long kiem tra email hoac log backend.' : ''
-  );
+  const [messageKey, setMessageKey] = useState(initialEmail ? 'auth.emailVerifyInitial' : '');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
@@ -27,14 +27,14 @@ function VerifyEmail() {
 
   const resendOtp = async () => {
     setError('');
-    setMessage('');
+    setMessageKey('');
     setResending(true);
 
     try {
       await sendEmailVerification(form.email);
-      setMessage('Da gui lai OTP xac minh email.');
+      setMessageKey('auth.emailVerifyResent');
     } catch (err) {
-      setError(err.response?.data?.message || 'Khong the gui OTP. Vui long thu lai.');
+      setError(err.response?.data?.message || t('auth.emailVerifySendError'));
     } finally {
       setResending(false);
     }
@@ -43,7 +43,7 @@ function VerifyEmail() {
   const verifyEmail = async (event) => {
     event.preventDefault();
     setError('');
-    setMessage('');
+    setMessageKey('');
     setLoading(true);
 
     try {
@@ -51,10 +51,10 @@ function VerifyEmail() {
         email: form.email,
         otp: form.otp,
       });
-      setMessage('Xac minh email thanh cong. Ban co the dang nhap.');
+      setMessageKey('auth.emailVerifySuccess');
       setTimeout(() => navigate('/login'), 800);
     } catch (err) {
-      setError(err.response?.data?.message || 'OTP khong dung hoac da het han.');
+      setError(err.response?.data?.message || t('auth.emailVerifyError'));
     } finally {
       setLoading(false);
     }
@@ -71,14 +71,14 @@ function VerifyEmail() {
               </div>
 
               <div className="mb-4">
-                <div className="auth-brand">Health Nutrition</div>
-                <h1 className="h3 fw-bold mb-2">Xac minh email</h1>
+                <div className="auth-brand">{t('app.name')}</div>
+                <h1 className="h3 fw-bold mb-2">{t('auth.verifyEmailTitle')}</h1>
                 <p className="text-secondary mb-0">
-                  Nhap ma OTP da gui den email cua ban de hoan tat xac minh tai khoan.
+                  {t('auth.verifyEmailDescription')}
                 </p>
               </div>
 
-              {message && <Alert variant="success">{message}</Alert>}
+              {messageKey && <Alert variant="success">{t(messageKey)}</Alert>}
               {error && <Alert variant="danger">{error}</Alert>}
 
               <Form onSubmit={verifyEmail}>
@@ -101,13 +101,13 @@ function VerifyEmail() {
                     onChange={handleChange}
                     inputMode="numeric"
                     maxLength={6}
-                    placeholder="Nhap 6 chu so"
+                    placeholder={t('auth.otpInputPlaceholder')}
                     required
                   />
                 </Form.Group>
 
                 <Button className="w-100" variant="success" type="submit" disabled={loading}>
-                  {loading ? 'Dang xac minh...' : 'Xac minh email'}
+                  {loading ? t('auth.verifyingEmail') : t('auth.verifyEmail')}
                 </Button>
               </Form>
 
@@ -118,11 +118,11 @@ function VerifyEmail() {
                 onClick={resendOtp}
                 disabled={resending || !form.email}
               >
-                {resending ? 'Dang gui lai...' : 'Gui lai OTP'}
+                {resending ? t('auth.resendingOtp') : t('auth.resendOtp')}
               </Button>
 
               <p className="text-center text-secondary mt-4 mb-0">
-                <Link to="/login">Ve trang dang nhap</Link>
+                <Link to="/login">{t('auth.backToLogin')}</Link>
               </p>
             </Card.Body>
           </Card>

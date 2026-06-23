@@ -53,7 +53,14 @@ public class AuthController {
     public ResponseEntity<Map<String, String>> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request) {
         authService.requestPasswordReset(request.getEmail());
-        return ResponseEntity.ok(Map.of("message", "If the account exists, an OTP has been sent"));
+        return ResponseEntity.ok(Map.of("message", "OTP has been sent"));
+    }
+
+    @PostMapping("/password/verify-otp")
+    public ResponseEntity<Map<String, String>> verifyPasswordResetOtp(
+            @Valid @RequestBody PasswordResetOtpRequest request) {
+        authService.verifyPasswordResetOtp(request.getEmail(), request.getOtp());
+        return ResponseEntity.ok(Map.of("message", "OTP verified successfully"));
     }
 
     @PostMapping("/password/reset")

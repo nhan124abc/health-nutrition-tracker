@@ -262,7 +262,6 @@
     "activityHint": "Choose <strong>Physical Activity</strong> in the dropdown and click \"Generate 2 Options\" to get workout suggestions.",
     "overLimitError": "This option exceeds your remaining calorie budget. Please generate new suggestions."
   },
-
   "profile": {
     "title": "Health Profile",
     "subtitle": "Update body information so the system can calculate BMI and assess your health status.",
@@ -655,9 +654,15 @@
     "registerError": "Unable to register. Please try again.",
     "forgotTitle": "Forgot password",
     "forgotDescription": "Enter your email to receive an OTP, then set a new password.",
-    "otpSent": "OTP has been sent to your email if the account exists.",
+    "otpSent": "OTP has been sent to your email.",
     "sendOtpError": "Unable to send OTP. Please try again.",
     "newPassword": "New password",
+    "otpPlaceholder": "Enter 6-digit OTP",
+    "otpVerified": "OTP verified. Please set a new password.",
+    "otpVerifyError": "Invalid or expired OTP.",
+    "verifyingOtp": "Verifying OTP...",
+    "verifyOtp": "Verify OTP",
+    "changeEmail": "Change email",
     "sending": "Sending...",
     "sendOtp": "Send OTP",
     "resetting": "Resetting password...",
@@ -665,7 +670,19 @@
     "resetSuccess": "Password changed successfully. You can log in again.",
     "resetError": "Unable to reset password. Please check your OTP.",
     "backToLogin": "Back to login",
-    "backToHome": "Back to home"
+    "backToHome": "Back to home",
+    "emailVerifyInitial": "An OTP has been sent. Please check your email.",
+    "emailVerifyResent": "A new email verification OTP has been sent.",
+    "emailVerifySendError": "Unable to send OTP. Please try again.",
+    "emailVerifySuccess": "Email verified successfully. You can log in now.",
+    "emailVerifyError": "Invalid or expired OTP.",
+    "verifyEmailTitle": "Verify email",
+    "verifyEmailDescription": "Enter the OTP sent to your email to finish verifying your account.",
+    "otpInputPlaceholder": "Enter 6 digits",
+    "verifyingEmail": "Verifying...",
+    "verifyEmail": "Verify email",
+    "resendingOtp": "Resending...",
+    "resendOtp": "Resend OTP"
   },
   "common": {
     "protein": "Protein",

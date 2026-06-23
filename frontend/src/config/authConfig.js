@@ -17,6 +17,7 @@ const authConfig = {
     logout: '/auth/logout',
     refresh: '/auth/refresh',
     forgotPassword: '/auth/password/forgot',
+    verifyPasswordResetOtp: '/auth/password/verify-otp',
     resetPassword: '/auth/password/reset',
     sendEmailVerification: '/auth/email/verification/send',
     confirmEmailVerification: '/auth/email/verification/confirm',
