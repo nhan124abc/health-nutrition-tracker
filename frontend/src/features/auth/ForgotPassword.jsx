@@ -99,7 +99,6 @@ function ForgotPassword() {
               <div className="mb-4">
                 <div className="auth-brand">{t('app.name')}</div>
                 <h1 className="h3 fw-bold mb-2">{t('auth.forgotTitle')}</h1>
-                <p className="text-secondary mb-0">{t('auth.forgotDescription')}</p>
               </div>
 
               {messageKey && <Alert variant="success">{t(messageKey)}</Alert>}
@@ -174,9 +173,11 @@ function ForgotPassword() {
                 </Form>
               )}
 
-              <p className="text-center text-secondary mt-4 mb-0">
-                <Link to="/login">{t('auth.backToLogin')}</Link>
-              </p>
+              <div className="auth-form-meta justify-content-center mt-4 mb-0">
+                <Link to="/login" className="auth-subtle-link">
+                  {t('auth.backToLogin')}
+                </Link>
+              </div>
             </Card.Body>
           </Card>
         </Col>

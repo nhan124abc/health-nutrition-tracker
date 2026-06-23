@@ -1,39 +1,51 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Alert, Badge, Button, Card, Spinner } from 'react-bootstrap';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Button, Card, Modal, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { FaPrint } from 'react-icons/fa';
 import { getCurrentUser } from '../../api/api';
 import ProfileEditForm from './components/ProfileEditForm';
-import ProfileMetrics from './components/ProfileMetrics';
-import ProfileNotifications from './components/ProfileNotifications';
 import ProfileOverview from './components/ProfileOverview';
 import ProfileTabs from './components/ProfileTabs';
-import { getBodyMetrics, getProfile, updateProfile } from './profileService';
+import { createBodyMetric, getBodyMetrics, getProfile, updateProfile } from './profileService';
 import {
+  buildBodyMetricFormFromProfile,
+  extractBodyMetricFromApi,
   extractMetricRows,
   extractProfileFromApi,
   getApiErrorMessage,
   initialProfile,
+  mergeProfileAvatar,
+  mapBodyMetricToApi,
   mapProfileFromApi,
   mapProfileToApi,
+  saveStoredProfileAvatar,
 } from './profileUtils';
+
+const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
+const MAX_AVATAR_SIZE_MB = MAX_AVATAR_SIZE_BYTES / (1024 * 1024);
 
 function Profile() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState('overview');
+  const location = useLocation();
+  const avatarInputRef = useRef(null);
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'overview');
   const [profile, setProfile] = useState(initialProfile);
+  const [editProfile, setEditProfile] = useState(initialProfile);
   const [account, setAccount] = useState(null);
   const [metrics, setMetrics] = useState([]);
-  const [notificationSettings, setNotificationSettings] = useState({
-    mealReminder: true,
-    waterReminder: true,
-    weightReminder: false,
-    weeklyReport: true,
-  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [avatarError, setAvatarError] = useState('');
+  const [avatarDraftUrl, setAvatarDraftUrl] = useState(null);
+
+  useEffect(() => {
+    if (activeTab === 'metrics' || activeTab === 'notifications') {
+      setActiveTab('overview');
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     let isMounted = true;
@@ -53,7 +65,14 @@ function Profile() {
         }
 
         if (profileResponse.status === 'fulfilled') {
-          setProfile(mapProfileFromApi(extractProfileFromApi(profileResponse.value.data)));
+          const currentAccount = getCurrentUser();
+          const loadedProfile = mergeProfileAvatar(
+            mapProfileFromApi(extractProfileFromApi(profileResponse.value.data)),
+            currentAccount
+          );
+          setProfile(loadedProfile);
+          setEditProfile(loadedProfile);
+          setAvatarDraftUrl(null);
         } else {
           setError(getApiErrorMessage(profileResponse.reason, t('profilePage.loadError')));
         }
@@ -96,12 +115,53 @@ function Profile() {
 
   const handleChange = (event) => {
     const { name, value } = event.target;
-    setProfile((current) => ({ ...current, [name]: value }));
+    setEditProfile((current) => ({ ...current, [name]: value }));
   };
 
-  const handleNotificationChange = (event) => {
-    const { checked, name } = event.target;
-    setNotificationSettings((current) => ({ ...current, [name]: checked }));
+  const handleAvatarChange = (event) => {
+    const file = event.target.files?.[0];
+    setAvatarError('');
+
+    if (!file) {
+      return;
+    }
+
+    const fileName = file.name.toLowerCase();
+    const hasAllowedExtension = fileName.endsWith('.jpg') || fileName.endsWith('.png');
+    const hasAllowedType = file.type === 'image/jpeg' || file.type === 'image/png';
+
+    if (!hasAllowedExtension || !hasAllowedType) {
+      setAvatarError(t('profilePage.avatar.invalidType'));
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+      setAvatarError(t('profilePage.avatar.tooLarge', { size: MAX_AVATAR_SIZE_MB }));
+      event.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      setAvatarDraftUrl(reader.result || '');
+    };
+
+    reader.onerror = () => {
+      setAvatarError(t('profilePage.avatar.readError'));
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const handleAvatarRemove = () => {
+    setAvatarError('');
+    setAvatarDraftUrl('');
+
+    if (avatarInputRef.current) {
+      avatarInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = async (event) => {
@@ -111,8 +171,37 @@ function Profile() {
     setSaving(true);
 
     try {
-      const response = await updateProfile(mapProfileToApi(profile));
-      setProfile(mapProfileFromApi(extractProfileFromApi(response.data)));
+      const profileToSave = {
+        ...editProfile,
+        avatarUrl: avatarDraftUrl === null ? editProfile.avatarUrl : avatarDraftUrl,
+      };
+      const response = await updateProfile(mapProfileToApi(profileToSave));
+      const responseProfile = mapProfileFromApi(extractProfileFromApi(response.data));
+      const updatedProfile = {
+        ...responseProfile,
+        avatarUrl: profileToSave.avatarUrl === '' ? '' : responseProfile.avatarUrl || profileToSave.avatarUrl,
+      };
+
+      setProfile(updatedProfile);
+      setEditProfile(updatedProfile);
+      saveStoredProfileAvatar(getCurrentUser(), updatedProfile.avatarUrl);
+      setAvatarDraftUrl(null);
+      window.dispatchEvent(new CustomEvent('profile:updated', { detail: updatedProfile }));
+
+      if (Number(profile.weight) !== Number(updatedProfile.weight) && Number(updatedProfile.weight) > 0) {
+        createBodyMetric(mapBodyMetricToApi(buildBodyMetricFormFromProfile(updatedProfile, metrics)))
+          .then((metricResponse) => {
+            const createdMetric = extractBodyMetricFromApi(metricResponse.data);
+            setMetrics((current) => [
+              createdMetric,
+              ...current.filter((item) => item.id !== createdMetric.id),
+            ]);
+          })
+          .catch((syncError) => {
+            console.error('[Profile] Error syncing body metric weight:', syncError);
+          });
+      }
+
       setSaved(true);
     } catch (err) {
       setError(getApiErrorMessage(err, t('profilePage.saveError')));
@@ -129,9 +218,7 @@ function Profile() {
     <>
       <div className="page-heading">
         <div>
-          <Badge bg="success" className="mb-2">{t('profilePage.badge')}</Badge>
           <h1>{t('profilePage.title')}</h1>
-          <p>{t('profilePage.description')}</p>
         </div>
         <Button variant="outline-success" onClick={printProfile}>
           <FaPrint className="me-2" />
@@ -140,7 +227,6 @@ function Profile() {
       </div>
 
       {error && <Alert variant="danger">{error}</Alert>}
-      {saved && <Alert variant="success">{t('profilePage.savedMessage')}</Alert>}
 
       <ProfileTabs activeTab={activeTab} onSelect={setActiveTab} t={t} />
 
@@ -159,27 +245,34 @@ function Profile() {
 
           {activeTab === 'edit' && (
             <ProfileEditForm
+              avatarError={avatarError}
+              avatarInputRef={avatarInputRef}
+              avatarPreviewUrl={avatarDraftUrl === null ? editProfile.avatarUrl : avatarDraftUrl}
+              maxAvatarSizeMb={MAX_AVATAR_SIZE_MB}
+              onAvatarChange={handleAvatarChange}
+              onAvatarRemove={handleAvatarRemove}
               onChange={handleChange}
               onSubmit={handleSubmit}
-              profile={profile}
+              profile={editProfile}
               saving={saving}
               t={t}
             />
           )}
 
-          {activeTab === 'metrics' && (
-            <ProfileMetrics metrics={metrics} t={t} />
-          )}
-
-          {activeTab === 'notifications' && (
-            <ProfileNotifications
-              onChange={handleNotificationChange}
-              settings={notificationSettings}
-              t={t}
-            />
-          )}
         </>
       )}
+
+      <Modal show={saved} onHide={() => setSaved(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{t('profilePage.updateProfile')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{t('profilePage.savedMessage')}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={() => setSaved(false)}>
+            {t('common.close')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }

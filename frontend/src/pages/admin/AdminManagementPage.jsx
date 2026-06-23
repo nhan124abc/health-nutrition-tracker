@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Badge, Button, Card, Col, Form, InputGroup, Row, Spinner, Table } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Form, InputGroup, Row, Spinner, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import {
   FaBullseye,
@@ -20,17 +20,16 @@ import {
 import { getAdminUsers } from '../../features/admin/adminService';
 import { getActivityTypes } from '../../features/activities/activityService';
 import { getFoods } from '../../features/nutrition/nutritionService';
+import { cleanText } from '../../features/nutrition/nutritionUtils';
 
 const pageConfigs = {
   users: {
-    badgeKey: 'admin.pages.users.badge',
     icon: FaUsers,
     stats: [],
     columns: ['name', 'email', 'role', 'status'],
     rows: [],
   },
   foods: {
-    badgeKey: 'admin.pages.foods.badge',
     icon: FaUtensils,
     stats: [],
     columns: ['food', 'portion', 'calories', 'macro'],
@@ -38,14 +37,12 @@ const pageConfigs = {
     statusColumn: false,
   },
   exercises: {
-    badgeKey: 'admin.pages.exercises.badge',
     icon: FaDumbbell,
     stats: [],
     columns: ['exercise', 'category', 'met', 'source'],
     rows: [],
   },
   articles: {
-    badgeKey: 'admin.pages.articles.badge',
     icon: FaNewspaper,
     stats: [
       ['total', '96'],
@@ -60,7 +57,6 @@ const pageConfigs = {
     ],
   },
   reports: {
-    badgeKey: 'admin.pages.reports.badge',
     icon: FaChartLine,
     stats: [
       ['logs', '48,920'],
@@ -75,7 +71,6 @@ const pageConfigs = {
     ],
   },
   submissions: {
-    badgeKey: 'admin.pages.submissions.badge',
     icon: FaTasks,
     stats: [
       ['pending', '38'],
@@ -90,7 +85,6 @@ const pageConfigs = {
     ],
   },
   plans: {
-    badgeKey: 'admin.pages.plans.badge',
     icon: FaBullseye,
     stats: [
       ['goals', '16'],
@@ -105,7 +99,6 @@ const pageConfigs = {
     ],
   },
   settings: {
-    badgeKey: 'admin.pages.settings.badge',
     icon: FaCog,
     stats: [
       ['roles', '5'],
@@ -186,7 +179,7 @@ function hasCompleteMacro(food) {
 }
 
 function mapFoodRow(food) {
-  const serving = food.servingDescription
+  const serving = cleanText(food.servingDescription)
     || (food.servingSizeG != null ? `${food.servingSizeG}g` : '-');
   const calories = food.calories != null ? `${food.calories} kcal` : '-';
   const macro = hasCompleteMacro(food)
@@ -195,7 +188,7 @@ function mapFoodRow(food) {
 
   return {
     id: food.id,
-    cells: [food.nameVi || food.name || '-', serving, calories, macro],
+    cells: [cleanText(food.nameVi) || cleanText(food.name) || '-', serving, calories, macro],
     verified: Boolean(food.verified),
     macroComplete: hasCompleteMacro(food),
   };
@@ -220,7 +213,7 @@ function mapActivityTypeRow(activityType) {
   return {
     id: activityType.id,
     cells: [
-      activityType.nameVi || activityType.name || '-',
+      cleanText(activityType.nameVi) || cleanText(activityType.name) || '-',
       formatEnum(activityType.category),
       hasMet ? metValue.toFixed(1) : '-',
       activityType.system ? 'admin.status.system' : 'admin.status.custom',
@@ -365,11 +358,7 @@ function AdminManagementPage({ type }) {
     <>
       <div className="admin-page-heading">
         <div>
-          <Badge bg="success" className="mb-2">
-            {t(config.badgeKey)}
-          </Badge>
           <h2>{t(`${pageKey}.title`)}</h2>
-          <p>{t(`${pageKey}.description`)}</p>
         </div>
         <Button variant="success">
           <FaPlus className="me-2" />
@@ -406,7 +395,6 @@ function AdminManagementPage({ type }) {
           <div className="admin-table-toolbar">
             <div>
               <h3 className="h5 fw-bold mb-1">{t('admin.table.listTitle')}</h3>
-              <p className="text-secondary mb-0">{t('admin.table.listDescription')}</p>
             </div>
             <Form className="admin-table-search">
               <InputGroup>
@@ -451,7 +439,7 @@ function AdminManagementPage({ type }) {
                         return (
                           <td key={`${rowKey}-${cell}`}>
                             {isStatusCell
-                              ? <Badge bg={row.variant}>{displayCell(cell)}</Badge>
+                              ? <span className={`small fw-semibold text-${row.variant || 'secondary'}`}>{displayCell(cell)}</span>
                               : displayCell(cell)}
                           </td>
                         );

@@ -1,25 +1,102 @@
 import { Button, Card, Col, Form, Row } from 'react-bootstrap';
-import { goalFormulaKeys, goalOptions, profileFields } from '../profileUtils';
+import { FaTrash, FaUpload, FaUserCircle } from 'react-icons/fa';
+import { goalFormulaKeys, goalOptions, profileFields, requiredProfileFields } from '../profileUtils';
 
-function ProfileEditForm({ onChange, onSubmit, profile, saving, t }) {
+const requiredFieldNames = new Set(requiredProfileFields.map(([name]) => name));
+
+function RequiredLabel({ children, name }) {
+  return (
+    <Form.Label>
+      {children}
+      {requiredFieldNames.has(name) && <span className="text-danger ms-1">*</span>}
+    </Form.Label>
+  );
+}
+
+function ProfileEditForm({
+  avatarError,
+  avatarInputRef,
+  avatarPreviewUrl,
+  maxAvatarSizeMb,
+  onAvatarChange,
+  onAvatarRemove,
+  onChange,
+  onSubmit,
+  profile,
+  saving,
+  t,
+}) {
+  const hasAvatar = Boolean(avatarPreviewUrl);
+
   return (
     <Card className="border-0 shadow-sm">
       <Card.Body className="p-4">
         <Card.Title className="fw-bold mb-3">{t('profilePage.updateProfile')}</Card.Title>
         <Form onSubmit={onSubmit}>
           <Row className="g-3">
+            <Col xs={12}>
+              <div className="profile-avatar-editor">
+                <div className="profile-avatar-preview">
+                  {hasAvatar ? (
+                    <img src={avatarPreviewUrl} alt={t('profilePage.avatar.previewAlt')} />
+                  ) : (
+                    <FaUserCircle />
+                  )}
+                </div>
+                <div className="profile-avatar-controls">
+                  <div>
+                    <div className="fw-bold">{t('profilePage.avatar.title')}</div>
+                    <div className="text-secondary small">
+                      {t('profilePage.avatar.help', { size: maxAvatarSizeMb })}
+                    </div>
+                  </div>
+                  <div className="d-flex flex-wrap gap-2">
+                    <Button
+                      as="label"
+                      htmlFor="profile-avatar-input"
+                      variant="outline-success"
+                      disabled={saving}
+                    >
+                      <FaUpload className="me-2" />
+                      {hasAvatar ? t('profilePage.avatar.update') : t('profilePage.avatar.add')}
+                    </Button>
+                    {hasAvatar && (
+                      <Button
+                        type="button"
+                        variant="outline-secondary"
+                        onClick={onAvatarRemove}
+                        disabled={saving}
+                      >
+                        <FaTrash className="me-2" />
+                        {t('profilePage.avatar.remove')}
+                      </Button>
+                    )}
+                  </div>
+                  <Form.Control
+                    ref={avatarInputRef}
+                    id="profile-avatar-input"
+                    className="visually-hidden"
+                    type="file"
+                    accept=".jpg,.png,image/jpeg,image/png"
+                    onChange={onAvatarChange}
+                    disabled={saving}
+                  />
+                  {avatarError && <div className="text-danger small">{avatarError}</div>}
+                </div>
+              </div>
+            </Col>
             {profileFields.map(([name, labelKey, type]) => (
               <Col md={6} key={name}>
                 <Form.Group>
-                  <Form.Label>{t(labelKey)}</Form.Label>
-                  <Form.Control type={type} name={name} value={profile[name]} onChange={onChange} disabled={saving} />
+                  <RequiredLabel name={name}>{t(labelKey)}</RequiredLabel>
+                  <Form.Control type={type} name={name} value={profile[name]} onChange={onChange} disabled={saving} required={requiredFieldNames.has(name)} />
                 </Form.Group>
               </Col>
             ))}
             <Col md={6}>
               <Form.Group>
-                <Form.Label>{t('profile.gender')}</Form.Label>
-                <Form.Select name="gender" value={profile.gender} onChange={onChange} disabled={saving}>
+                <RequiredLabel name="gender">{t('profile.gender')}</RequiredLabel>
+                <Form.Select name="gender" value={profile.gender} onChange={onChange} disabled={saving} required>
                   <option value="">{t('profilePage.selectGender')}</option>
                   <option value="male">{t('profile.male')}</option>
                   <option value="female">{t('profile.female')}</option>
@@ -29,8 +106,8 @@ function ProfileEditForm({ onChange, onSubmit, profile, saving, t }) {
             </Col>
             <Col md={6}>
               <Form.Group>
-                <Form.Label>{t('profile.activityLevel')}</Form.Label>
-                <Form.Select name="activityLevel" value={profile.activityLevel} onChange={onChange} disabled={saving}>
+                <RequiredLabel name="activityLevel">{t('profile.activityLevel')}</RequiredLabel>
+                <Form.Select name="activityLevel" value={profile.activityLevel} onChange={onChange} disabled={saving} required>
                   <option value="">{t('profile.selectActivity')}</option>
                   <option value="sedentary">{t('profile.sedentary')}</option>
                   <option value="light">{t('profile.light')}</option>
@@ -42,8 +119,8 @@ function ProfileEditForm({ onChange, onSubmit, profile, saving, t }) {
             </Col>
             <Col xs={12}>
               <Form.Group>
-                <Form.Label>{t('profilePage.fields.healthGoal')}</Form.Label>
-                <Form.Select name="healthGoal" value={profile.healthGoal} onChange={onChange} disabled={saving}>
+                <RequiredLabel name="healthGoal">{t('profilePage.fields.healthGoal')}</RequiredLabel>
+                <Form.Select name="healthGoal" value={profile.healthGoal} onChange={onChange} disabled={saving} required>
                   <option value="">{t('profilePage.selectGoal')}</option>
                   {goalOptions.map((goal) => (
                     <option value={goal.value} key={goal.value}>{t(goal.labelKey)}</option>

@@ -1,9 +1,8 @@
-import { Badge, Card } from 'react-bootstrap';
+import { Card } from 'react-bootstrap';
 import { FaUtensils } from 'react-icons/fa';
-import CrudActions from '../../../components/CrudActions';
 import { getMealTotals, mealTypes } from '../mealUtils';
 
-function MealCard({ meal, onDelete, onEdit, onOpen, t }) {
+function MealCard({ meal, onOpen, t }) {
   const type = mealTypes.find((item) => item.key === meal.type);
   const label = type ? t(type.labelKey) : meal.type;
   const mealTotals = getMealTotals(meal);
@@ -28,16 +27,8 @@ function MealCard({ meal, onDelete, onEdit, onOpen, t }) {
             </div>
           </div>
           <div className="text-end">
-            <Badge bg="light" text="dark">{mealTotals.calories} kcal</Badge>
+            <div className="fw-semibold">{mealTotals.calories} kcal</div>
             <div className="text-secondary small mt-1">{meal.items.length} {t('foodDiary.items')}</div>
-            <CrudActions
-              className="mt-2"
-              editLabel={t('foodDiaryPage.updateMeal')}
-              deleteLabel={t('foodDiaryPage.deleteMeal')}
-              onEdit={() => onEdit(meal)}
-              onDelete={() => onDelete(meal.id)}
-              stopPropagation
-            />
           </div>
         </div>
       </Card.Body>

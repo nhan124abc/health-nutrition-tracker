@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button, Container, Form, InputGroup, Modal, Nav, Navbar, Offcanvas } from 'react-bootstrap';
+import { Button, Container, Form, InputGroup, Modal, Nav, Navbar, Offcanvas, Overlay, Popover } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -10,6 +10,7 @@ import {
   FaPaperPlane,
   FaRobot,
   FaSearch,
+  FaCog,
   FaSignOutAlt,
   FaTint,
   FaUserCircle,
@@ -17,9 +18,16 @@ import {
   FaWeight,
   FaBullseye,
 } from 'react-icons/fa';
-import { logout } from '../api/api';
+import { getCurrentUser, logout } from '../api/api';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { clearChatHistory, getChatHistory, sendChatMessage } from '../features/ai/aiService';
+import { getProfile } from '../features/profile/profileService';
+import {
+  extractProfileFromApi,
+  getMissingRequiredProfileFields,
+  mergeProfileAvatar,
+  mapProfileFromApi,
+} from '../features/profile/profileUtils';
 
 const SIDEBAR_DEFAULT_WIDTH = 264;
 const SIDEBAR_MIN_WIDTH = 84;
@@ -37,6 +45,7 @@ const menuItems = [
   { to: '/reports', labelKey: 'nav.statistics', icon: FaChartLine },
   { to: '/body-metrics', labelKey: 'nav.bodyMetrics', icon: FaWeight },
   { to: '/profile', labelKey: 'nav.profile', icon: FaUserCircle },
+  { to: '/settings', labelKey: 'nav.settings', icon: FaCog },
 ];
 
 function MainLayout() {
@@ -47,6 +56,11 @@ function MainLayout() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiHistoryLoading, setAiHistoryLoading] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [showProfileSummary, setShowProfileSummary] = useState(false);
+  const [currentProfile, setCurrentProfile] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
+  const [showProfileRequiredModal, setShowProfileRequiredModal] = useState(false);
+  const [missingProfileFields, setMissingProfileFields] = useState([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     () => localStorage.getItem('sidebarCollapsed') === 'true'
   );
@@ -63,9 +77,64 @@ function MainLayout() {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const aiChatWindowRef = useRef(null);
+  const profileButtonRef = useRef(null);
 
   useEffect(() => {
     setShowMobileSidebar(false);
+    setShowProfileSummary(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    setCurrentUser(getCurrentUser());
+  }, [location.pathname]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    getProfile()
+      .then((response) => {
+        if (!isActive) {
+          return;
+        }
+
+        const profile = mergeProfileAvatar(
+          mapProfileFromApi(extractProfileFromApi(response.data)),
+          getCurrentUser()
+        );
+        const missingFields = getMissingRequiredProfileFields(profile);
+
+        setCurrentProfile(profile);
+        setMissingProfileFields(missingFields);
+        setShowProfileRequiredModal(missingFields.length > 0 && location.pathname !== '/profile');
+      })
+      .catch(() => {
+        if (isActive) {
+          setCurrentProfile(null);
+          setMissingProfileFields([]);
+          setShowProfileRequiredModal(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const handleProfileUpdated = (event) => {
+      const profile = event.detail;
+      const missingFields = getMissingRequiredProfileFields(profile);
+
+      setCurrentProfile(profile);
+      setMissingProfileFields(missingFields);
+      setShowProfileRequiredModal(missingFields.length > 0 && location.pathname !== '/profile');
+    };
+
+    window.addEventListener('profile:updated', handleProfileUpdated);
+
+    return () => {
+      window.removeEventListener('profile:updated', handleProfileUpdated);
+    };
   }, [location.pathname]);
 
   useEffect(() => {
@@ -198,6 +267,11 @@ function MainLayout() {
     navigate('/login');
   };
 
+  const goToProfile = () => {
+    setShowProfileRequiredModal(false);
+    navigate('/profile', { state: { activeTab: 'edit' } });
+  };
+
   const handleAiSubmit = async (event) => {
     event.preventDefault();
     const message = aiMessage.trim();
@@ -299,9 +373,20 @@ function MainLayout() {
               <FaRobot />
             </Button>
             <LanguageSwitcher />
-            <NavLink to="/profile" className="btn btn-light layout-user-toggle" aria-label={t('nav.profile')}>
-              <FaUserCircle />
-            </NavLink>
+            <button
+              type="button"
+              ref={profileButtonRef}
+              className={`btn btn-light layout-user-toggle${currentProfile?.avatarUrl ? ' layout-user-avatar-toggle' : ''}`}
+              onClick={() => setShowProfileSummary((current) => !current)}
+              aria-label={t('nav.profile')}
+              title={t('nav.profile')}
+            >
+              {currentProfile?.avatarUrl ? (
+                <img src={currentProfile.avatarUrl} alt={t('nav.profile')} />
+              ) : (
+                <FaUserCircle />
+              )}
+            </button>
             <button type="button" className="btn btn-light layout-user-toggle" onClick={handleLogout} aria-label={t('nav.logout')}>
               <FaSignOutAlt />
             </button>
@@ -407,6 +492,60 @@ function MainLayout() {
             </InputGroup>
           </Form>
         </Modal.Body>
+      </Modal>
+
+      <Overlay
+        target={profileButtonRef.current}
+        show={showProfileSummary}
+        placement="bottom-end"
+        rootClose
+        onHide={() => setShowProfileSummary(false)}
+      >
+        <Popover id="profile-summary-popover" className="profile-summary-popover">
+          <Popover.Body>
+            <div className="profile-summary-mini">
+              <div>
+                <span>{t('profilePage.fields.username')}</span>
+                <strong>{currentProfile?.username || currentUser?.username || currentUser?.fullName || '-'}</strong>
+              </div>
+              <div>
+                <span>Email</span>
+                <strong>{currentUser?.email || '-'}</strong>
+              </div>
+            </div>
+          </Popover.Body>
+        </Popover>
+      </Overlay>
+
+      <Modal
+        show={showProfileRequiredModal}
+        onHide={() => setShowProfileRequiredModal(false)}
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>{t('profilePage.completion.title')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p className="text-secondary mb-3">{t('profilePage.completion.description')}</p>
+          {missingProfileFields.length > 0 && (
+            <div>
+              <div className="fw-semibold mb-2">{t('profilePage.completion.missingTitle')}</div>
+              <ul className="mb-0">
+                {missingProfileFields.map(([name, labelKey]) => (
+                  <li key={name}>{t(labelKey)}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setShowProfileRequiredModal(false)}>
+            {t('profilePage.completion.later')}
+          </Button>
+          <Button variant="success" onClick={goToProfile}>
+            {t('profilePage.completion.goToProfile')}
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );

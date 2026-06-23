@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Badge, Button, Card, Col, ProgressBar, Row, Spinner, Table } from 'react-bootstrap';
+import { Alert, Button, Card, Col, ProgressBar, Row, Spinner, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaChartLine, FaDumbbell, FaUsers, FaUtensils } from 'react-icons/fa';
 import { getAdminDashboardOverview } from '../../features/admin/adminService';
@@ -104,11 +104,7 @@ function AdminDashboard() {
     <>
       <div className="admin-page-heading">
         <div>
-          <Badge bg="success" className="mb-2">
-            {t('admin.dashboard.badge')}
-          </Badge>
           <h2>{t('admin.dashboard.title')}</h2>
-          <p>{t('admin.dashboard.description')}</p>
         </div>
         <Button variant="success">{t('admin.dashboard.quickExport')}</Button>
       </div>
@@ -134,9 +130,9 @@ function AdminDashboard() {
                   <span className="text-secondary">{t(stat.labelKey)}</span>
                   <div className="admin-stat-value">{stat.value}</div>
                   {stat.trend !== undefined && stat.trend !== null && (
-                    <Badge bg="light" text="success">
+                    <span className="text-success small fw-semibold">
                       {displayText(stat.trend)}
-                    </Badge>
+                    </span>
                   )}
                 </Card.Body>
               </Card>
@@ -173,9 +169,9 @@ function AdminDashboard() {
                         <td>{displayText(activity.content || activity.itemKey)}</td>
                         <td>{displayText(activity.type || activity.typeKey)}</td>
                         <td>
-                          <Badge bg={activity.variant || activity.statusVariant || 'secondary'}>
+                          <span className={`small fw-semibold text-${activity.variant || activity.statusVariant || 'secondary'}`}>
                             {displayText(activity.status || activity.statusKey)}
-                          </Badge>
+                          </span>
                         </td>
                       </tr>
                     ))}

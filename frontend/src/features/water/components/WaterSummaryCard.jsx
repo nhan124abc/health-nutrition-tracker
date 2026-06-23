@@ -1,4 +1,4 @@
-import { Badge, Button, Card, Form, ProgressBar } from 'react-bootstrap';
+import { Button, Card, Form, ProgressBar } from 'react-bootstrap';
 import { FaBell, FaPlus, FaTint } from 'react-icons/fa';
 import { quickWaterAmounts } from '../waterUtils';
 
@@ -30,7 +30,7 @@ function WaterSummaryCard({
               </Card.Text>
             </div>
           </div>
-          <Badge bg={progress >= 100 ? 'success' : 'info'}>{Math.round(progress)}%</Badge>
+          <span className={`small fw-semibold text-${progress >= 100 ? 'success' : 'info'}`}>{Math.round(progress)}%</span>
         </div>
 
         <ProgressBar now={progress} className="mb-3" />
@@ -69,9 +69,14 @@ function WaterSummaryCard({
               value={waterAmount}
               onChange={(event) => onWaterAmountChange(event.target.value)}
             />
-            <Button variant="info" className="text-white" onClick={() => onAddWater()}>
-              <FaPlus className="me-2" />
-              {t('waterPage.addLog')}
+            <Button
+              variant="info"
+              className="text-white"
+              onClick={() => onAddWater()}
+              aria-label={t('waterPage.addLog')}
+              title={t('waterPage.addLog')}
+            >
+              <FaPlus />
             </Button>
           </div>
         </Form.Group>

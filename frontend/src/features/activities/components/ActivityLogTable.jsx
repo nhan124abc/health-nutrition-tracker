@@ -1,8 +1,7 @@
 import { Card, Form, Table } from 'react-bootstrap';
-import CrudActions from '../../../components/CrudActions';
 import { activityCategories } from '../activityUtils';
 
-function ActivityLogTable({ category, loading, logs, onCategoryChange, onDelete, onEdit, t }) {
+function ActivityLogTable({ category, loading, logs, onCategoryChange, t }) {
   return (
     <Card className="border-0 shadow-sm">
       <Card.Body>
@@ -25,7 +24,6 @@ function ActivityLogTable({ category, loading, logs, onCategoryChange, onDelete,
                 <th className="text-end">{t('common.calories')}</th>
                 <th className="text-end">HR</th>
                 <th className="text-end">{t('common.details')}</th>
-                <th className="text-end">{t('activityPage.actions')}</th>
               </tr>
             </thead>
             <tbody>
@@ -45,14 +43,6 @@ function ActivityLogTable({ category, loading, logs, onCategoryChange, onDelete,
                     {log.category === 'strength'
                       ? `${log.sets || '-'} ${t('activityPage.fields.sets')} - ${log.reps || '-'} ${t('activityPage.fields.reps')} - ${log.strengthWeight || '-'}kg`
                       : `${log.distance || '-'} km`}
-                  </td>
-                  <td className="text-end">
-                    <CrudActions
-                      editLabel={t('activityPage.editAction')}
-                      deleteLabel={t('activityPage.deleteAction')}
-                      onEdit={() => onEdit(log)}
-                      onDelete={() => onDelete(log.id)}
-                    />
                   </td>
                 </tr>
               ))}

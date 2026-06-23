@@ -24,19 +24,19 @@ function CrudActions({
   return (
     <div className={`crud-actions ${className}`.trim()}>
       {onAdd && (
-        <Button variant="success" size={size} onClick={(event) => handleClick(event, onAdd)} aria-label={addLabel}>
-          <FaPlus className={addLabel ? 'me-2' : ''} />
-          {addLabel}
+        <Button variant="success" size={size} onClick={(event) => handleClick(event, onAdd)} aria-label={addLabel} title={addLabel}>
+          <FaPlus className={showLabels ? 'me-2' : ''} />
+          {showLabels && addLabel}
         </Button>
       )}
       {onEdit && (
-        <Button variant="outline-success" size={size} onClick={(event) => handleClick(event, onEdit)} aria-label={editLabel}>
+        <Button variant="outline-success" size={size} onClick={(event) => handleClick(event, onEdit)} aria-label={editLabel} title={editLabel}>
           <FaEdit className={showLabels ? 'me-2' : ''} />
           {showLabels && editLabel}
         </Button>
       )}
       {onDelete && (
-        <Button variant="outline-danger" size={size} onClick={(event) => handleClick(event, onDelete)} aria-label={deleteLabel}>
+        <Button variant="outline-danger" size={size} onClick={(event) => handleClick(event, onDelete)} aria-label={deleteLabel} title={deleteLabel}>
           <FaTrash className={showLabels ? 'me-2' : ''} />
           {showLabels && deleteLabel}
         </Button>

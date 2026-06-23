@@ -1,25 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Badge, Card, Col, Row } from 'react-bootstrap';
+import { Card, Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import CrudActions from '../../components/CrudActions';
 import DailyMealSummary from './components/DailyMealSummary';
 import MealCard from './components/MealCard';
 import MealDetailModal from './components/MealDetailModal';
-import MealFormModal from './components/MealFormModal';
-import { getFoods } from '../nutrition/nutritionService';
-import { extractFoodsFromApi, normalizeFoodFromApi } from '../nutrition/nutritionUtils';
 import {
-  buildMealFallback,
-  emptyMeal,
   extractMealFromApi,
   extractMealsFromApi,
   getMealsTotals,
   getTodayDate,
-  mapMealToApi,
-  mapMealToForm,
   normalizeMealFromApi,
 } from './mealUtils';
-import { createMeal, deleteMealById, getMealById, getMealsByDate, updateMeal } from './mealService';
+import { getMealById, getMealsByDate } from './mealService';
 import { getProfile } from '../profile/profileService';
 import { extractProfileFromApi, mapProfileFromApi } from '../profile/profileUtils';
 
@@ -27,21 +19,10 @@ function FoodDiary() {
   const { t } = useTranslation();
   const [selectedDate, setSelectedDate] = useState(getTodayDate);
   const [meals, setMeals] = useState([]);
-  const [form, setForm] = useState(() => ({ ...emptyMeal, date: getTodayDate() }));
-  const [showMealModal, setShowMealModal] = useState(false);
   const [loadingMeals, setLoadingMeals] = useState(false);
   const [loadingMealDetail, setLoadingMealDetail] = useState(false);
-  const [savingMeal, setSavingMeal] = useState(false);
   const [mealError, setMealError] = useState('');
   const [selectedMealDetail, setSelectedMealDetail] = useState(null);
-  const [editingMealId, setEditingMealId] = useState(null);
-  const [foods, setFoods] = useState([]);
-  const [loadingFoods, setLoadingFoods] = useState(false);
-  const [foodSelection, setFoodSelection] = useState({
-    foodId: '',
-    serving: 100,
-    quantity: 1,
-  });
   const [calorieGoal, setCalorieGoal] = useState(2000);
 
   useEffect(() => {
@@ -92,105 +73,6 @@ function FoodDiary() {
     };
   }, [selectedDate]);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setForm((current) => ({ ...current, [name]: value }));
-  };
-
-  const loadFoods = async () => {
-    if (foods.length > 0 || loadingFoods) {
-      return;
-    }
-
-    setLoadingFoods(true);
-
-    try {
-      const response = await getFoods({ page: 0, size: 200 });
-      setFoods(extractFoodsFromApi(response.data).map(normalizeFoodFromApi));
-    } catch (error) {
-      console.error('[FoodDiary] Error fetching foods:', error);
-      setMealError(error.response?.data?.message || t('foodDiaryPage.foodLoadError'));
-    } finally {
-      setLoadingFoods(false);
-    }
-  };
-
-  const openMealModal = () => {
-    setEditingMealId(null);
-    setForm({ ...emptyMeal, date: selectedDate });
-    setFoodSelection({ foodId: '', serving: 100, quantity: 1 });
-    setShowMealModal(true);
-    loadFoods();
-  };
-
-  const openEditMealModal = (meal) => {
-    setMealError('');
-    setEditingMealId(meal.id);
-    setForm(mapMealToForm(meal));
-    setFoodSelection({ foodId: '', serving: 100, quantity: 1 });
-    setShowMealModal(true);
-    loadFoods();
-  };
-
-  const closeMealModal = () => {
-    setShowMealModal(false);
-    setEditingMealId(null);
-    setForm({ ...emptyMeal, date: selectedDate });
-    setFoodSelection({ foodId: '', serving: 100, quantity: 1 });
-  };
-
-  const handleFoodSelectionChange = (event) => {
-    const { name, value } = event.target;
-
-    setFoodSelection((current) => {
-      if (name !== 'foodId') {
-        return { ...current, [name]: value };
-      }
-
-      const food = foods.find((item) => String(item.id) === String(value));
-      return {
-        ...current,
-        foodId: value,
-        serving: food ? parseFloat(food.servingSize) || 100 : current.serving,
-      };
-    });
-  };
-
-  const addFoodToMeal = () => {
-    const food = foods.find((item) => String(item.id) === String(foodSelection.foodId));
-
-    if (!food) {
-      return;
-    }
-
-    const servingSize = Number(foodSelection.serving) || 100;
-    const quantity = Number(foodSelection.quantity) || 1;
-    const baseServingSize = parseFloat(food.servingSize) || 100;
-
-    setForm((current) => ({
-      ...current,
-      items: [
-        ...current.items,
-        {
-          ...food,
-          foodId: food.id,
-          foodServingSize: food.servingSize,
-          serving: `${servingSize}g`,
-          quantity,
-          totalCalories: food.calories * (servingSize / baseServingSize) * quantity,
-        },
-      ],
-    }));
-    setFoodSelection({ foodId: '', serving: 100, quantity: 1 });
-  };
-
-  const removeFoodFromMeal = (index) => {
-    setForm((current) => ({
-      ...current,
-      items: current.items.filter((_, itemIndex) => itemIndex !== index),
-    }));
-  };
-
   const openMealDetail = async (meal) => {
     setMealError('');
     setSelectedMealDetail(meal);
@@ -207,90 +89,14 @@ function FoodDiary() {
     }
   };
 
-  const createNewMeal = async () => {
-    const response = await createMeal(mapMealToApi(form));
-    const createdMeal = normalizeMealFromApi(extractMealFromApi(response.data));
-
-    setMeals((current) => {
-      if (createdMeal.id && current.some((meal) => meal.id === createdMeal.id)) {
-        return current;
-      }
-
-      return [...current, createdMeal];
-    });
-  };
-
-  const updateCurrentMeal = async () => {
-    if (!window.confirm(t('foodDiaryPage.confirmUpdateMeal'))) {
-      return false;
-    }
-
-    const response = await updateMeal(editingMealId, mapMealToApi(form));
-    const updatedMeal = normalizeMealFromApi(
-      extractMealFromApi(response.data) || buildMealFallback(editingMealId, form)
-    );
-
-    setMeals((current) => current.map((meal) => (meal.id === editingMealId ? updatedMeal : meal)));
-    setSelectedMealDetail((current) => (current?.id === editingMealId ? updatedMeal : current));
-    return true;
-  };
-
-  const saveMeal = async () => {
-    if (savingMeal || form.items.length === 0) {
-      return;
-    }
-
-    setMealError('');
-    setSavingMeal(true);
-
-    try {
-      if (editingMealId) {
-        const didUpdate = await updateCurrentMeal();
-
-        if (!didUpdate) {
-          return;
-        }
-      } else {
-        await createNewMeal();
-      }
-
-      closeMealModal();
-    } catch (error) {
-      console.error('[FoodDiary] Error saving meal:', error);
-      setMealError(error.response?.data?.message || 'Could not save meal.');
-    } finally {
-      setSavingMeal(false);
-    }
-  };
-
-  const removeMeal = async (mealId) => {
-    if (!window.confirm(t('foodDiaryPage.confirmDeleteMeal'))) {
-      return;
-    }
-
-    setMealError('');
-
-    try {
-      await deleteMealById(mealId);
-      setMeals((current) => current.filter((meal) => meal.id !== mealId));
-      setSelectedMealDetail((current) => (current?.id === mealId ? null : current));
-    } catch (error) {
-      console.error('[FoodDiary] Error deleting meal:', error);
-      setMealError(error.response?.data?.message || 'Could not delete meal.');
-    }
-  };
-
   return (
     <>
       <div className="page-heading">
         <div>
-          <Badge bg="success" className="mb-2">{t('foodDiaryPage.badge')}</Badge>
           <h1>{t('foodDiaryPage.title')}</h1>
-          <p>{t('foodDiaryPage.description')}</p>
         </div>
         <div className="d-flex flex-wrap gap-2">
           <input className="form-control page-date-input" type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
-          <CrudActions addLabel={t('foodDiaryPage.createMeal')} onAdd={openMealModal} size={null} />
         </div>
       </div>
 
@@ -308,8 +114,6 @@ function FoodDiary() {
               <MealCard
                 key={meal.id}
                 meal={meal}
-                onDelete={removeMeal}
-                onEdit={openEditMealModal}
                 onOpen={openMealDetail}
                 t={t}
               />
@@ -321,23 +125,6 @@ function FoodDiary() {
           <DailyMealSummary calorieGoal={calorieGoal} mealCount={dayMeals.length} t={t} totals={totals} />
         </Col>
       </Row>
-
-      <MealFormModal
-        editingMealId={editingMealId}
-        foodSelection={foodSelection}
-        foods={foods}
-        form={form}
-        loadingFoods={loadingFoods}
-        onAddFood={addFoodToMeal}
-        onChange={handleChange}
-        onClose={closeMealModal}
-        onFoodSelectionChange={handleFoodSelectionChange}
-        onRemoveFood={removeFoodFromMeal}
-        onSave={saveMeal}
-        savingMeal={savingMeal}
-        show={showMealModal}
-        t={t}
-      />
 
       <MealDetailModal
         loading={loadingMealDetail}

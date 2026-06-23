@@ -17,6 +17,14 @@ export function createBodyMetric(payload) {
   return api.post(profileConfig.endpoints.bodyMetrics, payload);
 }
 
+export function updateBodyMetric(id, payload) {
+  return api.put(`${profileConfig.endpoints.bodyMetrics}/${id}`, payload);
+}
+
+export function deleteBodyMetric(id) {
+  return api.delete(`${profileConfig.endpoints.bodyMetrics}/${id}`);
+}
+
 export function getGoalPlanSuggestions(payload) {
   return api.post(profileConfig.endpoints.goalSuggestions, payload);
 }

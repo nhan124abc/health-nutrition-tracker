@@ -76,7 +76,6 @@ function Login() {
               <div className="mb-4">
                 <div className="auth-brand">{t('app.name')}</div>
                 <h1 className="h3 fw-bold mb-2">{t('auth.loginTitle')}</h1>
-                <p className="text-secondary mb-0">{t('auth.loginDescription')}</p>
               </div>
 
               {(error || oauthError) && (

@@ -19,9 +19,11 @@ import BodyMetrics from './features/profile/BodyMetrics';
 import GoalPlanner from './features/profile/GoalPlanner';
 import Reports from './pages/Reports';
 import Planner from './pages/Planner';
+import Settings from './pages/Settings';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminManagementPage from './pages/admin/AdminManagementPage';
+import AdminProfile from './pages/admin/AdminProfile';
 
 function App() {
   return (
@@ -80,6 +82,7 @@ function App() {
           <Route path="/body-metrics" element={<BodyMetrics />} />
           <Route path="/goals" element={<GoalPlanner />} />
           <Route path="/planner" element={<Planner />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
         <Route
           path="/admin"
@@ -95,6 +98,7 @@ function App() {
           <Route path="catalogs/foods" element={<AdminManagementPage type="foods" />} />
           <Route path="catalogs/activities" element={<AdminManagementPage type="exercises" />} />
           <Route path="analytics" element={<AdminAnalytics />} />
+          <Route path="profile" element={<AdminProfile />} />
         </Route>
       </Routes>
     </BrowserRouter>

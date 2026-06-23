@@ -1,5 +1,6 @@
 export const initialProfile = {
   username: '',
+  avatarUrl: '',
   birthDate: '',
   gender: '',
   height: '',
@@ -29,9 +30,7 @@ export const profileFields = [
   ['height', 'profile.height', 'number'],
   ['weight', 'profile.weight', 'number'],
   ['targetWeight', 'profilePage.fields.targetWeight', 'number'],
-  ['dailyCalorieGoal', 'health.dailyCalorieGoal', 'number'],
   ['dailyWaterGoal', 'profilePage.fields.dailyWaterGoal', 'number'],
-  ['timezone', 'common.timezone', 'text'],
 ];
 
 export const notificationFields = [
@@ -39,6 +38,17 @@ export const notificationFields = [
   ['waterReminder', 'profilePage.notifications.waterReminder'],
   ['weightReminder', 'profilePage.notifications.weightReminder'],
   ['weeklyReport', 'profilePage.notifications.weeklyReport'],
+];
+
+export const requiredProfileFields = [
+  ['username', 'profilePage.fields.username'],
+  ['birthDate', 'profile.birthDate'],
+  ['gender', 'profile.gender'],
+  ['height', 'profile.height'],
+  ['weight', 'profile.weight'],
+  ['activityLevel', 'profile.activityLevel'],
+  ['healthGoal', 'profilePage.fields.healthGoal'],
+  ['targetWeight', 'profilePage.fields.targetWeight'],
 ];
 
 export const emptyBodyMetric = {
@@ -55,12 +65,9 @@ export const emptyBodyMetric = {
 export const bodyMetricFields = [
   ['date', 'bodyMetricsPage.fields.date', 'date'],
   ['weight', 'bodyMetricsPage.fields.weight', 'number'],
-  ['bodyFat', 'bodyMetricsPage.fields.bodyFat', 'number'],
-  ['muscleMass', 'bodyMetricsPage.fields.muscleMass', 'number'],
   ['waist', 'bodyMetricsPage.fields.waist', 'number'],
   ['hip', 'bodyMetricsPage.fields.hip', 'number'],
   ['chest', 'bodyMetricsPage.fields.chest', 'number'],
-  ['notes', 'common.notes', 'text'],
 ];
 
 const activityFromApi = {
@@ -98,6 +105,12 @@ const goalToApi = {
   body_recomposition: 'BODY_RECOMPOSITION',
   improve_health: 'IMPROVE_FITNESS',
 };
+
+function getAvatarStorageKey(account = {}) {
+  const accountKey = account.id || account.email || account.username || account.sub;
+
+  return accountKey ? `profileAvatar:${accountKey}` : '';
+}
 
 export const goalFormulaKeys = {
   lose_weight: 'profilePage.goalFormulas.loseWeight',
@@ -149,6 +162,25 @@ export function mapBodyMetricToApi(metric) {
   };
 }
 
+export function getLatestBodyMetric(metrics = []) {
+  return [...metrics]
+    .filter(Boolean)
+    .sort((first, second) => String(second.recordedAt || second.date).localeCompare(String(first.recordedAt || first.date)))[0] || {};
+}
+
+export function buildBodyMetricFormFromProfile(profile = {}, metrics = []) {
+  const latestMetric = getLatestBodyMetric(metrics);
+
+  return {
+    ...emptyBodyMetric,
+    date: getTodayDate(),
+    weight: profile.weight || latestMetric.weightKg || latestMetric.weight || '',
+    waist: latestMetric.waistCm ?? latestMetric.waist ?? '',
+    hip: latestMetric.hipCm ?? latestMetric.hip ?? '',
+    chest: latestMetric.chestCm ?? latestMetric.chest ?? '',
+  };
+}
+
 export function extractBodyMetricFromApi(data) {
   return data?.data || data?.metric || data;
 }
@@ -156,6 +188,7 @@ export function extractBodyMetricFromApi(data) {
 export function mapProfileFromApi(data = {}) {
   return {
     username: data.username || '',
+    avatarUrl: data.avatarUrl || data.profilePictureUrl || data.pictureUrl || '',
     birthDate: data.dateOfBirth || '',
     gender: data.gender?.toLowerCase() || '',
     height: data.heightCm ?? '',
@@ -180,14 +213,76 @@ export function mapProfileFromApi(data = {}) {
   };
 }
 
+export function getStoredProfileAvatar(account) {
+  const storageKey = getAvatarStorageKey(account);
+
+  if (!storageKey) {
+    return '';
+  }
+
+  return localStorage.getItem(storageKey) || '';
+}
+
+export function saveStoredProfileAvatar(account, avatarUrl) {
+  const storageKey = getAvatarStorageKey(account);
+
+  if (!storageKey) {
+    return;
+  }
+
+  if (avatarUrl) {
+    localStorage.setItem(storageKey, avatarUrl);
+    return;
+  }
+
+  localStorage.removeItem(storageKey);
+}
+
+export function mergeProfileAvatar(profile, account) {
+  if (profile.avatarUrl) {
+    saveStoredProfileAvatar(account, profile.avatarUrl);
+    return profile;
+  }
+
+  return {
+    ...profile,
+    avatarUrl: getStoredProfileAvatar(account),
+  };
+}
+
 export function extractProfileFromApi(data) {
   return data?.data || data?.profile || data || {};
+}
+
+function hasProfileValue(value) {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  if (typeof value === 'number') {
+    return Number.isFinite(value) && value > 0;
+  }
+
+  if (typeof value === 'string') {
+    return value.trim() !== '' && value.trim() !== '0';
+  }
+
+  return true;
+}
+
+export function getMissingRequiredProfileFields(profile = {}) {
+  return requiredProfileFields.filter(([name]) => !hasProfileValue(profile[name]));
+}
+
+export function isProfileComplete(profile = {}) {
+  return getMissingRequiredProfileFields(profile).length === 0;
 }
 
 export function mapProfileToApi(profile, options = {}) {
   const { includeManualCalorieGoal = true } = options;
   const payload = {
     username: emptyToNull(profile.username),
+    avatarUrl: emptyToNull(profile.avatarUrl),
     dateOfBirth: emptyToNull(profile.birthDate),
     gender: profile.gender ? profile.gender.toUpperCase() : null,
     heightCm: normalizeNumber(profile.height),

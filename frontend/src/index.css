@@ -5,6 +5,22 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
 }
 
+
+html,
+body,
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
 :root {
   --health-primary: #2f8f6b;
   --health-primary-dark: #1f6f56;
@@ -24,6 +40,7 @@ body {
     linear-gradient(180deg, rgba(201, 130, 155, 0.08), rgba(252, 249, 247, 0) 280px),
     #fcf9f7;
 }
+
 
 .btn-success {
   --bs-btn-bg: var(--health-primary);
@@ -53,10 +70,6 @@ body {
 
 .progress-bar.bg-success {
   background-color: var(--health-primary) !important;
-}
-
-.badge.text-success {
-  color: var(--health-primary-dark) !important;
 }
 
 .layout-shell {
@@ -221,6 +234,17 @@ body {
   color: var(--health-primary) !important;
 }
 
+.layout-user-avatar-toggle {
+  padding: 0 !important;
+}
+
+.layout-user-avatar-toggle img {
+  border-radius: 999px;
+  height: 1.25rem;
+  object-fit: cover;
+  width: 1.25rem;
+}
+
 .layout-sidebar {
   background: #fff;
   border-right: 1px solid #e9ecef;
@@ -310,7 +334,7 @@ body {
   height: 120px;
   object-fit: contain;
   transition: height 0.22s ease, width 0.22s ease;
-  width: 100px;
+  width: 120px;
 }
 
 .layout-sidebar-mark {
@@ -918,6 +942,160 @@ body {
   height: 72px;
   object-fit: contain;
   width: 72px;
+}
+
+.profile-summary-popover {
+  border: 0;
+  border-radius: 0.75rem;
+  box-shadow: 0 16px 40px rgba(20, 45, 36, 0.14);
+  min-width: 220px;
+}
+
+.profile-summary-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.profile-summary-row {
+  align-items: center;
+  border-bottom: 1px solid #eef2f1;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding-bottom: 0.85rem;
+}
+
+.profile-summary-row:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.profile-summary-row span {
+  color: #60706a;
+}
+
+.profile-summary-row strong {
+  color: #1f2f2a;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.profile-summary-mini {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.profile-summary-mini div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.profile-summary-mini span {
+  color: #60706a;
+  font-size: 0.8rem;
+}
+
+.profile-summary-mini strong {
+  color: #1f2f2a;
+  font-size: 0.95rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.settings-option-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.settings-option-list .form-check {
+  align-items: center;
+  background: var(--health-surface);
+  border: 1px solid #edf0f2;
+  border-radius: 0.75rem;
+  display: flex;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.9rem 1rem 0.9rem 3rem;
+}
+
+.water-history-readonly-input {
+  background: var(--health-surface) !important;
+  cursor: default;
+}
+
+.profile-avatar-editor,
+.profile-overview-heading {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+}
+
+.profile-avatar-editor {
+  background: var(--health-surface);
+  border: 1px solid #edf0f2;
+  border-radius: 0.85rem;
+  padding: 1rem;
+}
+
+.profile-avatar-preview {
+  align-items: center;
+  background: #eef8f1;
+  border: 1px solid rgba(47, 143, 107, 0.18);
+  border-radius: 999px;
+  color: var(--health-primary-dark);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 4rem;
+  height: 96px;
+  justify-content: center;
+  overflow: hidden;
+  width: 96px;
+}
+
+.profile-avatar-preview img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.profile-avatar-preview-sm {
+  font-size: 2.4rem;
+  height: 56px;
+  width: 56px;
+}
+
+.profile-avatar-controls {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.admin-profile-heading {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+}
+
+.admin-profile-heading h3 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0 0 0.2rem;
+}
+
+.admin-profile-heading span {
+  color: #60706a;
+}
+
+.admin-profile-avatar {
+  align-items: center;
+  background: #eef8f1;
+  border-radius: 1rem;
+  color: #198754;
+  display: inline-flex;
+  font-size: 2rem;
+  height: 64px;
+  justify-content: center;
+  width: 64px;
 }
 
 .home-page {
@@ -1889,6 +2067,11 @@ body {
 
   .layout-footer-links {
     flex-wrap: wrap;
+  }
+
+  .profile-avatar-editor {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 

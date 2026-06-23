@@ -24,6 +24,56 @@ export const basicFoodFields = [
   ['imageUrl', 'nutritionPage.fields.imageUrl'],
 ];
 
+const mojibakePattern = /[\u00c0-\u00ff\u2018-\u201d\u2026]/;
+const windows1252ReverseMap = {
+  '\u20ac': 0x80,
+  '\u201a': 0x82,
+  '\u0192': 0x83,
+  '\u201e': 0x84,
+  '\u2026': 0x85,
+  '\u2020': 0x86,
+  '\u2021': 0x87,
+  '\u02c6': 0x88,
+  '\u2030': 0x89,
+  '\u0160': 0x8a,
+  '\u2039': 0x8b,
+  '\u0152': 0x8c,
+  '\u017d': 0x8e,
+  '\u2018': 0x91,
+  '\u2019': 0x92,
+  '\u201c': 0x93,
+  '\u201d': 0x94,
+  '\u2022': 0x95,
+  '\u2013': 0x96,
+  '\u2014': 0x97,
+  '\u02dc': 0x98,
+  '\u2122': 0x99,
+  '\u0161': 0x9a,
+  '\u203a': 0x9b,
+  '\u0153': 0x9c,
+  '\u017e': 0x9e,
+  '\u0178': 0x9f,
+};
+
+function repairMojibake(value) {
+  if (typeof value !== 'string' || !mojibakePattern.test(value)) {
+    return value || '';
+  }
+
+  try {
+    const bytes = Uint8Array.from([...value].map((character) => (
+      windows1252ReverseMap[character] ?? character.charCodeAt(0)
+    )));
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    return value;
+  }
+}
+
+export function cleanText(value) {
+  return repairMojibake(value).trim();
+}
+
 function normalizeNumber(value) {
   return Number(value) || 0;
 }
@@ -67,9 +117,9 @@ export function extractFoodFromApi(data) {
 export function normalizeCategory(category = {}) {
   return {
     id: category.id ?? category.categoryId,
-    name: category.name || '',
-    nameVi: category.nameVi || '',
-    icon: category.icon || '',
+    name: cleanText(category.name),
+    nameVi: cleanText(category.nameVi),
+    icon: cleanText(category.icon),
   };
 }
 
@@ -78,13 +128,13 @@ export function normalizeFoodFromApi(food = {}) {
 
   return {
     id: food.id ?? food.foodId,
-    name: food.name || '',
-    nameVi: food.nameVi || '',
-    brand: food.brand || '',
+    name: cleanText(food.name),
+    nameVi: cleanText(food.nameVi),
+    brand: cleanText(food.brand),
     categoryId: category.id ?? '',
     category: category.nameVi || category.name || '',
     servingSize: `${normalizeNumber(food.servingSizeG)}g`,
-    servingDescription: food.servingDescription || '',
+    servingDescription: cleanText(food.servingDescription),
     calories: normalizeNumber(food.calories),
     protein: normalizeNumber(food.proteinG),
     carbs: normalizeNumber(food.carbsG),
@@ -123,13 +173,8 @@ export function mapFoodToForm(food) {
   };
 }
 
-export function filterFoods(items, query, categoryId, imageSearchName) {
+export function filterFoods(items, query, categoryId) {
   const keyword = query.trim().toLowerCase();
-  const imageKeyword = imageSearchName
-    .replace(/\.[^.]+$/, '')
-    .replace(/[_-]+/g, ' ')
-    .trim()
-    .toLowerCase();
 
   return items.filter((food) => {
     const searchableValues = [food.name, food.nameVi, food.brand, food.category]
@@ -137,8 +182,7 @@ export function filterFoods(items, query, categoryId, imageSearchName) {
       .map((value) => String(value).toLowerCase());
     const matchesKeyword = !keyword || searchableValues.some((value) => value.includes(keyword));
     const matchesCategory = categoryId === 'all' || String(food.categoryId) === String(categoryId);
-    const matchesImage = !imageKeyword || searchableValues.some((value) => value.includes(imageKeyword));
 
-    return matchesKeyword && matchesCategory && matchesImage;
+    return matchesKeyword && matchesCategory;
   });
 }

@@ -15,7 +15,7 @@ function VerifyEmail() {
   }, [location.search, location.state]);
 
   const [form, setForm] = useState({ email: initialEmail, otp: '' });
-  const [messageKey, setMessageKey] = useState(initialEmail ? 'auth.emailVerifyInitial' : '');
+  const [messageKey, setMessageKey] = useState(initialEmail ? 'auth.verifyOtpSent' : '');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
@@ -32,9 +32,9 @@ function VerifyEmail() {
 
     try {
       await sendEmailVerification(form.email);
-      setMessageKey('auth.emailVerifyResent');
+      setMessageKey('auth.verifyOtpResent');
     } catch (err) {
-      setError(err.response?.data?.message || t('auth.emailVerifySendError'));
+      setError(err.response?.data?.message || t('auth.verifySendError'));
     } finally {
       setResending(false);
     }
@@ -51,10 +51,10 @@ function VerifyEmail() {
         email: form.email,
         otp: form.otp,
       });
-      setMessageKey('auth.emailVerifySuccess');
+      setMessageKey('auth.verifySuccess');
       setTimeout(() => navigate('/login'), 800);
     } catch (err) {
-      setError(err.response?.data?.message || t('auth.emailVerifyError'));
+      setError(err.response?.data?.message || t('auth.verifyError'));
     } finally {
       setLoading(false);
     }
@@ -72,10 +72,8 @@ function VerifyEmail() {
 
               <div className="mb-4">
                 <div className="auth-brand">{t('app.name')}</div>
-                <h1 className="h3 fw-bold mb-2">{t('auth.verifyEmailTitle')}</h1>
-                <p className="text-secondary mb-0">
-                  {t('auth.verifyEmailDescription')}
-                </p>
+                <h1 className="h3 fw-bold mb-2">{t('auth.verifyTitle')}</h1>
+                <p className="text-secondary mb-0">{t('auth.verifyDescription')}</p>
               </div>
 
               {messageKey && <Alert variant="success">{t(messageKey)}</Alert>}
@@ -101,13 +99,13 @@ function VerifyEmail() {
                     onChange={handleChange}
                     inputMode="numeric"
                     maxLength={6}
-                    placeholder={t('auth.otpInputPlaceholder')}
+                    placeholder={t('auth.verifyOtpPlaceholder')}
                     required
                   />
                 </Form.Group>
 
                 <Button className="w-100" variant="success" type="submit" disabled={loading}>
-                  {loading ? t('auth.verifyingEmail') : t('auth.verifyEmail')}
+                  {loading ? t('auth.verifying') : t('auth.verifyTitle')}
                 </Button>
               </Form>
 
@@ -118,12 +116,14 @@ function VerifyEmail() {
                 onClick={resendOtp}
                 disabled={resending || !form.email}
               >
-                {resending ? t('auth.resendingOtp') : t('auth.resendOtp')}
+                {resending ? t('auth.sending') : t('auth.verifyResendOtp')}
               </Button>
 
-              <p className="text-center text-secondary mt-4 mb-0">
-                <Link to="/login">{t('auth.backToLogin')}</Link>
-              </p>
+              <div className="auth-form-meta justify-content-center mt-4 mb-0">
+                <Link to="/login" className="auth-subtle-link">
+                  {t('auth.backToLogin')}
+                </Link>
+              </div>
             </Card.Body>
           </Card>
         </Col>

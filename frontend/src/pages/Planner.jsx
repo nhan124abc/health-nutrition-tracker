@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Badge, Button, Card, Col, Form, ProgressBar, Row, Spinner } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Form, ProgressBar, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaBookOpen, FaCalendarAlt, FaCheck, FaDumbbell, FaFireAlt, FaRobot, FaUtensils } from 'react-icons/fa';
 import { getAiPlanSuggestions } from '../features/ai/aiService';
@@ -442,9 +442,7 @@ function Planner() {
   return <>
     <div className="page-heading">
       <div>
-        <Badge bg="success" className="mb-2">{t('plannerPage.badge')}</Badge>
         <h1>{t('plannerPage.title')}</h1>
-        <p>{t('plannerPage.description')}</p>
       </div>
     </div>
     {error && <Alert variant="danger">{error}</Alert>}
@@ -508,7 +506,6 @@ function Planner() {
             </div>
             <ProgressBar now={Math.min(progress, 100)} variant={progress > 100 ? 'danger' : 'success'} className="mb-3" />
             <Form.Group className="mb-3">
-              <Form.Label>{t('plannerPage.planDate')}</Form.Label>
               <div className="planner-date-control">
                 <FaCalendarAlt />
                 <Form.Control
@@ -661,7 +658,7 @@ function Planner() {
                         <Card.Body className="d-flex flex-column p-3">
                           <div className="d-flex justify-content-between align-items-center mb-2">
                             <span className="fw-bold text-dark">{item.name}</span>
-                            <Badge bg="success">{item.calories} kcal</Badge>
+                            <span className="small fw-semibold text-success">{item.calories} kcal</span>
                           </div>
                           <div className="text-secondary small mb-3">{t('plannerPage.serving')}: {item.serving}</div>
                           <div className="quick-grid mb-3">
@@ -702,7 +699,7 @@ function Planner() {
                       <Card.Body className="d-flex flex-column p-3">
                         <div className="d-flex justify-content-between align-items-center mb-2">
                           <span className="fw-bold text-dark">{act.activityName}</span>
-                          <Badge bg="primary">{Math.round(act.caloriesBurned)} kcal</Badge>
+                          <span className="small fw-semibold text-primary">{Math.round(act.caloriesBurned)} kcal</span>
                         </div>
                         <div className="text-secondary small mb-3">{t('plannerPage.duration', { minutes: act.durationMinutes })}</div>
                         <Button 
@@ -730,7 +727,7 @@ function Planner() {
                 <h2 className="h4 fw-bold mb-1">{t('plannerPage.recipeLibraryTitle')}</h2>
                 <p className="text-secondary mb-0">{t('plannerPage.recipeLibraryDescription')}</p>
               </div>
-              <Badge bg="success" className="mt-1">{recipes.length}</Badge>
+              <span className="small fw-semibold text-success mt-1">{recipes.length}</span>
             </div>
             {recipesLoading && (
               <Card className="border-0 shadow-sm">
@@ -757,15 +754,15 @@ function Planner() {
                         <Card.Body className="d-flex flex-column">
                           <div className="d-flex justify-content-between gap-2">
                             <FaBookOpen className="text-success fs-5" />
-                            <Badge bg="success">{recipe.calories} kcal</Badge>
+                            <span className="small fw-semibold text-success">{recipe.calories} kcal</span>
                           </div>
                           <h3 className="h5 fw-bold mt-3">{recipe.name}</h3>
                           <div className="d-flex flex-wrap gap-2 mb-3">
-                            <Badge bg="info">{t('plannerPage.savedRecipe')}</Badge>
-                            <Badge bg="light" text="dark">
+                            <span className="text-info small fw-semibold">{t('plannerPage.savedRecipe')}</span>
+                            <span className="text-secondary small">
                               {t('plannerPage.ingredientCount', { count: recipe.ingredients.length })}
-                            </Badge>
-                            <Badge bg="light" text="dark">{recipe.amount}</Badge>
+                            </span>
+                            <span className="text-secondary small">{recipe.amount}</span>
                           </div>
                           {recipe.ingredients.length > 0 && (
                             <div className="mb-3">
@@ -871,37 +868,37 @@ function Planner() {
                           ) : (
                             <FaUtensils className="text-success" />
                           )}
-                          <Badge bg={isExercise ? 'primary' : 'success'}>
+                          <span className={`small fw-semibold text-${isExercise ? 'primary' : 'success'}`}>
                             {isExercise
                               ? t('plannerPage.caloriesBurned', { calories: option.caloriesBurned || option.calories })
                               : `${option.calories} kcal`}
-                          </Badge>
+                          </span>
                         </div>
                         <h3 className="h5 fw-bold mt-3">{option.name}</h3>
                         <p className="text-secondary">{option.amount}</p>
                         {!isExercise && (
                           <div className="d-flex flex-wrap gap-2 mb-3">
-                            <Badge bg={option.recipeId ? 'info' : 'secondary'}>
+                            <span className={`small fw-semibold text-${option.recipeId ? 'info' : 'secondary'}`}>
                               {option.recipeId ? t('plannerPage.savedRecipe') : t('plannerPage.aiGenerated')}
-                            </Badge>
+                            </span>
                             {ingredientCount > 0 && (
-                              <Badge bg="light" text="dark">
+                              <span className="text-secondary small">
                                 {t('plannerPage.ingredientCount', { count: ingredientCount })}
-                              </Badge>
+                              </span>
                             )}
                           </div>
                         )}
                         {isExercise && (
                           <div className="d-flex flex-wrap gap-2 mb-3">
                             {option.durationMinutes && (
-                              <Badge bg="light" text="dark">
+                              <span className="text-secondary small">
                                 {t('plannerPage.minutes', { minutes: option.durationMinutes })}
-                              </Badge>
+                              </span>
                             )}
                             {matchedActivityType?.category && (
-                              <Badge bg="light" text="dark">
+                              <span className="text-secondary small">
                                 {t('plannerPage.activityCategory')}: {matchedActivityType.category.toUpperCase()}
-                              </Badge>
+                              </span>
                             )}
                           </div>
                         )}
@@ -985,7 +982,7 @@ function Planner() {
                               <Card.Body className="d-flex flex-column p-3">
                                 <div className="d-flex justify-content-between align-items-center mb-2">
                                   <span className="fw-bold text-dark">{act.activityName}</span>
-                                  <Badge bg="primary">{Math.round(act.caloriesBurned)} kcal</Badge>
+                                  <span className="small fw-semibold text-primary">{Math.round(act.caloriesBurned)} kcal</span>
                                 </div>
                                 <div className="text-secondary small mb-3">{t('plannerPage.duration', { minutes: act.durationMinutes })}</div>
                                 <Button
@@ -1018,15 +1015,15 @@ function Planner() {
                             <Card.Body className="d-flex flex-column">
                               <div className="d-flex justify-content-between gap-2">
                                 <FaDumbbell className="text-primary fs-5" />
-                                <Badge bg="primary">{t('plannerPage.caloriesBurned', { calories: activity.caloriesBurned })}</Badge>
+                                <span className="small fw-semibold text-primary">{t('plannerPage.caloriesBurned', { calories: activity.caloriesBurned })}</span>
                               </div>
                               <h3 className="h5 fw-bold mt-3">{activity.name}</h3>
                               <p className="text-secondary">{t('plannerPage.durationLabel')}: <strong>{t('plannerPage.minutes', { minutes: activity.durationMinutes })}</strong></p>
                               {matchedActivityType?.category && (
                                 <div className="mb-3">
-                                  <Badge bg="light" text="dark">
+                                  <span className="text-secondary small">
                                     {t('plannerPage.activityCategory')}: {matchedActivityType.category.toUpperCase()}
-                                  </Badge>
+                                  </span>
                                 </div>
                               )}
                               <Button
