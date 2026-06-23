@@ -519,7 +519,7 @@ function Planner() {
                   }}
                 />
               </div>
-            </Form.Group>
+            </Form.Group>    
             <Form.Group>
               <Form.Select
                 value={isExerciseMode ? 'exercise' : selectedMeal}

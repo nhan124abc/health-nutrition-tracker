@@ -21,6 +21,7 @@ import Reports from './pages/Reports';
 import Planner from './pages/Planner';
 import Settings from './pages/Settings';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
+import AdminCatalogs from './pages/admin/AdminCatalogs';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminManagementPage from './pages/admin/AdminManagementPage';
 import AdminProfile from './pages/admin/AdminProfile';
@@ -95,8 +96,13 @@ function App() {
           <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="users" element={<AdminManagementPage type="users" />} />
-          <Route path="catalogs/foods" element={<AdminManagementPage type="foods" />} />
-          <Route path="catalogs/activities" element={<AdminManagementPage type="exercises" />} />
+          <Route path="catalogs" element={<AdminCatalogs />} />
+          <Route path="catalogs/food-categories" element={<AdminCatalogs type="food" />} />
+          <Route path="catalogs/activity-categories" element={<AdminCatalogs type="activity" />} />
+          <Route path="all-foods" element={<AdminManagementPage type="foods" />} />
+          <Route path="all-activities" element={<AdminManagementPage type="exercises" />} />
+          <Route path="catalogs/foods" element={<Navigate to="/admin/catalogs/food-categories" replace />} />
+          <Route path="catalogs/activities" element={<Navigate to="/admin/catalogs/activity-categories" replace />} />
           <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="profile" element={<AdminProfile />} />
         </Route>
