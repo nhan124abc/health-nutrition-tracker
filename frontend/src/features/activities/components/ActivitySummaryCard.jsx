@@ -1,4 +1,4 @@
-import { Badge, Card, ProgressBar } from 'react-bootstrap';
+import { Card, ProgressBar } from 'react-bootstrap';
 
 function ActivitySummaryCard({ activityGoal = 0, activityTypes, logCount, summary, t }) {
   const percent = activityGoal > 0 ? Math.round((summary.calories / activityGoal) * 100) : 0;
@@ -23,7 +23,7 @@ function ActivitySummaryCard({ activityGoal = 0, activityTypes, logCount, summar
           {activityTypes.map((type) => (
             <div className="type-pill" key={type.id}>
               <span>{type.nameVi || type.name}</span>
-              <Badge bg="light" text="dark">{t(`activityPage.categories.${type.category}`)}</Badge>
+              <span className="text-secondary small">{t(`activityPage.categories.${type.category}`)}</span>
             </div>
           ))}
         </div>

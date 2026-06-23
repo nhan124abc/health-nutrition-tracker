@@ -99,7 +99,6 @@
       "createAccount": "Create account"
     },
     "hero": {
-      "badge": "Daily health tracking website",
       "description": "Health Nutrition helps you record meals, water, activity, and weight in one place. It makes it easier to understand your daily habits and see what you may need to adjust.",
       "secondary": "Built for people who want to lose weight, gain weight, maintain their shape, or simply build healthier everyday habits."
     },
@@ -114,7 +113,6 @@
       "days": "days"
     },
     "features": {
-      "badge": "Key features",
       "title": "Everything you need to keep track of your health",
       "description": "The website is designed to make daily tracking simple, easy to review, and easy to understand.",
       "onboarding": {
@@ -143,7 +141,6 @@
       }
     },
     "flow": {
-      "badge": "How it works",
       "title": "Start tracking your health in a few steps",
       "description": "Create an account, enter your basic health information, then record meals and activity each day. The website brings everything together so it is easier to follow your progress.",
       "steps": {
@@ -207,7 +204,6 @@
     "items": "items"
   },
   "planner": {
-    "badge": "AI Calorie-based Suggestions",
     "pageTitle": "Choose a Suitable Meal",
     "pageSubtitle": "The system generates two alternative options based on your remaining calorie budget for today.",
     "calorieBudgetTitle": "Today's Calorie Budget",
@@ -325,7 +321,6 @@
       "backToUser": "Back to user app"
     },
     "profile": {
-      "badge": "Admin",
       "title": "Admin profile",
       "role": "Role"
     },
@@ -411,7 +406,6 @@
       "empty": "No data found."
     },
     "dashboard": {
-      "badge": "Overview",
       "title": "System overview",
       "quickExport": "Quick export",
       "recentTitle": "Recent activity",
@@ -446,7 +440,6 @@
       }
     },
     "analytics": {
-      "badge": "System analytics",
       "title": "System-wide analytics",
       "loading": "Loading system-wide analytics...",
       "loadError": "Unable to load system-wide analytics.",
@@ -480,8 +473,7 @@
           "total": "Total users",
           "active": "Active users",
           "locked": "Locked accounts"
-        },
-        "badge": "Users"
+        }
       },
       "foods": {
         "title": "Food, meal, calorie and macro management",
@@ -492,8 +484,7 @@
           "total": "Foods",
           "pending": "Pending standardization",
           "macroFull": "Complete macro data"
-        },
-        "badge": "Nutrition"
+        }
       },
       "exercises": {
         "title": "Exercise and calorie burn management",
@@ -504,8 +495,7 @@
           "total": "Exercises",
           "hasMet": "With MET",
           "needsReview": "Needs review"
-        },
-        "badge": "Workout"
+        }
       },
       "articles": {
         "title": "Health article and news management",
@@ -514,8 +504,7 @@
           "total": "Articles",
           "published": "Published",
           "draftPending": "Drafts/pending"
-        },
-        "badge": "Content"
+        }
       },
       "reports": {
         "title": "System reports",
@@ -524,8 +513,7 @@
           "logs": "Diary logs",
           "calories": "Recorded calories",
           "retention": "Retention rate"
-        },
-        "badge": "Reports"
+        }
       },
       "submissions": {
         "title": "Review and edit user-submitted data",
@@ -534,8 +522,7 @@
           "pending": "Pending review",
           "approvedToday": "Approved today",
           "rejected": "Rejected"
-        },
-        "badge": "Review"
+        }
       },
       "plans": {
         "title": "Goal and service plan management",
@@ -544,8 +531,7 @@
           "goals": "Goal templates",
           "plans": "Service plans",
           "activeUsers": "Active users"
-        },
-        "badge": "Plans"
+        }
       },
       "settings": {
         "title": "Roles and system settings",
@@ -554,8 +540,7 @@
           "roles": "Roles",
           "permissions": "Permissions",
           "enabledSettings": "Enabled settings"
-        },
-        "badge": "System"
+        }
       }
     },
     "data": {
@@ -724,7 +709,6 @@
     "loading": "Loading dashboard data...",
     "loadError": "Unable to load dashboard data.",
     "partialLoadError": "Some dashboard data could not be loaded.",
-    "badge": "Daily dashboard",
     "title": "Today overview",
     "weeklyTitle": "7-day calories",
     "weeklyDescription": "Calories in/out and net calorie trend.",
@@ -757,7 +741,6 @@
     "loading": "Loading report data...",
     "loadError": "Unable to load report data.",
     "partialLoadError": "Some report data could not be loaded.",
-    "badge": "Reports & Statistics",
     "title": "Reports & Statistics",
     "caloriesTitle": "Calories in/out",
     "macroTitle": "Macro trend",
@@ -774,7 +757,6 @@
     }
   },
   "waterPage": {
-    "badge": "Water tracker",
     "title": "Water Tracker",
     "todayTitle": "Today's water",
     "totalToday": "{{total}} / {{goal}} ml today",
@@ -786,7 +768,10 @@
     "amount": "Amount ml",
     "noHistory": "No water logs for this date.",
     "updateLog": "Update water log",
-    "deleteLog": "Delete water log",
+    "editLog": "Edit",
+    "editLogTitle": "Edit water amount",
+    "savingLog": "Saving...",
+    "deleteLog": "Delete",
     "confirmDeleteLog": "Delete this water log?",
     "invalidAmount": "Please enter a water amount greater than 0 ml.",
     "invalidGoal": "Water goal must be between 100 and 10,000 ml.",
@@ -802,8 +787,18 @@
     "reminderDue": "It has been {{minutes}} minutes since your last water log.",
     "goalReached": "Today's water goal is complete."
   },
+  "settingsPage": {
+    "title": "Settings",
+    "notifications": {
+      "title": "Notification settings",
+      "mealReminder": "Meal reminders",
+      "waterReminder": "Water reminders",
+      "bodyMetricsReminder": "Body metrics reminders",
+      "activityReminder": "Activity reminders",
+      "weeklyReport": "Weekly report summary"
+    }
+  },
   "foodDiaryPage": {
-    "badge": "Meal diary",
     "title": "Daily meal log",
     "createMeal": "Create meal",
     "deleteMeal": "Delete meal",
@@ -872,7 +867,6 @@
     }
   },
   "nutritionPage": {
-    "badge": "Food database",
     "title": "Nutrition and foods",
     "addFood": "Add food",
     "loading": "Loading nutrition data...",
@@ -909,7 +903,6 @@
     }
   },
   "activityPage": {
-    "badge": "Physical activity",
     "title": "Daily activity logs",
     "addActivity": "Log activity",
     "listTitle": "Activity list",
@@ -967,7 +960,6 @@
     }
   },
   "profilePage": {
-    "badge": "User profile",
     "title": "Health profile",
     "savedMessage": "Profile saved successfully.",
     "completion": {
@@ -990,6 +982,17 @@
       "dailyWaterGoal": "Daily water goal ml",
       "healthGoal": "Health goal",
       "activityFactor": "Activity factor"
+    },
+    "avatar": {
+      "title": "Avatar",
+      "add": "Add avatar",
+      "update": "Update avatar",
+      "remove": "Remove avatar",
+      "help": "Optional. Use a .jpg or .png file, up to {{size}}MB.",
+      "invalidType": "Avatar must be a .jpg or .png file.",
+      "tooLarge": "Avatar must not exceed {{size}}MB.",
+      "readError": "Could not read the selected image. Please try another image.",
+      "previewAlt": "Avatar"
     },
     "selectGoal": "Select goal",
     "goals": {
@@ -1017,19 +1020,10 @@
     "healthProfile": "Health profile",
     "updateProfile": "Update profile",
     "metricHistory": "Body metrics history",
-    "notificationSettings": "Notification settings",
     "tabs": {
       "overview": "Health profile",
       "edit": "Update profile",
-      "metrics": "Body metrics history",
-      "notifications": "Notifications"
-    },
-    "notifications": {
-      "mealReminder": "Meal reminders",
-      "waterReminder": "Water reminders",
-      "weightReminder": "Weight check reminders",
-      "weeklyReport": "Weekly report summary",
-      "localOnly": "Notification settings are shown in the frontend only until the backend settings API is available."
+      "metrics": "Body metrics history"
     },
     "localModeNote": "Auth is disabled and no token is available, so this profile is saved locally for development. Log in or turn auth back on to save to the backend.",
     "goalFormulas": {
@@ -1043,7 +1037,6 @@
     }
   },
   "plannerPage": {
-    "badge": "Suggestions from remaining calories",
     "title": "Choose a suitable meal",
     "calorieBudget": "Today's calorie budget",
     "consumed": "Consumed {{consumed}} / {{goal}} kcal",
@@ -1155,7 +1148,6 @@
     }
   },
   "goalPlannerPage": {
-    "badge": "Automatic planning",
     "title": "Set a weight goal",
     "empty": "Enter your goal to receive suitable timeline options.",
     "summary": "Total energy change: {{energy}} kcal · Minimum safe duration: {{weeks}} weeks",
@@ -1164,7 +1156,7 @@
       "currentWeight": "Current",
       "goal": "Goal",
       "targetChange": "Weight change in kg",
-      "targetWeeks": "Preferred duration (weeks, optional)",
+      "targetWeeks": "Preferred duration (weeks)",
       "calculating": "Calculating...",
       "createOptions": "Create options"
     },
@@ -1195,7 +1187,6 @@
     }
   },
   "bodyMetricsPage": {
-    "badge": "Body metrics",
     "title": "Track body metrics",
     "addTitle": "Add metric",
     "saveMetric": "Save metric",
@@ -1204,6 +1195,13 @@
     "loadError": "Could not load body metrics.",
     "saveError": "Could not save body metric.",
     "savedMessage": "Body metric saved successfully.",
+    "editMetric": "Edit",
+    "deleteMetric": "Delete",
+    "editTitle": "Edit body metric",
+    "updating": "Updating...",
+    "updateError": "Could not update body metric.",
+    "deleteError": "Could not delete body metric.",
+    "confirmDeleteMetric": "Delete this body metric?",
     "chartTitle": "Progress chart",
     "historyTitle": "Metric history",
     "fields": {
@@ -1212,13 +1210,13 @@
       "bodyFat": "Body fat %",
       "muscleMass": "Muscle mass kg",
       "waist": "Waist cm",
-      "hip": "Hip cm",
+      "hip": "Buttocks cm",
       "chest": "Chest cm"
     },
     "table": {
       "bodyFat": "Body fat",
       "muscle": "Muscle",
-      "measurements": "Waist/Hip/Chest"
+      "measurements": "Waist/Buttocks/Chest"
     }
   }
 }

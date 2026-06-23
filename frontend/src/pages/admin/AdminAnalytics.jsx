@@ -10,7 +10,7 @@ import {
 } from 'chart.js';
 import { Bar, Line } from 'react-chartjs-2';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Badge, Card, Col, ProgressBar, Row, Spinner } from 'react-bootstrap';
+import { Alert, Card, Col, ProgressBar, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaChartLine, FaDatabase, FaUserCheck, FaUsers } from 'react-icons/fa';
 import { getAdminSystemAnalytics } from '../../features/admin/adminService';
@@ -133,7 +133,6 @@ function AdminAnalytics() {
     <>
       <div className="admin-page-heading">
         <div>
-          <Badge bg="success" className="mb-2">{t('admin.analytics.badge')}</Badge>
           <h2>{t('admin.analytics.title')}</h2>
         </div>
       </div>
@@ -156,7 +155,7 @@ function AdminAnalytics() {
                   <div className="admin-stat-icon"><Icon /></div>
                   <span className="text-secondary">{t(stat.labelKey)}</span>
                   <div className="admin-stat-value">{stat.value}</div>
-                  <Badge bg="light" text="success">{stat.helper}</Badge>
+                  <span className="text-success small fw-semibold">{stat.helper}</span>
                 </Card.Body>
               </Card>
             </Col>

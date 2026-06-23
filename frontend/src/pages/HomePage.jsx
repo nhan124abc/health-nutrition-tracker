@@ -1,4 +1,4 @@
-import { Badge, Button, Card, Col, Container, ProgressBar, Row } from 'react-bootstrap';
+import { Button, Card, Col, Container, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import {
   FaBarcode,
@@ -6,7 +6,6 @@ import {
   FaCheckCircle,
   FaDumbbell,
   FaHeartbeat,
-  FaLock,
   FaTint,
   FaUserCheck,
   FaUtensils,
@@ -29,13 +28,6 @@ const flowSteps = [
   ['02', 'home.flow.steps.profile.title', 'home.flow.steps.profile.description'],
   ['03', 'home.flow.steps.log.title', 'home.flow.steps.log.description'],
   ['04', 'home.flow.steps.track.title', 'home.flow.steps.track.description'],
-];
-
-const heroMetrics = [
-  ['1,680', 'kcal', 'home.snapshot.calories'],
-  ['112g', '', 'health.protein'],
-  ['65', 'home.units.minutes', 'home.snapshot.activeMinutes'],
-  ['8', 'home.units.days', 'home.snapshot.streak'],
 ];
 
 function HomePage() {
@@ -75,9 +67,6 @@ function HomePage() {
           <Container>
             <Row className="align-items-center g-5">
               <Col lg={6}>
-                <Badge bg="success" className="premium-eyebrow mb-3">
-                  {t('home.hero.badge')}
-                </Badge>
                 <h1>{t('app.name')}</h1>
                 <p className="premium-hero-copy">{t('home.hero.description')}</p>
                 <div className="premium-hero-actions">
@@ -152,66 +141,9 @@ function HomePage() {
           </Container>
         </section>
 
-        <section className="premium-metrics-band">
+        <section className="home-features bg-white" id="features">
           <Container>
-            <Row className="g-3">
-              {heroMetrics.map(([value, unitKey, labelKey]) => (
-                <Col sm={6} lg={3} key={labelKey}>
-                  <div className="premium-metric-tile">
-                    <strong>
-                      {value}
-                      {unitKey && <small> {unitKey.startsWith('home.') ? t(unitKey) : unitKey}</small>}
-                    </strong>
-                    <span>{t(labelKey)}</span>
-                  </div>
-                </Col>
-              ))}
-            </Row>
-          </Container>
-        </section>
-
-        <section className="premium-section premium-split-section">
-          <Container>
-            <Row className="g-4 align-items-center">
-              <Col lg={5}>
-                <Badge bg="light" text="success" className="mb-3">
-                  {t('home.features.badge')}
-                </Badge>
-                <h2>{t('home.features.title')}</h2>
-                <p>{t('home.features.description')}</p>
-              </Col>
-              <Col lg={7}>
-                <div className="premium-dashboard-preview">
-                  <div className="premium-preview-header">
-                    <span>{t('dashboard.title')}</span>
-                    <strong>1,680 / 2,000 kcal</strong>
-                  </div>
-                  <ProgressBar now={84} variant="success" />
-                  <Row className="g-3 mt-2">
-                    {featureCards.slice(0, 3).map((feature) => {
-                      const Icon = feature.icon;
-                      return (
-                        <Col md={4} key={feature.titleKey}>
-                          <div className="premium-mini-module">
-                            <Icon />
-                            <span>{t(feature.titleKey)}</span>
-                          </div>
-                        </Col>
-                      );
-                    })}
-                  </Row>
-                </div>
-              </Col>
-            </Row>
-          </Container>
-        </section>
-
-        <section className="premium-section premium-feature-grid" id="features">
-          <Container>
-            <div className="section-heading premium-centered-heading">
-              <Badge bg="success" className="mb-2">
-                {t('home.features.badge')}
-              </Badge>
+            <div className="section-heading">
               <h2>{t('home.features.title')}</h2>
               <p>{t('home.features.description')}</p>
             </div>
@@ -221,7 +153,7 @@ function HomePage() {
 
                 return (
                   <Col md={6} xl={4} key={feature.titleKey}>
-                    <Card className="premium-feature-card h-100 border-0">
+                    <Card className="home-feature-card h-100 border-0 shadow-sm">
                       <Card.Body>
                         <div className="home-feature-icon">
                           <Icon />
@@ -237,20 +169,17 @@ function HomePage() {
           </Container>
         </section>
 
-        <section className="premium-section premium-flow" id="flow">
+        <section className="home-flow" id="flow">
           <Container>
             <Row className="g-4 align-items-start">
               <Col lg={5}>
-                <Badge bg="success" className="mb-3">
-                  {t('home.flow.badge')}
-                </Badge>
                 <h2>{t('home.flow.title')}</h2>
                 <p>{t('home.flow.description')}</p>
               </Col>
               <Col lg={7}>
-                <div className="premium-flow-list">
+                <div className="flow-list">
                   {flowSteps.map(([number, titleKey, descriptionKey]) => (
-                    <div className="premium-flow-item" key={number}>
+                    <div className="flow-item" key={number}>
                       <span>{number}</span>
                       <div>
                         <h3>{t(titleKey)}</h3>
@@ -264,38 +193,41 @@ function HomePage() {
           </Container>
         </section>
 
-        <section className="premium-section premium-security" id="security">
+        <section className="home-security bg-white" id="security">
           <Container>
-            <Row className="g-4">
-              <Col lg={6}>
-                <Card className="premium-info-card border-0 h-100">
-                  <Card.Body>
-                    <FaLock className="home-info-icon" />
-                    <h2>{t('home.security.authTitle')}</h2>
-                    <p>{t('home.security.authDescription')}</p>
-                  </Card.Body>
-                </Card>
-              </Col>
-              <Col lg={6}>
-                <Card className="premium-info-card border-0 h-100">
-                  <Card.Body>
-                    <FaHeartbeat className="home-info-icon" />
-                    <h2>{t('home.security.apiTitle')}</h2>
-                    <p>{t('home.security.apiDescription')}</p>
-                  </Card.Body>
-                </Card>
-              </Col>
-            </Row>
+            <Card className="home-info-card border-0 shadow-sm">
+              <Card.Body className="p-4">
+                <Row className="g-4">
+                  <Col md={6}>
+                    <div className="d-flex gap-3">
+                      <FaCheckCircle className="home-info-icon flex-shrink-0" />
+                      <div>
+                        <h2 className="h4">{t('home.security.authTitle')}</h2>
+                        <p className="mb-0">{t('home.security.authDescription')}</p>
+                      </div>
+                    </div>
+                  </Col>
+                  <Col md={6}>
+                    <div className="d-flex gap-3">
+                      <FaCheckCircle className="home-info-icon flex-shrink-0" />
+                      <div>
+                        <h2 className="h4">{t('home.security.apiTitle')}</h2>
+                        <p className="mb-0">{t('home.security.apiDescription')}</p>
+                      </div>
+                    </div>
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
           </Container>
         </section>
 
-        <section className="premium-final-cta">
+        <section className="home-final-cta">
           <Container>
-            <div className="premium-cta-panel">
-              <div>
-                <h2>{t('home.cta.title')}</h2>
-                <p>{t('home.cta.description')}</p>
-              </div>
+            <div className="text-center mx-auto" style={{ maxWidth: '760px' }}>
+              <FaHeartbeat className="home-final-icon" />
+              <h2>{t('home.cta.title')}</h2>
+              <p>{t('home.cta.description')}</p>
               <Button as={Link} to="/register" variant="success" size="lg">
                 {t('home.actions.createAccount')}
               </Button>

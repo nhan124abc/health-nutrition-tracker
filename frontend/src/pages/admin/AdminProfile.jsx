@@ -1,4 +1,4 @@
-import { Badge, Card, Col, Row } from 'react-bootstrap';
+import { Card, Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaUserCircle } from 'react-icons/fa';
 import { getCurrentUser } from '../../api/api';
@@ -17,7 +17,6 @@ function AdminProfile() {
     <>
       <div className="admin-page-heading">
         <div>
-          <Badge bg="success" className="mb-2">{t('admin.profile.badge')}</Badge>
           <h2>{t('admin.profile.title')}</h2>
         </div>
       </div>

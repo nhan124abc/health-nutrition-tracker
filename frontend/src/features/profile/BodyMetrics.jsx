@@ -1,27 +1,43 @@
 import { useEffect, useState } from 'react';
-import { Alert, Badge, Col, Row, Spinner } from 'react-bootstrap';
+import { Alert, Button, Col, Form, Modal, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import BodyMetricChart from './components/BodyMetricChart';
 import BodyMetricFormCard from './components/BodyMetricFormCard';
 import ProfileMetrics from './components/ProfileMetrics';
-import { createBodyMetric, getBodyMetrics } from './profileService';
 import {
+  createBodyMetric,
+  deleteBodyMetric,
+  getBodyMetrics,
+  getProfile,
+  updateBodyMetric,
+  updateProfile,
+} from './profileService';
+import {
+  buildBodyMetricFormFromProfile,
+  bodyMetricFields,
   emptyBodyMetric,
   extractBodyMetricFromApi,
   extractMetricRows,
+  extractProfileFromApi,
   getApiErrorMessage,
+  getLatestBodyMetric,
   getTodayDate,
   mapBodyMetricToApi,
+  mapProfileFromApi,
 } from './profileUtils';
 
 function BodyMetrics() {
   const { t } = useTranslation();
+  const [profile, setProfile] = useState(null);
   const [metrics, setMetrics] = useState([]);
   const [form, setForm] = useState(() => ({ ...emptyBodyMetric, date: getTodayDate() }));
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const [editingMetric, setEditingMetric] = useState(null);
+  const [editForm, setEditForm] = useState(emptyBodyMetric);
+  const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -31,10 +47,29 @@ function BodyMetrics() {
       setError('');
 
       try {
-        const response = await getBodyMetrics({ page: 0, size: 100 });
+        const [profileResult, metricsResult] = await Promise.allSettled([
+          getProfile(),
+          getBodyMetrics({ page: 0, size: 100 }),
+        ]);
 
-        if (isMounted) {
-          setMetrics(extractMetricRows(response.data));
+        if (!isMounted) {
+          return;
+        }
+
+        const loadedProfile = profileResult.status === 'fulfilled'
+          ? mapProfileFromApi(extractProfileFromApi(profileResult.value.data))
+          : {};
+        const loadedMetrics = metricsResult.status === 'fulfilled'
+          ? extractMetricRows(metricsResult.value.data)
+          : [];
+
+        setProfile(loadedProfile);
+        setMetrics(loadedMetrics);
+        setForm(buildBodyMetricFormFromProfile(loadedProfile, loadedMetrics));
+
+        const failedResult = [profileResult, metricsResult].find((result) => result.status === 'rejected');
+        if (failedResult) {
+          setError(getApiErrorMessage(failedResult.reason, t('bodyMetricsPage.loadError')));
         }
       } catch (requestError) {
         console.error('[BodyMetrics] Error loading metrics:', requestError);
@@ -62,6 +97,49 @@ function BodyMetrics() {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
+  const handleEditChange = (event) => {
+    const { name, value } = event.target;
+    setEditForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const syncProfileWeight = (nextMetrics) => {
+    const latestMetric = getLatestBodyMetric(nextMetrics);
+    const nextWeight = latestMetric.weightKg ?? latestMetric.weight;
+
+    if (Number(nextWeight) > 0) {
+      const nextProfile = { ...(profile || {}), weight: nextWeight };
+      setProfile(nextProfile);
+      updateProfile({ weightKg: Number(nextWeight) })
+        .then(() => window.dispatchEvent(new CustomEvent('profile:updated', { detail: nextProfile })))
+        .catch((syncError) => {
+          console.error('[BodyMetrics] Error syncing profile weight:', syncError);
+        });
+    }
+  };
+
+  const mapMetricToForm = (metric = {}) => ({
+    ...emptyBodyMetric,
+    date: String(metric.recordedAt || metric.date || getTodayDate()).slice(0, 10),
+    weight: metric.weightKg ?? metric.weight ?? '',
+    waist: metric.waistCm ?? metric.waist ?? '',
+    hip: metric.hipCm ?? metric.hip ?? '',
+    chest: metric.chestCm ?? metric.chest ?? '',
+  });
+
+  const openEditMetric = (metric) => {
+    setEditingMetric(metric);
+    setEditForm(mapMetricToForm(metric));
+  };
+
+  const closeEditMetric = () => {
+    if (updating) {
+      return;
+    }
+
+    setEditingMetric(null);
+    setEditForm(emptyBodyMetric);
+  };
+
   const addMetric = async (event) => {
     event.preventDefault();
 
@@ -76,12 +154,27 @@ function BodyMetrics() {
     try {
       const response = await createBodyMetric(mapBodyMetricToApi(form));
       const createdMetric = extractBodyMetricFromApi(response.data);
-
-      setMetrics((current) => [
+      const nextMetrics = [
         createdMetric,
-        ...current.filter((item) => item.id !== createdMetric.id),
-      ]);
-      setForm({ ...emptyBodyMetric, date: getTodayDate() });
+        ...metrics.filter((item) => item.id !== createdMetric.id),
+      ];
+      const nextProfile = {
+        ...(profile || {}),
+        weight: form.weight,
+      };
+
+      setMetrics(nextMetrics);
+      setProfile(nextProfile);
+      setForm(buildBodyMetricFormFromProfile(nextProfile, nextMetrics));
+
+      if (Number(form.weight) > 0) {
+        updateProfile({ weightKg: Number(form.weight) })
+          .then(() => window.dispatchEvent(new CustomEvent('profile:updated', { detail: nextProfile })))
+          .catch((syncError) => {
+            console.error('[BodyMetrics] Error syncing profile weight:', syncError);
+          });
+      }
+
       setSaved(true);
     } catch (requestError) {
       console.error('[BodyMetrics] Error saving metric:', requestError);
@@ -91,11 +184,64 @@ function BodyMetrics() {
     }
   };
 
+  const updateMetric = async (event) => {
+    event.preventDefault();
+
+    if (!editingMetric || updating) {
+      return;
+    }
+
+    setUpdating(true);
+    setSaved(false);
+    setError('');
+
+    try {
+      const response = await updateBodyMetric(editingMetric.id, mapBodyMetricToApi(editForm));
+      const updatedMetric = extractBodyMetricFromApi(response.data);
+      const nextMetrics = metrics.map((item) => (
+        item.id === editingMetric.id ? { ...item, ...updatedMetric } : item
+      ));
+
+      setMetrics(nextMetrics);
+      setForm(buildBodyMetricFormFromProfile(profile || {}, nextMetrics));
+      syncProfileWeight(nextMetrics);
+      setEditingMetric(null);
+      setEditForm(emptyBodyMetric);
+      setSaved(true);
+    } catch (requestError) {
+      console.error('[BodyMetrics] Error updating metric:', requestError);
+      setError(getApiErrorMessage(requestError, t('bodyMetricsPage.updateError')));
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const removeMetric = async (metric) => {
+    if (!window.confirm(t('bodyMetricsPage.confirmDeleteMetric'))) {
+      return;
+    }
+
+    setSaved(false);
+    setError('');
+
+    try {
+      await deleteBodyMetric(metric.id);
+      const nextMetrics = metrics.filter((item) => item.id !== metric.id);
+
+      setMetrics(nextMetrics);
+      setForm(buildBodyMetricFormFromProfile(profile || {}, nextMetrics));
+      syncProfileWeight(nextMetrics);
+      setSaved(true);
+    } catch (requestError) {
+      console.error('[BodyMetrics] Error deleting metric:', requestError);
+      setError(getApiErrorMessage(requestError, t('bodyMetricsPage.deleteError')));
+    }
+  };
+
   return (
     <>
       <div className="page-heading">
         <div>
-          <Badge bg="success" className="mb-2">{t('bodyMetricsPage.badge')}</Badge>
           <h1>{t('bodyMetricsPage.title')}</h1>
         </div>
       </div>
@@ -125,12 +271,49 @@ function BodyMetrics() {
           <Col xs={12}>
             <ProfileMetrics
               metrics={metrics}
+              onDelete={removeMetric}
+              onEdit={openEditMetric}
               t={t}
               titleKey="bodyMetricsPage.historyTitle"
             />
           </Col>
         </Row>
       )}
+
+      <Modal show={Boolean(editingMetric)} onHide={closeEditMetric} centered>
+        <Form onSubmit={updateMetric}>
+          <Modal.Header closeButton>
+            <Modal.Title>{t('bodyMetricsPage.editTitle')}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Row className="g-3">
+              {bodyMetricFields.map(([name, labelKey, type]) => (
+                <Col md={name === 'date' ? 12 : 6} key={name}>
+                  <Form.Group>
+                    <Form.Label>{t(labelKey)}</Form.Label>
+                    <Form.Control
+                      type={type}
+                      name={name}
+                      value={editForm[name]}
+                      onChange={handleEditChange}
+                      disabled={updating}
+                      required={name === 'date'}
+                    />
+                  </Form.Group>
+                </Col>
+              ))}
+            </Row>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="outline-secondary" onClick={closeEditMetric} disabled={updating}>
+              {t('common.cancel')}
+            </Button>
+            <Button variant="success" type="submit" disabled={updating}>
+              {updating ? t('bodyMetricsPage.updating') : t('common.save')}
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
     </>
   );
 }

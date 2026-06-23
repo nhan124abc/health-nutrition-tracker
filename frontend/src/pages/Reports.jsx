@@ -11,7 +11,7 @@ import {
 } from 'chart.js';
 import { Bar, Line } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
-import { Badge, Card, Col, Form, Row } from 'react-bootstrap';
+import { Card, Col, Form, Row } from 'react-bootstrap';
 import { getActivitySummary } from '../features/activities/activityService';
 import { getMealsByDate } from '../features/meals/mealService';
 import {
@@ -193,7 +193,6 @@ function Reports() {
     <>
       <div className="page-heading">
         <div>
-          <Badge bg="success" className="mb-2">{t('reportsPage.badge')}</Badge>
           <h1>{t('reportsPage.title')}</h1>
         </div>
         <Form.Select className="page-date-input" value={range} onChange={(event) => setRange(event.target.value)}>

@@ -1,4 +1,5 @@
 import { Card, Col, Row } from 'react-bootstrap';
+import { FaUserCircle } from 'react-icons/fa';
 
 function ProfileOverview({ account, bmi, profile, t }) {
   const summaryItems = [
@@ -17,7 +18,16 @@ function ProfileOverview({ account, bmi, profile, t }) {
       <Col lg={8}>
         <Card className="border-0 shadow-sm">
           <Card.Body className="p-4">
-            <Card.Title className="fw-bold mb-3">{t('profilePage.healthProfile')}</Card.Title>
+            <div className="profile-overview-heading">
+              <div className="profile-avatar-preview profile-avatar-preview-sm">
+                {profile.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt={t('profilePage.avatar.previewAlt')} />
+                ) : (
+                  <FaUserCircle />
+                )}
+              </div>
+              <Card.Title className="fw-bold mb-0">{t('profilePage.healthProfile')}</Card.Title>
+            </div>
             <div className="nutrition-detail-grid">
               <div><span>{t('profilePage.fields.username')}</span><strong>{profile.username || '-'}</strong></div>
               <div><span>{t('profile.gender')}</span><strong>{profile.gender ? t(`profile.${profile.gender}`) : '-'}</strong></div>

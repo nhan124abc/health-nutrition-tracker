@@ -5,6 +5,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
 }
 
+
 html,
 body,
 * {
@@ -40,6 +41,7 @@ body::-webkit-scrollbar,
     #fcf9f7;
 }
 
+
 .btn-success {
   --bs-btn-bg: var(--health-primary);
   --bs-btn-border-color: var(--health-primary);
@@ -68,10 +70,6 @@ body::-webkit-scrollbar,
 
 .progress-bar.bg-success {
   background-color: var(--health-primary) !important;
-}
-
-.badge.text-success {
-  color: var(--health-primary-dark) !important;
 }
 
 .layout-shell {
@@ -234,6 +232,17 @@ body::-webkit-scrollbar,
 .layout-user-toggle:hover,
 .layout-user-toggle:focus {
   color: var(--health-primary) !important;
+}
+
+.layout-user-avatar-toggle {
+  padding: 0 !important;
+}
+
+.layout-user-avatar-toggle img {
+  border-radius: 999px;
+  height: 1.25rem;
+  object-fit: cover;
+  width: 1.25rem;
 }
 
 .layout-sidebar {
@@ -991,6 +1000,74 @@ body::-webkit-scrollbar,
   font-size: 0.95rem;
   line-height: 1.25;
   overflow-wrap: anywhere;
+}
+
+.settings-option-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.settings-option-list .form-check {
+  align-items: center;
+  background: var(--health-surface);
+  border: 1px solid #edf0f2;
+  border-radius: 0.75rem;
+  display: flex;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0.9rem 1rem 0.9rem 3rem;
+}
+
+.water-history-readonly-input {
+  background: var(--health-surface) !important;
+  cursor: default;
+}
+
+.profile-avatar-editor,
+.profile-overview-heading {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+}
+
+.profile-avatar-editor {
+  background: var(--health-surface);
+  border: 1px solid #edf0f2;
+  border-radius: 0.85rem;
+  padding: 1rem;
+}
+
+.profile-avatar-preview {
+  align-items: center;
+  background: #eef8f1;
+  border: 1px solid rgba(47, 143, 107, 0.18);
+  border-radius: 999px;
+  color: var(--health-primary-dark);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 4rem;
+  height: 96px;
+  justify-content: center;
+  overflow: hidden;
+  width: 96px;
+}
+
+.profile-avatar-preview img {
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.profile-avatar-preview-sm {
+  font-size: 2.4rem;
+  height: 56px;
+  width: 56px;
+}
+
+.profile-avatar-controls {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
 }
 
 .admin-profile-heading {
@@ -1990,6 +2067,11 @@ body::-webkit-scrollbar,
 
   .layout-footer-links {
     flex-wrap: wrap;
+  }
+
+  .profile-avatar-editor {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 

@@ -171,7 +171,6 @@
     "items": "Món"
   },
   "planner": {
-    "badge": "Gợi ý theo calo còn lại",
     "pageTitle": "Chọn bữa ăn phù hợp",
     "pageSubtitle": "Hệ thống tạo hai phương án thay thế nhau dựa trên lượng calo bạn còn được ăn hôm nay.",
     "calorieBudgetTitle": "Ngân sách calo hôm nay",
@@ -275,7 +274,6 @@
       "createAccount": "Tạo tài khoản"
     },
     "hero": {
-      "badge": "Ứng dụng theo dõi sức khỏe mỗi ngày",
       "description": "Health Nutrition giúp bạn ghi lại bữa ăn, lượng nước, vận động và cân nặng trong một nơi. Từ đó bạn dễ nhìn thấy mình đang ăn uống ra sao và cần điều chỉnh điều gì.",
       "secondary": "Phù hợp cho người muốn giảm cân, tăng cân, duy trì vóc dáng hoặc đơn giản là xây dựng thói quen sống lành mạnh hơn."
     },
@@ -290,7 +288,6 @@
       "days": "ngày"
     },
     "features": {
-      "badge": "Tính năng nổi bật",
       "title": "Tất cả những gì bạn cần để theo dõi sức khỏe",
       "description": "Website được thiết kế để bạn dễ ghi chép, dễ xem lại và dễ hiểu tình trạng của mình qua từng ngày.",
       "onboarding": {
@@ -319,7 +316,6 @@
       }
     },
     "flow": {
-      "badge": "Cách sử dụng",
       "title": "Bắt đầu theo dõi sức khỏe chỉ trong vài bước",
       "description": "Bạn chỉ cần tạo tài khoản, nhập thông tin cơ bản, sau đó ghi lại bữa ăn và hoạt động mỗi ngày. Hệ thống sẽ tổng hợp để bạn dễ theo dõi hơn.",
       "steps": {
@@ -404,7 +400,6 @@
     "loading": "Đang tải dữ liệu dashboard...",
     "loadError": "Không thể tải dữ liệu dashboard.",
     "partialLoadError": "Một phần dữ liệu dashboard chưa tải được.",
-    "badge": "Dashboard ngày",
     "title": "Tổng quan hôm nay",
     "weeklyTitle": "Calories 7 ngày",
     "weeklyDescription": "Calories in/out và xu hướng net calories.",
@@ -437,7 +432,6 @@
     "loading": "Đang tải dữ liệu báo cáo...",
     "loadError": "Không thể tải dữ liệu báo cáo.",
     "partialLoadError": "Một phần dữ liệu báo cáo chưa tải được.",
-    "badge": "Báo cáo & thống kê",
     "title": "Báo cáo & thống kê",
     "caloriesTitle": "Calories in/out",
     "macroTitle": "Macro trend",
@@ -454,7 +448,6 @@
     }
   },
   "waterPage": {
-    "badge": "Theo dõi nước uống",
     "title": "Theo dõi nước uống",
     "todayTitle": "Nước hôm nay",
     "totalToday": "{{total}} / {{goal}} ml hôm nay",
@@ -465,16 +458,19 @@
     "time": "Giờ",
     "amount": "Lượng ml",
     "noHistory": "Chưa có lịch sử uống nước cho ngày này.",
-    "updateLog": "Cập nhật water log",
-    "deleteLog": "Xóa water log",
+    "updateLog": "Cập nhật lịch sử uống nước",
+    "editLog": "Chỉnh sửa",
+    "editLogTitle": "Chỉnh sửa lượng nước",
+    "savingLog": "Đang lưu...",
+    "deleteLog": "Xóa",
     "confirmDeleteLog": "Bạn có chắc muốn xóa water log này?",
     "invalidAmount": "Vui lòng nhập lượng nước lớn hơn 0 ml.",
     "invalidGoal": "Mục tiêu nước phải từ 100 đến 10.000 ml.",
     "goalSaved": "Đã lưu mục tiêu nước.",
     "localGoalSaved": "Đã lưu mục tiêu nước local vì chưa cập nhật được profile API.",
     "loggedMessage": "Đã ghi nhận {{amount}} ml nước.",
-    "updatedMessage": "Đã cập nhật water log.",
-    "deletedMessage": "Đã xóa water log.",
+    "updatedMessage": "Đã cập nhật lịch sử uống nước.",
+    "deletedMessage": "Đã xóa lịch sử uống nước.",
     "notificationTitle": "Thông báo uống nước",
     "reminderEnabled": "Nhắc uống nước",
     "reminderInterval": "Khoảng nhắc phút",
@@ -482,8 +478,18 @@
     "reminderDue": "Đã {{minutes}} phút từ lần uống nước gần nhất.",
     "goalReached": "Bạn đã hoàn thành mục tiêu nước hôm nay."
   },
+  "settingsPage": {
+    "title": "Cài đặt",
+    "notifications": {
+      "title": "Cài đặt thông báo",
+      "mealReminder": "Nhắc bữa ăn",
+      "waterReminder": "Nhắc uống nước",
+      "bodyMetricsReminder": "Nhắc cập nhật chỉ số cơ thể",
+      "activityReminder": "Nhắc vận động",
+      "weeklyReport": "Tổng kết tuần"
+    }
+  },
   "foodDiaryPage": {
-    "badge": "Nhật ký bữa ăn",
     "title": "Meal log trong ngày",
     "createMeal": "Tạo bữa ăn",
     "deleteMeal": "Xóa bữa ăn",
@@ -552,7 +558,6 @@
     }
   },
   "nutritionPage": {
-    "badge": "Cơ sở dữ liệu thực phẩm",
     "title": "Dinh dưỡng và thực phẩm",
     "addFood": "Thêm thực phẩm",
     "loading": "Đang tải dữ liệu dinh dưỡng...",
@@ -589,7 +594,6 @@
     }
   },
   "activityPage": {
-    "badge": "Hoạt động thể chất",
     "title": "Activity logs trong ngày",
     "addActivity": "Ghi hoạt động",
     "listTitle": "Danh sách hoạt động",
@@ -658,7 +662,6 @@
       "title": "Thông tin hồ sơ",
       "empty": "Chưa tải được thông tin hồ sơ."
     },
-    "badge": "Hồ sơ người dùng",
     "title": "Profile sức khỏe",
     "savedMessage": "Đã lưu hồ sơ thành công.",
     "metricsLoadError": "Không thể tải lịch sử chỉ số cơ thể.",
@@ -670,6 +673,17 @@
       "dailyWaterGoal": "Mục tiêu nước/ngày ml",
       "healthGoal": "Mục tiêu sức khỏe",
       "activityFactor": "Hệ số vận động"
+    },
+    "avatar": {
+      "title": "Ảnh đại diện",
+      "add": "Thêm ảnh đại diện",
+      "update": "Cập nhật ảnh đại diện",
+      "remove": "Hủy ảnh đại diện",
+      "help": "Chỉ nhận file .jpg hoặc .png, tối đa {{size}}MB.",
+      "invalidType": "Ảnh đại diện chỉ được dùng file .jpg hoặc .png.",
+      "tooLarge": "Ảnh đại diện không được vượt quá {{size}}MB.",
+      "readError": "Không thể đọc ảnh đã chọn. Vui lòng thử ảnh khác.",
+      "previewAlt": "Ảnh đại diện"
     },
     "selectGoal": "Chọn mục tiêu",
     "goals": {
@@ -697,19 +711,10 @@
     "healthProfile": "Hồ sơ sức khỏe",
     "updateProfile": "Cập nhật hồ sơ",
     "metricHistory": "Lịch sử chỉ số cơ thể",
-    "notificationSettings": "Cài đặt thông báo",
     "tabs": {
       "overview": "Hồ sơ sức khỏe",
       "edit": "Cập nhật hồ sơ",
-      "metrics": "Lịch sử chỉ số",
-      "notifications": "Thông báo"
-    },
-    "notifications": {
-      "mealReminder": "Nhắc bữa ăn",
-      "waterReminder": "Nhắc uống nước",
-      "weightReminder": "Nhắc kiểm tra cân nặng",
-      "weeklyReport": "Tổng kết tuần",
-      "localOnly": "Cài đặt thông báo hiện chỉ hiển thị ở frontend cho đến khi có API settings từ backend."
+      "metrics": "Lịch sử chỉ số"
     },
     "localModeNote": "Auth đang tắt và chưa có token, nên hồ sơ này được lưu local để phát triển. Đăng nhập hoặc bật lại auth để lưu vào backend.",
     "goalFormulas": {
@@ -723,13 +728,10 @@
     }
   },
   "plannerPage": {
-    "badge": "Gợi ý theo calo còn lại",
     "title": "Chọn bữa ăn phù hợp",
     "calorieBudget": "Ngân sách calo hôm nay",
     "consumed": "Đã ăn {{consumed}} / {{goal}} kcal",
-    "planDate": "Ngày lập kế hoạch",
-    "activityKind": "Kế hoạch vận động",
-    "selectSlot": "Chọn bữa ăn hoặc hoạt động",
+    "selectSlot": "Chọn bữa ăn",
     "generating": "Đang tạo...",
     "createOptions": "Tạo 2 phương án",
     "createOtherOptions": "Tạo 2 phương án khác",
@@ -835,7 +837,6 @@
     }
   },
   "goalPlannerPage": {
-    "badge": "Kế hoạch tự động",
     "title": "Thiết lập mục tiêu cân nặng",
     "empty": "Nhập mục tiêu để nhận các mốc thời gian phù hợp.",
     "summary": "Tổng năng lượng cần thay đổi: {{energy}} kcal · Thời gian an toàn tối thiểu: {{weeks}} tuần",
@@ -844,7 +845,7 @@
       "currentWeight": "Hiện tại",
       "goal": "Mục tiêu",
       "targetChange": "Số kg muốn thay đổi",
-      "targetWeeks": "Thời gian mong muốn (tuần, không bắt buộc)",
+      "targetWeeks": "Thời gian mong muốn (tuần)",
       "calculating": "Đang tính...",
       "createOptions": "Tạo các phương án"
     },
@@ -874,7 +875,6 @@
     }
   },
   "bodyMetricsPage": {
-    "badge": "Chỉ số cơ thể",
     "title": "Theo dõi body metrics",
     "addTitle": "Thêm chỉ số",
     "saveMetric": "Lưu chỉ số",
@@ -883,6 +883,13 @@
     "loadError": "Không thể tải chỉ số cơ thể.",
     "saveError": "Không thể lưu chỉ số cơ thể.",
     "savedMessage": "Đã lưu chỉ số cơ thể.",
+    "editMetric": "Chỉnh sửa",
+    "deleteMetric": "Xóa",
+    "editTitle": "Chỉnh sửa chỉ số cơ thể",
+    "updating": "Đang cập nhật...",
+    "updateError": "Không thể cập nhật chỉ số cơ thể.",
+    "deleteError": "Không thể xóa chỉ số cơ thể.",
+    "confirmDeleteMetric": "Bạn có chắc muốn xóa chỉ số cơ thể này?",
     "chartTitle": "Biểu đồ tiến trình",
     "historyTitle": "Lịch sử chỉ số",
     "fields": {
@@ -891,13 +898,11 @@
       "bodyFat": "Body fat %",
       "muscleMass": "Muscle mass kg",
       "waist": "Vòng eo cm",
-      "hip": "Vòng hông cm",
+      "hip": "Vòng mông cm",
       "chest": "Vòng ngực cm"
     },
     "table": {
-      "bodyFat": "Body fat",
-      "muscle": "Muscle",
-      "measurements": "Eo/Hông/Ngực"
+      "measurements": "Eo/Mông/Ngực"
     }
   },
   "admin": {
@@ -920,7 +925,6 @@
     "layout": {
       "brand": "Health Admin",
       "logoAlt": "Health Nutrition Admin",
-      "badge": "Admin",
       "title": "Bảng quản trị",
       "toggleSidebar": "Thu gọn hoặc mở rộng menu admin",
       "searchPlaceholder": "Tìm user, món ăn, báo cáo...",
@@ -929,7 +933,6 @@
       "backToUser": "Về trang user"
     },
     "profile": {
-      "badge": "Admin",
       "title": "Hồ sơ Quản trị viên",
       "role": "Vai trò"
     },
@@ -1016,7 +1019,6 @@
       "empty": "Không tìm thấy dữ liệu."
     },
     "dashboard": {
-      "badge": "Tổng quan",
       "title": "Tổng quan hệ thống",
       "quickExport": "Xuất báo cáo nhanh",
       "recentTitle": "Hoạt động gần đây",
@@ -1051,7 +1053,6 @@
       }
     },
     "analytics": {
-      "badge": "Phân tích hệ thống",
       "title": "Phân tích toàn hệ thống",
       "loading": "Đang tải dữ liệu phân tích toàn hệ thống...",
       "loadError": "Không thể tải dữ liệu phân tích toàn hệ thống.",
@@ -1077,7 +1078,6 @@
     },
     "pages": {
       "users": {
-        "badge": "Người dùng",
         "title": "Quản lý người dùng",
         "action": "Thêm người dùng",
         "loading": "Đang tải người dùng từ cơ sở dữ liệu...",
@@ -1089,7 +1089,6 @@
         }
       },
       "foods": {
-        "badge": "Dinh dưỡng",
         "title": "Quản lý thực phẩm, món ăn, calo/macro",
         "action": "Thêm món ăn",
         "loading": "Đang tải danh mục thực phẩm từ cơ sở dữ liệu...",
@@ -1101,7 +1100,6 @@
         }
       },
       "exercises": {
-        "badge": "Vận động",
         "title": "Quản lý bài tập và calo tiêu hao",
         "action": "Thêm bài tập",
         "loading": "Đang tải danh mục hoạt động từ cơ sở dữ liệu...",
@@ -1113,7 +1111,6 @@
         }
       },
       "articles": {
-        "badge": "Nội dung",
         "title": "Quản lý bài viết và tin tức sức khỏe",
         "action": "Tạo bài viết",
         "stats": {
@@ -1123,7 +1120,6 @@
         }
       },
       "reports": {
-        "badge": "Báo cáo",
         "title": "Báo cáo tổng quan hệ thống",
         "action": "Xuất báo cáo",
         "stats": {
@@ -1133,7 +1129,6 @@
         }
       },
       "submissions": {
-        "badge": "Duyệt dữ liệu",
         "title": "Duyệt và chỉnh sửa dữ liệu do user thêm",
         "action": "Duyệt hàng loạt",
         "stats": {
@@ -1143,7 +1138,6 @@
         }
       },
       "plans": {
-        "badge": "Gói dịch vụ",
         "title": "Quản lý mục tiêu và gói dịch vụ",
         "action": "Thêm gói",
         "stats": {
@@ -1153,7 +1147,6 @@
         }
       },
       "settings": {
-        "badge": "Hệ thống",
         "title": "Phân quyền và cấu hình hệ thống",
         "action": "Thêm vai trò",
         "stats": {

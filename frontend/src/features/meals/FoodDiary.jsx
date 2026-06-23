@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Badge, Card, Col, Row } from 'react-bootstrap';
+import { Card, Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import DailyMealSummary from './components/DailyMealSummary';
 import MealCard from './components/MealCard';
@@ -93,7 +93,6 @@ function FoodDiary() {
     <>
       <div className="page-heading">
         <div>
-          <Badge bg="success" className="mb-2">{t('foodDiaryPage.badge')}</Badge>
           <h1>{t('foodDiaryPage.title')}</h1>
         </div>
         <div className="d-flex flex-wrap gap-2">
