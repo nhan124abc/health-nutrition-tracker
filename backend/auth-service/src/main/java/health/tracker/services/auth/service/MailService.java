@@ -39,4 +39,25 @@ public class MailService {
             throw ex;
         }
     }
+
+    public void sendReminder(String email, String subject, String body) {
+        if (!enabled) {
+            log.warn("Email delivery is disabled. Reminder for {}: {} - {}", email, subject, body);
+            return;
+        }
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(from);
+        message.setTo(email);
+        message.setSubject(subject);
+        message.setText(body);
+
+        try {
+            mailSender.send(message);
+            log.info("Reminder email accepted by SMTP provider for: {}", email);
+        } catch (MailException ex) {
+            log.error("Failed to send reminder email to {}: {}", email, ex.getMessage(), ex);
+            throw ex;
+        }
+    }
 }

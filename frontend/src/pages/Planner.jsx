@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Col, Form, ProgressBar, Row, Spinner } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Form, InputGroup, ProgressBar, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { FaBookOpen, FaCalendarAlt, FaCheck, FaDumbbell, FaFireAlt, FaRobot, FaUtensils } from 'react-icons/fa';
+import { FaBookOpen, FaCalendarAlt, FaCheck, FaDumbbell, FaFireAlt, FaRobot, FaSearch, FaUtensils } from 'react-icons/fa';
 import { getAiPlanSuggestions } from '../features/ai/aiService';
 import { createMeal, getMealsByDate, deleteMealById } from '../features/meals/mealService';
-import { extractMealsFromApi, getMealsTotals, normalizeMealFromApi } from '../features/meals/mealUtils';
+import { extractMealsFromApi, getMealTotals, getMealsTotals, normalizeMealFromApi } from '../features/meals/mealUtils';
 import { getProfile } from '../features/profile/profileService';
 import { extractProfileFromApi, mapProfileFromApi } from '../features/profile/profileUtils';
 import { getActivitiesByDate, createActivityLog, deleteActivityById, getActivityTypes } from '../features/activities/activityService';
@@ -13,6 +13,13 @@ import { getFoods, getRecipeSuggestions } from '../features/nutrition/nutritionS
 
 function today() {
   return new Date().toLocaleDateString('en-CA');
+}
+
+function mapFoodOption(food) {
+  return {
+    id: food.id,
+    name: food.nameVi || food.name,
+  };
 }
 
 const mealTypes = [
@@ -35,11 +42,16 @@ function Planner() {
   const [selectedMeal, setSelectedMeal] = useState('lunch');
   const [planDate, setPlanDate] = useState(today());
   const [foodOptions, setFoodOptions] = useState([]);
+  const [foodSearchTerm, setFoodSearchTerm] = useState('');
+  const [foodSearchResults, setFoodSearchResults] = useState([]);
+  const [foodSearchLoading, setFoodSearchLoading] = useState(false);
   const [selectedFoodNames, setSelectedFoodNames] = useState([]);
   const [recipes, setRecipes] = useState([]);
+  const [recipeSearchTerm, setRecipeSearchTerm] = useState('');
   const [recipesLoading, setRecipesLoading] = useState(false);
   const [selectedRecipeId, setSelectedRecipeId] = useState(null);
   const [activityOptions, setActivityOptions] = useState([]);
+  const [activitySearchTerm, setActivitySearchTerm] = useState('');
   const [selectedActivityNames, setSelectedActivityNames] = useState([]);
   const [suggestion, setSuggestion] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -71,6 +83,31 @@ function Planner() {
     .filter((food) => selectedFoodNames.includes(food.name))
     .map((food) => food.id), [foodOptions, selectedFoodNames]);
   const selectedFoodKey = selectedFoodIds.join(',');
+  const selectedFoodOptions = useMemo(() => foodOptions
+    .filter((food) => selectedFoodNames.includes(food.name)), [foodOptions, selectedFoodNames]);
+  const normalizedFoodSearchTerm = foodSearchTerm.trim();
+  const canSearchFoods = normalizedFoodSearchTerm.length >= 2;
+  const normalizedRecipeSearchTerm = recipeSearchTerm.trim();
+  const canSearchRecipes = normalizedRecipeSearchTerm.length >= 2 || selectedFoodIds.length > 0;
+  const normalizedActivitySearchTerm = activitySearchTerm.trim();
+  const canSearchActivities = normalizedActivitySearchTerm.length >= 2;
+  const selectedActivityOptions = useMemo(() => activityOptions.filter((activity) => {
+    const name = activity.nameVi || activity.name;
+    return selectedActivityNames.includes(name);
+  }), [activityOptions, selectedActivityNames]);
+  const activitySearchResults = useMemo(() => {
+    if (!canSearchActivities) {
+      return [];
+    }
+
+    const keyword = normalizedActivitySearchTerm.toLowerCase();
+    return activityOptions.filter((activity) => {
+      const values = [activity.name, activity.nameVi, activity.category]
+        .filter(Boolean)
+        .map((value) => String(value).toLowerCase());
+      return values.some((value) => value.includes(keyword));
+    });
+  }, [activityOptions, canSearchActivities, normalizedActivitySearchTerm]);
 
   const loggedMealsForSlot = useMemo(() => {
     return meals.filter((meal) => meal.type === selectedMeal);
@@ -92,8 +129,27 @@ function Planner() {
       return activities.some((act) => act.activityName === optionName);
     }
     return loggedMealsForSlot.some((meal) =>
+      String(meal.notes || '').toLowerCase().includes(String(optionName).toLowerCase()) ||
       (meal.items || []).some((item) => item.name === optionName)
     );
+  };
+
+  const getLoggedMealTitle = (meal, fallbackLabel) => {
+    const noteText = String(meal.notes || '');
+    const noteTitle = noteText.includes(':')
+      ? noteText.split(':').slice(1).join(':').trim()
+      : '';
+
+    if (noteTitle) {
+      return noteTitle;
+    }
+
+    const itemNames = (meal.items || [])
+      .map((item) => item.name)
+      .filter(Boolean)
+      .join(', ');
+
+    return itemNames || fallbackLabel;
   };
 
   const getOptionCookingMethod = (option) => {
@@ -146,6 +202,11 @@ function Planner() {
   }, [t]);
 
   const loadRecipes = useCallback(async () => {
+    if (!canSearchRecipes) {
+      setRecipes([]);
+      return;
+    }
+
     setRecipesLoading(true);
     setError('');
     try {
@@ -156,6 +217,9 @@ function Planner() {
       if (selectedFoodIds.length > 0) {
         params.foodIds = selectedFoodKey;
       }
+      if (normalizedRecipeSearchTerm) {
+        params.q = normalizedRecipeSearchTerm;
+      }
       const response = await getRecipeSuggestions(params);
       setRecipes(Array.isArray(response.data) ? response.data.map(normalizeRecipeOption) : []);
     } catch (err) {
@@ -163,7 +227,7 @@ function Planner() {
     } finally {
       setRecipesLoading(false);
     }
-  }, [calorieGoal, normalizeRecipeOption, remaining, selectedFoodIds.length, selectedFoodKey, t]);
+  }, [calorieGoal, canSearchRecipes, normalizeRecipeOption, normalizedRecipeSearchTerm, remaining, selectedFoodIds.length, selectedFoodKey, t]);
 
   const toggleFoodName = (name) => {
     setSelectedFoodNames((current) => {
@@ -201,23 +265,14 @@ function Planner() {
   });
 
   useEffect(() => {
-    Promise.all([getProfile(), getMealsByDate(today()), getActivitiesByDate(today()), getFoods({ page: 0, size: 50 }), getActivityTypes()])
-      .then(([profileResponse, mealsResponse, activitiesResponse, foodsResponse, activityTypesResponse]) => {
+    Promise.all([getProfile(), getMealsByDate(today()), getActivitiesByDate(today()), getActivityTypes()])
+      .then(([profileResponse, mealsResponse, activitiesResponse, activityTypesResponse]) => {
         setProfile(mapProfileFromApi(extractProfileFromApi(profileResponse.data)));
         setMeals(extractMealsFromApi(mealsResponse.data).map(normalizeMealFromApi));
         const actList = Array.isArray(activitiesResponse.data) 
           ? activitiesResponse.data 
           : activitiesResponse.data?.content || activitiesResponse.data?.data || [];
         setActivities(actList);
-        const foods = Array.isArray(foodsResponse.data?.content)
-          ? foodsResponse.data.content
-          : Array.isArray(foodsResponse.data)
-            ? foodsResponse.data
-            : [];
-        setFoodOptions(foods.map((food) => ({
-          id: food.id,
-          name: food.nameVi || food.name,
-        })).filter((food) => food.id && food.name));
         setActivityOptions(extractActivityTypesFromApi(activityTypesResponse.data)
           .map(normalizeActivityType)
           .filter((activity) => activity.id && activity.name));
@@ -227,11 +282,68 @@ function Planner() {
   }, [t]);
 
   useEffect(() => {
-    if (loading || !isRecipeMode) {
-      return;
+    if (!canSearchFoods) {
+      setFoodSearchResults([]);
+      setFoodSearchLoading(false);
+      return undefined;
     }
-    loadRecipes();
-  }, [loading, isRecipeMode, selectedFoodKey, remaining, loadRecipes]);
+
+    let cancelled = false;
+    setFoodSearchLoading(true);
+    const timer = setTimeout(() => {
+      getFoods({ q: normalizedFoodSearchTerm, page: 0, size: 10 })
+        .then((response) => {
+          if (cancelled) {
+            return;
+          }
+
+          const foods = Array.isArray(response.data?.content)
+            ? response.data.content
+            : Array.isArray(response.data)
+              ? response.data
+              : [];
+          const mappedFoods = foods.map(mapFoodOption).filter((food) => food.id && food.name);
+          setFoodSearchResults(mappedFoods);
+          setFoodOptions((current) => {
+            const foodMap = new Map(current.map((food) => [food.id, food]));
+            mappedFoods.forEach((food) => foodMap.set(food.id, food));
+            return Array.from(foodMap.values());
+          });
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setFoodSearchResults([]);
+          }
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setFoodSearchLoading(false);
+          }
+        });
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [canSearchFoods, normalizedFoodSearchTerm]);
+
+  useEffect(() => {
+    if (loading || !isRecipeMode) {
+      return undefined;
+    }
+
+    if (!canSearchRecipes) {
+      setRecipes([]);
+      return undefined;
+    }
+
+    const timer = setTimeout(() => {
+      loadRecipes();
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [canSearchRecipes, isRecipeMode, loadRecipes, loading, normalizedRecipeSearchTerm, remaining, selectedFoodKey]);
 
   const generate = async () => {
     setGenerating(true);
@@ -353,13 +465,20 @@ function Planner() {
         notes: `${t('plannerPage.savedNotes.meal')}: ${option.name}`,
         items: mealItems,
       };
+      const replacedMealIds = loggedMealsForSlot.map((meal) => meal.id).filter(Boolean);
+      if (replacedMealIds.length > 0) {
+        await Promise.all(replacedMealIds.map((mealId) => deleteMealById(mealId)));
+      }
       const response = await createMeal(payload);
-      setMeals((current) => [...current, normalizeMealFromApi(response.data)]);
+      setMeals((current) => [
+        ...current.filter((meal) => !replacedMealIds.includes(meal.id)),
+        normalizeMealFromApi(response.data),
+      ]);
       setSelectedOption(index);
       if (option.recipeId) {
         setSelectedRecipeId(option.recipeId);
       }
-      setSuccess(t('plannerPage.success.mealAdded', { name: option.name }));
+      setSuccess(t(replacedMealIds.length > 0 ? 'plannerPage.success.mealReplaced' : 'plannerPage.success.mealAdded', { name: option.name }));
     } catch (err) {
       setError(err.response?.data?.message || err.message || t('plannerPage.errors.addMeal'));
     } finally {
@@ -557,8 +676,45 @@ function Planner() {
                   </Button>
                 )}
               </div>
+              <InputGroup className="planner-food-search mb-2">
+                <InputGroup.Text><FaSearch /></InputGroup.Text>
+                <Form.Control
+                  value={foodSearchTerm}
+                  onChange={(event) => setFoodSearchTerm(event.target.value)}
+                  placeholder={t('plannerPage.searchFoodsPlaceholder')}
+                  aria-label={t('plannerPage.searchFoods')}
+                />
+              </InputGroup>
+              {selectedFoodOptions.length > 0 && (
+                <div className="planner-food-picker planner-food-picker-selected mb-2">
+                  {selectedFoodOptions.map((food) => (
+                    <button
+                      type="button"
+                      className="planner-food-choice is-selected"
+                      key={food.id}
+                      onClick={() => toggleFoodName(food.name)}
+                    >
+                      <FaUtensils />
+                      <span>{food.name}</span>
+                      <FaCheck />
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="planner-food-picker">
-                {foodOptions.map((food) => {
+                {!canSearchFoods && (
+                  <div className="planner-food-empty">{t('plannerPage.searchFoodsHint')}</div>
+                )}
+                {canSearchFoods && foodSearchLoading && (
+                  <div className="planner-food-empty">
+                    <Spinner animation="border" size="sm" className="me-2" />
+                    {t('plannerPage.searchingFoods')}
+                  </div>
+                )}
+                {canSearchFoods && !foodSearchLoading && foodSearchResults.length === 0 && (
+                  <div className="planner-food-empty">{t('plannerPage.noFoodResults')}</div>
+                )}
+                {canSearchFoods && !foodSearchLoading && foodSearchResults.map((food) => {
                   const selected = selectedFoodNames.includes(food.name);
                   return (
                     <button
@@ -576,6 +732,24 @@ function Planner() {
                 })}
               </div>
               <Form.Text muted>{t('plannerPage.selectedFoodsHint', { count: selectedFoodCount, max: maxSelectedFoods })}</Form.Text>
+              {isRecipeMode && (
+                <div className="mt-3">
+                  <Form.Label className="mb-2">{t('plannerPage.searchRecipes')}</Form.Label>
+                  <InputGroup className="planner-food-search">
+                    <InputGroup.Text><FaSearch /></InputGroup.Text>
+                    <Form.Control
+                      value={recipeSearchTerm}
+                      onChange={(event) => {
+                        setRecipeSearchTerm(event.target.value);
+                        setSelectedRecipeId(null);
+                      }}
+                      placeholder={t('plannerPage.searchRecipesPlaceholder')}
+                      aria-label={t('plannerPage.searchRecipes')}
+                    />
+                  </InputGroup>
+                  <Form.Text muted>{t('plannerPage.searchRecipesHint')}</Form.Text>
+                </div>
+              )}
             </section>
           )}
           {isExerciseMode && (
@@ -604,8 +778,42 @@ function Planner() {
                   </Button>
                 )}
               </div>
+              <InputGroup className="planner-food-search mb-2">
+                <InputGroup.Text><FaSearch /></InputGroup.Text>
+                <Form.Control
+                  value={activitySearchTerm}
+                  onChange={(event) => setActivitySearchTerm(event.target.value)}
+                  placeholder={t('plannerPage.searchActivitiesPlaceholder')}
+                  aria-label={t('plannerPage.searchActivities')}
+                />
+              </InputGroup>
+              {selectedActivityOptions.length > 0 && (
+                <div className="planner-food-picker planner-food-picker-selected mb-2">
+                  {selectedActivityOptions.map((activity) => {
+                    const name = activity.nameVi || activity.name;
+                    return (
+                      <button
+                        type="button"
+                        className="planner-food-choice is-selected"
+                        key={activity.id}
+                        onClick={() => toggleActivityName(name)}
+                      >
+                        <FaDumbbell />
+                        <span>{name}</span>
+                        <FaCheck />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               <div className="planner-food-picker">
-                {activityOptions.map((activity) => {
+                {!canSearchActivities && (
+                  <div className="planner-food-empty">{t('plannerPage.searchActivitiesHint')}</div>
+                )}
+                {canSearchActivities && activitySearchResults.length === 0 && (
+                  <div className="planner-food-empty">{t('plannerPage.noActivityResults')}</div>
+                )}
+                {canSearchActivities && activitySearchResults.map((activity) => {
                   const name = activity.nameVi || activity.name;
                   const selected = selectedActivityNames.includes(name);
                   return (
@@ -626,12 +834,7 @@ function Planner() {
               <Form.Text muted>{t('plannerPage.selectedActivitiesHint', { count: selectedActivityCount, max: maxSelectedActivities })}</Form.Text>
             </section>
           )}
-          {isRecipeMode ? (
-            <Button className="w-100" variant="success" onClick={loadRecipes} disabled={recipesLoading}>
-              <FaBookOpen className="me-2" />
-              {recipesLoading ? t('plannerPage.loadingRecipes') : t('plannerPage.loadRecipes')}
-            </Button>
-          ) : (
+          {!isRecipeMode && (
             <>
               <Button className="w-100" variant={isExerciseMode ? 'primary' : 'success'} onClick={generate} disabled={generating || (!isExerciseMode && remaining < 100 && !hasInvalidDailyTotal)}><FaRobot className="me-2" />{generating ? t('plannerPage.generating') : t('plannerPage.createOptions')}</Button>
               {suggestion && <Button className="w-100 mt-2" variant={isExerciseMode ? 'outline-primary' : 'outline-success'} onClick={generate} disabled={generating}><FaRobot className="me-2" />{t('plannerPage.createOtherOptions')}</Button>}
@@ -650,24 +853,42 @@ function Planner() {
                 {t('plannerPage.loggedMealsTitle', { meal: selectedMealLabel.toLocaleLowerCase(i18n.language) })}
               </h3>
               <Row className="g-3">
-                {loggedMealsForSlot.map((meal) =>
-                  (meal.items || []).map((item, idx) => (
-                    <Col md={6} key={item.id || idx}>
+                {loggedMealsForSlot.map((meal) => {
+                  const mealTotals = getMealTotals(meal);
+                  const mealItems = meal.items || [];
+
+                  return (
+                    <Col md={6} key={meal.id || meal.notes || getLoggedMealTitle(meal, selectedMealLabel)}>
                       <Card className="border-0 shadow-sm bg-white h-100">
                         <Card.Body className="d-flex flex-column p-3">
-                          <div className="d-flex justify-content-between align-items-center mb-2">
-                            <span className="fw-bold text-dark">{item.name}</span>
-                            <span className="small fw-semibold text-success">{item.calories} kcal</span>
+                          <div className="d-flex justify-content-between align-items-center gap-2 mb-2">
+                            <span className="fw-bold text-dark">{getLoggedMealTitle(meal, selectedMealLabel)}</span>
+                            <span className="small fw-semibold text-success">{Math.round(mealTotals.calories)} kcal</span>
                           </div>
-                          <div className="text-secondary small mb-3">{t('plannerPage.serving')}: {item.serving}</div>
+
+                          {mealItems.length > 0 && (
+                            <div className="mb-3">
+                              <div className="text-uppercase text-secondary small fw-semibold mb-1">
+                                {t('plannerPage.ingredients')}
+                              </div>
+                              <ul className="small text-secondary ps-3 mb-0">
+                                {mealItems.map((item) => (
+                                  <li key={item.id || item.name}>
+                                    {item.name}{item.serving ? ` - ${item.serving}` : ''}
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+
                           <div className="quick-grid mb-3">
-                            <span>{t('common.protein')}<strong>{item.protein}g</strong></span>
-                            <span>{t('common.carbs')}<strong>{item.carbs}g</strong></span>
-                            <span>{t('common.fat')}<strong>{item.fat}g</strong></span>
+                            <span>{t('common.protein')}<strong>{mealTotals.protein.toFixed(1)}g</strong></span>
+                            <span>{t('common.carbs')}<strong>{mealTotals.carbs.toFixed(1)}g</strong></span>
+                            <span>{t('common.fat')}<strong>{mealTotals.fat.toFixed(1)}g</strong></span>
                           </div>
-                          <Button 
-                            variant="outline-danger" 
-                            size="sm" 
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
                             className="mt-auto w-100"
                             disabled={saving}
                             onClick={() => deleteMeal(meal.id)}
@@ -677,8 +898,8 @@ function Planner() {
                         </Card.Body>
                       </Card>
                     </Col>
-                  ))
-                )}
+                  );
+                })}
               </Row>
             </Card.Body>
           </Card>
@@ -738,7 +959,7 @@ function Planner() {
             )}
             {!recipesLoading && recipes.length === 0 && (
               <Alert variant="light" className="border">
-                {t('plannerPage.empty.noRecipes')}
+                {t(canSearchRecipes ? 'plannerPage.empty.noRecipes' : 'plannerPage.searchRecipesEmpty')}
               </Alert>
             )}
             {!recipesLoading && recipes.length > 0 && (
@@ -791,7 +1012,7 @@ function Planner() {
                           <Button
                             className="mt-auto"
                             variant={logged ? 'success' : 'outline-success'}
-                            disabled={saving || logged || hasLoggedMealInSlot}
+                            disabled={saving || logged || selectedOption !== null}
                             onClick={() => addOption(recipe, index)}
                           >
                             {logged ? (
@@ -800,7 +1021,7 @@ function Planner() {
                                 {t('plannerPage.selected')}
                               </>
                             ) : (
-                              t('plannerPage.chooseRecipe')
+                              hasLoggedMealInSlot ? t('plannerPage.replaceOption') : t('plannerPage.chooseRecipe')
                             )}
                           </Button>
                         </Card.Body>
@@ -856,7 +1077,7 @@ function Planner() {
                 const ingredientCount = Array.isArray(option.ingredients) ? option.ingredients.length : 0;
                 const isBlockedByOtherSelection = isExercise 
                   ? (hasLoggedActivityInSlot && !logged) 
-                  : (selectedOption !== null || hasLoggedMealInSlot);
+                  : selectedOption !== null;
                 return (
                   <Col md={6} key={`${option.name}-${index}`}>
                     <Card className="border-0 shadow-sm h-100">
@@ -947,7 +1168,11 @@ function Planner() {
                               {t('plannerPage.selected')}
                             </>
                           ) : (
-                            isExercise ? t('plannerPage.chooseActivity') : t('plannerPage.chooseOption')
+                            isExercise
+                              ? t('plannerPage.chooseActivity')
+                              : hasLoggedMealInSlot
+                                ? t('plannerPage.replaceOption')
+                                : t('plannerPage.chooseOption')
                           )}
                         </Button>
                       </Card.Body>

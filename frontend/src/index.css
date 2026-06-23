@@ -2031,6 +2031,21 @@ tr.is-completed {
   padding-right: 0.2rem;
 }
 
+.planner-food-picker-selected {
+  max-height: 9rem;
+}
+
+.planner-food-empty {
+  align-items: center;
+  background: #fff;
+  border: 1px dashed #ced4da;
+  border-radius: 0.65rem;
+  color: #6c757d;
+  display: flex;
+  min-height: 2.75rem;
+  padding: 0.65rem 0.75rem;
+}
+
 .planner-food-choice {
   align-items: center;
   background: #fff;

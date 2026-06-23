@@ -21,7 +21,9 @@ import {
 import { getCurrentUser, logout } from '../api/api';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { clearChatHistory, getChatHistory, sendChatMessage } from '../features/ai/aiService';
+import AuthTimeoutWatcher from '../features/auth/AuthTimeoutWatcher';
 import { getProfile } from '../features/profile/profileService';
+import ReminderNotifier from '../features/reminders/ReminderNotifier';
 import {
   extractProfileFromApi,
   getMissingRequiredProfileFields,
@@ -547,6 +549,9 @@ function MainLayout() {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      <AuthTimeoutWatcher />
+      <ReminderNotifier />
     </div>
   );
 }

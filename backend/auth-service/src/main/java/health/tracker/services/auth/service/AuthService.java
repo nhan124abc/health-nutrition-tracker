@@ -110,6 +110,11 @@ public class AuthService {
         }
 
         String email = jwtUtil.getEmailFromToken(refresh);
+        String storedRefreshToken = redisTemplate.opsForValue().get(REFRESH_PREFIX + email);
+        if (!refresh.equals(storedRefreshToken)) {
+            throw new AppException(HttpStatus.UNAUTHORIZED, "Refresh token has expired or been replaced");
+        }
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -193,7 +198,7 @@ public class AuthService {
         redisTemplate.opsForValue().set(
                 REFRESH_PREFIX + principal.getEmail(),
                 refreshToken,
-                Duration.ofMillis(jwtUtil.getExpirationMs() * 7)
+                Duration.ofMillis(jwtUtil.getRefreshExpirationMs())
         );
 
         User user = userRepository.findByEmail(principal.getEmail()).orElseThrow();

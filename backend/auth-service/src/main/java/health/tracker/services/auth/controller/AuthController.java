@@ -6,6 +6,7 @@ import health.tracker.services.auth.exception.AppException;
 import health.tracker.services.auth.repository.UserRepository;
 import health.tracker.services.auth.service.AdminUserService;
 import health.tracker.services.auth.service.AuthService;
+import health.tracker.services.auth.service.MailService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class AuthController {
     private final AuthService authService;
     private final AdminUserService adminUserService;
     private final UserRepository userRepository;
+    private final MailService mailService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -82,6 +84,20 @@ public class AuthController {
             @Valid @RequestBody EmailVerificationRequest request) {
         authService.verifyEmail(request.getEmail(), request.getOtp());
         return ResponseEntity.ok(Map.of("message", "Email verified successfully"));
+    }
+
+    @PostMapping("/reminders/email")
+    public ResponseEntity<Map<String, String>> sendReminderEmail(
+            @RequestHeader("X-User-Id") Long userId,
+            @Valid @RequestBody ReminderEmailRequest request) {
+        User user = userRepository.findById(userId)
+                .filter(User::isActive)
+                .orElseThrow(() -> new AppException(
+                        HttpStatus.UNAUTHORIZED,
+                        "User account is unavailable or inactive"));
+
+        mailService.sendReminder(user.getEmail(), request.getSubject(), request.getMessage());
+        return ResponseEntity.ok(Map.of("message", "Reminder email sent"));
     }
 
     @GetMapping("/oauth2/authorize/{provider}")
