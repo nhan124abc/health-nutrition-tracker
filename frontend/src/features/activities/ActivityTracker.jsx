@@ -16,6 +16,11 @@ import {
   getActivitiesByDate,
   getActivityTypes,
 } from './activityService';
+import {
+  getActivityCompletionId,
+  readCompletionIds,
+  toggleCompletionId,
+} from '../../utils/completionStorage';
 
 function ActivityTracker() {
   const { t } = useTranslation();
@@ -26,6 +31,7 @@ function ActivityTracker() {
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [activityError, setActivityError] = useState('');
   const [showFireworks, setShowFireworks] = useState(false);
+  const [completedActivityIds, setCompletedActivityIds] = useState(() => readCompletionIds('activities'));
   const wasActivityGoalComplete = useRef(false);
   const [activityGoal] = useState(() => {
     try { return JSON.parse(localStorage.getItem('activeGoalPlan'))?.dailyActivityGoalKcal || 0; } catch { return 0; }
@@ -117,6 +123,17 @@ function ActivityTracker() {
     };
   }, [selectedDate, t]);
 
+  const toggleActivityCompleted = (activity) => {
+    const completionId = getActivityCompletionId(activity);
+    const wasCompleted = completedActivityIds.includes(completionId);
+    setCompletedActivityIds(toggleCompletionId('activities', completionId));
+
+    if (!wasCompleted) {
+      setShowFireworks(true);
+      window.setTimeout(() => setShowFireworks(false), 2400);
+    }
+  };
+
   return (
     <>
       <GoalFireworks visible={showFireworks} />
@@ -135,9 +152,11 @@ function ActivityTracker() {
           {loadingLogs && <div className="alert alert-light border">{t('activityPage.loading')}</div>}
           <ActivityLogTable
             category={category}
+            completedIds={completedActivityIds}
             loading={loadingLogs}
             logs={visibleLogs}
             onCategoryChange={setCategory}
+            onToggleComplete={toggleActivityCompleted}
             t={t}
           />
         </Col>
