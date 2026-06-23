@@ -309,7 +309,9 @@
       "reports": "System reports",
       "submissions": "User submissions",
       "plans": "Goals & plans",
-      "settings": "Roles & settings"
+      "settings": "Roles & settings",
+      "manageFoods": "Manage foods",
+      "manageActivities": "Manage activities"
     },
     "layout": {
       "brand": "Health Admin",
@@ -322,7 +324,14 @@
     },
     "profile": {
       "title": "Admin profile",
-      "role": "Role"
+      "role": "Role",
+      "updateTitle": "Update profile",
+      "saved": "Admin profile updated.",
+      "fullName": "Full name",
+      "tabs": {
+        "overview": "Profile",
+        "edit": "Update profile"
+      }
     },
     "common": {
       "food": "Food",
@@ -369,7 +378,8 @@
       "view": "View details",
       "edit": "Edit",
       "approve": "Approve",
-      "delete": "Delete"
+      "delete": "Delete",
+      "toggleAccount": "Show/hide account"
     },
     "table": {
       "listTitle": "User list",
@@ -407,7 +417,6 @@
     },
     "dashboard": {
       "title": "System overview",
-      "quickExport": "Quick export",
       "recentTitle": "Recent activity",
       "recentDescription": "Changes and records that need admin attention.",
       "dataHealthTitle": "Data health",
@@ -437,7 +446,8 @@
         "exercises": "Exercises with burn data",
         "users": "Complete user profiles",
         "content": "Approved content"
-      }
+      },
+      "description": "Track users, catalog data, recent activity, and system data completeness at a glance."
     },
     "analytics": {
       "title": "System-wide analytics",
@@ -601,6 +611,35 @@
         "jwtTimeout": "JWT timeout",
         "twentyFourHours": "24 hours"
       }
+    },
+    "userDetails": {
+      "title": "User details",
+      "open": "View user details",
+      "username": "Username",
+      "phone": "Phone",
+      "createdAt": "Created at"
+    },
+    "catalogs": {
+      "title": "System catalogs",
+      "foodsTitle": "Food catalog",
+      "activitiesTitle": "Activity catalog",
+      "foodCategoriesTitle": "Food categories",
+      "activityCategoriesTitle": "Activity categories",
+      "back": "Back to catalogs",
+      "viewActivityCategories": "View activity categories",
+      "viewFoodCategories": "View food categories",
+      "loading": "Loading categories...",
+      "loadError": "Unable to load categories.",
+      "categoryList": "Category list",
+      "categoryName": "Category name",
+      "itemCount": "Items",
+      "addCategory": "Add category",
+      "editCategory": "Edit category",
+      "totalCategoryBlocks": "Total categories",
+      "totalDataItems": "Total data items",
+      "toggleHidden": "Show/hide category",
+      "hidden": "Hidden",
+      "visible": "Visible"
     }
   },
   "auth": {

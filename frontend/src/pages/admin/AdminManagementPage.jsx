@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Col, Form, InputGroup, Row, Spinner, Table } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Form, InputGroup, Modal, Row, Spinner, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import {
   FaBullseye,
@@ -134,6 +134,7 @@ function mapUserRow(user) {
     ],
     variant: active ? 'success' : 'secondary',
     active,
+    raw: user,
   };
 }
 
@@ -230,6 +231,7 @@ function AdminManagementPage({ type }) {
   const [foodRows, setFoodRows] = useState([]);
   const [foodSummary, setFoodSummary] = useState({});
   const [activityRows, setActivityRows] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [loading, setLoading] = useState(['users', 'foods', 'exercises'].includes(type));
   const [loadError, setLoadError] = useState('');
   const { t } = useTranslation();
@@ -353,6 +355,17 @@ function AdminManagementPage({ type }) {
   const displayCell = (cell) => (
     typeof cell === 'string' && cell.startsWith('admin.') ? t(cell) : cell
   );
+  const eyeActionLabel = type === 'users' ? t('admin.actions.toggleAccount') : t('admin.actions.view');
+  const userDetailRows = selectedUser ? [
+    [t('admin.table.name'), selectedUser.cells[0]],
+    [t('admin.table.email'), selectedUser.cells[1]],
+    [t('admin.table.role'), selectedUser.cells[2]],
+    [t('admin.table.status'), displayCell(selectedUser.cells[3])],
+    ['ID', selectedUser.id || '-'],
+    [t('admin.userDetails.username'), selectedUser.raw?.username || '-'],
+    [t('admin.userDetails.phone'), selectedUser.raw?.phone || selectedUser.raw?.phoneNumber || '-'],
+    [t('admin.userDetails.createdAt'), selectedUser.raw?.createdAt ? new Date(selectedUser.raw.createdAt).toLocaleString() : '-'],
+  ] : [];
 
   return (
     <>
@@ -440,24 +453,55 @@ function AdminManagementPage({ type }) {
                           <td key={`${rowKey}-${cell}`}>
                             {isStatusCell
                               ? <span className={`small fw-semibold text-${row.variant || 'secondary'}`}>{displayCell(cell)}</span>
-                              : displayCell(cell)}
+                              : type === 'users' && index === 0
+                                ? (
+                                  <button
+                                    type="button"
+                                    className="admin-table-link"
+                                    onClick={() => setSelectedUser(row)}
+                                    title={t('admin.userDetails.open')}
+                                  >
+                                    {displayCell(cell)}
+                                  </button>
+                                )
+                                : displayCell(cell)}
                           </td>
                         );
                       })}
                       <td className="text-end">
                         <div className="admin-row-actions">
-                          <Button variant="outline-secondary" size="sm" aria-label={t('admin.actions.view')}>
+                          <Button
+                            variant="outline-secondary"
+                            size="sm"
+                            aria-label={eyeActionLabel}
+                            title={eyeActionLabel}
+                          >
                             <FaEye />
                           </Button>
-                          <Button variant="outline-success" size="sm" aria-label={t('admin.actions.edit')}>
+                          <Button
+                            variant="outline-success"
+                            size="sm"
+                            aria-label={t('admin.actions.edit')}
+                            title={t('admin.actions.edit')}
+                          >
                             <FaEdit />
                           </Button>
                           {type === 'submissions' && (
-                            <Button variant="success" size="sm" aria-label={t('admin.actions.approve')}>
+                            <Button
+                              variant="success"
+                              size="sm"
+                              aria-label={t('admin.actions.approve')}
+                              title={t('admin.actions.approve')}
+                            >
                               <FaCheck />
                             </Button>
                           )}
-                          <Button variant="outline-danger" size="sm" aria-label={t('admin.actions.delete')}>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            aria-label={t('admin.actions.delete')}
+                            title={t('admin.actions.delete')}
+                          >
                             <FaTrash />
                           </Button>
                         </div>
@@ -470,6 +514,27 @@ function AdminManagementPage({ type }) {
           </div>
         </Card.Body>
       </Card>
+
+      <Modal show={Boolean(selectedUser)} onHide={() => setSelectedUser(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{t('admin.userDetails.title')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div className="profile-summary-list">
+            {userDetailRows.map(([label, value]) => (
+              <div className="profile-summary-row" key={label}>
+                <span>{label}</span>
+                <strong>{value || '-'}</strong>
+              </div>
+            ))}
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={() => setSelectedUser(null)}>
+            {t('common.close')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }

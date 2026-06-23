@@ -924,7 +924,9 @@
       "reports": "Báo cáo hệ thống",
       "submissions": "Dữ liệu chờ duyệt",
       "plans": "Mục tiêu & gói dịch vụ",
-      "settings": "Phân quyền & cấu hình"
+      "settings": "Phân quyền & cấu hình",
+      "manageFoods": "Quản lý thực phẩm",
+      "manageActivities": "Quản lý hoạt động"
     },
     "layout": {
       "brand": "Health Admin",
@@ -938,7 +940,14 @@
     },
     "profile": {
       "title": "Hồ sơ Quản trị viên",
-      "role": "Vai trò"
+      "role": "Vai trò",
+      "updateTitle": "Cập nhật hồ sơ",
+      "saved": "Đã cập nhật hồ sơ admin.",
+      "fullName": "Họ và tên",
+      "tabs": {
+        "overview": "Hồ sơ",
+        "edit": "Cập nhật hồ sơ"
+      }
     },
     "common": {
       "food": "Thực phẩm",
@@ -985,7 +994,8 @@
       "view": "Xem chi tiết",
       "edit": "Chỉnh sửa",
       "approve": "Duyệt",
-      "delete": "Xóa"
+      "delete": "Xóa",
+      "toggleAccount": "Ẩn/hiện tài khoản"
     },
     "table": {
       "listTitle": "Danh sách dữ liệu",
@@ -1024,7 +1034,6 @@
     },
     "dashboard": {
       "title": "Tổng quan hệ thống",
-      "quickExport": "Xuất báo cáo nhanh",
       "recentTitle": "Hoạt động gần đây",
       "recentDescription": "Các thay đổi và dữ liệu cần admin theo dõi.",
       "dataHealthTitle": "Tình trạng dữ liệu",
@@ -1054,7 +1063,8 @@
         "exercises": "Bài tập có calo tiêu hao",
         "users": "Hồ sơ người dùng đầy đủ",
         "content": "Nội dung đã duyệt"
-      }
+      },
+      "description": "Theo dõi nhanh người dùng, dữ liệu danh mục, hoạt động mới và mức độ hoàn thiện dữ liệu hệ thống."
     },
     "analytics": {
       "title": "Phân tích toàn hệ thống",
@@ -1218,6 +1228,35 @@
         "jwtTimeout": "Thời hạn JWT",
         "twentyFourHours": "24 giờ"
       }
+    },
+    "userDetails": {
+      "title": "Chi tiết người dùng",
+      "open": "Xem chi tiết người dùng",
+      "username": "Tên đăng nhập",
+      "phone": "Số điện thoại",
+      "createdAt": "Ngày tạo"
+    },
+    "catalogs": {
+      "title": "Quản lý danh mục",
+      "foodsTitle": "Danh mục thực phẩm",
+      "activitiesTitle": "Danh mục hoạt động",
+      "foodCategoriesTitle": "Danh mục thực phẩm",
+      "activityCategoriesTitle": "Danh mục hoạt động",
+      "back": "Quay lại danh mục",
+      "viewActivityCategories": "Xem danh mục hoạt động",
+      "viewFoodCategories": "Xem danh mục thực phẩm",
+      "loading": "Đang tải danh mục...",
+      "loadError": "Không thể tải danh mục.",
+      "categoryList": "Danh sách danh mục",
+      "categoryName": "Tên danh mục",
+      "itemCount": "Số mục",
+      "addCategory": "Thêm danh mục",
+      "editCategory": "Sửa danh mục",
+      "totalCategoryBlocks": "Tổng danh mục",
+      "totalDataItems": "Tổng dữ liệu",
+      "toggleHidden": "Ẩn/hiện danh mục",
+      "hidden": "Đã ẩn",
+      "visible": "Đang hiện"
     }
   }
 }

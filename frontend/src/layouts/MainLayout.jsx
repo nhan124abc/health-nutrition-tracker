@@ -387,7 +387,13 @@ function MainLayout() {
                 <FaUserCircle />
               )}
             </button>
-            <button type="button" className="btn btn-light layout-user-toggle" onClick={handleLogout} aria-label={t('nav.logout')}>
+            <button
+              type="button"
+              className="btn btn-light layout-user-toggle"
+              onClick={handleLogout}
+              aria-label={t('nav.logout')}
+              title={t('nav.logout')}
+            >
               <FaSignOutAlt />
             </button>
           </div>

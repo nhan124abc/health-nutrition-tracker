@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Col, ProgressBar, Row, Spinner, Table } from 'react-bootstrap';
+import { Alert, Card, Col, ProgressBar, Row, Spinner, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaChartLine, FaDumbbell, FaUsers, FaUtensils } from 'react-icons/fa';
 import { getAdminDashboardOverview } from '../../features/admin/adminService';
@@ -105,8 +105,8 @@ function AdminDashboard() {
       <div className="admin-page-heading">
         <div>
           <h2>{t('admin.dashboard.title')}</h2>
+          <p>{t('admin.dashboard.description')}</p>
         </div>
-        <Button variant="success">{t('admin.dashboard.quickExport')}</Button>
       </div>
 
       {loading && (
@@ -117,23 +117,25 @@ function AdminDashboard() {
       )}
       {loadError && <Alert variant="danger">{loadError}</Alert>}
 
-      <Row className="g-4 mb-4">
+      <Row className="g-3 mb-4 admin-overview-stats">
         {overviewStats.map((stat) => {
           const Icon = stat.icon;
           return (
             <Col md={6} xl={3} key={stat.labelKey}>
-              <Card className="admin-stat-card border-0 shadow-sm h-100">
+              <Card className="admin-stat-card admin-overview-stat border-0 shadow-sm h-100">
                 <Card.Body>
                   <div className="admin-stat-icon">
                     <Icon />
                   </div>
-                  <span className="text-secondary">{t(stat.labelKey)}</span>
-                  <div className="admin-stat-value">{stat.value}</div>
-                  {stat.trend !== undefined && stat.trend !== null && (
-                    <span className="text-success small fw-semibold">
-                      {displayText(stat.trend)}
-                    </span>
-                  )}
+                  <div>
+                    <span className="text-secondary">{t(stat.labelKey)}</span>
+                    <div className="admin-stat-value">{stat.value}</div>
+                    {stat.trend !== undefined && stat.trend !== null && (
+                      <span className="text-success small fw-semibold">
+                        {displayText(stat.trend)}
+                      </span>
+                    )}
+                  </div>
                 </Card.Body>
               </Card>
             </Col>
@@ -141,18 +143,15 @@ function AdminDashboard() {
         })}
       </Row>
 
-      <Row className="g-4">
-        <Col lg={7}>
+      <Row className="g-4 align-items-stretch">
+        <Col xl={8}>
           <Card className="border-0 shadow-sm h-100 admin-card">
             <Card.Body>
-              <div className="d-flex justify-content-between align-items-start gap-3 mb-4">
+              <div className="mb-4">
                 <div>
                   <Card.Title className="fw-bold mb-1">{t('admin.dashboard.recentTitle')}</Card.Title>
                   <p className="text-secondary mb-0">{t('admin.dashboard.recentDescription')}</p>
                 </div>
-                <Button variant="outline-success" size="sm">
-                  {t('admin.common.viewAll')}
-                </Button>
               </div>
               <div className="table-responsive">
                 <Table hover className="align-middle mb-0 admin-table">
@@ -189,7 +188,7 @@ function AdminDashboard() {
           </Card>
         </Col>
 
-        <Col lg={5}>
+        <Col xl={4}>
           <Card className="border-0 shadow-sm h-100 admin-card">
             <Card.Body>
               <Card.Title className="fw-bold mb-1">{t('admin.dashboard.dataHealthTitle')}</Card.Title>
