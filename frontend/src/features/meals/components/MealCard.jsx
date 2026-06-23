@@ -1,8 +1,8 @@
-import { Card } from 'react-bootstrap';
-import { FaUtensils } from 'react-icons/fa';
+import { Button, Card } from 'react-bootstrap';
+import { FaCheck, FaUtensils } from 'react-icons/fa';
 import { getMealTotals, mealTypes } from '../mealUtils';
 
-function MealCard({ meal, onOpen, t }) {
+function MealCard({ completed = false, meal, onOpen, onToggleComplete, t }) {
   const type = mealTypes.find((item) => item.key === meal.type);
   const label = type ? t(type.labelKey) : meal.type;
   const mealTotals = getMealTotals(meal);
@@ -16,7 +16,7 @@ function MealCard({ meal, onOpen, t }) {
   };
 
   return (
-    <Card className="border-0 shadow-sm meal-planner-card meal-summary-card" role="button" tabIndex={0} onClick={() => onOpen(meal)} onKeyDown={handleKeyDown}>
+    <Card className={`border-0 shadow-sm meal-planner-card meal-summary-card${completed ? ' is-completed' : ''}`} role="button" tabIndex={0} onClick={() => onOpen(meal)} onKeyDown={handleKeyDown}>
       <Card.Body>
         <div className="d-flex justify-content-between align-items-start gap-3">
           <div className="d-flex align-items-center gap-2">
@@ -29,6 +29,20 @@ function MealCard({ meal, onOpen, t }) {
           <div className="text-end">
             <div className="fw-semibold">{mealTotals.calories} kcal</div>
             <div className="text-secondary small mt-1">{meal.items.length} {t('foodDiary.items')}</div>
+            <Button
+              variant="link"
+              size="sm"
+              className="completion-action mt-2"
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggleComplete?.(meal);
+              }}
+              aria-pressed={completed}
+              aria-label={t(completed ? 'foodDiaryPage.mealCompleted' : 'foodDiaryPage.markMealCompleted')}
+              title={t(completed ? 'foodDiaryPage.mealCompleted' : 'foodDiaryPage.markMealCompleted')}
+            >
+              <FaCheck />
+            </Button>
           </div>
         </div>
       </Card.Body>

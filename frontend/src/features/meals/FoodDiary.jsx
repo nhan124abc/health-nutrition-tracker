@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import GoalFireworks from '../../components/GoalFireworks';
 import DailyMealSummary from './components/DailyMealSummary';
 import MealCard from './components/MealCard';
 import MealDetailModal from './components/MealDetailModal';
@@ -14,6 +15,11 @@ import {
 import { getMealById, getMealsByDate } from './mealService';
 import { getProfile } from '../profile/profileService';
 import { extractProfileFromApi, mapProfileFromApi } from '../profile/profileUtils';
+import {
+  getMealCompletionId,
+  readCompletionIds,
+  toggleCompletionId,
+} from '../../utils/completionStorage';
 
 function FoodDiary() {
   const { t } = useTranslation();
@@ -24,6 +30,8 @@ function FoodDiary() {
   const [mealError, setMealError] = useState('');
   const [selectedMealDetail, setSelectedMealDetail] = useState(null);
   const [calorieGoal, setCalorieGoal] = useState(2000);
+  const [completedMealIds, setCompletedMealIds] = useState(() => readCompletionIds('meals'));
+  const [showFireworks, setShowFireworks] = useState(false);
 
   useEffect(() => {
     getProfile().then((response) => {
@@ -89,8 +97,20 @@ function FoodDiary() {
     }
   };
 
+  const toggleMealCompleted = (meal) => {
+    const completionId = getMealCompletionId(meal);
+    const wasCompleted = completedMealIds.includes(completionId);
+    setCompletedMealIds(toggleCompletionId('meals', completionId));
+
+    if (!wasCompleted) {
+      setShowFireworks(true);
+      window.setTimeout(() => setShowFireworks(false), 2400);
+    }
+  };
+
   return (
     <>
+      <GoalFireworks visible={showFireworks} />
       <div className="page-heading">
         <div>
           <h1>{t('foodDiaryPage.title')}</h1>
@@ -112,9 +132,11 @@ function FoodDiary() {
             )}
             {dayMeals.map((meal) => (
               <MealCard
+                completed={completedMealIds.includes(getMealCompletionId(meal))}
                 key={meal.id}
                 meal={meal}
                 onOpen={openMealDetail}
+                onToggleComplete={toggleMealCompleted}
                 t={t}
               />
             ))}

@@ -555,7 +555,9 @@
       "reminderStart": "Hôm nay bạn chưa ghi nhận uống nước.",
       "reminderDue": "Đã {{minutes}} phút từ lần uống nước gần nhất.",
       "goalReached": "Bạn đã hoàn thành mục tiêu nước hôm nay."
-    }
+    },
+    "markMealCompleted": "Đánh dấu hoàn thành bữa ăn",
+    "mealCompleted": "Bữa ăn đã hoàn thành"
   },
   "nutritionPage": {
     "title": "Dinh dưỡng và thực phẩm",
@@ -648,7 +650,9 @@
     },
     "sampleNotes": {
       "morningRun": "Chạy sáng"
-    }
+    },
+    "markActivityCompleted": "Đánh dấu hoàn thành vận động",
+    "activityCompleted": "Vận động đã hoàn thành"
   },
   "profilePage": {
     "completion": {

@@ -1755,6 +1755,52 @@ body::-webkit-scrollbar,
   transform: translateY(-1px);
 }
 
+.meal-summary-card.is-completed,
+tr.is-completed {
+  background: rgba(47, 143, 107, 0.06);
+}
+
+.meal-summary-card.is-completed {
+  border-color: rgba(47, 143, 107, 0.24) !important;
+}
+
+.completion-action {
+  align-items: center;
+  background: #fff;
+  border: 1.5px solid #cbd8d1;
+  border-radius: 0.45rem;
+  color: #9eb1a7;
+  display: inline-flex;
+  height: 1.85rem;
+  justify-content: center;
+  padding: 0;
+  text-decoration: none;
+  transition: background-color 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, color 0.16s ease;
+  width: 1.85rem;
+}
+
+.completion-action:hover,
+.completion-action:focus {
+  background: rgba(47, 143, 107, 0.08);
+  border-color: var(--health-primary);
+  box-shadow: 0 0 0 0.18rem rgba(47, 143, 107, 0.12);
+  color: var(--health-primary);
+  text-decoration: none;
+}
+
+.completion-action[aria-pressed="true"] {
+  background: var(--health-primary);
+  border-color: var(--health-primary);
+  color: #fff;
+}
+
+.completion-action[aria-pressed="true"]:hover,
+.completion-action[aria-pressed="true"]:focus {
+  background: var(--health-primary-dark);
+  border-color: var(--health-primary-dark);
+  color: #fff;
+}
+
 .meal-icon,
 .water-glass,
 .workout-icon {
