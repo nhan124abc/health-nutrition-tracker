@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Badge, Col, Row } from 'react-bootstrap';
+import { Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import GoalFireworks from '../../components/GoalFireworks';
 import { getProfile, updateProfile } from '../profile/profileService';
 import WaterHistoryCard from './components/WaterHistoryCard';
-import WaterReminderCard from './components/WaterReminderCard';
 import WaterSummaryCard from './components/WaterSummaryCard';
 import {
   defaultWaterSettings,
@@ -27,6 +26,7 @@ import {
 
 function WaterTracker() {
   const { t } = useTranslation();
+  const userSettings = readStoredJson('userSettings', {});
   const [selectedDate, setSelectedDate] = useState(getTodayDate);
   const [waterLogs, setWaterLogs] = useState([]);
   const [dailyWaterTotal, setDailyWaterTotal] = useState(0);
@@ -36,7 +36,6 @@ function WaterTracker() {
   }));
   const [waterAmount, setWaterAmount] = useState(250);
   const [waterGoalInput, setWaterGoalInput] = useState(waterSettings.goalMl);
-  const [waterDraftAmounts, setWaterDraftAmounts] = useState({});
   const [waterReminderMessage, setWaterReminderMessage] = useState('');
   const [waterError, setWaterError] = useState('');
   const [waterNotice, setWaterNotice] = useState('');
@@ -130,7 +129,7 @@ function WaterTracker() {
   }, [selectedDate, t]);
 
   useEffect(() => {
-    if (!waterSettings.reminderEnabled) {
+    if (userSettings.waterReminder === false || !waterSettings.reminderEnabled) {
       setWaterReminderMessage('');
       return undefined;
     }
@@ -166,7 +165,7 @@ function WaterTracker() {
     const timerId = window.setInterval(updateReminder, 60000);
 
     return () => window.clearInterval(timerId);
-  }, [lastWaterLog, selectedDate, t, totalWaterMl, waterSettings]);
+  }, [lastWaterLog, selectedDate, t, totalWaterMl, userSettings.waterReminder, waterSettings]);
 
   const showNotice = (message) => {
     setWaterNotice(message);
@@ -231,11 +230,6 @@ function WaterTracker() {
       setWaterLogs((current) => current.map((item) => (
         item.id === log.id ? updatedLog : item
       )));
-      setWaterDraftAmounts((current) => {
-        const nextDrafts = { ...current };
-        delete nextDrafts[log.id];
-        return nextDrafts;
-      });
 
       if (log.date === getTodayDate()) {
         setDailyWaterTotal((current) => current - normalizeNumber(log.amountMl) + normalizedAmount);
@@ -258,11 +252,6 @@ function WaterTracker() {
     try {
       await deleteWaterLog(log.id);
       setWaterLogs((current) => current.filter((item) => item.id !== log.id));
-      setWaterDraftAmounts((current) => {
-        const nextDrafts = { ...current };
-        delete nextDrafts[log.id];
-        return nextDrafts;
-      });
 
       if (log.date === getTodayDate()) {
         setDailyWaterTotal((current) => Math.max(0, current - normalizeNumber(log.amountMl)));
@@ -295,20 +284,11 @@ function WaterTracker() {
     }
   };
 
-  const updateWaterReminderSetting = (name, value) => {
-    setWaterSettings((current) => ({ ...current, [name]: value }));
-  };
-
-  const updateWaterDraftAmount = (logId, value) => {
-    setWaterDraftAmounts((current) => ({ ...current, [logId]: value }));
-  };
-
   return (
     <>
       <GoalFireworks visible={showFireworks} />
       <div className="page-heading">
         <div>
-          <Badge bg="success" className="mb-2">{t('waterPage.badge')}</Badge>
           <h1>{t('waterPage.title')}</h1>
         </div>
         <input className="form-control page-date-input" type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} />
@@ -335,16 +315,9 @@ function WaterTracker() {
 
         <Col lg={7}>
           <div className="planner-side-stack">
-            <WaterReminderCard
-              onSettingChange={updateWaterReminderSetting}
-              settings={waterSettings}
-              t={t}
-            />
             <WaterHistoryCard
-              draftAmounts={waterDraftAmounts}
               logs={dayWaterLogs}
               onDelete={removeWaterLog}
-              onDraftChange={updateWaterDraftAmount}
               onUpdate={updateWaterLogAmount}
               t={t}
             />

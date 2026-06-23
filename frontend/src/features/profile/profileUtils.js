@@ -1,5 +1,6 @@
 export const initialProfile = {
   username: '',
+  avatarUrl: '',
   birthDate: '',
   gender: '',
   height: '',
@@ -48,7 +49,6 @@ export const requiredProfileFields = [
   ['activityLevel', 'profile.activityLevel'],
   ['healthGoal', 'profilePage.fields.healthGoal'],
   ['targetWeight', 'profilePage.fields.targetWeight'],
-  ['dailyWaterGoal', 'profilePage.fields.dailyWaterGoal'],
 ];
 
 export const emptyBodyMetric = {
@@ -65,12 +65,9 @@ export const emptyBodyMetric = {
 export const bodyMetricFields = [
   ['date', 'bodyMetricsPage.fields.date', 'date'],
   ['weight', 'bodyMetricsPage.fields.weight', 'number'],
-  ['bodyFat', 'bodyMetricsPage.fields.bodyFat', 'number'],
-  ['muscleMass', 'bodyMetricsPage.fields.muscleMass', 'number'],
   ['waist', 'bodyMetricsPage.fields.waist', 'number'],
   ['hip', 'bodyMetricsPage.fields.hip', 'number'],
   ['chest', 'bodyMetricsPage.fields.chest', 'number'],
-  ['notes', 'common.notes', 'text'],
 ];
 
 const activityFromApi = {
@@ -108,6 +105,12 @@ const goalToApi = {
   body_recomposition: 'BODY_RECOMPOSITION',
   improve_health: 'IMPROVE_FITNESS',
 };
+
+function getAvatarStorageKey(account = {}) {
+  const accountKey = account.id || account.email || account.username || account.sub;
+
+  return accountKey ? `profileAvatar:${accountKey}` : '';
+}
 
 export const goalFormulaKeys = {
   lose_weight: 'profilePage.goalFormulas.loseWeight',
@@ -159,6 +162,25 @@ export function mapBodyMetricToApi(metric) {
   };
 }
 
+export function getLatestBodyMetric(metrics = []) {
+  return [...metrics]
+    .filter(Boolean)
+    .sort((first, second) => String(second.recordedAt || second.date).localeCompare(String(first.recordedAt || first.date)))[0] || {};
+}
+
+export function buildBodyMetricFormFromProfile(profile = {}, metrics = []) {
+  const latestMetric = getLatestBodyMetric(metrics);
+
+  return {
+    ...emptyBodyMetric,
+    date: getTodayDate(),
+    weight: profile.weight || latestMetric.weightKg || latestMetric.weight || '',
+    waist: latestMetric.waistCm ?? latestMetric.waist ?? '',
+    hip: latestMetric.hipCm ?? latestMetric.hip ?? '',
+    chest: latestMetric.chestCm ?? latestMetric.chest ?? '',
+  };
+}
+
 export function extractBodyMetricFromApi(data) {
   return data?.data || data?.metric || data;
 }
@@ -166,6 +188,7 @@ export function extractBodyMetricFromApi(data) {
 export function mapProfileFromApi(data = {}) {
   return {
     username: data.username || '',
+    avatarUrl: data.avatarUrl || data.profilePictureUrl || data.pictureUrl || '',
     birthDate: data.dateOfBirth || '',
     gender: data.gender?.toLowerCase() || '',
     height: data.heightCm ?? '',
@@ -187,6 +210,43 @@ export function mapProfileFromApi(data = {}) {
     planDurationWeeks: data.planDurationWeeks ?? '',
     dailyActivityGoalKcal: data.dailyActivityGoalKcal ?? '',
     weeklyWeightMilestones: data.weeklyWeightMilestones || [],
+  };
+}
+
+export function getStoredProfileAvatar(account) {
+  const storageKey = getAvatarStorageKey(account);
+
+  if (!storageKey) {
+    return '';
+  }
+
+  return localStorage.getItem(storageKey) || '';
+}
+
+export function saveStoredProfileAvatar(account, avatarUrl) {
+  const storageKey = getAvatarStorageKey(account);
+
+  if (!storageKey) {
+    return;
+  }
+
+  if (avatarUrl) {
+    localStorage.setItem(storageKey, avatarUrl);
+    return;
+  }
+
+  localStorage.removeItem(storageKey);
+}
+
+export function mergeProfileAvatar(profile, account) {
+  if (profile.avatarUrl) {
+    saveStoredProfileAvatar(account, profile.avatarUrl);
+    return profile;
+  }
+
+  return {
+    ...profile,
+    avatarUrl: getStoredProfileAvatar(account),
   };
 }
 
@@ -222,6 +282,7 @@ export function mapProfileToApi(profile, options = {}) {
   const { includeManualCalorieGoal = true } = options;
   const payload = {
     username: emptyToNull(profile.username),
+    avatarUrl: emptyToNull(profile.avatarUrl),
     dateOfBirth: emptyToNull(profile.birthDate),
     gender: profile.gender ? profile.gender.toUpperCase() : null,
     heightCm: normalizeNumber(profile.height),

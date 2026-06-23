@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  Badge,
   Button,
   Container,
   Nav,
@@ -22,7 +21,6 @@ import {
   FaDumbbell,
   FaFolderOpen,
   FaHome,
-  FaShieldAlt,
   FaUserCircle,
   FaUsers,
   FaUtensils,

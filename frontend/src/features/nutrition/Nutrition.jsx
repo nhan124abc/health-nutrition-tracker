@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Badge, Col, Row, Spinner } from 'react-bootstrap';
+import { Alert, Col, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import FoodCatalogCard from './components/FoodCatalogCard';
 import FoodDetailCard from './components/FoodDetailCard';
@@ -23,16 +23,14 @@ function Nutrition() {
   const [categories, setCategories] = useState([]);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
-  const [imageSearchName, setImageSearchName] = useState('');
-  const [imagePreview, setImagePreview] = useState('');
   const [selectedFood, setSelectedFood] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [error, setError] = useState('');
 
   const filteredFoods = useMemo(
-    () => filterFoods(foods, query, category, imageSearchName),
-    [category, foods, imageSearchName, query]
+    () => filterFoods(foods, query, category),
+    [category, foods, query]
   );
 
   useEffect(() => {
@@ -81,27 +79,6 @@ function Nutrition() {
     };
   }, [t]);
 
-  const handleImageSearch = (event) => {
-    const file = event.target.files?.[0];
-
-    if (!file) {
-      setImageSearchName('');
-      setImagePreview('');
-      return;
-    }
-
-    setImageSearchName(file.name);
-
-    const reader = new FileReader();
-    reader.onload = () => setImagePreview(String(reader.result || ''));
-    reader.readAsDataURL(file);
-  };
-
-  const clearImageSearch = () => {
-    setImageSearchName('');
-    setImagePreview('');
-  };
-
   const selectFood = async (food) => {
     setSelectedFood(food);
     setLoadingDetail(true);
@@ -122,7 +99,6 @@ function Nutrition() {
     <>
       <div className="page-heading">
         <div>
-          <Badge bg="success" className="mb-2">{t('nutritionPage.badge')}</Badge>
           <h1>{t('nutritionPage.title')}</h1>
         </div>
       </div>
@@ -141,11 +117,7 @@ function Nutrition() {
               categories={categories}
               category={category}
               foods={filteredFoods}
-              imagePreview={imagePreview}
-              imageSearchName={imageSearchName}
               onCategoryChange={setCategory}
-              onClearImage={clearImageSearch}
-              onImageSearch={handleImageSearch}
               onQueryChange={setQuery}
               onSelectFood={selectFood}
               query={query}

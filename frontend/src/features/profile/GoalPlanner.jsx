@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Badge, Button, Card, Col, Form, ProgressBar, Row, Spinner } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Form, ProgressBar, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { applyGoalPlan, getGoalPlanSuggestions, getProfile } from './profileService';
@@ -70,7 +70,6 @@ function GoalPlanner() {
     <>
       <div className="page-heading">
         <div>
-          <Badge bg="success" className="mb-2">{t('goalPlannerPage.badge')}</Badge>
           <h1>{t('goalPlannerPage.title')}</h1>
         </div>
       </div>
@@ -94,7 +93,10 @@ function GoalPlanner() {
               </Form.Group>
               {form.goal !== 'MAINTAIN_WEIGHT' && (
                 <Form.Group className="mb-3">
-                  <Form.Label>{t('goalPlannerPage.form.targetChange')}</Form.Label>
+                  <Form.Label>
+                    {t('goalPlannerPage.form.targetChange')}
+                    <span className="text-danger ms-1">*</span>
+                  </Form.Label>
                   <Form.Control type="number" min="0.1" step="0.1" value={form.targetChangeKg} onChange={(event) => setForm({ ...form, targetChangeKg: event.target.value })} required />
                 </Form.Group>
               )}
@@ -131,9 +133,9 @@ function GoalPlanner() {
                       <Card.Body>
                         <div className="d-flex justify-content-between">
                           <h3 className="h6 fw-bold">{t('goalPlannerPage.option.weeks', { count: option.weeks })}</h3>
-                          <Badge bg={option.safe ? 'success' : 'danger'}>
+                          <span className={`small fw-semibold text-${option.safe ? 'success' : 'danger'}`}>
                             {t(option.safe ? 'goalPlannerPage.option.safe' : 'goalPlannerPage.option.unsafe')}
-                          </Badge>
+                          </span>
                         </div>
                         <div className="display-6 fw-bold my-2">
                           {numberFormatter.format(option.dailyCalorieGoal)}

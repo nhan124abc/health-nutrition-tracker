@@ -10,6 +10,7 @@ import {
   FaPaperPlane,
   FaRobot,
   FaSearch,
+  FaCog,
   FaSignOutAlt,
   FaTint,
   FaUserCircle,
@@ -24,6 +25,7 @@ import { getProfile } from '../features/profile/profileService';
 import {
   extractProfileFromApi,
   getMissingRequiredProfileFields,
+  mergeProfileAvatar,
   mapProfileFromApi,
 } from '../features/profile/profileUtils';
 
@@ -43,6 +45,7 @@ const menuItems = [
   { to: '/reports', labelKey: 'nav.statistics', icon: FaChartLine },
   { to: '/body-metrics', labelKey: 'nav.bodyMetrics', icon: FaWeight },
   { to: '/profile', labelKey: 'nav.profile', icon: FaUserCircle },
+  { to: '/settings', labelKey: 'nav.settings', icon: FaCog },
 ];
 
 function MainLayout() {
@@ -94,7 +97,10 @@ function MainLayout() {
           return;
         }
 
-        const profile = mapProfileFromApi(extractProfileFromApi(response.data));
+        const profile = mergeProfileAvatar(
+          mapProfileFromApi(extractProfileFromApi(response.data)),
+          getCurrentUser()
+        );
         const missingFields = getMissingRequiredProfileFields(profile);
 
         setCurrentProfile(profile);
@@ -370,12 +376,16 @@ function MainLayout() {
             <button
               type="button"
               ref={profileButtonRef}
-              className="btn btn-light layout-user-toggle"
+              className={`btn btn-light layout-user-toggle${currentProfile?.avatarUrl ? ' layout-user-avatar-toggle' : ''}`}
               onClick={() => setShowProfileSummary((current) => !current)}
               aria-label={t('nav.profile')}
               title={t('nav.profile')}
             >
-              <FaUserCircle />
+              {currentProfile?.avatarUrl ? (
+                <img src={currentProfile.avatarUrl} alt={t('nav.profile')} />
+              ) : (
+                <FaUserCircle />
+              )}
             </button>
             <button type="button" className="btn btn-light layout-user-toggle" onClick={handleLogout} aria-label={t('nav.logout')}>
               <FaSignOutAlt />

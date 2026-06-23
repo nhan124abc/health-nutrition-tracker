@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Badge, Col, Row } from 'react-bootstrap';
+import { Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import GoalFireworks from '../../components/GoalFireworks';
 import ActivityLogTable from './components/ActivityLogTable';
@@ -122,7 +122,6 @@ function ActivityTracker() {
       <GoalFireworks visible={showFireworks} />
       <div className="page-heading">
         <div>
-          <Badge bg="success" className="mb-2">{t('activityPage.badge')}</Badge>
           <h1>{t('activityPage.title')}</h1>
         </div>
         <div className="d-flex flex-wrap gap-2">

@@ -173,13 +173,8 @@ export function mapFoodToForm(food) {
   };
 }
 
-export function filterFoods(items, query, categoryId, imageSearchName) {
+export function filterFoods(items, query, categoryId) {
   const keyword = query.trim().toLowerCase();
-  const imageKeyword = imageSearchName
-    .replace(/\.[^.]+$/, '')
-    .replace(/[_-]+/g, ' ')
-    .trim()
-    .toLowerCase();
 
   return items.filter((food) => {
     const searchableValues = [food.name, food.nameVi, food.brand, food.category]
@@ -187,8 +182,7 @@ export function filterFoods(items, query, categoryId, imageSearchName) {
       .map((value) => String(value).toLowerCase());
     const matchesKeyword = !keyword || searchableValues.some((value) => value.includes(keyword));
     const matchesCategory = categoryId === 'all' || String(food.categoryId) === String(categoryId);
-    const matchesImage = !imageKeyword || searchableValues.some((value) => value.includes(imageKeyword));
 
-    return matchesKeyword && matchesCategory && matchesImage;
+    return matchesKeyword && matchesCategory;
   });
 }

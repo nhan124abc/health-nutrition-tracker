@@ -10,7 +10,7 @@ import {
 } from 'chart.js';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
-import { Badge, Button, Card, Col, ProgressBar, Row } from 'react-bootstrap';
+import { Button, Card, Col, ProgressBar, Row } from 'react-bootstrap';
 import { FaBullseye, FaFire } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import GoalFireworks from '../components/GoalFireworks';
@@ -394,7 +394,6 @@ function Dashboard() {
       <GoalFireworks visible={showFireworks} />
       <div className="page-heading">
         <div>
-          <Badge bg="success" className="mb-2">{t('dashboardPage.badge')}</Badge>
           <h1>{t('dashboardPage.title')}</h1>
         </div>
         <input
@@ -505,7 +504,7 @@ function Dashboard() {
                   <Card.Title className="fw-bold mb-1">{t('dashboardPage.weeklyTitle')}</Card.Title>
                   <Card.Text className="text-secondary small mb-0">{t('dashboardPage.weeklyDescription')}</Card.Text>
                 </div>
-                <Badge bg="light" text="dark">{t('common.weekly')}</Badge>
+                <span className="text-secondary small fw-semibold">{t('common.weekly')}</span>
               </div>
               <div className="dashboard-chart dashboard-chart-bar">
                 <Bar data={weeklyData} options={{ responsive: true, maintainAspectRatio: false }} />
