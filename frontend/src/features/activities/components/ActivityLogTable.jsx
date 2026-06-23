@@ -1,7 +1,9 @@
-import { Card, Form, Table } from 'react-bootstrap';
+import { Button, Card, Form, Table } from 'react-bootstrap';
+import { FaCheck } from 'react-icons/fa';
 import { activityCategories } from '../activityUtils';
+import { getActivityCompletionId } from '../../../utils/completionStorage';
 
-function ActivityLogTable({ category, loading, logs, onCategoryChange, t }) {
+function ActivityLogTable({ category, completedIds = [], loading, logs, onCategoryChange, onToggleComplete, t }) {
   return (
     <Card className="border-0 shadow-sm">
       <Card.Body>
@@ -24,11 +26,15 @@ function ActivityLogTable({ category, loading, logs, onCategoryChange, t }) {
                 <th className="text-end">{t('common.calories')}</th>
                 <th className="text-end">HR</th>
                 <th className="text-end">{t('common.details')}</th>
+                <th className="text-end">{t('activityPage.actions')}</th>
               </tr>
             </thead>
             <tbody>
-              {logs.map((log) => (
-                <tr key={log.id}>
+              {logs.map((log) => {
+                const completed = completedIds.includes(getActivityCompletionId(log));
+
+                return (
+                <tr className={completed ? 'is-completed' : ''} key={log.id}>
                   <td>
                     <strong>{log.customName}</strong>
                     <div className="text-secondary small">
@@ -44,8 +50,22 @@ function ActivityLogTable({ category, loading, logs, onCategoryChange, t }) {
                       ? `${log.sets || '-'} ${t('activityPage.fields.sets')} - ${log.reps || '-'} ${t('activityPage.fields.reps')} - ${log.strengthWeight || '-'}kg`
                       : `${log.distance || '-'} km`}
                   </td>
+                  <td className="text-end">
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="completion-action"
+                      onClick={() => onToggleComplete?.(log)}
+                      aria-pressed={completed}
+                      aria-label={t(completed ? 'activityPage.activityCompleted' : 'activityPage.markActivityCompleted')}
+                      title={t(completed ? 'activityPage.activityCompleted' : 'activityPage.markActivityCompleted')}
+                    >
+                      <FaCheck />
+                    </Button>
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </Table>
         </div>

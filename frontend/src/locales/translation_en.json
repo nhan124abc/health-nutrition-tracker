@@ -883,7 +883,9 @@
       "reminderStart": "You have not logged water today.",
       "reminderDue": "It has been {{minutes}} minutes since your last water log.",
       "goalReached": "Today's water goal is complete."
-    }
+    },
+    "markMealCompleted": "Mark meal as completed",
+    "mealCompleted": "Meal completed"
   },
   "nutritionPage": {
     "title": "Nutrition and foods",
@@ -976,7 +978,9 @@
     },
     "sampleNotes": {
       "morningRun": "Morning run"
-    }
+    },
+    "markActivityCompleted": "Mark activity as completed",
+    "activityCompleted": "Activity completed"
   },
   "profilePage": {
     "title": "Health profile",

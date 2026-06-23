@@ -521,7 +521,6 @@ function Planner() {
               </div>
             </Form.Group>
             <Form.Group>
-              <Form.Label>{isExerciseMode ? t('plannerPage.activityKind') : t('plannerPage.selectSlot')}</Form.Label>
               <Form.Select
                 value={isExerciseMode ? 'exercise' : selectedMeal}
                 disabled={isExerciseMode}
