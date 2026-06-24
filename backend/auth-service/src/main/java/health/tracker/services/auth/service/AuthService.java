@@ -72,6 +72,12 @@ public class AuthService {
         // 1. Kiểm tra brute-force trước
         rateLimitService.checkNotLocked(request.getEmail());
 
+        userRepository.findByEmail(request.getEmail())
+                .filter(user -> !user.isActive())
+                .ifPresent(user -> {
+                    throw new AppException(HttpStatus.FORBIDDEN, "User account is unavailable or inactive");
+                });
+
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
@@ -117,6 +123,9 @@ public class AuthService {
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "User not found"));
+        if (!user.isActive()) {
+            throw new AppException(HttpStatus.FORBIDDEN, "User account is unavailable or inactive");
+        }
 
         UserPrincipal principal = UserPrincipal.create(user);
         return buildAuthResponse(principal);
@@ -202,6 +211,9 @@ public class AuthService {
         );
 
         User user = userRepository.findByEmail(principal.getEmail()).orElseThrow();
+        if (!user.isActive()) {
+            throw new AppException(HttpStatus.FORBIDDEN, "User account is unavailable or inactive");
+        }
         return AuthResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)

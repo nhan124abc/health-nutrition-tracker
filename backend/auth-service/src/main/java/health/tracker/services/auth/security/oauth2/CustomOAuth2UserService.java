@@ -99,6 +99,13 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private User updateExistingUser(User user, OAuth2UserInfo userInfo) {
+        if (!user.isActive()) {
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("account_inactive"),
+                    "User account is unavailable or inactive"
+            );
+        }
+
         user.setFullName(userInfo.getName());
         user.setAvatarUrl(userInfo.getAvatarUrl());
         return userRepository.save(user);

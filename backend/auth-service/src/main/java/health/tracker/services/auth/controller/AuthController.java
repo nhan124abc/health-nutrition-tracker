@@ -138,4 +138,77 @@ public class AuthController {
 
         return ResponseEntity.ok(adminUserService.getUsers(page, size, search));
     }
+
+    @PostMapping("/admin/users")
+    public ResponseEntity<AdminUsersResponse.UserItem> createAdminUser(
+            @RequestHeader("X-User-Role") String role,
+            @RequestBody Map<String, Object> request) {
+
+        requireAdmin(role);
+        return ResponseEntity.status(HttpStatus.CREATED).body(adminUserService.createUser(
+                asString(request.get("fullName")),
+                asString(request.get("email")),
+                asString(request.get("password")),
+                asString(request.get("role")),
+                asBoolean(request.get("active"))
+        ));
+    }
+
+    @PutMapping("/admin/users/{userId}")
+    public ResponseEntity<AdminUsersResponse.UserItem> updateAdminUser(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Long userId,
+            @RequestBody Map<String, Object> request) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(adminUserService.updateUser(
+                userId,
+                asString(request.get("fullName")),
+                asString(request.get("email")),
+                asString(request.get("role")),
+                asBoolean(request.get("active"))
+        ));
+    }
+
+    @PatchMapping("/admin/users/{userId}/lock")
+    public ResponseEntity<AdminUsersResponse.UserItem> lockAdminUser(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Long userId) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(adminUserService.setUserActive(userId, false));
+    }
+
+    @PatchMapping("/admin/users/{userId}/unlock")
+    public ResponseEntity<AdminUsersResponse.UserItem> unlockAdminUser(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Long userId) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(adminUserService.setUserActive(userId, true));
+    }
+
+    @DeleteMapping("/admin/users/{userId}")
+    public ResponseEntity<Map<String, String>> deleteAdminUser(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Long userId) {
+
+        requireAdmin(role);
+        adminUserService.deleteUser(userId);
+        return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
+    }
+
+    private void requireAdmin(String role) {
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Admin role is required");
+        }
+    }
+
+    private String asString(Object value) {
+        return value == null ? null : String.valueOf(value);
+    }
+
+    private Boolean asBoolean(Object value) {
+        return value instanceof Boolean booleanValue ? booleanValue : null;
+    }
 }

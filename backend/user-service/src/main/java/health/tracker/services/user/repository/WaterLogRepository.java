@@ -23,4 +23,6 @@ public interface WaterLogRepository extends JpaRepository<WaterLog, Long> {
     );
 
     Optional<WaterLog> findByIdAndUserId(Long waterId, Long userId);
+
+    void deleteByUserId(Long userId);
 }

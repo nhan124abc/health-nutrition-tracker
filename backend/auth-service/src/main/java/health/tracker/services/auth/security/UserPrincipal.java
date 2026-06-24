@@ -19,6 +19,7 @@ public class UserPrincipal implements UserDetails, OAuth2User {
     private final Long id;
     private final String email;
     private final String password;
+    private final boolean enabled;
     private final Collection<? extends GrantedAuthority> authorities;
     private Map<String, Object> attributes;
 
@@ -30,6 +31,7 @@ public class UserPrincipal implements UserDetails, OAuth2User {
                 user.getId(),
                 user.getEmail(),
                 user.getPassword(),
+                user.isActive(),
                 authorities,
                 null
         );
@@ -58,7 +60,7 @@ public class UserPrincipal implements UserDetails, OAuth2User {
     public boolean isCredentialsNonExpired() { return true; }
 
     @Override
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() { return enabled; }
 
     // -------- OAuth2User --------
 

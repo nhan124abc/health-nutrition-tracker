@@ -55,6 +55,10 @@ public class ActivityService {
             activityType = typeRepository.findById(request.getActivityTypeId())
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
                             "Activity type not found: " + request.getActivityTypeId()));
+            if (activityType.isHidden()) {
+                throw new AppException(HttpStatus.BAD_REQUEST,
+                        "Activity type is hidden: " + request.getActivityTypeId());
+            }
             activityName = activityType.getName();
             category     = activityType.getCategory().name();
         }
@@ -102,6 +106,10 @@ public class ActivityService {
                 : typeRepository.findById(request.getActivityTypeId())
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
                         "Activity type not found: " + request.getActivityTypeId()));
+        if (type != null && type.isHidden()) {
+            throw new AppException(HttpStatus.BAD_REQUEST,
+                    "Activity type is hidden: " + request.getActivityTypeId());
+        }
         activity.setActivityType(type);
         activity.setActivityName(type != null ? type.getName() : request.getActivityName());
         activity.setCategory(type != null ? type.getCategory().name() : "OTHER");

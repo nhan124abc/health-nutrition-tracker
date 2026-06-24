@@ -32,6 +32,10 @@ public class FoodCategory {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "hidden", nullable = false)
+    @Builder.Default
+    private boolean hidden = false;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

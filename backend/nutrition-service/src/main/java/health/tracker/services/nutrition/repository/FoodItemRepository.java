@@ -37,5 +37,7 @@ public interface FoodItemRepository extends JpaRepository<FoodItem, Long> {
 
     Page<FoodItem> findByCreatedByUserIdAndIsPublicOrderByCreatedAtDesc(
             Long userId, boolean isPublic, Pageable pageable);
+
+    long countByCategoryId(Integer categoryId);
 }
 

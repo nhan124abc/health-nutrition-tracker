@@ -18,5 +18,7 @@ public interface BodyMetricRepository extends JpaRepository<BodyMetric, Long> {
             Long userId, LocalDate from, LocalDate to);
 
     boolean existsByUserIdAndRecordedAt(Long userId, LocalDate recordedAt);
+
+    void deleteByUserId(Long userId);
 }
 

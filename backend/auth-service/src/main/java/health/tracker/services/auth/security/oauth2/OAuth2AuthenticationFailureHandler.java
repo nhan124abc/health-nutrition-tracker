@@ -24,8 +24,12 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
                                         HttpServletResponse response,
                                         AuthenticationException exception) throws IOException, ServletException {
         log.error("OAuth2 authentication failed: {}", exception.getMessage());
+        String errorCode = exception.getMessage() != null
+                && exception.getMessage().toLowerCase().contains("inactive")
+                ? "account_locked"
+                : "oauth2_login_failed";
         String redirectUrl = UriComponentsBuilder.fromUriString(authorizedRedirectUri)
-                .queryParam("error", "oauth2_login_failed")
+                .queryParam("error", errorCode)
                 .build()
                 .toUriString();
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
