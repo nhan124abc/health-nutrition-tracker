@@ -9,7 +9,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +21,6 @@ public class AdminUserService {
 
     private final UserRepository userRepository;
     private final UserCacheService userCacheService;
-    private final PasswordEncoder passwordEncoder;
 
     @Transactional(readOnly = true)
     public AdminUsersResponse getUsers(int page, int size, String search) {
@@ -55,33 +53,6 @@ public class AdminUserService {
                 users.getSize(),
                 users.getTotalPages()
         );
-    }
-
-    @Transactional
-    public AdminUsersResponse.UserItem createUser(String fullName, String email, String password, String role, Boolean active) {
-        if (email == null || email.isBlank()) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Email is required");
-        }
-        if (password == null || password.length() < 8) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Password must be at least 8 characters");
-        }
-        if (userRepository.existsByEmail(email.trim())) {
-            throw new AppException(HttpStatus.CONFLICT, "Email already registered: " + email);
-        }
-
-        User user = User.builder()
-                .email(email.trim())
-                .password(passwordEncoder.encode(password))
-                .fullName(fullName == null ? "" : fullName.trim())
-                .role(parseRole(role))
-                .authProvider(User.AuthProvider.LOCAL)
-                .active(active == null || active)
-                .emailVerified(true)
-                .build();
-
-        User savedUser = userRepository.save(user);
-        userCacheService.put(savedUser);
-        return toItem(savedUser);
     }
 
     @Transactional
