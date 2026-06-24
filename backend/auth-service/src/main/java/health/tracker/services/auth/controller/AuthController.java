@@ -7,6 +7,7 @@ import health.tracker.services.auth.repository.UserRepository;
 import health.tracker.services.auth.service.AdminUserService;
 import health.tracker.services.auth.service.AuthService;
 import health.tracker.services.auth.service.MailService;
+import health.tracker.services.auth.service.UserCacheService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class AuthController {
     private final AdminUserService adminUserService;
     private final UserRepository userRepository;
     private final MailService mailService;
+    private final UserCacheService userCacheService;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -122,6 +124,34 @@ public class AuthController {
                 "role", user.getRole().name(),
                 "authProvider", user.getAuthProvider().name(),
                 "emailVerified", user.isEmailVerified()
+        ));
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<Map<String, Object>> updateMe(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestBody Map<String, Object> request) {
+        User user = userRepository.findById(userId)
+                .filter(User::isActive)
+                .orElseThrow(() -> new AppException(
+                        HttpStatus.UNAUTHORIZED,
+                        "User account is unavailable or inactive"));
+
+        String fullName = asString(request.get("fullName"));
+        if (StringUtils.hasText(fullName)) {
+            user.setFullName(fullName.trim());
+        }
+
+        User savedUser = userRepository.save(user);
+        userCacheService.evict(savedUser.getEmail());
+
+        return ResponseEntity.ok(Map.of(
+                "id", savedUser.getId(),
+                "email", savedUser.getEmail(),
+                "fullName", savedUser.getFullName() == null ? "" : savedUser.getFullName(),
+                "role", savedUser.getRole().name(),
+                "authProvider", savedUser.getAuthProvider().name(),
+                "emailVerified", savedUser.isEmailVerified()
         ));
     }
 

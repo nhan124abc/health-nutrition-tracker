@@ -17,18 +17,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByProviderIdAndAuthProvider(String providerId, User.AuthProvider authProvider);
 
-    Page<User> findByRole(User.Role role, Pageable pageable);
-
-    Page<User> findByRoleAndEmailContainingIgnoreCaseOrRoleAndFullNameContainingIgnoreCase(
-            User.Role emailRole,
+    Page<User> findByEmailContainingIgnoreCaseOrFullNameContainingIgnoreCase(
             String email,
-            User.Role fullNameRole,
             String fullName,
             Pageable pageable
     );
 
-    long countByRole(User.Role role);
-
-    long countByRoleAndActive(User.Role role, boolean active);
+    long countByActive(boolean active);
 }
 
