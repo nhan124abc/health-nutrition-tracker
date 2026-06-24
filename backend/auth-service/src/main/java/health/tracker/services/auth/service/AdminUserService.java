@@ -35,20 +35,18 @@ public class AdminUserService {
         );
 
         Page<User> users = hasSearch(search)
-                ? userRepository.findByRoleAndEmailContainingIgnoreCaseOrRoleAndFullNameContainingIgnoreCase(
-                        User.Role.USER,
+                ? userRepository.findByEmailContainingIgnoreCaseOrFullNameContainingIgnoreCase(
                         search.trim(),
-                        User.Role.USER,
                         search.trim(),
                         pageRequest
                 )
-                : userRepository.findByRole(User.Role.USER, pageRequest);
+                : userRepository.findAll(pageRequest);
 
         return new AdminUsersResponse(
                 users.getContent().stream().map(this::toItem).toList(),
                 users.getTotalElements(),
-                userRepository.countByRoleAndActive(User.Role.USER, true),
-                userRepository.countByRoleAndActive(User.Role.USER, false),
+                userRepository.countByActive(true),
+                userRepository.countByActive(false),
                 users.getNumber(),
                 users.getSize(),
                 users.getTotalPages()
