@@ -2,17 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Col, Form, InputGroup, Modal, Row, Spinner, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import {
-  FaBullseye,
-  FaChartLine,
-  FaCheck,
-  FaCog,
   FaDumbbell,
   FaEdit,
   FaEye,
-  FaNewspaper,
-  FaPlus,
+  FaEyeSlash,
   FaSearch,
-  FaTasks,
   FaTrash,
   FaUsers,
   FaUtensils,
@@ -41,76 +35,6 @@ const pageConfigs = {
     stats: [],
     columns: ['exercise', 'category', 'met', 'source'],
     rows: [],
-  },
-  articles: {
-    icon: FaNewspaper,
-    stats: [
-      ['total', '96'],
-      ['published', '72'],
-      ['draftPending', '24'],
-    ],
-    columns: ['title', 'category', 'author', 'status'],
-    rows: [
-      { cells: ['admin.data.articles.macro', 'admin.common.nutrition', 'Admin', 'admin.status.published'], variant: 'success' },
-      { cells: ['admin.data.articles.water', 'admin.common.health', 'Editor', 'admin.status.pending'], variant: 'warning' },
-      { cells: ['admin.data.articles.breakfast', 'admin.common.food', 'Admin', 'admin.status.draft'], variant: 'warning' },
-    ],
-  },
-  reports: {
-    icon: FaChartLine,
-    stats: [
-      ['logs', '48,920'],
-      ['calories', '72M'],
-      ['retention', '64%'],
-    ],
-    columns: ['report', 'period', 'creator', 'status'],
-    rows: [
-      { cells: ['admin.data.reports.users', 'admin.data.periods.may2026', 'admin.common.system', 'admin.status.ready'], variant: 'success' },
-      { cells: ['admin.data.reports.popularFoods', 'admin.data.periods.thisWeek', 'Admin', 'admin.status.processing'], variant: 'warning' },
-      { cells: ['admin.data.reports.goals', 'admin.data.periods.thirtyDays', 'admin.common.system', 'admin.status.ready'], variant: 'success' },
-    ],
-  },
-  submissions: {
-    icon: FaTasks,
-    stats: [
-      ['pending', '38'],
-      ['approvedToday', '19'],
-      ['rejected', '5'],
-    ],
-    columns: ['data', 'submitter', 'type', 'status'],
-    rows: [
-      { cells: ['admin.data.submissions.noodle', 'user_1024', 'admin.common.food', 'admin.status.pending'], variant: 'warning' },
-      { cells: ['admin.data.submissions.stairs', 'coach_08', 'admin.common.activity', 'admin.status.needsEdit'], variant: 'warning' },
-      { cells: ['admin.data.submissions.dinnerTip', 'editor_03', 'admin.common.article', 'admin.status.pending'], variant: 'warning' },
-    ],
-  },
-  plans: {
-    icon: FaBullseye,
-    stats: [
-      ['goals', '16'],
-      ['plans', '4'],
-      ['activeUsers', '2,840'],
-    ],
-    columns: ['name', 'type', 'value', 'status'],
-    rows: [
-      { cells: ['admin.data.plans.weightLoss', 'admin.common.goal', 'admin.data.plans.weightLossValue', 'admin.status.inUse'], variant: 'success' },
-      { cells: ['Premium Meal Planner', 'admin.common.servicePlan', 'admin.data.plans.premiumPrice', 'admin.status.selling'], variant: 'success' },
-      { cells: ['Coach Pro', 'admin.common.servicePlan', 'admin.data.plans.coachPrice', 'admin.status.draft'], variant: 'warning' },
-    ],
-  },
-  settings: {
-    icon: FaCog,
-    stats: [
-      ['roles', '5'],
-      ['permissions', '32'],
-      ['enabledSettings', '18'],
-    ],
-    columns: ['setting', 'group', 'value', 'status'],
-    rows: [
-      { cells: ['admin.data.settings.fullAdmin', 'admin.common.permission', 'admin.data.settings.fullAccess', 'admin.status.enabled'], variant: 'success' },
-      { cells: ['admin.data.settings.foodReview', 'admin.common.permission', 'food.review', 'admin.status.enabled'], variant: 'success' },
-      { cells: ['admin.data.settings.jwtTimeout', 'admin.common.security', 'admin.data.settings.twentyFourHours', 'admin.status.enabled'], variant: 'success' },
-    ],
   },
 };
 
@@ -355,7 +279,6 @@ function AdminManagementPage({ type }) {
   const displayCell = (cell) => (
     typeof cell === 'string' && cell.startsWith('admin.') ? t(cell) : cell
   );
-  const eyeActionLabel = type === 'users' ? t('admin.actions.toggleAccount') : t('admin.actions.view');
   const userDetailRows = selectedUser ? [
     [t('admin.table.name'), selectedUser.cells[0]],
     [t('admin.table.email'), selectedUser.cells[1]],
@@ -373,10 +296,6 @@ function AdminManagementPage({ type }) {
         <div>
           <h2>{t(`${pageKey}.title`)}</h2>
         </div>
-        <Button variant="success">
-          <FaPlus className="me-2" />
-          {t(`${pageKey}.action`)}
-        </Button>
       </div>
 
       <Row className="g-4 mb-4">
@@ -444,6 +363,11 @@ function AdminManagementPage({ type }) {
                 )}
                 {filteredRows.map((row) => {
                   const rowKey = row.id || row.cells.join('-');
+                  const isUserRow = type === 'users';
+                  const visibilityActionLabel = isUserRow
+                    ? t(row.active ? 'admin.actions.hideAccount' : 'admin.actions.showAccount')
+                    : t('admin.actions.view');
+
                   return (
                     <tr key={rowKey}>
                       {row.cells.map((cell, index) => {
@@ -471,36 +395,29 @@ function AdminManagementPage({ type }) {
                       <td className="text-end">
                         <div className="admin-row-actions">
                           <Button
-                            variant="outline-secondary"
+                            variant={isUserRow && !row.active ? 'outline-primary' : 'outline-secondary'}
                             size="sm"
-                            aria-label={eyeActionLabel}
-                            title={eyeActionLabel}
+                            aria-label={visibilityActionLabel}
+                            title={visibilityActionLabel}
+                            disabled
                           >
-                            <FaEye />
+                            {isUserRow && row.active ? <FaEyeSlash /> : <FaEye />}
                           </Button>
                           <Button
                             variant="outline-success"
                             size="sm"
                             aria-label={t('admin.actions.edit')}
                             title={t('admin.actions.edit')}
+                            disabled
                           >
                             <FaEdit />
                           </Button>
-                          {type === 'submissions' && (
-                            <Button
-                              variant="success"
-                              size="sm"
-                              aria-label={t('admin.actions.approve')}
-                              title={t('admin.actions.approve')}
-                            >
-                              <FaCheck />
-                            </Button>
-                          )}
                           <Button
                             variant="outline-danger"
                             size="sm"
                             aria-label={t('admin.actions.delete')}
                             title={t('admin.actions.delete')}
+                            disabled
                           >
                             <FaTrash />
                           </Button>

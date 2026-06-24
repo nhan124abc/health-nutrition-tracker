@@ -1,20 +1,13 @@
-import { Button, Card, Form, Table } from 'react-bootstrap';
+import { Button, Card, Table } from 'react-bootstrap';
 import { FaCheck } from 'react-icons/fa';
-import { activityCategories } from '../activityUtils';
 import { getActivityCompletionId } from '../../../utils/completionStorage';
 
-function ActivityLogTable({ category, completedIds = [], loading, logs, onCategoryChange, onToggleComplete, t }) {
+function ActivityLogTable({ completedIds = [], loading, logs, onToggleComplete, t }) {
   return (
     <Card className="border-0 shadow-sm">
       <Card.Body>
         <div className="d-flex flex-wrap justify-content-between gap-3 mb-3">
           <Card.Title className="fw-bold mb-0">{t('activityPage.listTitle')}</Card.Title>
-          <Form.Select className="page-date-input" value={category} onChange={(event) => onCategoryChange(event.target.value)}>
-            <option value="all">{t('activityPage.allCategories')}</option>
-            {activityCategories.map((item) => (
-              <option value={item} key={item}>{t(`activityPage.categories.${item}`)}</option>
-            ))}
-          </Form.Select>
         </div>
         <div className="table-responsive">
           <Table hover className="align-middle mb-0">

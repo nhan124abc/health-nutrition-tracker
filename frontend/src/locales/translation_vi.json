@@ -1029,7 +1029,8 @@
       "edit": "Chỉnh sửa",
       "approve": "Duyệt",
       "delete": "Xóa",
-      "toggleAccount": "Ẩn/hiện tài khoản"
+      "hideAccount": "\u1ea8n t\u00e0i kho\u1ea3n",
+      "showAccount": "Hi\u1ec7n t\u00e0i kho\u1ea3n"
     },
     "table": {
       "listTitle": "Danh sách dữ liệu",
@@ -1097,8 +1098,7 @@
         "exercises": "Bài tập có calo tiêu hao",
         "users": "Hồ sơ người dùng đầy đủ",
         "content": "Nội dung đã duyệt"
-      },
-      "description": "Theo dõi nhanh người dùng, dữ liệu danh mục, hoạt động mới và mức độ hoàn thiện dữ liệu hệ thống."
+      }
     },
     "analytics": {
       "title": "Phân tích toàn hệ thống",

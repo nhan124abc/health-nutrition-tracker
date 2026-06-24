@@ -1,5 +1,3 @@
-export const activityCategories = ['cardio', 'strength', 'flexibility', 'sports', 'daily', 'other'];
-
 export const emptyLog = {
   typeId: '',
   customName: '',

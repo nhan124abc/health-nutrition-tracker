@@ -1,12 +1,19 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Col, Form, Modal, Row, Spinner, Table } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Row, Spinner, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { FaArrowLeft, FaDumbbell, FaEdit, FaEye, FaPlus, FaTrash, FaUtensils } from 'react-icons/fa';
+import { FaArrowLeft, FaDumbbell, FaEdit, FaEyeSlash, FaPlus, FaTrash, FaUtensils } from 'react-icons/fa';
 import { getActivityTypes } from '../../features/activities/activityService';
 import { extractActivityTypesFromApi, normalizeActivityType } from '../../features/activities/activityUtils';
-import { getFoods } from '../../features/nutrition/nutritionService';
-import { cleanText } from '../../features/nutrition/nutritionUtils';
+import { getFoodCategories, getFoods } from '../../features/nutrition/nutritionService';
+import {
+  cleanText,
+  deriveCategoriesFromFoods,
+  extractCategoriesFromApi,
+  extractFoodsFromApi,
+  normalizeCategory,
+  normalizeFoodFromApi,
+} from '../../features/nutrition/nutritionUtils';
 
 const catalogItems = [
   {
@@ -21,36 +28,7 @@ const catalogItems = [
   },
 ];
 
-function extractPage(payload) {
-  const data = payload?.data ?? payload ?? {};
-  return {
-    content: Array.isArray(data.content) ? data.content : [],
-    totalPages: Number(data.totalPages) || 0,
-  };
-}
-
-async function loadAllFoods() {
-  const firstResponse = await getFoods({ page: 0, size: 100 });
-  const firstPage = extractPage(firstResponse.data);
-
-  if (firstPage.totalPages <= 1) {
-    return firstPage.content;
-  }
-
-  const remainingResponses = await Promise.all(
-    Array.from(
-      { length: firstPage.totalPages - 1 },
-      (_, index) => getFoods({ page: index + 1, size: 100 })
-    )
-  );
-
-  return [
-    ...firstPage.content,
-    ...remainingResponses.flatMap((response) => extractPage(response.data).content),
-  ];
-}
-
-function groupByCategory(items, getCategory) {
+function groupByCategory(items, getCategory, getName = (category) => category) {
   return Object.values(items.reduce((groups, item) => {
     const category = getCategory(item) || 'other';
     const key = String(category).toLowerCase();
@@ -59,12 +37,47 @@ function groupByCategory(items, getCategory) {
       ...groups,
       [key]: {
         id: groups[key]?.id || key,
-        name: groups[key]?.name || category,
+        name: groups[key]?.name || getName(key, category),
         count: (groups[key]?.count || 0) + 1,
-        hidden: groups[key]?.hidden || false,
       },
     };
   }, {})).sort((left, right) => left.name.localeCompare(right.name));
+}
+
+function getCategoryItemCount(category) {
+  return Number(
+    category.count
+    ?? category.foodCount
+    ?? category.itemCount
+    ?? category.totalItems
+    ?? category.totalFoods
+    ?? 0
+  ) || 0;
+}
+
+function mapFoodCategory(category = {}) {
+  const normalizedCategory = normalizeCategory(category);
+  const name = normalizedCategory.nameVi || normalizedCategory.name;
+
+  return {
+    id: normalizedCategory.id ?? cleanText(name).toLowerCase(),
+    name: name || '-',
+    count: getCategoryItemCount(category),
+  };
+}
+
+function mapDerivedFoodCategory(category, foods) {
+  return {
+    ...category,
+    count: foods.filter((food) => String(food.categoryId || food.category) === String(category.id)).length,
+  };
+}
+
+async function loadFoodCategoriesFromFoods() {
+  const response = await getFoods({ page: 0, size: 500 });
+  const foods = extractFoodsFromApi(response.data).map(normalizeFoodFromApi);
+
+  return deriveCategoriesFromFoods(foods).map((category) => mapDerivedFoodCategory(category, foods));
 }
 
 function AdminCatalogs({ type = 'overview' }) {
@@ -72,9 +85,6 @@ function AdminCatalogs({ type = 'overview' }) {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(type !== 'overview');
   const [error, setError] = useState('');
-  const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [editingCategory, setEditingCategory] = useState(null);
-  const [categoryName, setCategoryName] = useState('');
   const isFoodCategories = type === 'food';
   const isActivityCategories = type === 'activity';
 
@@ -91,23 +101,28 @@ function AdminCatalogs({ type = 'overview' }) {
 
       try {
         if (isFoodCategories) {
-          const foods = await loadAllFoods();
-          const groupedFoods = groupByCategory(foods, (food) =>
-            cleanText(food.categoryName)
-            || cleanText(food.category)
-            || cleanText(food.foodGroup)
-            || cleanText(food.brandName)
-          );
+          const response = await getFoodCategories();
+          const foodCategories = extractCategoriesFromApi(response.data)
+            .map(mapFoodCategory)
+            .filter((category) => category.id && category.name)
+            .sort((left, right) => left.name.localeCompare(right.name));
+          const categoriesFromDb = foodCategories.length
+            ? foodCategories
+            : await loadFoodCategoriesFromFoods();
 
           if (isActive) {
-            setCategories(groupedFoods);
+            setCategories(categoriesFromDb);
           }
         } else if (isActivityCategories) {
           const response = await getActivityTypes();
           const activityTypes = extractActivityTypesFromApi(response.data).map(normalizeActivityType);
 
           if (isActive) {
-            setCategories(groupByCategory(activityTypes, (activity) => activity.category));
+            setCategories(groupByCategory(
+              activityTypes,
+              (activity) => activity.category,
+              (category) => t(`activityPage.categories.${category}`)
+            ));
           }
         }
       } catch (loadError) {
@@ -135,61 +150,6 @@ function AdminCatalogs({ type = 'overview' }) {
     () => categories.reduce((sum, category) => sum + category.count, 0),
     [categories]
   );
-
-  const openAddCategory = () => {
-    setEditingCategory(null);
-    setCategoryName('');
-    setShowCategoryModal(true);
-  };
-
-  const openEditCategory = (category) => {
-    setEditingCategory(category);
-    setCategoryName(category.name);
-    setShowCategoryModal(true);
-  };
-
-  const closeCategoryModal = () => {
-    setShowCategoryModal(false);
-    setEditingCategory(null);
-    setCategoryName('');
-  };
-
-  const saveCategory = (event) => {
-    event.preventDefault();
-    const trimmedName = categoryName.trim();
-
-    if (!trimmedName) {
-      return;
-    }
-
-    if (editingCategory) {
-      setCategories((current) => current.map((category) =>
-        category.id === editingCategory.id ? { ...category, name: trimmedName } : category
-      ));
-    } else {
-      setCategories((current) => [
-        ...current,
-        {
-          id: `local-${Date.now()}`,
-          name: trimmedName,
-          count: 0,
-          hidden: false,
-        },
-      ].sort((left, right) => left.name.localeCompare(right.name)));
-    }
-
-    closeCategoryModal();
-  };
-
-  const deleteCategory = (category) => {
-    setCategories((current) => current.filter((item) => item.id !== category.id));
-  };
-
-  const toggleCategoryHidden = (category) => {
-    setCategories((current) => current.map((item) =>
-      item.id === category.id ? { ...item, hidden: !item.hidden } : item
-    ));
-  };
 
   if (type !== 'overview') {
     return (
@@ -247,15 +207,6 @@ function AdminCatalogs({ type = 'overview' }) {
                 <div>
                   <h3 className="h5 fw-bold mb-1">{t('admin.catalogs.categoryList')}</h3>
                 </div>
-                <Button
-                  variant="success"
-                  className="admin-catalog-add-action"
-                  onClick={openAddCategory}
-                  aria-label={t('admin.catalogs.addCategory')}
-                  title={t('admin.catalogs.addCategory')}
-                >
-                  <FaPlus />
-                </Button>
               </div>
               <div className="table-responsive">
                 <Table hover className="align-middle mb-0 admin-table">
@@ -271,8 +222,8 @@ function AdminCatalogs({ type = 'overview' }) {
                       <tr key={category.id}>
                         <td className="fw-semibold">{category.name}</td>
                         <td>
-                          <span className={`small fw-semibold text-${category.hidden ? 'secondary' : 'success'}`}>
-                            {t(category.hidden ? 'admin.catalogs.hidden' : 'admin.catalogs.visible')}
+                          <span className="small fw-semibold text-success">
+                            {t('admin.catalogs.visible')}
                           </span>
                         </td>
                         <td className="text-end">
@@ -280,27 +231,27 @@ function AdminCatalogs({ type = 'overview' }) {
                             <Button
                               variant="outline-secondary"
                               size="sm"
-                              onClick={() => toggleCategoryHidden(category)}
                               aria-label={t('admin.catalogs.toggleHidden')}
                               title={t('admin.catalogs.toggleHidden')}
+                              disabled
                             >
-                              <FaEye />
+                              <FaEyeSlash />
                             </Button>
                             <Button
                               variant="outline-success"
                               size="sm"
-                              onClick={() => openEditCategory(category)}
                               aria-label={t('admin.actions.edit')}
                               title={t('admin.actions.edit')}
+                              disabled
                             >
                               <FaEdit />
                             </Button>
                             <Button
                               variant="outline-danger"
                               size="sm"
-                              onClick={() => deleteCategory(category)}
                               aria-label={t('admin.actions.delete')}
                               title={t('admin.actions.delete')}
+                              disabled
                             >
                               <FaTrash />
                             </Button>
@@ -322,35 +273,6 @@ function AdminCatalogs({ type = 'overview' }) {
             </Card>
           </>
         )}
-
-        <Modal show={showCategoryModal} onHide={closeCategoryModal} centered>
-          <Form onSubmit={saveCategory}>
-            <Modal.Header closeButton>
-              <Modal.Title>
-                {editingCategory ? t('admin.catalogs.editCategory') : t('admin.catalogs.addCategory')}
-              </Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <Form.Group>
-                <Form.Label>{t('admin.catalogs.categoryName')}</Form.Label>
-                <Form.Control
-                  value={categoryName}
-                  onChange={(event) => setCategoryName(event.target.value)}
-                  autoFocus
-                  required
-                />
-              </Form.Group>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="outline-secondary" onClick={closeCategoryModal}>
-                {t('common.cancel')}
-              </Button>
-              <Button variant="success" type="submit">
-                {t('common.save')}
-              </Button>
-            </Modal.Footer>
-          </Form>
-        </Modal>
       </>
     );
   }

@@ -379,7 +379,8 @@
       "edit": "Edit",
       "approve": "Approve",
       "delete": "Delete",
-      "toggleAccount": "Show/hide account"
+      "hideAccount": "Hide account",
+      "showAccount": "Show account"
     },
     "table": {
       "listTitle": "User list",
@@ -418,7 +419,6 @@
     "dashboard": {
       "title": "System overview",
       "recentTitle": "Recent activity",
-      "recentDescription": "Changes and records that need admin attention.",
       "dataHealthTitle": "Data health",
       "dataHealthDescription": "Completion status of the main data groups.",
       "stats": {
@@ -446,8 +446,7 @@
         "exercises": "Exercises with burn data",
         "users": "Complete user profiles",
         "content": "Approved content"
-      },
-      "description": "Track users, catalog data, recent activity, and system data completeness at a glance."
+      }
     },
     "analytics": {
       "title": "System-wide analytics",

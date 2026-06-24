@@ -25,7 +25,6 @@ import {
 function ActivityTracker() {
   const { t } = useTranslation();
   const [selectedDate, setSelectedDate] = useState(getTodayDate);
-  const [category, setCategory] = useState('all');
   const [logs, setLogs] = useState([]);
   const [activityTypes, setActivityTypes] = useState([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
@@ -37,8 +36,6 @@ function ActivityTracker() {
     try { return JSON.parse(localStorage.getItem('activeGoalPlan'))?.dailyActivityGoalKcal || 0; } catch { return 0; }
   });
 
-  const filteredTypes = category === 'all' ? activityTypes : activityTypes.filter((type) => type.category === category);
-  const visibleLogs = category === 'all' ? logs : logs.filter((log) => log.category === category);
   const summary = useMemo(() => getActivitySummary(logs), [logs]);
 
   useEffect(() => {
@@ -151,11 +148,9 @@ function ActivityTracker() {
           {activityError && <div className="alert alert-danger">{activityError}</div>}
           {loadingLogs && <div className="alert alert-light border">{t('activityPage.loading')}</div>}
           <ActivityLogTable
-            category={category}
             completedIds={completedActivityIds}
             loading={loadingLogs}
-            logs={visibleLogs}
-            onCategoryChange={setCategory}
+            logs={logs}
             onToggleComplete={toggleActivityCompleted}
             t={t}
           />
@@ -164,7 +159,7 @@ function ActivityTracker() {
         <Col lg={4}>
           <ActivitySummaryCard
             activityGoal={activityGoal}
-            activityTypes={filteredTypes}
+            activityTypes={activityTypes}
             logCount={logs.length}
             summary={summary}
             t={t}

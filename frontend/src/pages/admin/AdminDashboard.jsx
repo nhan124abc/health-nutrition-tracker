@@ -105,7 +105,6 @@ function AdminDashboard() {
       <div className="admin-page-heading">
         <div>
           <h2>{t('admin.dashboard.title')}</h2>
-          <p>{t('admin.dashboard.description')}</p>
         </div>
       </div>
 
@@ -150,7 +149,6 @@ function AdminDashboard() {
               <div className="mb-4">
                 <div>
                   <Card.Title className="fw-bold mb-1">{t('admin.dashboard.recentTitle')}</Card.Title>
-                  <p className="text-secondary mb-0">{t('admin.dashboard.recentDescription')}</p>
                 </div>
               </div>
               <div className="table-responsive">

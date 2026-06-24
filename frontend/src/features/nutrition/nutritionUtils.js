@@ -124,7 +124,13 @@ export function normalizeCategory(category = {}) {
 }
 
 export function normalizeFoodFromApi(food = {}) {
-  const category = normalizeCategory(food.category || {});
+  const category = normalizeCategory({
+    id: food.category?.id ?? food.categoryId,
+    categoryId: food.category?.categoryId,
+    name: food.category?.name ?? food.categoryName ?? food.category,
+    nameVi: food.category?.nameVi ?? food.categoryNameVi,
+    icon: food.category?.icon ?? food.categoryIcon,
+  });
 
   return {
     id: food.id ?? food.foodId,
@@ -144,6 +150,31 @@ export function normalizeFoodFromApi(food = {}) {
     sodium: normalizeNumber(food.sodiumMg),
     imageUrl: food.imageUrl || '',
   };
+}
+
+export function deriveCategoriesFromFoods(foods = []) {
+  const categoriesById = foods.reduce((groups, food) => {
+    if (!food.categoryId && !food.category) {
+      return groups;
+    }
+
+    const id = food.categoryId || food.category;
+    const existing = groups[id];
+
+    return {
+      ...groups,
+      [id]: {
+        id,
+        name: existing?.name || food.category,
+        nameVi: existing?.nameVi || '',
+        icon: existing?.icon || '',
+      },
+    };
+  }, {});
+
+  return Object.values(categoriesById)
+    .filter((category) => category.id && (category.name || category.nameVi))
+    .sort((left, right) => (left.nameVi || left.name).localeCompare(right.nameVi || right.name));
 }
 
 export function mapFoodToApi(food) {
