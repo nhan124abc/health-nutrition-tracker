@@ -373,8 +373,15 @@
     "passwordMismatch": "Mật khẩu xác nhận không khớp.",
     "registerError": "Không thể đăng ký. Vui lòng thử lại.",
     "forgotTitle": "Quên mật khẩu",
-    "otpSent": "OTP đã được gửi tới email nếu tài khoản tồn tại.",
+    "forgotDescription": "Nhập email để nhận OTP, sau đó đặt mật khẩu mới.",
+    "otpSent": "OTP đã được gửi tới email của bạn.",
     "sendOtpError": "Không thể gửi OTP. Vui lòng thử lại.",
+    "otpPlaceholder": "Nhập mã OTP 6 chữ số",
+    "otpVerified": "OTP đã được xác thực. Vui lòng đặt mật khẩu mới.",
+    "otpVerifyError": "OTP không đúng hoặc đã hết hạn.",
+    "verifyingOtp": "Đang xác thực OTP...",
+    "verifyOtp": "Xác thực OTP",
+    "changeEmail": "Đổi email",
     "newPassword": "Mật khẩu mới",
     "sending": "Đang gửi...",
     "sendOtp": "Gửi OTP",
@@ -394,7 +401,19 @@
     "verifyError": "OTP không đúng hoặc đã hết hạn.",
     "verifyRemembered": "Đã xác minh?",
     "backToLogin": "Quay lại đăng nhập",
-    "backToHome": "Về trang chủ"
+    "backToHome": "Về trang chủ",
+    "emailVerifyInitial": "OTP đã được gửi. Vui lòng kiểm tra email của bạn.",
+    "emailVerifyResent": "Đã gửi lại OTP xác minh email.",
+    "emailVerifySendError": "Không thể gửi OTP. Vui lòng thử lại.",
+    "emailVerifySuccess": "Xác minh email thành công. Bạn có thể đăng nhập.",
+    "emailVerifyError": "OTP không đúng hoặc đã hết hạn.",
+    "verifyEmailTitle": "Xác minh email",
+    "verifyEmailDescription": "Nhập mã OTP đã gửi đến email của bạn để hoàn tất xác minh tài khoản.",
+    "otpInputPlaceholder": "Nhập 6 chữ số",
+    "verifyingEmail": "Đang xác minh...",
+    "verifyEmail": "Xác minh email",
+    "resendingOtp": "Đang gửi lại...",
+    "resendOtp": "Gửi lại OTP"
   },
   "dashboardPage": {
     "loading": "Đang tải dữ liệu dashboard...",
@@ -733,7 +752,7 @@
   },
   "plannerPage": {
     "title": "Chọn bữa ăn phù hợp",
-    "calorieBudget": "Ngân sách calo hôm nay",
+    "calorieBudget": "Ngân sách calo của ngày đã chọn",
     "consumed": "Đã ăn {{consumed}} / {{goal}} kcal",
     "selectSlot": "Chọn bữa ăn",
     "generating": "Đang tạo...",
@@ -741,8 +760,8 @@
     "createOtherOptions": "Tạo 2 phương án khác",
     "invalidTotal": "Tổng calo hiện tại bất thường do dữ liệu bữa cũ. Gợi ý mới sẽ bỏ qua tổng này; bạn nên xóa các bữa bị sai.",
     "insufficientCalories": "Không còn đủ calo cho một bữa mới.",
-    "loggedMealsTitle": "Món ăn đã ghi nhận cho {{meal}} hôm nay:",
-    "loggedActivitiesTitle": "Hoạt động vận động đã ghi nhận hôm nay:",
+    "loggedMealsTitle": "Bữa ăn đã ghi nhận cho {{meal}} trong ngày này:",
+    "loggedActivitiesTitle": "Hoạt động vận động đã ghi nhận trong ngày này:",
     "serving": "Định lượng",
     "duration": "Thời lượng: {{minutes}} phút",
     "durationLabel": "Thời lượng",
@@ -770,8 +789,8 @@
     "oneServing": "1 phần",
     "servings": "{{count}} phần",
     "noCookingGuide": "Chưa có hướng dẫn nấu chi tiết cho công thức này.",
-    "selectedFoods": "Thực phẩm muốn dùng",
-    "selectedFoodsHint": "Đã chọn {{count}}/{{max}} thực phẩm. AI sẽ dùng công thức có sẵn nếu khớp hoặc tạo công thức bữa ăn từ các món này.",
+    "selectedFoods": "Danh sách thực phẩm",
+    "selectedFoodsHint": "Đã chọn {{count}}/{{max}} thực phẩm. AI sẽ ưu tiên các thực phẩm bạn chọn để tạo món ăn.",
     "clearFoods": "Xóa chọn",
     "selectedActivities": "Loại vận động muốn tập",
     "selectedActivitiesHint": "Đã chọn {{count}}/{{max}} loại vận động. AI sẽ ưu tiên tạo phương án từ các loại bạn chọn.",
@@ -794,7 +813,7 @@
       "activityDescription": "Tạo gợi ý vận động từ dữ liệu hoạt động."
     },
     "defaultCookingMethod": "Sơ chế nguyên liệu, nấu chín các phần cần làm nóng, sau đó kết hợp và nêm nhẹ: {{ingredients}}.",
-    "activitySuggestionsTitle": "Gợi ý hoạt động vận động hôm nay",
+    "activitySuggestionsTitle": "Gợi ý hoạt động vận động cho ngày này",
     "activitySuggestionsDescription": "Kết hợp tập luyện giúp bạn đạt mục tiêu nhanh hơn.",
     "logged": "Đã ghi nhận",
     "logging": "Đang ghi nhận...",
@@ -808,9 +827,9 @@
       "exercise": "Hoạt động vận động"
     },
     "empty": {
-      "loggedActivity": "Bạn đã ghi nhận hoạt động vận động hôm nay. Nhấn \"Tạo 2 phương án khác\" nếu muốn thay đổi.",
+      "loggedActivity": "Bạn đã ghi nhận hoạt động vận động trong ngày này. Có thể xóa hoạt động cũ nếu muốn thay đổi.",
       "selectActivity": "Chọn loại hoạt động vận động rồi nhấn \"Tạo 2 phương án\".",
-      "loggedMeal": "Bạn đã ghi nhận món ăn cho {{meal}} hôm nay. Nhấn \"Tạo 2 phương án khác\" nếu muốn thay đổi.",
+      "loggedMeal": "Bạn đã ghi nhận bữa {{meal}} trong ngày này. Hãy xóa bữa cũ nếu muốn chọn phương án khác.",
       "selectMeal": "Chọn loại bữa rồi nhấn \"Tạo 2 phương án\".",
       "noRecipes": "Chưa có công thức phù hợp. Hãy chạy seed công thức hoặc bỏ bớt bộ lọc thực phẩm."
     },
@@ -827,7 +846,8 @@
       "mealAdded": "Đã thêm \"{{name}}\". Phương án còn lại sẽ không được cộng thêm.",
       "mealDeleted": "Đã hủy chọn và xóa bữa ăn khỏi nhật ký.",
       "activityAdded": "Đã ghi nhận bài tập \"{{name}}\".",
-      "activityDeleted": "Đã xóa hoạt động khỏi nhật ký."
+      "activityDeleted": "Đã xóa hoạt động khỏi nhật ký.",
+      "mealReplaced": "Đã thay bữa cũ bằng \"{{name}}\"."
     },
     "errors": {
       "load": "Không thể tải dữ liệu hôm nay.",
@@ -838,7 +858,21 @@
       "deleteMeal": "Không thể xóa bữa ăn.",
       "addActivity": "Không thể ghi nhận hoạt động.",
       "deleteActivity": "Không thể xóa hoạt động."
-    }
+    },
+    "replaceOption": "Thay thế bằng phương án này",
+    "searchFoods": "Tìm kiếm thực phẩm",
+    "searchFoodsPlaceholder": "Nhập tên thực phẩm muốn dùng...",
+    "searchFoodsHint": "Nhập ít nhất 2 ký tự để tìm thực phẩm.",
+    "searchingFoods": "Đang tìm thực phẩm...",
+    "noFoodResults": "Không tìm thấy thực phẩm phù hợp.",
+    "searchRecipes": "Tìm kiếm công thức",
+    "searchRecipesPlaceholder": "Nhập tên công thức hoặc món ăn...",
+    "searchRecipesHint": "Nhập ít nhất 2 ký tự hoặc chọn thực phẩm để tìm công thức.",
+    "searchRecipesEmpty": "Nhập tên công thức hoặc chọn thực phẩm để bắt đầu tìm.",
+    "searchActivities": "Tìm kiếm hoạt động",
+    "searchActivitiesPlaceholder": "Nhập tên hoạt động muốn tập...",
+    "searchActivitiesHint": "Nhập ít nhất 2 ký tự để tìm hoạt động.",
+    "noActivityResults": "Không tìm thấy hoạt động phù hợp."
   },
   "goalPlannerPage": {
     "title": "Thiết lập mục tiêu cân nặng",

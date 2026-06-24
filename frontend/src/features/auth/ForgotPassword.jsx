@@ -1,15 +1,20 @@
 import { useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
-import { requestPasswordReset, resetPassword as submitPasswordReset } from './authService';
+import {
+  requestPasswordReset,
+  resetPassword as submitPasswordReset,
+  verifyPasswordResetOtp,
+} from './authService';
 
 function ForgotPassword() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [step, setStep] = useState('request');
   const [form, setForm] = useState({ email: '', otp: '', newPassword: '', confirmPassword: '' });
-  const [message, setMessage] = useState('');
+  const [messageKey, setMessageKey] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -21,15 +26,35 @@ function ForgotPassword() {
   const requestOtp = async (event) => {
     event.preventDefault();
     setError('');
-    setMessage('');
+    setMessageKey('');
     setLoading(true);
 
     try {
       await requestPasswordReset(form.email);
-      setMessage(t('auth.otpSent'));
-      setStep('reset');
+      setMessageKey('auth.otpSent');
+      setStep('otp');
     } catch (err) {
       setError(err.response?.data?.message || t('auth.sendOtpError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyOtp = async (event) => {
+    event.preventDefault();
+    setError('');
+    setMessageKey('');
+    setLoading(true);
+
+    try {
+      await verifyPasswordResetOtp({
+        email: form.email,
+        otp: form.otp,
+      });
+      setMessageKey('auth.otpVerified');
+      setStep('reset');
+    } catch (err) {
+      setError(err.response?.data?.message || t('auth.otpVerifyError'));
     } finally {
       setLoading(false);
     }
@@ -38,7 +63,7 @@ function ForgotPassword() {
   const resetPassword = async (event) => {
     event.preventDefault();
     setError('');
-    setMessage('');
+    setMessageKey('');
 
     if (form.newPassword !== form.confirmPassword) {
       setError(t('auth.passwordMismatch'));
@@ -53,7 +78,8 @@ function ForgotPassword() {
         otp: form.otp,
         newPassword: form.newPassword,
       });
-      setMessage(t('auth.resetSuccess'));
+      setMessageKey('auth.resetSuccess');
+      setTimeout(() => navigate('/login', { replace: true }), 800);
     } catch (err) {
       setError(err.response?.data?.message || t('auth.resetError'));
     } finally {
@@ -75,7 +101,7 @@ function ForgotPassword() {
                 <h1 className="h3 fw-bold mb-2">{t('auth.forgotTitle')}</h1>
               </div>
 
-              {message && <Alert variant="success">{message}</Alert>}
+              {messageKey && <Alert variant="success">{t(messageKey)}</Alert>}
               {error && <Alert variant="danger">{error}</Alert>}
 
               {step === 'request' ? (
@@ -94,12 +120,33 @@ function ForgotPassword() {
                     {loading ? t('auth.sending') : t('auth.sendOtp')}
                   </Button>
                 </Form>
+              ) : step === 'otp' ? (
+                <Form onSubmit={verifyOtp}>
+                  <Form.Group className="mb-4" controlId="otp">
+                    <Form.Label>OTP</Form.Label>
+                    <Form.Control
+                      name="otp"
+                      value={form.otp}
+                      onChange={handleChange}
+                      placeholder={t('auth.otpPlaceholder')}
+                      required
+                    />
+                  </Form.Group>
+                  <Button className="w-100" variant="success" type="submit" disabled={loading}>
+                    {loading ? t('auth.verifyingOtp') : t('auth.verifyOtp')}
+                  </Button>
+                  <Button
+                    className="w-100 mt-2"
+                    variant="outline-secondary"
+                    type="button"
+                    disabled={loading}
+                    onClick={() => setStep('request')}
+                  >
+                    {t('auth.changeEmail')}
+                  </Button>
+                </Form>
               ) : (
                 <Form onSubmit={resetPassword}>
-                  <Form.Group className="mb-3" controlId="otp">
-                    <Form.Label>OTP</Form.Label>
-                    <Form.Control name="otp" value={form.otp} onChange={handleChange} required />
-                  </Form.Group>
                   <Form.Group className="mb-3" controlId="newPassword">
                     <Form.Label>{t('auth.newPassword')}</Form.Label>
                     <Form.Control

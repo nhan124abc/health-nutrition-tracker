@@ -10,6 +10,7 @@ const authConfig = {
     legacy: 'jwtToken',
   },
   userKey: 'authUser',
+  sessionTimeoutMs: Number(process.env.REACT_APP_SESSION_TIMEOUT_MS || 30 * 60 * 1000),
 
   endpoints: {
     login: '/auth/login',
@@ -17,9 +18,11 @@ const authConfig = {
     logout: '/auth/logout',
     refresh: '/auth/refresh',
     forgotPassword: '/auth/password/forgot',
+    verifyPasswordResetOtp: '/auth/password/verify-otp',
     resetPassword: '/auth/password/reset',
     sendEmailVerification: '/auth/email/verification/send',
     confirmEmailVerification: '/auth/email/verification/confirm',
+    sendReminderEmail: '/auth/reminders/email',
     me: '/auth/me',
     oauthAuthorize: (provider) => `/auth/oauth2/authorize/${provider}`,
   },

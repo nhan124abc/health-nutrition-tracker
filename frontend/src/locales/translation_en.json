@@ -667,9 +667,16 @@
     "passwordMismatch": "Password confirmation does not match.",
     "registerError": "Unable to register. Please try again.",
     "forgotTitle": "Forgot password",
-    "otpSent": "OTP has been sent to your email if the account exists.",
+    "forgotDescription": "Enter your email to receive an OTP, then set a new password.",
+    "otpSent": "OTP has been sent to your email.",
     "sendOtpError": "Unable to send OTP. Please try again.",
     "newPassword": "New password",
+    "otpPlaceholder": "Enter 6-digit OTP",
+    "otpVerified": "OTP verified. Please set a new password.",
+    "otpVerifyError": "Invalid or expired OTP.",
+    "verifyingOtp": "Verifying OTP...",
+    "verifyOtp": "Verify OTP",
+    "changeEmail": "Change email",
     "sending": "Sending...",
     "sendOtp": "Send OTP",
     "resetting": "Resetting password...",
@@ -688,7 +695,19 @@
     "verifyError": "OTP is incorrect or expired.",
     "verifyRemembered": "Already verified?",
     "backToLogin": "Back to login",
-    "backToHome": "Back to home"
+    "backToHome": "Back to home",
+    "emailVerifyInitial": "An OTP has been sent. Please check your email.",
+    "emailVerifyResent": "A new email verification OTP has been sent.",
+    "emailVerifySendError": "Unable to send OTP. Please try again.",
+    "emailVerifySuccess": "Email verified successfully. You can log in now.",
+    "emailVerifyError": "Invalid or expired OTP.",
+    "verifyEmailTitle": "Verify email",
+    "verifyEmailDescription": "Enter the OTP sent to your email to finish verifying your account.",
+    "otpInputPlaceholder": "Enter 6 digits",
+    "verifyingEmail": "Verifying...",
+    "verifyEmail": "Verify email",
+    "resendingOtp": "Resending...",
+    "resendOtp": "Resend OTP"
   },
   "common": {
     "protein": "Protein",
@@ -1081,7 +1100,7 @@
   },
   "plannerPage": {
     "title": "Choose a suitable meal",
-    "calorieBudget": "Today's calorie budget",
+    "calorieBudget": "Calorie budget for the selected date",
     "consumed": "Consumed {{consumed}} / {{goal}} kcal",
     "planDate": "Plan date",
     "activityKind": "Activity planner",
@@ -1091,8 +1110,8 @@
     "createOtherOptions": "Create 2 other options",
     "invalidTotal": "The current calorie total appears invalid because of older meal data. New suggestions will ignore it; remove the incorrect meals.",
     "insufficientCalories": "There are not enough calories left for another meal.",
-    "loggedMealsTitle": "Meals logged for {{meal}} today:",
-    "loggedActivitiesTitle": "Activities logged today:",
+    "loggedMealsTitle": "Meals logged for {{meal}} on this date:",
+    "loggedActivitiesTitle": "Activities logged on this date:",
     "serving": "Serving",
     "duration": "Duration: {{minutes}} minutes",
     "durationLabel": "Duration",
@@ -1120,8 +1139,8 @@
     "oneServing": "1 serving",
     "servings": "{{count}} servings",
     "noCookingGuide": "No detailed cooking guide is available for this recipe yet.",
-    "selectedFoods": "Foods to use",
-    "selectedFoodsHint": "Selected {{count}}/{{max}} foods. AI will use a matching saved recipe or generate a meal recipe from them.",
+    "selectedFoods": "Food list",
+    "selectedFoodsHint": "Selected {{count}}/{{max}} foods. AI will prioritize your selected foods when creating meal options.",
     "clearFoods": "Clear",
     "selectedActivities": "Activity types to use",
     "selectedActivitiesHint": "Selected {{count}}/{{max}} activity types. AI will prioritize suggestions from your choices.",
@@ -1144,7 +1163,7 @@
       "activityDescription": "Generate workout options from activity data."
     },
     "defaultCookingMethod": "Prepare the ingredients, cook the items that need heat, then combine and season lightly: {{ingredients}}.",
-    "activitySuggestionsTitle": "Activity suggestions for today",
+    "activitySuggestionsTitle": "Activity suggestions for this date",
     "activitySuggestionsDescription": "Combining exercise with your plan can help you reach your goal sooner.",
     "logged": "Logged",
     "logging": "Logging...",
@@ -1158,9 +1177,9 @@
       "exercise": "Exercise"
     },
     "empty": {
-      "loggedActivity": "You have logged an activity today. Select \"Create 2 other options\" to make a change.",
+      "loggedActivity": "You have logged an activity on this date. Remove the old activity if you want to change it.",
       "selectActivity": "Choose an activity type and select \"Create 2 options\".",
-      "loggedMeal": "You have logged food for {{meal}} today. Select \"Create 2 other options\" to make a change.",
+      "loggedMeal": "You have logged {{meal}} on this date. Remove the old meal if you want to choose another option.",
       "selectMeal": "Choose a meal type and select \"Create 2 options\".",
       "noRecipes": "No matching recipes yet. Run the recipe seed or remove some food filters."
     },
@@ -1177,7 +1196,8 @@
       "mealAdded": "Added \"{{name}}\". The alternative option will not be added.",
       "mealDeleted": "The meal was unselected and removed from your diary.",
       "activityAdded": "Logged exercise \"{{name}}\".",
-      "activityDeleted": "The activity was removed from your diary."
+      "activityDeleted": "The activity was removed from your diary.",
+      "mealReplaced": "Replaced the old meal with \"{{name}}\"."
     },
     "errors": {
       "load": "Unable to load today's data.",
@@ -1188,7 +1208,21 @@
       "deleteMeal": "Unable to delete the meal.",
       "addActivity": "Unable to log the activity.",
       "deleteActivity": "Unable to delete the activity."
-    }
+    },
+    "replaceOption": "Replace with this option",
+    "searchFoods": "Search foods",
+    "searchFoodsPlaceholder": "Enter a food name to use...",
+    "searchFoodsHint": "Enter at least 2 characters to search foods.",
+    "searchingFoods": "Searching foods...",
+    "noFoodResults": "No matching foods found.",
+    "searchRecipes": "Search recipes",
+    "searchRecipesPlaceholder": "Enter a recipe or meal name...",
+    "searchRecipesHint": "Enter at least 2 characters or select foods to find recipes.",
+    "searchRecipesEmpty": "Enter a recipe name or select foods to start searching.",
+    "searchActivities": "Search activities",
+    "searchActivitiesPlaceholder": "Enter an activity to exercise...",
+    "searchActivitiesHint": "Enter at least 2 characters to search activities.",
+    "noActivityResults": "No matching activities found."
   },
   "goalPlannerPage": {
     "title": "Set a weight goal",

@@ -4,6 +4,7 @@ import authConfig from '../config/authConfig';
 const API_BASE_URL = authConfig.apiBaseUrl;
 const TOKEN_KEYS = authConfig.tokenKeys;
 const USER_KEY = authConfig.userKey;
+const LAST_ACTIVITY_KEY = 'auth:lastActivityAt';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -100,6 +101,8 @@ export function saveAuthTokens(payload = {}) {
   if (payload.user) {
     localStorage.setItem(USER_KEY, JSON.stringify(payload.user));
   }
+
+  localStorage.setItem(LAST_ACTIVITY_KEY, String(Date.now()));
 }
 
 export function clearAuthTokens() {
@@ -107,6 +110,7 @@ export function clearAuthTokens() {
   localStorage.removeItem(TOKEN_KEYS.refresh);
   localStorage.removeItem(TOKEN_KEYS.legacy);
   localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(LAST_ACTIVITY_KEY);
 }
 
 export async function logout() {
@@ -131,6 +135,7 @@ function shouldSkipTokenRefresh(url = '') {
     authConfig.endpoints.logout,
     authConfig.endpoints.refresh,
     authConfig.endpoints.forgotPassword,
+    authConfig.endpoints.verifyPasswordResetOtp,
     authConfig.endpoints.resetPassword,
     authConfig.endpoints.sendEmailVerification,
     authConfig.endpoints.confirmEmailVerification,

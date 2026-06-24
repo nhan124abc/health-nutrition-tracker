@@ -31,7 +31,6 @@ public class OtpService {
 
     // ======================== Password Reset OTP ========================
 
-    /** Tạo và lưu OTP reset mật khẩu cho email */
     public String generatePasswordResetOtp(String email) {
         String otp = generateOtp();
         redis.opsForValue().set(OTP_RESET_KEY + email, otp, Duration.ofMinutes(OTP_TTL_MINUTES));
@@ -40,8 +39,7 @@ public class OtpService {
         return otp;
     }
 
-    /** Xác thực OTP reset mật khẩu */
-    public void verifyPasswordResetOtp(String email, String otp) {
+    public void validatePasswordResetOtp(String email, String otp) {
         String stored = redis.opsForValue().get(OTP_RESET_KEY + email);
         if (stored == null) {
             throw new AppException(
@@ -55,11 +53,15 @@ public class OtpService {
                     "Invalid OTP."
             );
         }
-        // Xóa OTP sau khi dùng (one-time use)
+        log.info("Password reset OTP validated for: {}", email);
+    }
+
+    /** Xac thuc OTP reset mat khau va xoa OTP sau khi doi mat khau */
+    public void verifyPasswordResetOtp(String email, String otp) {
+        validatePasswordResetOtp(email, otp);
         redis.delete(OTP_RESET_KEY + email);
         log.info("Password reset OTP verified for: {}", email);
     }
-
     // ======================== Email Verification OTP ========================
 
     /** Tạo và lưu OTP xác minh email */

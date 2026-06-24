@@ -110,6 +110,11 @@ public class AuthService {
         }
 
         String email = jwtUtil.getEmailFromToken(refresh);
+        String storedRefreshToken = redisTemplate.opsForValue().get(REFRESH_PREFIX + email);
+        if (!refresh.equals(storedRefreshToken)) {
+            throw new AppException(HttpStatus.UNAUTHORIZED, "Refresh token has expired or been replaced");
+        }
+
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -132,11 +137,21 @@ public class AuthService {
     }
 
     public void requestPasswordReset(String email) {
-        userRepository.findByEmail(email).ifPresent(user -> {
-            if (user.isActive()) {
-                otpService.generatePasswordResetOtp(email);
-            }
-        });
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Email không tồn tại"));
+        if (!user.isActive()) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Tài khoản đã bị khóa hoặc không hoạt động");
+        }
+        otpService.generatePasswordResetOtp(email);
+    }
+
+    public void verifyPasswordResetOtp(String email, String otp) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Email không tồn tại"));
+        if (!user.isActive()) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Tài khoản đã bị khóa hoặc không hoạt động");
+        }
+        otpService.validatePasswordResetOtp(email, otp);
     }
 
     @Transactional
@@ -183,7 +198,7 @@ public class AuthService {
         redisTemplate.opsForValue().set(
                 REFRESH_PREFIX + principal.getEmail(),
                 refreshToken,
-                Duration.ofMillis(jwtUtil.getExpirationMs() * 7)
+                Duration.ofMillis(jwtUtil.getRefreshExpirationMs())
         );
 
         User user = userRepository.findByEmail(principal.getEmail()).orElseThrow();

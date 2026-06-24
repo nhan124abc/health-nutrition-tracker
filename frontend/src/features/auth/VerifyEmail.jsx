@@ -6,16 +6,16 @@ import LanguageSwitcher from '../../components/LanguageSwitcher';
 import { confirmEmailVerification, sendEmailVerification } from './authService';
 
 function VerifyEmail() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useTranslation();
   const initialEmail = useMemo(() => {
     const queryEmail = new URLSearchParams(location.search).get('email');
     return queryEmail || location.state?.email || '';
   }, [location.search, location.state]);
 
   const [form, setForm] = useState({ email: initialEmail, otp: '' });
-  const [message, setMessage] = useState(initialEmail ? t('auth.verifyOtpSent') : '');
+  const [messageKey, setMessageKey] = useState(initialEmail ? 'auth.verifyOtpSent' : '');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
@@ -27,12 +27,12 @@ function VerifyEmail() {
 
   const resendOtp = async () => {
     setError('');
-    setMessage('');
+    setMessageKey('');
     setResending(true);
 
     try {
       await sendEmailVerification(form.email);
-      setMessage(t('auth.verifyOtpResent'));
+      setMessageKey('auth.verifyOtpResent');
     } catch (err) {
       setError(err.response?.data?.message || t('auth.verifySendError'));
     } finally {
@@ -43,7 +43,7 @@ function VerifyEmail() {
   const verifyEmail = async (event) => {
     event.preventDefault();
     setError('');
-    setMessage('');
+    setMessageKey('');
     setLoading(true);
 
     try {
@@ -51,7 +51,7 @@ function VerifyEmail() {
         email: form.email,
         otp: form.otp,
       });
-      setMessage(t('auth.verifySuccess'));
+      setMessageKey('auth.verifySuccess');
       setTimeout(() => navigate('/login'), 800);
     } catch (err) {
       setError(err.response?.data?.message || t('auth.verifyError'));
@@ -76,7 +76,7 @@ function VerifyEmail() {
                 <p className="text-secondary mb-0">{t('auth.verifyDescription')}</p>
               </div>
 
-              {message && <Alert variant="success">{message}</Alert>}
+              {messageKey && <Alert variant="success">{t(messageKey)}</Alert>}
               {error && <Alert variant="danger">{error}</Alert>}
 
               <Form onSubmit={verifyEmail}>
