@@ -139,21 +139,6 @@ public class AuthController {
         return ResponseEntity.ok(adminUserService.getUsers(page, size, search));
     }
 
-    @PostMapping("/admin/users")
-    public ResponseEntity<AdminUsersResponse.UserItem> createAdminUser(
-            @RequestHeader("X-User-Role") String role,
-            @RequestBody Map<String, Object> request) {
-
-        requireAdmin(role);
-        return ResponseEntity.status(HttpStatus.CREATED).body(adminUserService.createUser(
-                asString(request.get("fullName")),
-                asString(request.get("email")),
-                asString(request.get("password")),
-                asString(request.get("role")),
-                asBoolean(request.get("active"))
-        ));
-    }
-
     @PutMapping("/admin/users/{userId}")
     public ResponseEntity<AdminUsersResponse.UserItem> updateAdminUser(
             @RequestHeader("X-User-Role") String role,
