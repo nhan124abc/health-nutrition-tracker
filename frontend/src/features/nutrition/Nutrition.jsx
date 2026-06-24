@@ -9,6 +9,7 @@ import {
   getFoods,
 } from './nutritionService';
 import {
+  deriveCategoriesFromFoods,
   extractCategoriesFromApi,
   extractFoodFromApi,
   extractFoodsFromApi,
@@ -41,20 +42,26 @@ function Nutrition() {
       setError('');
 
       try {
-        const [foodsResponse, categoriesResponse] = await Promise.all([
+        const [foodsResult, categoriesResult] = await Promise.allSettled([
           getFoods({ page: 0, size: 100 }),
           getFoodCategories(),
         ]);
+
+        if (foodsResult.status === 'rejected') {
+          throw foodsResult.reason;
+        }
 
         if (!isMounted) {
           return;
         }
 
-        const normalizedFoods = extractFoodsFromApi(foodsResponse.data).map(normalizeFoodFromApi);
-        const normalizedCategories = extractCategoriesFromApi(categoriesResponse.data).map(normalizeCategory);
+        const normalizedFoods = extractFoodsFromApi(foodsResult.value.data).map(normalizeFoodFromApi);
+        const normalizedCategories = categoriesResult.status === 'fulfilled'
+          ? extractCategoriesFromApi(categoriesResult.value.data).map(normalizeCategory)
+          : deriveCategoriesFromFoods(normalizedFoods);
 
         setFoods(normalizedFoods);
-        setCategories(normalizedCategories);
+        setCategories(normalizedCategories.length ? normalizedCategories : deriveCategoriesFromFoods(normalizedFoods));
         setSelectedFood(normalizedFoods[0] || null);
       } catch (requestError) {
         console.error('[Nutrition] Error loading nutrition data:', requestError);
