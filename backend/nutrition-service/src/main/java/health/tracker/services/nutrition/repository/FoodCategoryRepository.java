@@ -10,5 +10,9 @@ import java.util.List;
 public interface FoodCategoryRepository extends JpaRepository<FoodCategory, Integer> {
 
     List<FoodCategory> findAllByOrderByNameAsc();
+
+    List<FoodCategory> findByHiddenFalseOrderByNameAsc();
+
+    boolean existsByNameIgnoreCase(String name);
 }
 

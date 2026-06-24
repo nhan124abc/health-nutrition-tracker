@@ -88,6 +88,10 @@ public class UserProfile {
     @Column(name = "daily_activity_goal_kcal")
     private Integer dailyActivityGoalKcal;
 
+    @Column(name = "hidden", nullable = false)
+    @Builder.Default
+    private boolean hidden = false;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

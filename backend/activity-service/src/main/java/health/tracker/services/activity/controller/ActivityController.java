@@ -2,10 +2,13 @@ package health.tracker.services.activity.controller;
 
 import health.tracker.services.activity.dto.ActivityLogRequest;
 import health.tracker.services.activity.dto.ActivityLogResponse;
+import health.tracker.services.activity.dto.ActivityTypeRequest;
 import health.tracker.services.activity.entity.ActivityType;
+import health.tracker.services.activity.exception.AppException;
 import health.tracker.services.activity.repository.ActivityLogRepository;
 import health.tracker.services.activity.repository.ActivityTypeRepository;
 import health.tracker.services.activity.service.ActivityService;
+import health.tracker.services.activity.service.ActivityTypeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +42,7 @@ import java.util.Map;
 public class ActivityController {
 
     private final ActivityService        activityService;
+    private final ActivityTypeService    activityTypeService;
     private final ActivityTypeRepository typeRepository;
     private final ActivityLogRepository  logRepository;
 
@@ -106,10 +110,73 @@ public class ActivityController {
     public ResponseEntity<List<ActivityType>> getTypes(
             @RequestParam(required = false) ActivityType.Category category) {
 
-        List<ActivityType> types = (category != null)
-                ? typeRepository.findByCategoryOrderByNameAsc(category)
-                : typeRepository.findAllByOrderByCategoryAscNameAsc();
-        return ResponseEntity.ok(types);
+        return ResponseEntity.ok(activityTypeService.getVisibleTypes(category));
+    }
+
+    @GetMapping("/admin/types")
+    public ResponseEntity<List<ActivityType>> adminTypes(
+            @RequestHeader("X-User-Role") String role,
+            @RequestParam(required = false) ActivityType.Category category,
+            @RequestParam(required = false) Boolean hidden) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(activityTypeService.getAdminTypes(category, hidden));
+    }
+
+    @GetMapping("/admin/types/{id}")
+    public ResponseEntity<ActivityType> adminType(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Integer id) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(activityTypeService.getById(id));
+    }
+
+    @PostMapping("/admin/types")
+    public ResponseEntity<ActivityType> createType(
+            @RequestHeader("X-User-Role") String role,
+            @Valid @RequestBody ActivityTypeRequest request) {
+
+        requireAdmin(role);
+        return ResponseEntity.status(HttpStatus.CREATED).body(activityTypeService.create(request));
+    }
+
+    @PutMapping("/admin/types/{id}")
+    public ResponseEntity<ActivityType> updateType(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Integer id,
+            @Valid @RequestBody ActivityTypeRequest request) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(activityTypeService.update(id, request));
+    }
+
+    @DeleteMapping("/admin/types/{id}")
+    public ResponseEntity<Void> deleteType(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Integer id) {
+
+        requireAdmin(role);
+        activityTypeService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/admin/types/{id}/hide")
+    public ResponseEntity<ActivityType> hideType(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Integer id) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(activityTypeService.hide(id));
+    }
+
+    @PatchMapping("/admin/types/{id}/restore")
+    public ResponseEntity<ActivityType> restoreType(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Integer id) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(activityTypeService.restore(id));
     }
 
     /**
@@ -135,6 +202,12 @@ public class ActivityController {
                 "activityCount",     logs.size(),
                 "totalActiveMinutes", logs.stream().mapToInt(l -> l.getDurationMinutes() != null ? l.getDurationMinutes() : 0).sum()
         ));
+    }
+
+    private void requireAdmin(String role) {
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Admin role is required");
+        }
     }
 }
 

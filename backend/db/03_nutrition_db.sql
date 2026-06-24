@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS food_categories (
     name_vi     VARCHAR(100)    NULL COMMENT 'Tên tiếng Việt',
     icon        VARCHAR(50)     NULL COMMENT 'Icon emoji hoặc tên icon',
     description TEXT            NULL,
+    hidden      TINYINT(1)      NOT NULL DEFAULT 0 COMMENT 'Ẩn danh mục khỏi danh sách người dùng',
     created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id)

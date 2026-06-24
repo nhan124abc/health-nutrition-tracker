@@ -21,6 +21,8 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> 
 
     boolean existsByIdAndUserId(Long id, Long userId);
 
+    long countByActivityTypeId(Integer activityTypeId);
+
     @Query("""
             SELECT COALESCE(SUM(a.caloriesBurned), 0)
             FROM ActivityLog a

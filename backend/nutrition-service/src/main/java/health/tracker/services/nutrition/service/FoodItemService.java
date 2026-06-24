@@ -65,6 +65,10 @@ public class FoodItemService {
             category = categoryRepository.findById(request.getCategoryId())
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
                             "Category not found: " + request.getCategoryId()));
+            if (category.isHidden()) {
+                throw new AppException(HttpStatus.BAD_REQUEST,
+                        "Category is hidden: " + request.getCategoryId());
+            }
         }
 
         FoodItem food = FoodItem.builder()

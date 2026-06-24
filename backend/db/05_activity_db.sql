@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS activity_types (
     icon        VARCHAR(50)     NULL,
     description TEXT            NULL,
     is_system   TINYINT(1)      NOT NULL DEFAULT 1 COMMENT '1 = hoạt động hệ thống, 0 = người dùng tự thêm',
+    hidden      TINYINT(1)      NOT NULL DEFAULT 0 COMMENT 'Ẩn loại hoạt động khỏi danh sách người dùng',
     created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),

@@ -2,8 +2,10 @@ package health.tracker.services.nutrition.controller;
 
 import health.tracker.services.nutrition.dto.FoodItemRequest;
 import health.tracker.services.nutrition.dto.FoodItemResponse;
+import health.tracker.services.nutrition.dto.FoodCategoryRequest;
 import health.tracker.services.nutrition.entity.FoodCategory;
-import health.tracker.services.nutrition.repository.FoodCategoryRepository;
+import health.tracker.services.nutrition.exception.AppException;
+import health.tracker.services.nutrition.service.FoodCategoryService;
 import health.tracker.services.nutrition.service.FoodItemService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,7 +37,7 @@ import java.util.List;
 public class FoodItemController {
 
     private final FoodItemService        foodItemService;
-    private final FoodCategoryRepository categoryRepository;
+    private final FoodCategoryService    foodCategoryService;
 
     /**
      * GET /api/v1/nutrition/foods?q=cơm&categoryId=1&page=0&size=20
@@ -94,7 +96,78 @@ public class FoodItemController {
      */
     @GetMapping("/categories")
     public ResponseEntity<List<FoodCategory>> getCategories() {
-        return ResponseEntity.ok(categoryRepository.findAllByOrderByNameAsc());
+        return ResponseEntity.ok(foodCategoryService.getVisibleCategories());
+    }
+
+    @GetMapping("/admin/categories")
+    public ResponseEntity<List<FoodCategory>> adminCategories(
+            @RequestHeader("X-User-Role") String role,
+            @RequestParam(required = false) Boolean hidden) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(foodCategoryService.getAdminCategories(hidden));
+    }
+
+    @GetMapping("/admin/categories/{id}")
+    public ResponseEntity<FoodCategory> adminCategory(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Integer id) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(foodCategoryService.getById(id));
+    }
+
+    @PostMapping("/admin/categories")
+    public ResponseEntity<FoodCategory> createCategory(
+            @RequestHeader("X-User-Role") String role,
+            @Valid @RequestBody FoodCategoryRequest request) {
+
+        requireAdmin(role);
+        return ResponseEntity.status(HttpStatus.CREATED).body(foodCategoryService.create(request));
+    }
+
+    @PutMapping("/admin/categories/{id}")
+    public ResponseEntity<FoodCategory> updateCategory(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Integer id,
+            @Valid @RequestBody FoodCategoryRequest request) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(foodCategoryService.update(id, request));
+    }
+
+    @DeleteMapping("/admin/categories/{id}")
+    public ResponseEntity<Void> deleteCategory(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Integer id) {
+
+        requireAdmin(role);
+        foodCategoryService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/admin/categories/{id}/hide")
+    public ResponseEntity<FoodCategory> hideCategory(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Integer id) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(foodCategoryService.hide(id));
+    }
+
+    @PatchMapping("/admin/categories/{id}/restore")
+    public ResponseEntity<FoodCategory> restoreCategory(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Integer id) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(foodCategoryService.restore(id));
+    }
+
+    private void requireAdmin(String role) {
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Admin role is required");
+        }
     }
 }
 

@@ -42,6 +42,7 @@ public class UserProfileResponse {
     private Integer planDurationWeeks;
     private Integer dailyActivityGoalKcal;
     private java.util.List<WeightMilestone> weeklyWeightMilestones;
+    private boolean hidden;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;

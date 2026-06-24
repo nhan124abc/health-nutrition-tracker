@@ -52,6 +52,10 @@ public class ActivityType {
     @Builder.Default
     private boolean system = true;
 
+    @Column(name = "hidden", nullable = false)
+    @Builder.Default
+    private boolean hidden = false;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

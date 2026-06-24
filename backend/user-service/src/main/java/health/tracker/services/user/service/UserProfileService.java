@@ -245,6 +245,7 @@ public class UserProfileService {
                 .planDurationWeeks(p.getPlanDurationWeeks())
                 .dailyActivityGoalKcal(p.getDailyActivityGoalKcal())
                 .weeklyWeightMilestones(milestones)
+                .hidden(p.isHidden())
                 .createdAt(p.getCreatedAt()).updatedAt(p.getUpdatedAt())
                 .build();
     }
