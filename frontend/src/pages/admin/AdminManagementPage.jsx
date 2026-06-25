@@ -216,11 +216,11 @@ function mapActivityTypeRow(activityType) {
   };
 }
 
-function getAdminActionErrorMessage(error, fallback) {
+function getAdminActionErrorMessage(error, fallback, sessionExpiredMessage) {
   const message = error.response?.data?.message || '';
 
   if (/authorization header|invalid or expired jwt|unauthorized/i.test(message)) {
-    return 'Phiên đăng nhập admin đã hết hạn hoặc token không hợp lệ. Vui lòng đăng nhập lại rồi thử mở khóa tài khoản.';
+    return sessionExpiredMessage;
   }
 
   return message || fallback;
@@ -290,8 +290,6 @@ const emptyActivityForm = {
   nameVi: '',
   category: 'OTHER',
   metValue: '3.0',
-  icon: '',
-  description: '',
   hidden: false,
 };
 
@@ -322,8 +320,8 @@ function AdminManagementPage({ type }) {
   const [pendingAction, setPendingAction] = useState('');
   const [confirmAction, setConfirmAction] = useState(null);
   const [confirmingAction, setConfirmingAction] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [noticeMessage, setNoticeMessage] = useState('');
+  const [successKey, setSuccessKey] = useState('');
+  const [noticeKey, setNoticeKey] = useState('');
   const [loading, setLoading] = useState(['users', 'foods', 'exercises'].includes(type));
   const [loadError, setLoadError] = useState('');
   const { t } = useTranslation();
@@ -519,8 +517,6 @@ function AdminManagementPage({ type }) {
         nameVi: raw.nameVi || '',
         category: raw.category || 'OTHER',
         metValue: raw.metValue ?? '3.0',
-        icon: raw.icon || '',
-        description: raw.description || '',
         hidden: Boolean(raw.hidden),
       });
     setShowCatalogForm(true);
@@ -532,12 +528,12 @@ function AdminManagementPage({ type }) {
     setCatalogForm(type === 'foods' ? emptyFoodForm : emptyActivityForm);
   };
 
-  const showSuccess = (message) => {
-    setSuccessMessage(message);
+  const showSuccess = (key) => {
+    setSuccessKey(key);
   };
 
   const showSelfLockNotice = () => {
-    setNoticeMessage('Kh\u00f4ng th\u1ec3 kh\u00f3a t\u00e0i kho\u1ea3n \u0111ang \u0111\u0103ng nh\u1eadp.');
+    setNoticeKey('admin.users.cannotLockLoggedIn');
   };
 
   const shouldPreventSelfLock = (row, nextActive) => (
@@ -571,12 +567,12 @@ function AdminManagementPage({ type }) {
         active: summary.active == null ? summary.active : summary.active + (nextActive ? 1 : -1),
         locked: summary.locked == null ? summary.locked : summary.locked + (nextActive ? -1 : 1),
       }));
-      showSuccess(nextActive ? 'Đã mở khóa tài khoản thành công.' : 'Đã khóa tài khoản thành công.');
+      showSuccess(nextActive ? 'admin.users.unlockSuccess' : 'admin.users.lockSuccess');
     } catch (error) {
       if (isSelfLockError(error)) {
         showSelfLockNotice();
       } else {
-        setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`)));
+        setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`), t('admin.common.sessionExpired')));
       }
     } finally {
       setPendingAction('');
@@ -613,12 +609,12 @@ function AdminManagementPage({ type }) {
         }));
       }
       closeUserForm();
-      showSuccess('Đã cập nhật người dùng thành công.');
+      showSuccess('admin.users.updateSuccess');
     } catch (error) {
       if (isSelfLockError(error)) {
         showSelfLockNotice();
       } else {
-        setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`)));
+        setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`), t('admin.common.sessionExpired')));
       }
     } finally {
       setSavingEdit(false);
@@ -639,9 +635,9 @@ function AdminManagementPage({ type }) {
         active: summary.active == null || !row.active ? summary.active : Math.max(0, summary.active - 1),
         locked: summary.locked == null || row.active ? summary.locked : Math.max(0, summary.locked - 1),
       }));
-      showSuccess('Đã xóa người dùng thành công.');
+      showSuccess('admin.users.deleteSuccess');
     } catch (error) {
-      setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`)));
+      setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`), t('admin.common.sessionExpired')));
     } finally {
       setPendingAction('');
     }
@@ -683,15 +679,13 @@ function AdminManagementPage({ type }) {
         if (!editingCatalogRow) {
           setFoodSummary((summary) => ({ ...summary, total: (summary.total ?? foodRows.length) + 1 }));
         }
-        showSuccess(editingCatalogRow ? 'Đã cập nhật thực phẩm.' : 'Đã thêm thực phẩm.');
+        showSuccess(editingCatalogRow ? 'admin.catalogData.foodUpdateSuccess' : 'admin.catalogData.foodCreateSuccess');
       } else {
         const payload = {
           name: catalogForm.name.trim(),
           nameVi: catalogForm.nameVi.trim() || null,
           category: catalogForm.category,
           metValue: toNumberOrNull(catalogForm.metValue),
-          icon: catalogForm.icon.trim() || null,
-          description: catalogForm.description.trim() || null,
           hidden: Boolean(catalogForm.hidden),
         };
         const response = editingCatalogRow
@@ -703,12 +697,12 @@ function AdminManagementPage({ type }) {
         setActivityRows((currentRows) => editingCatalogRow
           ? currentRows.map((row) => (row.id === editingCatalogRow.id ? mappedRow : row))
           : [mappedRow, ...currentRows]);
-        showSuccess(editingCatalogRow ? 'Đã cập nhật hoạt động.' : 'Đã thêm hoạt động.');
+        showSuccess(editingCatalogRow ? 'admin.catalogData.activityUpdateSuccess' : 'admin.catalogData.activityCreateSuccess');
       }
 
       closeCatalogForm();
     } catch (error) {
-      setActionError(error.response?.data?.message || 'Không thể lưu dữ liệu.');
+      setActionError(error.response?.data?.message || t('admin.catalogData.saveError'));
     } finally {
       setSavingEdit(false);
     }
@@ -724,14 +718,14 @@ function AdminManagementPage({ type }) {
         await deleteFood(row.id);
         setFoodRows((currentRows) => currentRows.filter((currentRow) => currentRow.id !== row.id));
         setFoodSummary((summary) => ({ ...summary, total: Math.max(0, (summary.total ?? foodRows.length) - 1) }));
-        showSuccess('Đã xóa thực phẩm.');
+        showSuccess('admin.catalogData.foodDeleteSuccess');
       } else {
         await deleteActivityType(row.id);
         setActivityRows((currentRows) => currentRows.filter((currentRow) => currentRow.id !== row.id));
-        showSuccess('Đã xóa hoạt động.');
+        showSuccess('admin.catalogData.activityDeleteSuccess');
       }
     } catch (error) {
-      setActionError(error.response?.data?.message || 'Không thể xóa dữ liệu.');
+      setActionError(error.response?.data?.message || t('admin.catalogData.deleteError'));
     } finally {
       setPendingAction('');
     }
@@ -749,9 +743,9 @@ function AdminManagementPage({ type }) {
       setActivityRows((currentRows) => currentRows.map((currentRow) => (
         currentRow.id === row.id ? mappedRow : currentRow
       )));
-      showSuccess(row.active ? 'Đã ẩn hoạt động.' : 'Đã hiện hoạt động.');
+      showSuccess(row.active ? 'admin.catalogData.activityHideSuccess' : 'admin.catalogData.activityShowSuccess');
     } catch (error) {
-      setActionError(error.response?.data?.message || 'Không thể cập nhật trạng thái.');
+      setActionError(error.response?.data?.message || t('admin.catalogData.statusError'));
     } finally {
       setPendingAction('');
     }
@@ -1137,14 +1131,6 @@ function AdminManagementPage({ type }) {
                   <Form.Label>MET</Form.Label>
                   <Form.Control required type="number" min="0.1" max="50" step="0.1" value={catalogForm.metValue} onChange={(event) => setCatalogForm((form) => ({ ...form, metValue: event.target.value }))} />
                 </Col>
-                <Col md={4}>
-                  <Form.Label>Icon</Form.Label>
-                  <Form.Control value={catalogForm.icon} onChange={(event) => setCatalogForm((form) => ({ ...form, icon: event.target.value }))} />
-                </Col>
-                <Col md={12}>
-                  <Form.Label>Mô tả</Form.Label>
-                  <Form.Control as="textarea" rows={2} value={catalogForm.description} onChange={(event) => setCatalogForm((form) => ({ ...form, description: event.target.value }))} />
-                </Col>
                 <Col md={12}>
                   <Form.Check
                     type="switch"
@@ -1157,11 +1143,11 @@ function AdminManagementPage({ type }) {
             )}
           </Modal.Body>
           <Modal.Footer>
-            <Button type="button" variant="outline-secondary" onClick={closeCatalogForm}>
+            <Button type="button" variant="outline-secondary" onClick={closeCatalogForm} title={t('common.close')}>
               {t('common.close')}
             </Button>
-            <Button type="submit" variant="success" disabled={savingEdit}>
-              {savingEdit ? <Spinner animation="border" size="sm" /> : 'Lưu'}
+            <Button type="submit" variant="success" disabled={savingEdit} title={t('common.save')}>
+              {savingEdit ? <Spinner animation="border" size="sm" /> : t('common.save')}
             </Button>
           </Modal.Footer>
         </Form>
@@ -1169,14 +1155,14 @@ function AdminManagementPage({ type }) {
 
       <Modal show={Boolean(confirmAction)} onHide={() => setConfirmAction(null)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Xác nhận thao tác</Modal.Title>
+          <Modal.Title>{t('admin.users.confirmTitle')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {confirmAction?.type === 'delete' && 'Bạn có chắc muốn xóa người dùng này?'}
+          {confirmAction?.type === 'delete' && t('admin.users.confirmDelete')}
           {confirmAction?.type === 'status' && (
             confirmAction.row?.active
-              ? 'Bạn có chắc muốn khóa tài khoản này?'
-              : 'Bạn có chắc muốn mở khóa tài khoản này?'
+              ? t('admin.users.confirmLock')
+              : t('admin.users.confirmUnlock')
           )}
         </Modal.Body>
         <Modal.Footer>
@@ -1188,30 +1174,30 @@ function AdminManagementPage({ type }) {
             onClick={runConfirmedAction}
             disabled={confirmingAction}
           >
-            Xác nhận
+            {t('admin.users.confirmAction')}
           </Button>
         </Modal.Footer>
       </Modal>
 
-      <Modal show={Boolean(successMessage)} onHide={() => setSuccessMessage('')} centered>
+      <Modal show={Boolean(successKey)} onHide={() => setSuccessKey('')} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Thành công</Modal.Title>
+          <Modal.Title>{t('admin.users.successTitle')}</Modal.Title>
         </Modal.Header>
-        <Modal.Body>{successMessage}</Modal.Body>
+        <Modal.Body>{successKey ? t(successKey) : ''}</Modal.Body>
         <Modal.Footer>
-          <Button variant="success" onClick={() => setSuccessMessage('')}>
+          <Button variant="success" onClick={() => setSuccessKey('')}>
             {t('common.close')}
           </Button>
         </Modal.Footer>
       </Modal>
 
-      <Modal show={Boolean(noticeMessage)} onHide={() => setNoticeMessage('')} centered>
+      <Modal show={Boolean(noticeKey)} onHide={() => setNoticeKey('')} centered>
         <Modal.Header closeButton>
-          <Modal.Title>{'Th\u00f4ng b\u00e1o'}</Modal.Title>
+          <Modal.Title>{t('admin.users.noticeTitle')}</Modal.Title>
         </Modal.Header>
-        <Modal.Body>{noticeMessage}</Modal.Body>
+        <Modal.Body>{noticeKey ? t(noticeKey) : ''}</Modal.Body>
         <Modal.Footer>
-          <Button variant="success" onClick={() => setNoticeMessage('')}>
+          <Button variant="success" onClick={() => setNoticeKey('')}>
             {t('common.close')}
           </Button>
         </Modal.Footer>
