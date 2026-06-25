@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Navigate, useLocation } from 'react-router-dom';
 import { clearAuthTokens, getCurrentUserRole, hasUsableAccessToken } from '../api/api';
-import { getAuthenticatedUser } from '../features/auth/authService';
+import { getAuthenticatedUser, isLockedAccountError } from '../features/auth/authService';
 
 function ProtectedRoute({ children, allowedRoles }) {
   const location = useLocation();
@@ -10,21 +10,28 @@ function ProtectedRoute({ children, allowedRoles }) {
   const [status, setStatus] = useState(() => (
     hasUsableAccessToken() ? 'checking' : 'unauthenticated'
   ));
+  const [lockedAccount, setLockedAccount] = useState(false);
 
   useEffect(() => {
     let active = true;
     if (!hasUsableAccessToken()) {
       clearAuthTokens();
+      setLockedAccount(false);
       setStatus('unauthenticated');
       return undefined;
     }
 
     setStatus('checking');
+    setLockedAccount(false);
     getAuthenticatedUser()
       .then(() => active && setStatus('authenticated'))
-      .catch(() => {
+      .catch((error) => {
+        const isLocked = isLockedAccountError(error);
         clearAuthTokens();
-        if (active) setStatus('unauthenticated');
+        if (active) {
+          setLockedAccount(isLocked);
+          setStatus('unauthenticated');
+        }
       });
 
     return () => { active = false; };
@@ -38,7 +45,7 @@ function ProtectedRoute({ children, allowedRoles }) {
     );
   }
   if (status !== 'authenticated') {
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    return <Navigate to="/login" replace state={{ from: location, accountLocked: lockedAccount }} />;
   }
   if (allowedRoles?.length) {
     const role = getCurrentUserRole();

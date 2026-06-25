@@ -13,7 +13,7 @@ function OAuth2Redirect() {
     const error = searchParams.get('error');
 
     if (error || !token) {
-      navigate('/login?oauthError=oauth2_login_failed', { replace: true });
+      navigate(`/login?oauthError=${error || 'oauth2_login_failed'}`, { replace: true });
       return;
     }
 

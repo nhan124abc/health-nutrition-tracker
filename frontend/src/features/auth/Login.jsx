@@ -6,7 +6,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { clearAuthTokens, getDefaultRouteForCurrentUser, saveAuthTokens } from '../../api/api';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import authConfig from '../../config/authConfig';
-import { login } from './authService';
+import { isLockedAccountError, login } from './authService';
 
 function Login() {
   const navigate = useNavigate();
@@ -17,6 +17,9 @@ function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const oauthError = new URLSearchParams(location.search).get('oauthError');
+  const lockedAccountNotice = location.state?.accountLocked || oauthError === 'account_locked'
+    ? t('auth.accountLocked')
+    : '';
 
   const getSafeRedirectPath = (userRole) => {
     const defaultRoute = getDefaultRouteForCurrentUser();
@@ -47,6 +50,14 @@ function Login() {
     try {
       clearAuthTokens();
       const response = await login(form);
+      const user = response.data?.user;
+
+      if (user && (user.active === false || user.enabled === false || user.locked === true)) {
+        clearAuthTokens();
+        setError(t('auth.accountLocked'));
+        return;
+      }
+
       saveAuthTokens(response.data);
 
       if (!response.data?.accessToken && !response.data?.token) {
@@ -55,7 +66,11 @@ function Login() {
 
       navigate(getSafeRedirectPath(response.data?.user?.role), { replace: true });
     } catch (err) {
-      setError(err.response?.data?.message || err.message || t('auth.loginError'));
+      setError(
+        isLockedAccountError(err)
+          ? t('auth.accountLocked')
+          : err.response?.data?.message || err.message || t('auth.loginError')
+      );
     } finally {
       setLoading(false);
     }
@@ -78,8 +93,10 @@ function Login() {
                 <h1 className="h3 fw-bold mb-2">{t('auth.loginTitle')}</h1>
               </div>
 
-              {(error || oauthError) && (
-                <Alert variant="danger">{error || t('auth.oauthLoginError')}</Alert>
+              {(error || oauthError || lockedAccountNotice) && (
+                <Alert variant="danger">
+                  {error || lockedAccountNotice || t('auth.oauthLoginError')}
+                </Alert>
               )}
 
               <Form onSubmit={handleSubmit}>

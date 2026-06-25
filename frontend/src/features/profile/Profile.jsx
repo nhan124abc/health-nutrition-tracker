@@ -4,10 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { FaPrint } from 'react-icons/fa';
 import { getCurrentUser } from '../../api/api';
+import authConfig from '../../config/authConfig';
 import ProfileEditForm from './components/ProfileEditForm';
 import ProfileOverview from './components/ProfileOverview';
 import ProfileTabs from './components/ProfileTabs';
-import { createBodyMetric, getBodyMetrics, getProfile, updateProfile } from './profileService';
+import { createBodyMetric, getBodyMetrics, getProfile, updateAccountProfile, updateProfile } from './profileService';
 import {
   buildBodyMetricFormFromProfile,
   extractBodyMetricFromApi,
@@ -24,6 +25,24 @@ import {
 
 const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
 const MAX_AVATAR_SIZE_MB = MAX_AVATAR_SIZE_BYTES / (1024 * 1024);
+
+function updateStoredAccount(accountPatch = {}) {
+  const currentUser = getCurrentUser();
+
+  if (!currentUser) {
+    return currentUser;
+  }
+
+  const nextName = accountPatch.fullName?.trim();
+  const updatedUser = {
+    ...currentUser,
+    ...accountPatch,
+    ...(nextName ? { fullName: nextName, name: nextName, username: nextName } : {}),
+  };
+
+  localStorage.setItem(authConfig.userKey, JSON.stringify(updatedUser));
+  return updatedUser;
+}
 
 function Profile() {
   const { t } = useTranslation();
@@ -175,16 +194,24 @@ function Profile() {
         ...editProfile,
         avatarUrl: avatarDraftUrl === null ? editProfile.avatarUrl : avatarDraftUrl,
       };
-      const response = await updateProfile(mapProfileToApi(profileToSave));
+      const [response, accountResponse] = await Promise.all([
+        updateProfile(mapProfileToApi(profileToSave)),
+        updateAccountProfile({ fullName: profileToSave.username.trim() }),
+      ]);
       const responseProfile = mapProfileFromApi(extractProfileFromApi(response.data));
-      const updatedProfile = {
-        ...responseProfile,
-        avatarUrl: profileToSave.avatarUrl === '' ? '' : responseProfile.avatarUrl || profileToSave.avatarUrl,
-      };
+      const updatedAccount = updateStoredAccount(accountResponse.data);
+      const updatedProfile = mergeProfileAvatar(
+        {
+          ...responseProfile,
+          avatarUrl: profileToSave.avatarUrl === '' ? '' : responseProfile.avatarUrl || profileToSave.avatarUrl,
+        },
+        updatedAccount
+      );
 
       setProfile(updatedProfile);
       setEditProfile(updatedProfile);
-      saveStoredProfileAvatar(getCurrentUser(), updatedProfile.avatarUrl);
+      setAccount(updatedAccount);
+      saveStoredProfileAvatar(updatedAccount, updatedProfile.avatarUrl);
       setAvatarDraftUrl(null);
       window.dispatchEvent(new CustomEvent('profile:updated', { detail: updatedProfile }));
 
@@ -264,9 +291,9 @@ function Profile() {
 
       <Modal show={saved} onHide={() => setSaved(false)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>{t('profilePage.updateProfile')}</Modal.Title>
+          <Modal.Title>{t('profilePage.updateSuccess.title')}</Modal.Title>
         </Modal.Header>
-        <Modal.Body>{t('profilePage.savedMessage')}</Modal.Body>
+        <Modal.Body>{t('profilePage.updateSuccess.message')}</Modal.Body>
         <Modal.Footer>
           <Button variant="success" onClick={() => setSaved(false)}>
             {t('common.close')}

@@ -140,6 +140,19 @@ function normalizeNumber(value) {
   return value === '' ? null : Number(value);
 }
 
+function getRegisteredName(account = {}) {
+  return account.fullName || account.name || account.username || '';
+}
+
+function withRegisteredName(profile = {}, account = {}) {
+  const registeredName = getRegisteredName(account);
+
+  return {
+    ...profile,
+    username: registeredName || profile.fullName || profile.name || profile.username || '',
+  };
+}
+
 export function getTodayDate() {
   const today = new Date();
   const year = today.getFullYear();
@@ -187,7 +200,7 @@ export function extractBodyMetricFromApi(data) {
 
 export function mapProfileFromApi(data = {}) {
   return {
-    username: data.username || '',
+    username: data.fullName || data.name || data.username || '',
     avatarUrl: data.avatarUrl || data.profilePictureUrl || data.pictureUrl || '',
     birthDate: data.dateOfBirth || '',
     gender: data.gender?.toLowerCase() || '',
@@ -239,13 +252,15 @@ export function saveStoredProfileAvatar(account, avatarUrl) {
 }
 
 export function mergeProfileAvatar(profile, account) {
+  const profileWithRegisteredName = withRegisteredName(profile, account);
+
   if (profile.avatarUrl) {
     saveStoredProfileAvatar(account, profile.avatarUrl);
-    return profile;
+    return profileWithRegisteredName;
   }
 
   return {
-    ...profile,
+    ...profileWithRegisteredName,
     avatarUrl: getStoredProfileAvatar(account),
   };
 }

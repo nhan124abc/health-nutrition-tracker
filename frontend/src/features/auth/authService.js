@@ -32,3 +32,17 @@ export function confirmEmailVerification(payload) {
 export function getAuthenticatedUser() {
   return api.get(authConfig.endpoints.me);
 }
+
+export function isLockedAccountError(error) {
+  const message = String(error?.response?.data?.message || error?.message || '').toLowerCase();
+
+  return [
+    'account is unavailable',
+    'inactive',
+    'locked',
+    'disabled',
+    'bị khóa',
+    'không hoạt động',
+    'khóa',
+  ].some((keyword) => message.includes(keyword));
+}
