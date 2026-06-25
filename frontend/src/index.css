@@ -1052,6 +1052,62 @@ body::-webkit-scrollbar,
   width: 96px;
 }
 
+.profile-avatar-picker {
+  flex: 0 0 auto;
+  position: relative;
+}
+
+.profile-avatar-preview-button {
+  cursor: pointer;
+  padding: 0;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.profile-avatar-preview-button:hover,
+.profile-avatar-preview-button:focus-visible {
+  border-color: var(--health-primary);
+  box-shadow: 0 0 0 4px rgba(47, 143, 107, 0.14);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.profile-avatar-preview-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.profile-avatar-remove {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #ffd0d0;
+  border-radius: 999px;
+  box-shadow: 0 8px 18px rgba(40, 52, 46, 0.14);
+  color: #b23a3a;
+  display: inline-flex;
+  font-size: 0.8rem;
+  height: 28px;
+  justify-content: center;
+  padding: 0;
+  position: absolute;
+  right: -4px;
+  top: -4px;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  width: 28px;
+}
+
+.profile-avatar-remove:hover,
+.profile-avatar-remove:focus-visible {
+  background: #d94848;
+  color: #ffffff;
+  outline: none;
+  transform: scale(1.04);
+}
+
+.profile-avatar-remove:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
 .profile-avatar-preview img {
   height: 100%;
   object-fit: cover;
@@ -1068,6 +1124,27 @@ body::-webkit-scrollbar,
   display: grid;
   gap: 0.75rem;
   min-width: 0;
+}
+
+.profile-avatar-status {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.86rem;
+  font-weight: 700;
+  justify-self: start;
+  line-height: 1;
+  padding: 0.45rem 0.75rem;
+}
+
+.profile-avatar-status-pending {
+  background: #fff7e6;
+  color: #9a5b00;
+}
+
+.profile-avatar-status-saved {
+  background: #eaf7ef;
+  color: var(--health-primary-dark);
 }
 
 .admin-profile-heading {

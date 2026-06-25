@@ -70,8 +70,8 @@ public class PlannerRuleEngine {
         int mealBudget = Math.max(100, Math.min((int) Math.round(goalCalories * share), remainingCalories));
 
         // 3. Select 2 alternative options from pool
-        String[] opt1 = getOptionFromPool(mealType, dayOfWeek + offset);
-        String[] opt2 = getOptionFromPool(mealType, dayOfWeek + offset + 3);
+        String[] opt1 = getOptionFromPool(mealType, dayOfWeek + offset, context, List.of());
+        String[] opt2 = getOptionFromPool(mealType, dayOfWeek + offset + 3, context, List.of(opt1[0]));
 
         double density1 = Double.parseDouble(opt1[2]);
         double density2 = Double.parseDouble(opt2[2]);
@@ -155,7 +155,7 @@ public class PlannerRuleEngine {
         return info;
     }
 
-    private static String[] getOptionFromPool(String mealType, int index) {
+    private static String[] getOptionFromPool(String mealType, int index, PlannerSuggestRequest context, List<String> extraExcluded) {
         if ("breakfast".equals(mealType)) {
             String[][] list = {
                 {"Phở gà xé hành hoa", "bát", "1.2"},
@@ -166,7 +166,7 @@ public class PlannerRuleEngine {
                 {"Khoai lang luộc & 2 quả trứng luộc", "phần", "1.3"},
                 {"Bún bắp bò luộc nấu dứa", "bát", "1.2"}
             };
-            return list[Math.abs(index) % list.length];
+            return selectOption(list, index, context, extraExcluded);
         } else if ("dinner".equals(mealType)) {
             String[][] list = {
                 {"Cơm gạo lứt, cá thu sốt cà chua & canh rau ngót thịt bằm", "đĩa", "1.1"},
@@ -177,7 +177,7 @@ public class PlannerRuleEngine {
                 {"Cơm trắng, đùi gà hấp lá chanh (bỏ da) & canh bí đỏ", "đĩa", "1.2"},
                 {"Cơm gạo lứt, sườn heo thăn rim chua ngọt & canh khổ qua nhồi thịt", "đĩa", "1.3"}
             };
-            return list[Math.abs(index) % list.length];
+            return selectOption(list, index, context, extraExcluded);
         } else if ("afternoon_snack".equals(mealType) || "snacks".equals(mealType) || "snack".equals(mealType)) {
             String[][] list = {
                 {"Sữa chua không đường & 1 quả táo nhỏ", "hũ", "0.8"},
@@ -188,7 +188,7 @@ public class PlannerRuleEngine {
                 {"Bánh yến mạch ăn kiêng & 1 quả lê", "phần", "1.1"},
                 {"Đu đủ chín cắt miếng & sữa hạt điều tự chế", "phần", "0.7"}
             };
-            return list[Math.abs(index) % list.length];
+            return selectOption(list, index, context, extraExcluded);
         } else { // lunch
             String[][] list = {
                 {"Cơm gạo lứt, ức gà áp chảo & súp lơ xanh luộc", "đĩa", "1.3"},
@@ -199,8 +199,32 @@ public class PlannerRuleEngine {
                 {"Cơm trắng, cá quả kho tộ & rau muống luộc", "đĩa", "1.2"},
                 {"Cơm gạo lứt, thịt heo luộc thái mỏng & canh bí xanh", "đĩa", "1.1"}
             };
-            return list[Math.abs(index) % list.length];
+            return selectOption(list, index, context, extraExcluded);
         }
+    }
+
+    private static String[] selectOption(String[][] list, int index, PlannerSuggestRequest context, List<String> extraExcluded) {
+        int start = Math.abs(index) % list.length;
+        for (int i = 0; i < list.length; i++) {
+            String[] candidate = list[(start + i) % list.length];
+            if (!isExcluded(candidate[0], context, extraExcluded)) {
+                return candidate;
+            }
+        }
+        return list[start];
+    }
+
+    private static boolean isExcluded(String name, PlannerSuggestRequest context, List<String> extraExcluded) {
+        List<String> excluded = new ArrayList<>();
+        if (context.getExcludedFoodNames() != null) {
+            excluded.addAll(context.getExcludedFoodNames());
+        }
+        if (extraExcluded != null) {
+            excluded.addAll(extraExcluded);
+        }
+        return excluded.stream()
+                .filter(item -> item != null && !item.isBlank())
+                .anyMatch(item -> item.equalsIgnoreCase(name));
     }
 
     private static List<ActivityInfo> getExerciseOptions(PlannerSuggestRequest context, String goal, double weight, int index) {

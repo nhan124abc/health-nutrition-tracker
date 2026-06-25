@@ -265,21 +265,59 @@ function Planner() {
   });
 
   useEffect(() => {
-    Promise.all([getProfile(), getMealsByDate(today()), getActivitiesByDate(today()), getActivityTypes()])
-      .then(([profileResponse, mealsResponse, activitiesResponse, activityTypesResponse]) => {
+    let cancelled = false;
+    setLoading(true);
+
+    Promise.all([getProfile(), getActivityTypes()])
+      .then(([profileResponse, activityTypesResponse]) => {
+        if (cancelled) {
+          return;
+        }
         setProfile(mapProfileFromApi(extractProfileFromApi(profileResponse.data)));
-        setMeals(extractMealsFromApi(mealsResponse.data).map(normalizeMealFromApi));
-        const actList = Array.isArray(activitiesResponse.data) 
-          ? activitiesResponse.data 
-          : activitiesResponse.data?.content || activitiesResponse.data?.data || [];
-        setActivities(actList);
         setActivityOptions(extractActivityTypesFromApi(activityTypesResponse.data)
           .map(normalizeActivityType)
           .filter((activity) => activity.id && activity.name));
       })
       .catch((err) => setError(err.response?.data?.message || t('plannerPage.errors.load')))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [t]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setError('');
+    setSuggestion(null);
+    setSelectedOption(null);
+    setSelectedRecipeId(null);
+
+    Promise.all([getMealsByDate(planDate), getActivitiesByDate(planDate)])
+      .then(([mealsResponse, activitiesResponse]) => {
+        if (cancelled) {
+          return;
+        }
+        setMeals(extractMealsFromApi(mealsResponse.data).map(normalizeMealFromApi));
+        const actList = Array.isArray(activitiesResponse.data)
+          ? activitiesResponse.data
+          : activitiesResponse.data?.content || activitiesResponse.data?.data || [];
+        setActivities(actList);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err.response?.data?.message || t('plannerPage.errors.load'));
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [planDate, t]);
 
   useEffect(() => {
     if (!canSearchFoods) {
@@ -370,7 +408,7 @@ function Planner() {
         activityLevel: profile?.activityLevel?.toUpperCase() || 'SEDENTARY',
         heightCm: Number(profile?.height) || 170,
         gender: profile?.gender?.toUpperCase() || 'MALE',
-        excludedFoodNames: [...new Set([...existingNames, ...(suggestedNames[selectedMeal] || [])])],
+        excludedFoodNames: [...new Set([...existingNames, ...(suggestedNames[effectiveMealType] || [])])],
         selectedFoodIds: isExerciseMode ? [] : selectedFoodIds,
         selectedFoodNames: isExerciseMode ? [] : selectedFoodNames,
         selectedActivityNames: isExerciseMode ? selectedActivityNames : [],

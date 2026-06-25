@@ -422,7 +422,7 @@ public class AiChatService {
             normalized.put("name", name);
             normalized.put("description", option.path("description").asText(""));
             normalized.put("cookingMethod", blankToDefault(context.getCookingMethod(), option.path("description").asText("")));
-            normalized.put("amount", "1 phan");
+            normalized.put("amount", "1 phần");
 
             BigDecimal totalServing = BigDecimal.ZERO;
             BigDecimal totalCalories = BigDecimal.ZERO;
@@ -483,7 +483,7 @@ public class AiChatService {
                                               int calorieBuffer,
                                               PlannerSuggestRequest context) throws Exception {
         ObjectNode result = objectMapper.createObjectNode();
-        result.put("message", "Goi y dua tren cong thuc da luu trong co so du lieu.");
+        result.put("message", "Gợi ý dựa trên công thức đã lưu trong cơ sở dữ liệu.");
         result.put("mealBudget", budget);
         result.put("calorieBuffer", calorieBuffer);
         result.put("source", "RECIPE_DB");
@@ -495,7 +495,7 @@ public class AiChatService {
             option.put("name", recipe.name());
             option.put("description", recipe.description());
             option.put("cookingMethod", recipe.description());
-            option.put("amount", recipe.servings() <= 1 ? "1 phan" : recipe.servings() + " phan");
+            option.put("amount", recipe.servings() <= 1 ? "1 phần" : recipe.servings() + " phần");
             option.put("servingSizeG", recipe.ingredients().stream()
                     .map(NutritionCatalogClient.RecipeIngredientCandidate::quantityG)
                     .reduce(BigDecimal.ZERO, BigDecimal::add)

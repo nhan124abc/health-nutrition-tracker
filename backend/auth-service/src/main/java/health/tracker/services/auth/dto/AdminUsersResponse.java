@@ -19,6 +19,7 @@ public record AdminUsersResponse(
             String fullName,
             String email,
             String role,
+            String avatarUrl,
             boolean active,
             boolean emailVerified,
             String authProvider,

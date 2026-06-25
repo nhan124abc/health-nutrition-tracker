@@ -133,6 +133,7 @@ public class AdminUserService {
                 user.getFullName(),
                 user.getEmail(),
                 user.getRole().name(),
+                user.getAvatarUrl(),
                 user.isActive(),
                 user.isEmailVerified(),
                 user.getAuthProvider().name(),

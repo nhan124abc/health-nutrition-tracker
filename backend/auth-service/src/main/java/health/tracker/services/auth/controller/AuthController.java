@@ -11,23 +11,38 @@ import health.tracker.services.auth.service.UserCacheService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
+    private static final long MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
+
     private final AuthService authService;
     private final AdminUserService adminUserService;
     private final UserRepository userRepository;
     private final MailService mailService;
     private final UserCacheService userCacheService;
+
+    @Value("${app.avatar.upload-dir:}")
+    private String avatarUploadDir;
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
@@ -117,14 +132,7 @@ public class AuthController {
                 .orElseThrow(() -> new AppException(
                         HttpStatus.UNAUTHORIZED,
                         "User account is unavailable or inactive"));
-        return ResponseEntity.ok(Map.of(
-                "id", user.getId(),
-                "email", user.getEmail(),
-                "fullName", user.getFullName() == null ? "" : user.getFullName(),
-                "role", user.getRole().name(),
-                "authProvider", user.getAuthProvider().name(),
-                "emailVerified", user.isEmailVerified()
-        ));
+        return ResponseEntity.ok(toAccountResponse(user));
     }
 
     @PutMapping("/me")
@@ -144,15 +152,41 @@ public class AuthController {
 
         User savedUser = userRepository.save(user);
         userCacheService.evict(savedUser.getEmail());
+        return ResponseEntity.ok(toAccountResponse(savedUser));
+    }
 
-        return ResponseEntity.ok(Map.of(
-                "id", savedUser.getId(),
-                "email", savedUser.getEmail(),
-                "fullName", savedUser.getFullName() == null ? "" : savedUser.getFullName(),
-                "role", savedUser.getRole().name(),
-                "authProvider", savedUser.getAuthProvider().name(),
-                "emailVerified", savedUser.isEmailVerified()
-        ));
+    @PutMapping("/me/avatar")
+    public ResponseEntity<Map<String, Object>> updateMyAvatar(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestBody Map<String, String> request) {
+        User user = userRepository.findById(userId)
+                .filter(User::isActive)
+                .orElseThrow(() -> new AppException(
+                        HttpStatus.UNAUTHORIZED,
+                        "User account is unavailable or inactive"));
+
+        user.setAvatarUrl(normalizePublicImageUrl(request.get("avatarUrl")));
+        User savedUser = userRepository.save(user);
+        userCacheService.evict(savedUser.getEmail());
+        return ResponseEntity.ok(toAccountResponse(savedUser));
+    }
+
+    @PostMapping(value = "/me/avatar/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, Object>> uploadMyAvatar(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestParam("file") MultipartFile file) {
+        User user = userRepository.findById(userId)
+                .filter(User::isActive)
+                .orElseThrow(() -> new AppException(
+                        HttpStatus.UNAUTHORIZED,
+                        "User account is unavailable or inactive"));
+
+        String fileName = saveAvatarFile(user.getId(), file);
+        user.setAvatarUrl("/img/" + fileName);
+
+        User savedUser = userRepository.save(user);
+        userCacheService.evict(savedUser.getEmail());
+        return ResponseEntity.ok(toAccountResponse(savedUser));
     }
 
     @GetMapping("/admin/users")
@@ -162,10 +196,7 @@ public class AuthController {
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String search) {
 
-        if (!"ADMIN".equalsIgnoreCase(role)) {
-            throw new AppException(HttpStatus.FORBIDDEN, "Admin role is required");
-        }
-
+        requireAdmin(role);
         return ResponseEntity.ok(adminUserService.getUsers(page, size, search));
     }
 
@@ -217,6 +248,18 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
     }
 
+    private Map<String, Object> toAccountResponse(User user) {
+        return Map.of(
+                "id", user.getId(),
+                "email", user.getEmail(),
+                "fullName", user.getFullName() == null ? "" : user.getFullName(),
+                "avatarUrl", user.getAvatarUrl() == null ? "" : user.getAvatarUrl(),
+                "role", user.getRole().name(),
+                "authProvider", user.getAuthProvider().name(),
+                "emailVerified", user.isEmailVerified()
+        );
+    }
+
     private void requireAdmin(String role) {
         if (!"ADMIN".equalsIgnoreCase(role)) {
             throw new AppException(HttpStatus.FORBIDDEN, "Admin role is required");
@@ -229,5 +272,93 @@ public class AuthController {
 
     private Boolean asBoolean(Object value) {
         return value instanceof Boolean booleanValue ? booleanValue : null;
+    }
+
+    private String normalizePublicImageUrl(String avatarUrl) {
+        if (!StringUtils.hasText(avatarUrl)) {
+            return null;
+        }
+
+        String normalized = avatarUrl.trim().replace("\\", "/");
+        if (!normalized.startsWith("/img/") || normalized.contains("..")) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Avatar URL must point to /img/ inside public assets");
+        }
+        if (!normalized.toLowerCase().matches("^/img/.+\\.(jpg|jpeg|png)$")) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Avatar URL must be a .jpg, .jpeg, or .png file");
+        }
+        return normalized;
+    }
+
+    private String saveAvatarFile(Long userId, MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Avatar image is required");
+        }
+        if (file.getSize() > MAX_AVATAR_SIZE_BYTES) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Avatar image must be 2MB or smaller");
+        }
+
+        String contentType = Objects.toString(file.getContentType(), "").toLowerCase(Locale.ROOT);
+        if (!contentType.equals("image/jpeg") && !contentType.equals("image/png")) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Avatar image must be a JPG or PNG file");
+        }
+
+        String fileName = buildAvatarFileName(userId, file);
+        Path uploadDirectory = resolveAvatarUploadDirectory();
+
+        try {
+            Files.createDirectories(uploadDirectory);
+            Files.copy(file.getInputStream(), uploadDirectory.resolve(fileName), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException error) {
+            log.error("Failed to save avatar image", error);
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to save avatar image");
+        }
+
+        return fileName;
+    }
+
+    private String buildAvatarFileName(Long userId, MultipartFile file) {
+        String originalFileName = StringUtils.cleanPath(Objects.toString(file.getOriginalFilename(), "avatar.png"))
+                .replace("\\", "/");
+        String nameOnly = originalFileName.substring(originalFileName.lastIndexOf('/') + 1);
+        int extensionIndex = nameOnly.lastIndexOf('.');
+        if (extensionIndex < 0) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Avatar image must be a JPG or PNG file");
+        }
+
+        String extension = nameOnly.substring(extensionIndex).toLowerCase(Locale.ROOT);
+        if (!extension.matches("\\.(jpg|jpeg|png)")) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Avatar image must be a JPG or PNG file");
+        }
+
+        String baseName = nameOnly.substring(0, extensionIndex)
+                .toLowerCase(Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", "-")
+                .replaceAll("(^-|-$)", "");
+        if (!StringUtils.hasText(baseName)) {
+            baseName = "avatar";
+        }
+
+        return "admin-" + userId + "-" + System.currentTimeMillis() + "-" + baseName + extension;
+    }
+
+    private Path resolveAvatarUploadDirectory() {
+        if (StringUtils.hasText(avatarUploadDir)) {
+            return Paths.get(avatarUploadDir).toAbsolutePath().normalize();
+        }
+
+        Path[] candidates = {
+                Paths.get("frontend", "public", "img"),
+                Paths.get("..", "frontend", "public", "img"),
+                Paths.get("..", "..", "frontend", "public", "img")
+        };
+
+        for (Path candidate : candidates) {
+            Path absoluteCandidate = candidate.toAbsolutePath().normalize();
+            if (Files.isDirectory(absoluteCandidate)) {
+                return absoluteCandidate;
+            }
+        }
+
+        return candidates[0].toAbsolutePath().normalize();
     }
 }
