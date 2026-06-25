@@ -33,16 +33,55 @@ export function getAuthenticatedUser() {
   return api.get(authConfig.endpoints.me);
 }
 
+function getAuthErrorMessage(error) {
+  return String(error?.response?.data?.message || error?.message || '').toLowerCase();
+}
+
+export function isAccountNotFoundError(error) {
+  const status = error?.response?.status;
+  const message = getAuthErrorMessage(error);
+
+  if (status === 404) {
+    return true;
+  }
+
+  if (status === 423) {
+    return false;
+  }
+
+  return [
+    'account not found',
+    'user not found',
+    'email not found',
+    'not found',
+    'does not exist',
+    'not exist',
+    'no user',
+    'khong ton tai',
+    'khong tim thay',
+    'chua ton tai',
+  ].some((keyword) => message.includes(keyword));
+}
+
 export function isLockedAccountError(error) {
-  const message = String(error?.response?.data?.message || error?.message || '').toLowerCase();
+  const status = error?.response?.status;
+  const message = getAuthErrorMessage(error);
+
+  if (status === 423) {
+    return true;
+  }
+
+  if (isAccountNotFoundError(error)) {
+    return false;
+  }
 
   return [
     'account is unavailable',
     'inactive',
     'locked',
     'disabled',
-    'bị khóa',
-    'không hoạt động',
-    'khóa',
+    'bi khoa',
+    'khoa',
+    'khong hoat dong',
   ].some((keyword) => message.includes(keyword));
 }

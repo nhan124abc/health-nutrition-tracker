@@ -17,9 +17,10 @@ import {
   updateAdminUser,
   updateAdminUserStatus,
 } from '../../features/admin/adminService';
-import { getActivityTypes } from '../../features/activities/activityService';
+import { getAdminActivityTypes, getActivityTypes } from '../../features/activities/activityService';
 import { getFoods } from '../../features/nutrition/nutritionService';
 import { cleanText } from '../../features/nutrition/nutritionUtils';
+import { getCurrentUser } from '../../api/api';
 
 const pageConfigs = {
   users: {
@@ -31,14 +32,13 @@ const pageConfigs = {
   foods: {
     icon: FaUtensils,
     stats: [],
-    columns: ['food', 'portion', 'calories', 'macro'],
+    columns: ['food', 'portion', 'calories', 'macro', 'status'],
     rows: [],
-    statusColumn: false,
   },
   exercises: {
     icon: FaDumbbell,
     stats: [],
-    columns: ['exercise', 'category', 'met', 'source'],
+    columns: ['exercise', 'category', 'met', 'status'],
     rows: [],
   },
 };
@@ -139,6 +139,12 @@ function hasCompleteMacro(food) {
     .every((value) => value !== null && value !== undefined);
 }
 
+function getActiveStatus(item = {}) {
+  return item.hidden != null
+    ? !item.hidden
+    : item.active ?? item.isActive ?? item.enabled ?? !item.locked;
+}
+
 function mapFoodRow(food) {
   const serving = cleanText(food.servingDescription)
     || (food.servingSizeG != null ? `${food.servingSizeG}g` : '-');
@@ -146,10 +152,19 @@ function mapFoodRow(food) {
   const macro = hasCompleteMacro(food)
     ? `${food.proteinG}P / ${food.carbsG}C / ${food.fatG}F`
     : '-';
+  const active = getActiveStatus(food);
 
   return {
     id: food.id,
-    cells: [cleanText(food.nameVi) || cleanText(food.name) || '-', serving, calories, macro],
+    cells: [
+      cleanText(food.nameVi) || cleanText(food.name) || '-',
+      serving,
+      calories,
+      macro,
+      active ? 'admin.status.active' : 'admin.status.locked',
+    ],
+    variant: active ? 'success' : 'secondary',
+    active,
     verified: Boolean(food.verified),
     macroComplete: hasCompleteMacro(food),
   };
@@ -170,6 +185,7 @@ function formatEnum(value) {
 function mapActivityTypeRow(activityType) {
   const metValue = Number(activityType.metValue);
   const hasMet = Number.isFinite(metValue) && metValue > 0;
+  const active = getActiveStatus(activityType);
 
   return {
     id: activityType.id,
@@ -177,9 +193,10 @@ function mapActivityTypeRow(activityType) {
       cleanText(activityType.nameVi) || cleanText(activityType.name) || '-',
       formatEnum(activityType.category),
       hasMet ? metValue.toFixed(1) : '-',
-      activityType.system ? 'admin.status.system' : 'admin.status.custom',
+      active ? 'admin.status.active' : 'admin.status.locked',
     ],
-    variant: activityType.system ? 'success' : 'secondary',
+    variant: active ? 'success' : 'secondary',
+    active,
     hasMet,
   };
 }
@@ -192,6 +209,47 @@ function getAdminActionErrorMessage(error, fallback) {
   }
 
   return message || fallback;
+}
+
+function isSelfLockError(error) {
+  const message = String(error.response?.data?.message || error.message || '').toLowerCase();
+  return message.includes('cannot lock the currently logged-in account')
+    || message.includes('cannot lock an account that is currently logged in')
+    || message.includes('không thể khóa tài khoản đang đăng nhập')
+    || message.includes('khong the khoa tai khoan dang dang nhap');
+}
+
+function normalizeIdentity(value) {
+  return value == null ? '' : String(value).trim().toLowerCase();
+}
+
+function getUserIdentityValues(user = {}) {
+  return [
+    user.id,
+    user.userId,
+    user.email,
+    user.username,
+    user.sub,
+    user.cells?.[1],
+  ].map(normalizeIdentity).filter(Boolean);
+}
+
+function isCurrentUserRow(row, currentUser) {
+  const currentValues = new Set(getUserIdentityValues(currentUser));
+
+  if (currentValues.size === 0) {
+    return false;
+  }
+
+  return getUserIdentityValues({ ...row?.raw, id: row?.id, cells: row?.cells })
+    .some((value) => currentValues.has(value));
+}
+
+function isTranslationKey(value) {
+  return typeof value === 'string' && (
+    value.startsWith('admin.')
+    || value.startsWith('common.')
+  );
 }
 
 function AdminManagementPage({ type }) {
@@ -211,6 +269,7 @@ function AdminManagementPage({ type }) {
   const [confirmAction, setConfirmAction] = useState(null);
   const [confirmingAction, setConfirmingAction] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [noticeMessage, setNoticeMessage] = useState('');
   const [loading, setLoading] = useState(['users', 'foods', 'exercises'].includes(type));
   const [loadError, setLoadError] = useState('');
   const { t } = useTranslation();
@@ -280,7 +339,7 @@ function AdminManagementPage({ type }) {
           setFoodRows(foods.map(mapFoodRow));
           setFoodSummary({ total });
         } else {
-          const response = await getActivityTypes();
+          const response = await getAdminActivityTypes().catch(() => getActivityTypes());
           const activityTypes = response.data?.data ?? response.data ?? [];
 
           if (!isActive) {
@@ -319,7 +378,7 @@ function AdminManagementPage({ type }) {
     return rows.filter((row) =>
       row.cells
         .map((cell) => {
-          if (typeof cell === 'string' && cell.startsWith('admin.')) {
+          if (isTranslationKey(cell)) {
             return t(cell);
           }
           return String(cell);
@@ -331,7 +390,7 @@ function AdminManagementPage({ type }) {
   }, [rows, searchTerm, t]);
 
   const displayCell = (cell) => (
-    typeof cell === 'string' && cell.startsWith('admin.') ? t(cell) : cell
+    isTranslationKey(cell) ? t(cell) : cell
   );
 
   const getRowActionKey = (action, row) => `${action}:${row.id}`;
@@ -371,9 +430,22 @@ function AdminManagementPage({ type }) {
     setSuccessMessage(message);
   };
 
+  const showSelfLockNotice = () => {
+    setNoticeMessage('Kh\u00f4ng th\u1ec3 kh\u00f3a t\u00e0i kho\u1ea3n \u0111ang \u0111\u0103ng nh\u1eadp.');
+  };
+
+  const shouldPreventSelfLock = (row, nextActive) => (
+    !nextActive && isCurrentUserRow(row, getCurrentUser() || {})
+  );
+
   const toggleUserStatus = async (row) => {
     const actionKey = getRowActionKey('status', row);
     const nextActive = !row.active;
+
+    if (shouldPreventSelfLock(row, nextActive)) {
+      showSelfLockNotice();
+      return;
+    }
 
     setActionError('');
     setPendingAction(actionKey);
@@ -395,7 +467,11 @@ function AdminManagementPage({ type }) {
       }));
       showSuccess(nextActive ? 'Đã mở khóa tài khoản thành công.' : 'Đã khóa tài khoản thành công.');
     } catch (error) {
-      setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`)));
+      if (isSelfLockError(error)) {
+        showSelfLockNotice();
+      } else {
+        setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`)));
+      }
     } finally {
       setPendingAction('');
     }
@@ -408,6 +484,11 @@ function AdminManagementPage({ type }) {
     setSavingEdit(true);
 
     try {
+      if (shouldPreventSelfLock(editingUser, editForm.active)) {
+        showSelfLockNotice();
+        return;
+      }
+
       const payload = {
         fullName: editForm.fullName.trim(),
         email: editForm.email.trim(),
@@ -428,7 +509,11 @@ function AdminManagementPage({ type }) {
       closeUserForm();
       showSuccess('Đã cập nhật người dùng thành công.');
     } catch (error) {
-      setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`)));
+      if (isSelfLockError(error)) {
+        showSelfLockNotice();
+      } else {
+        setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`)));
+      }
     } finally {
       setSavingEdit(false);
     }
@@ -601,7 +686,18 @@ function AdminManagementPage({ type }) {
                             aria-label={visibilityActionLabel}
                             title={visibilityActionLabel}
                             disabled={!isUserRow || pendingAction === statusActionKey}
-                            onClick={() => isUserRow && setConfirmAction({ type: 'status', row })}
+                            onClick={() => {
+                              if (!isUserRow) {
+                                return;
+                              }
+
+                              if (shouldPreventSelfLock(row, !row.active)) {
+                                showSelfLockNotice();
+                                return;
+                              }
+
+                              setConfirmAction({ type: 'status', row });
+                            }}
                           >
                             {pendingAction === statusActionKey
                               ? <Spinner animation="border" size="sm" />
@@ -753,6 +849,18 @@ function AdminManagementPage({ type }) {
         <Modal.Body>{successMessage}</Modal.Body>
         <Modal.Footer>
           <Button variant="success" onClick={() => setSuccessMessage('')}>
+            {t('common.close')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={Boolean(noticeMessage)} onHide={() => setNoticeMessage('')} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{'Th\u00f4ng b\u00e1o'}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{noticeMessage}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={() => setNoticeMessage('')}>
             {t('common.close')}
           </Button>
         </Modal.Footer>

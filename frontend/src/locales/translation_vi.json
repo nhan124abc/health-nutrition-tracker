@@ -361,6 +361,7 @@
     "registerNow": "Đăng ký ngay",
     "loginError": "Không thể đăng nhập. Vui lòng thử lại.",
     "accountLocked": "Tài khoản của bạn đã bị khóa và không thể truy cập.",
+    "accountNotFound": "Tài khoản chưa tồn tại.",
     "oauthLoginError": "Không thể đăng nhập bằng Google hoặc Facebook. Vui lòng kiểm tra tài khoản và thử lại.",
     "missingToken": "Backend chưa trả access token.",
     "registerTitle": "Tạo tài khoản",
