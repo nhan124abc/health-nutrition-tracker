@@ -1,30 +1,91 @@
-import { useRef, useState } from 'react';
-import { Button, Card, Col, Form, Modal, Nav, Row } from 'react-bootstrap';
+import { useEffect, useRef, useState } from 'react';
+import { Alert, Button, Card, Col, Form, Modal, Nav, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { FaEdit, FaIdCard, FaTrash, FaUpload, FaUserCircle } from 'react-icons/fa';
+import { FaEdit, FaIdCard, FaTimes, FaUserCircle } from 'react-icons/fa';
 import { getCurrentUser } from '../../api/api';
 import authConfig from '../../config/authConfig';
+import { updateAuthenticatedUserAvatar, uploadAuthenticatedUserAvatar } from '../../features/auth/authService';
+import { updateAccountProfile } from '../../features/profile/profileService';
+import { getStoredProfileAvatar, saveStoredProfileAvatar } from '../../features/profile/profileUtils';
 
 const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
 const MAX_AVATAR_SIZE_MB = MAX_AVATAR_SIZE_BYTES / (1024 * 1024);
+
+function withImageCacheBust(url, version) {
+  if (!url) {
+    return '';
+  }
+  if (url.startsWith('blob:') || url.startsWith('data:')) {
+    return url;
+  }
+  return `${url}${url.includes('?') ? '&' : '?'}v=${version}`;
+}
+
+function updateStoredAccount(accountPatch = {}) {
+  const currentUser = getCurrentUser() || {};
+  const updatedUser = { ...currentUser, ...accountPatch };
+  localStorage.setItem(authConfig.userKey, JSON.stringify(updatedUser));
+  return updatedUser;
+}
 
 function AdminProfile() {
   const { t } = useTranslation();
   const avatarInputRef = useRef(null);
   const [currentUser, setCurrentUser] = useState(() => getCurrentUser() || {});
   const [draftUser, setDraftUser] = useState(() => getCurrentUser() || {});
-  const [avatarDraftUrl, setAvatarDraftUrl] = useState(null);
+  const [avatarUrl, setAvatarUrl] = useState(() => currentUser.avatarUrl || getStoredProfileAvatar(currentUser));
+  const [avatarUrlDraft, setAvatarUrlDraft] = useState(() => currentUser.avatarUrl || getStoredProfileAvatar(currentUser));
   const [avatarError, setAvatarError] = useState('');
+  const [avatarSaved, setAvatarSaved] = useState(false);
+  const [avatarLoadFailed, setAvatarLoadFailed] = useState(false);
+  const [avatarDraftLoadFailed, setAvatarDraftLoadFailed] = useState(false);
+  const [avatarVersion, setAvatarVersion] = useState(Date.now());
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState('');
+  const [avatarMarkedForRemoval, setAvatarMarkedForRemoval] = useState(false);
+  const [avatarPendingChange, setAvatarPendingChange] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
-  const avatarPreviewUrl = avatarDraftUrl === null ? draftUser.avatarUrl : avatarDraftUrl;
 
+  const displayName = currentUser.fullName || currentUser.name || currentUser.username || t('user.name');
   const profileRows = [
-    [t('admin.profile.fullName'), currentUser.fullName || currentUser.name || currentUser.username || '-'],
+    [t('admin.profile.fullName'), displayName],
     ['Email', currentUser.email || '-'],
     [t('admin.profile.role'), currentUser.role || '-'],
   ];
-  const displayName = currentUser.fullName || currentUser.name || currentUser.username || t('user.name');
+
+  useEffect(() => {
+    setAvatarLoadFailed(false);
+  }, [avatarUrl]);
+
+  useEffect(() => {
+    setAvatarDraftLoadFailed(false);
+  }, [avatarUrlDraft]);
+
+  useEffect(() => () => {
+    if (avatarPreviewUrl) {
+      URL.revokeObjectURL(avatarPreviewUrl);
+    }
+  }, [avatarPreviewUrl]);
+
+  const applyAvatar = (nextAvatarUrl) => {
+    setAvatarUrl(nextAvatarUrl);
+    setAvatarUrlDraft(nextAvatarUrl);
+    setAvatarVersion(Date.now());
+    setAvatarLoadFailed(false);
+    setAvatarDraftLoadFailed(false);
+    setAvatarFile(null);
+    setAvatarMarkedForRemoval(false);
+    setAvatarPendingChange(false);
+    if (avatarPreviewUrl) {
+      URL.revokeObjectURL(avatarPreviewUrl);
+      setAvatarPreviewUrl('');
+    }
+    saveStoredProfileAvatar(currentUser, nextAvatarUrl);
+    window.dispatchEvent(new CustomEvent('admin:avatarUpdated', { detail: { avatarUrl: nextAvatarUrl } }));
+  };
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -34,13 +95,14 @@ function AdminProfile() {
   const handleAvatarChange = (event) => {
     const file = event.target.files?.[0];
     setAvatarError('');
+    setAvatarSaved(false);
 
     if (!file) {
       return;
     }
 
     const fileName = file.name.toLowerCase();
-    const hasAllowedExtension = fileName.endsWith('.jpg') || fileName.endsWith('.png');
+    const hasAllowedExtension = fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png');
     const hasAllowedType = file.type === 'image/jpeg' || file.type === 'image/png';
 
     if (!hasAllowedExtension || !hasAllowedType) {
@@ -55,36 +117,70 @@ function AdminProfile() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => setAvatarDraftUrl(reader.result || '');
-    reader.onerror = () => setAvatarError(t('profilePage.avatar.readError'));
-    reader.readAsDataURL(file);
+    if (avatarPreviewUrl) {
+      URL.revokeObjectURL(avatarPreviewUrl);
+    }
+
+    const nextPreviewUrl = URL.createObjectURL(file);
+    setAvatarFile(file);
+    setAvatarMarkedForRemoval(false);
+    setAvatarPendingChange(true);
+    setAvatarPreviewUrl(nextPreviewUrl);
+    setAvatarUrlDraft(nextPreviewUrl);
+    setAvatarDraftLoadFailed(false);
+    event.target.value = '';
   };
 
   const handleAvatarRemove = () => {
-    setAvatarError('');
-    setAvatarDraftUrl('');
+    if (avatarPreviewUrl) {
+      URL.revokeObjectURL(avatarPreviewUrl);
+      setAvatarPreviewUrl('');
+    }
+    setAvatarFile(null);
+    setAvatarMarkedForRemoval(true);
+    setAvatarPendingChange(true);
+    setAvatarUrlDraft('');
+    setAvatarSaved(false);
+    setAvatarDraftLoadFailed(false);
 
     if (avatarInputRef.current) {
       avatarInputRef.current.value = '';
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    const updatedUser = {
-      ...currentUser,
-      ...draftUser,
-      name: draftUser.fullName || draftUser.name || '',
-      avatarUrl: avatarDraftUrl === null ? draftUser.avatarUrl : avatarDraftUrl,
-    };
+    setSaved(false);
+    setProfileError('');
+    setAvatarError('');
+    setAvatarSaved(false);
+    setSavingProfile(true);
 
-    localStorage.setItem(authConfig.userKey, JSON.stringify(updatedUser));
-    setCurrentUser(updatedUser);
-    setDraftUser(updatedUser);
-    setAvatarDraftUrl(null);
-    setSaved(true);
-    window.dispatchEvent(new CustomEvent('admin:profile-updated', { detail: updatedUser }));
+    try {
+      let savedAvatarUrl = avatarUrl;
+
+      if (avatarFile) {
+        const avatarResponse = await uploadAuthenticatedUserAvatar(avatarFile);
+        savedAvatarUrl = avatarResponse.data?.avatarUrl || '';
+      } else if (avatarMarkedForRemoval) {
+        const avatarResponse = await updateAuthenticatedUserAvatar('');
+        savedAvatarUrl = avatarResponse.data?.avatarUrl || '';
+      }
+
+      const response = await updateAccountProfile({ fullName: (draftUser.fullName || draftUser.name || '').trim() });
+      const updatedUser = updateStoredAccount({ ...response.data, avatarUrl: savedAvatarUrl });
+
+      setCurrentUser(updatedUser);
+      setDraftUser(updatedUser);
+      applyAvatar(savedAvatarUrl);
+      setAvatarSaved(Boolean(avatarFile || avatarMarkedForRemoval));
+      setSaved(true);
+      window.dispatchEvent(new CustomEvent('admin:profile-updated', { detail: updatedUser }));
+    } catch (error) {
+      setProfileError(error.response?.data?.message || 'Không thể lưu hồ sơ admin.');
+    } finally {
+      setSavingProfile(false);
+    }
   };
 
   return (
@@ -124,8 +220,12 @@ function AdminProfile() {
           <Card.Body>
             <div className="admin-profile-heading">
               <div className="admin-profile-avatar">
-                {currentUser.avatarUrl ? (
-                  <img src={currentUser.avatarUrl} alt={t('admin.profile.title')} />
+                {avatarUrl && !avatarLoadFailed ? (
+                  <img
+                    src={withImageCacheBust(avatarUrl, avatarVersion)}
+                    alt={t('admin.profile.title')}
+                    onError={() => setAvatarLoadFailed(true)}
+                  />
                 ) : (
                   <FaUserCircle />
                 )}
@@ -150,75 +250,97 @@ function AdminProfile() {
 
       {activeTab === 'edit' && (
         <Card className="border-0 shadow-sm admin-card">
-            <Card.Body>
-              <Card.Title className="fw-bold mb-3">{t('admin.profile.updateTitle')}</Card.Title>
-              <Form onSubmit={handleSubmit}>
-                <div className="profile-avatar-editor mb-3">
-                  <div className="profile-avatar-preview">
-                    {avatarPreviewUrl ? (
-                      <img src={avatarPreviewUrl} alt={t('profilePage.avatar.previewAlt')} />
+          <Card.Body>
+            <Card.Title className="fw-bold mb-3">{t('admin.profile.updateTitle')}</Card.Title>
+            <Form onSubmit={handleSubmit}>
+              <div className="profile-avatar-editor mb-3">
+                <div className="profile-avatar-picker">
+                  <button
+                    type="button"
+                    className="profile-avatar-preview profile-avatar-preview-button"
+                    disabled={savingProfile}
+                    onClick={() => avatarInputRef.current?.click()}
+                    aria-label="Chọn ảnh đại diện"
+                    title="Chọn ảnh"
+                  >
+                    {avatarUrlDraft && !avatarDraftLoadFailed ? (
+                      <img
+                        src={withImageCacheBust(avatarUrlDraft, avatarVersion)}
+                        alt={t('profilePage.avatar.previewAlt')}
+                        onError={() => setAvatarDraftLoadFailed(true)}
+                      />
                     ) : (
                       <FaUserCircle />
                     )}
-                  </div>
-                  <div className="profile-avatar-controls">
-                    <div>
-                      <div className="fw-bold">{t('profilePage.avatar.title')}</div>
-                      <div className="text-secondary small">
-                        {t('profilePage.avatar.help', { size: MAX_AVATAR_SIZE_MB })}
-                      </div>
-                    </div>
-                    <div className="d-flex flex-wrap gap-2">
-                      <Button as="label" htmlFor="admin-avatar-input" variant="outline-success">
-                        <FaUpload className="me-2" />
-                        {avatarPreviewUrl ? t('profilePage.avatar.update') : t('profilePage.avatar.add')}
-                      </Button>
-                      {avatarPreviewUrl && (
-                        <Button type="button" variant="outline-secondary" onClick={handleAvatarRemove}>
-                          <FaTrash className="me-2" />
-                          {t('profilePage.avatar.remove')}
-                        </Button>
-                      )}
-                    </div>
-                    <Form.Control
-                      ref={avatarInputRef}
-                      id="admin-avatar-input"
-                      className="visually-hidden"
-                      type="file"
-                      accept=".jpg,.png,image/jpeg,image/png"
-                      onChange={handleAvatarChange}
-                    />
-                    {avatarError && <div className="text-danger small">{avatarError}</div>}
-                  </div>
+                  </button>
+                  {avatarUrlDraft && (
+                    <button
+                      type="button"
+                      className="profile-avatar-remove"
+                      disabled={savingProfile}
+                      onClick={handleAvatarRemove}
+                      aria-label="Xóa ảnh đại diện"
+                      title="Xóa ảnh"
+                    >
+                      <FaTimes />
+                    </button>
+                  )}
                 </div>
+                <div className="profile-avatar-controls">
+                  <div>
+                    <div className="fw-bold">{t('profilePage.avatar.title')}</div>
+                    <div className="text-secondary small">
+                      JPG hoặc PNG, tối đa {MAX_AVATAR_SIZE_MB}MB.
+                    </div>
+                  </div>
+                  <Form.Control
+                    ref={avatarInputRef}
+                    id="admin-avatar-input"
+                    className="visually-hidden"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                    onChange={handleAvatarChange}
+                  />
+                  {avatarError && <Alert variant="danger" className="py-2 mb-0">{avatarError}</Alert>}
+                  {avatarPendingChange && (
+                    <div className="profile-avatar-status profile-avatar-status-pending">Ảnh mới chưa lưu</div>
+                  )}
+                  {avatarSaved && <div className="profile-avatar-status profile-avatar-status-saved">Đã lưu ảnh đại diện</div>}
+                </div>
+              </div>
 
-                <Row className="g-3">
-                  <Col md={6}>
-                    <Form.Group>
-                      <Form.Label>{t('admin.profile.fullName')}</Form.Label>
-                      <Form.Control name="fullName" value={draftUser.fullName || draftUser.name || ''} onChange={handleChange} />
-                    </Form.Group>
+              <Row className="g-3">
+                <Col md={6}>
+                  <Form.Group>
+                    <Form.Label>{t('admin.profile.fullName')}</Form.Label>
+                    <Form.Control name="fullName" value={draftUser.fullName || draftUser.name || ''} onChange={handleChange} />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group>
+                    <Form.Label>Email</Form.Label>
+                    <Form.Control type="email" name="email" value={draftUser.email || ''} disabled readOnly />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group>
+                    <Form.Label>{t('admin.profile.role')}</Form.Label>
+                    <Form.Control value={draftUser.role || ''} disabled readOnly />
+                  </Form.Group>
+                </Col>
+                {profileError && (
+                  <Col xs={12}>
+                    <Alert variant="danger" className="mb-0">{profileError}</Alert>
                   </Col>
-                  <Col md={6}>
-                    <Form.Group>
-                      <Form.Label>Email</Form.Label>
-                      <Form.Control type="email" name="email" value={draftUser.email || ''} onChange={handleChange} />
-                    </Form.Group>
-                  </Col>
-                  <Col md={6}>
-                    <Form.Group>
-                      <Form.Label>{t('admin.profile.role')}</Form.Label>
-                      <Form.Control value={draftUser.role || ''} disabled readOnly />
-                    </Form.Group>
-                  </Col>
-                  <Col xs={12} className="d-flex justify-content-end">
-                    <Button variant="success" type="submit">
-                      {t('common.save')}
-                    </Button>
-                  </Col>
-                </Row>
-              </Form>
-            </Card.Body>
+                )}
+                <Col xs={12} className="d-flex justify-content-end">
+                  <Button variant="success" type="submit" disabled={savingProfile}>
+                    {savingProfile ? 'Đang lưu...' : 'Lưu hồ sơ'}
+                  </Button>
+                </Col>
+              </Row>
+            </Form>
+          </Card.Body>
         </Card>
       )}
 

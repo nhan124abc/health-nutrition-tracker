@@ -24,6 +24,8 @@ const authConfig = {
     confirmEmailVerification: '/auth/email/verification/confirm',
     sendReminderEmail: '/auth/reminders/email',
     me: '/auth/me',
+    avatar: '/auth/me/avatar',
+    avatarUpload: '/auth/me/avatar/upload',
     oauthAuthorize: (provider) => `/auth/oauth2/authorize/${provider}`,
   },
 };

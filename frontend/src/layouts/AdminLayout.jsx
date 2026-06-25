@@ -26,6 +26,7 @@ import {
 } from 'react-icons/fa';
 import { getCurrentUser, logout } from '../api/api';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { getStoredProfileAvatar } from '../features/profile/profileUtils';
 
 const adminMenuItems = [
   { to: '/admin/dashboard', labelKey: 'admin.nav.dashboard', icon: FaHome },
@@ -37,6 +38,17 @@ const adminMenuItems = [
   { to: '/admin/profile', labelKey: 'admin.nav.profile', icon: FaUserCircle },
 ];
 
+function getAdminAvatar(account) {
+  return account?.avatarUrl || getStoredProfileAvatar(account);
+}
+
+function withImageCacheBust(url, version) {
+  if (!url) {
+    return '';
+  }
+  return `${url}${url.includes('?') ? '&' : '?'}v=${version}`;
+}
+
 function AdminLayout() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
@@ -44,16 +56,37 @@ function AdminLayout() {
   );
   const [showUserPopover, setShowUserPopover] = useState(false);
   const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
+  const [adminAvatarUrl, setAdminAvatarUrl] = useState(() => getAdminAvatar(getCurrentUser()));
+  const [adminAvatarFailed, setAdminAvatarFailed] = useState(false);
+  const [adminAvatarVersion, setAdminAvatarVersion] = useState(Date.now());
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useTranslation();
   const userButtonRef = useRef(null);
 
   useEffect(() => {
+    const account = getCurrentUser();
     setShowSidebar(false);
     setShowUserPopover(false);
-    setCurrentUser(getCurrentUser());
+    setCurrentUser(account);
+    setAdminAvatarUrl(getAdminAvatar(account));
+    setAdminAvatarVersion(Date.now());
+    setAdminAvatarFailed(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const handleAdminAvatarUpdated = (event) => {
+      setAdminAvatarUrl(event.detail?.avatarUrl || '');
+      setAdminAvatarVersion(Date.now());
+      setAdminAvatarFailed(false);
+    };
+
+    window.addEventListener('admin:avatarUpdated', handleAdminAvatarUpdated);
+
+    return () => {
+      window.removeEventListener('admin:avatarUpdated', handleAdminAvatarUpdated);
+    };
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('adminSidebarCollapsed', String(isSidebarCollapsed));
@@ -61,7 +94,11 @@ function AdminLayout() {
 
   useEffect(() => {
     const handleProfileUpdated = (event) => {
-      setCurrentUser(event.detail || getCurrentUser());
+      const account = event.detail || getCurrentUser();
+      setCurrentUser(account);
+      setAdminAvatarUrl(getAdminAvatar(account));
+      setAdminAvatarVersion(Date.now());
+      setAdminAvatarFailed(false);
     };
 
     window.addEventListener('admin:profile-updated', handleProfileUpdated);
@@ -141,13 +178,17 @@ function AdminLayout() {
             <button
               type="button"
               ref={userButtonRef}
-              className={`btn btn-light layout-user-toggle${currentUser?.avatarUrl ? ' layout-user-avatar-toggle' : ''}`}
+              className={`btn btn-light layout-user-toggle${adminAvatarUrl && !adminAvatarFailed ? ' layout-user-avatar-toggle' : ''}`}
               onClick={() => setShowUserPopover((current) => !current)}
               aria-label={t('admin.nav.profile')}
               title={t('admin.nav.profile')}
             >
-              {currentUser?.avatarUrl ? (
-                <img src={currentUser.avatarUrl} alt={t('admin.nav.profile')} />
+              {adminAvatarUrl && !adminAvatarFailed ? (
+                <img
+                  src={withImageCacheBust(adminAvatarUrl, adminAvatarVersion)}
+                  alt={t('admin.nav.profile')}
+                  onError={() => setAdminAvatarFailed(true)}
+                />
               ) : (
                 <FaUserCircle />
               )}

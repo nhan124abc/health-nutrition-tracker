@@ -33,6 +33,19 @@ export function getAuthenticatedUser() {
   return api.get(authConfig.endpoints.me);
 }
 
+export function updateAuthenticatedUserAvatar(avatarUrl) {
+  return api.put(authConfig.endpoints.avatar, { avatarUrl });
+}
+
+export function uploadAuthenticatedUserAvatar(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return api.post(authConfig.endpoints.avatarUpload, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+}
+
 function getAuthErrorMessage(error) {
   return String(error?.response?.data?.message || error?.message || '').toLowerCase();
 }
