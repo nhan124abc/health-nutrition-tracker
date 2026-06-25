@@ -31,11 +31,11 @@ export function createFood(payload) {
 }
 
 export function updateFood(id, payload) {
-  return api.put(nutritionConfig.endpoints.foodDetail(id), payload);
+  return api.put(nutritionConfig.endpoints.foodDetail(id), payload, withAdminAuth());
 }
 
 export function deleteFood(id) {
-  return api.delete(nutritionConfig.endpoints.foodDetail(id));
+  return api.delete(nutritionConfig.endpoints.foodDetail(id), withAdminAuth());
 }
 
 export function getFoodCategories() {

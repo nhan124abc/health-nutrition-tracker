@@ -31,6 +31,9 @@ public class UserProfile {
     @Column(unique = true, length = 50)
     private String username;
 
+    @Column(name = "avatar_url", length = 500)
+    private String avatarUrl;
+
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 

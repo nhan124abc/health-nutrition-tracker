@@ -510,6 +510,39 @@
       "weeklyReport": "Tổng kết tuần"
     }
   },
+  "reminderNotifier": {
+    "title": "Nhắc nhở sức khỏe",
+    "later": "Để sau",
+    "openNow": "Mở ngay",
+    "slots": {
+      "breakfast": "bữa sáng",
+      "lunch": "bữa trưa",
+      "dinner": "bữa tối",
+      "activityMorning": "vận động buổi sáng",
+      "activityAfternoon": "vận động buổi chiều"
+    },
+    "popup": {
+      "meal": {
+        "missing": "Đã đến giờ {{label}} ({{time}}) nhưng bạn chưa ghi nhận bữa ăn này. Hãy cập nhật nhật ký để theo dõi calo chính xác hơn.",
+        "incomplete": "Bạn đã ghi nhận {{label}} ({{time}}) nhưng chưa đánh dấu hoàn thành."
+      },
+      "activity": {
+        "missing": "Đã đến giờ {{label}} ({{time}}) nhưng hôm nay bạn chưa ghi nhận hoạt động vận động nào.",
+        "incomplete": "Bạn đã ghi nhận hoạt động hôm nay nhưng chưa đánh dấu hoàn thành."
+      }
+    },
+    "email": {
+      "subject": "Nhắc {{label}} lúc {{time}}",
+      "meal": {
+        "missing": "Bạn chưa ghi nhận {{label}} lúc {{time}}. Hãy mở Health Nutrition Tracker để cập nhật bữa ăn trong ngày.",
+        "incomplete": "Bạn đã ghi nhận {{label}} nhưng chưa đánh dấu hoàn thành. Hãy mở Health Nutrition Tracker để cập nhật nhé."
+      },
+      "activity": {
+        "missing": "Bạn chưa ghi nhận {{label}} lúc {{time}}. Hãy mở Health Nutrition Tracker để cập nhật hoạt động trong ngày.",
+        "incomplete": "Bạn đã ghi nhận hoạt động hôm nay nhưng chưa đánh dấu hoàn thành. Hãy mở Health Nutrition Tracker để cập nhật nhé."
+      }
+    }
+  },
   "foodDiaryPage": {
     "title": "Meal log trong ngày",
     "createMeal": "Tạo bữa ăn",
@@ -801,6 +834,15 @@
     "selectedActivities": "Loại vận động muốn tập",
     "selectedActivitiesHint": "Đã chọn {{count}}/{{max}} loại vận động. AI sẽ ưu tiên tạo phương án từ các loại bạn chọn.",
     "clearActivities": "Xóa chọn",
+    "warnings": {
+      "foodLimitTitle": "Chọn quá nhiều thực phẩm",
+      "foodLimitMessage": "Một bữa chỉ nên chọn tối đa {{max}} thực phẩm để gợi ý không bị dồn quá nhiều món.",
+      "activityLimitTitle": "Chọn quá nhiều hoạt động",
+      "activityLimitMessage": "Một ngày chỉ nên chọn tối đa {{max}} loại vận động để kế hoạch vẫn vừa sức.",
+      "activityOverGoalTitle": "Vượt ngưỡng vận động trong ngày",
+      "activityOverGoalMessage": "Bạn đã đốt {{current}} kcal. Hoạt động này thêm khoảng {{added}} kcal, tổng {{total}} kcal, vượt mục tiêu {{goal}} kcal/ngày.",
+      "continueAnyway": "Vẫn ghi nhận"
+    },
     "sections": {
       "plan": "Kế hoạch",
       "planDescription": "Chọn ngày, bữa ăn và ngân sách calo.",
@@ -871,6 +913,9 @@
     "searchFoodsHint": "Nhập ít nhất 2 ký tự để tìm thực phẩm.",
     "searchingFoods": "Đang tìm thực phẩm...",
     "noFoodResults": "Không tìm thấy thực phẩm phù hợp.",
+    "previousPage": "Trước",
+    "nextPage": "Sau",
+    "foodPageInfo": "Trang {{page}}/{{total}} · {{count}} món",
     "searchRecipes": "Tìm kiếm công thức",
     "searchRecipesPlaceholder": "Nhập tên công thức hoặc món ăn...",
     "searchRecipesHint": "Nhập ít nhất 2 ký tự hoặc chọn thực phẩm để tìm công thức.",
@@ -878,6 +923,7 @@
     "searchActivities": "Tìm kiếm hoạt động",
     "searchActivitiesPlaceholder": "Nhập tên hoạt động muốn tập...",
     "searchActivitiesHint": "Nhập ít nhất 2 ký tự để tìm hoạt động.",
+    "activityPageInfo": "Trang {{page}}/{{total}} · {{count}} hoạt động",
     "noActivityResults": "Không tìm thấy hoạt động phù hợp."
   },
   "goalPlannerPage": {
@@ -904,6 +950,7 @@
       "unsafe": "Không an toàn",
       "activity": "Vận động",
       "change": "Thay đổi {{weight}} kg/tuần · {{energy}} kcal/ngày",
+      "stableActivity": "Duy trì cân nặng · mục tiêu vận động hằng ngày",
       "choose": "Chọn phương án này",
       "applying": "Đang áp dụng..."
     },

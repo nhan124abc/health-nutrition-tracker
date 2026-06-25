@@ -858,6 +858,39 @@
       "weeklyReport": "Weekly report summary"
     }
   },
+  "reminderNotifier": {
+    "title": "Health reminder",
+    "later": "Later",
+    "openNow": "Open now",
+    "slots": {
+      "breakfast": "breakfast",
+      "lunch": "lunch",
+      "dinner": "dinner",
+      "activityMorning": "morning activity",
+      "activityAfternoon": "afternoon activity"
+    },
+    "popup": {
+      "meal": {
+        "missing": "It is time for {{label}} ({{time}}), but this meal has not been logged yet. Update your diary so your calories stay accurate.",
+        "incomplete": "You logged {{label}} ({{time}}), but it has not been marked as completed yet."
+      },
+      "activity": {
+        "missing": "It is time for {{label}} ({{time}}), but no activity has been logged today.",
+        "incomplete": "You logged activity today, but it has not been marked as completed yet."
+      }
+    },
+    "email": {
+      "subject": "{{label}} reminder at {{time}}",
+      "meal": {
+        "missing": "{{label}} has not been logged at {{time}}. Open Health Nutrition Tracker to update today's meal diary.",
+        "incomplete": "{{label}} has been logged but not marked as completed. Open Health Nutrition Tracker to update it."
+      },
+      "activity": {
+        "missing": "{{label}} has not been logged at {{time}}. Open Health Nutrition Tracker to update today's activity.",
+        "incomplete": "You logged activity today but have not marked it as completed. Open Health Nutrition Tracker to update it."
+      }
+    }
+  },
   "foodDiaryPage": {
     "title": "Daily meal log",
     "createMeal": "Create meal",
@@ -1151,6 +1184,15 @@
     "selectedActivities": "Activity types to use",
     "selectedActivitiesHint": "Selected {{count}}/{{max}} activity types. AI will prioritize suggestions from your choices.",
     "clearActivities": "Clear",
+    "warnings": {
+      "foodLimitTitle": "Too many foods selected",
+      "foodLimitMessage": "One meal should use at most {{max}} foods so the suggestion does not become overloaded.",
+      "activityLimitTitle": "Too many activities selected",
+      "activityLimitMessage": "One day should use at most {{max}} activity types so the plan stays realistic.",
+      "activityOverGoalTitle": "Daily activity target exceeded",
+      "activityOverGoalMessage": "You have burned {{current}} kcal. This activity adds about {{added}} kcal, totaling {{total}} kcal, above your {{goal}} kcal/day target.",
+      "continueAnyway": "Log anyway"
+    },
     "sections": {
       "plan": "Plan",
       "planDescription": "Choose date, meal slot, and calorie target.",
@@ -1221,6 +1263,9 @@
     "searchFoodsHint": "Enter at least 2 characters to search foods.",
     "searchingFoods": "Searching foods...",
     "noFoodResults": "No matching foods found.",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "foodPageInfo": "Page {{page}}/{{total}} · {{count}} foods",
     "searchRecipes": "Search recipes",
     "searchRecipesPlaceholder": "Enter a recipe or meal name...",
     "searchRecipesHint": "Enter at least 2 characters or select foods to find recipes.",
@@ -1228,6 +1273,7 @@
     "searchActivities": "Search activities",
     "searchActivitiesPlaceholder": "Enter an activity to exercise...",
     "searchActivitiesHint": "Enter at least 2 characters to search activities.",
+    "activityPageInfo": "Page {{page}}/{{total}} · {{count}} activities",
     "noActivityResults": "No matching activities found."
   },
   "goalPlannerPage": {
@@ -1255,6 +1301,7 @@
       "unsafe": "Unsafe",
       "activity": "Activity",
       "change": "Change {{weight}} kg/week · {{energy}} kcal/day",
+      "stableActivity": "Maintain weight · daily activity target",
       "choose": "Choose this option",
       "applying": "Applying..."
     },

@@ -1,5 +1,5 @@
 import { Button, Card, Col, Form, Row } from 'react-bootstrap';
-import { FaTrash, FaUpload, FaUserCircle } from 'react-icons/fa';
+import { FaTimes, FaUserCircle } from 'react-icons/fa';
 import { goalFormulaKeys, goalOptions, profileFields, requiredProfileFields } from '../profileUtils';
 
 const requiredFieldNames = new Set(requiredProfileFields.map(([name]) => name));
@@ -36,11 +36,32 @@ function ProfileEditForm({
           <Row className="g-3">
             <Col xs={12}>
               <div className="profile-avatar-editor">
-                <div className="profile-avatar-preview">
-                  {hasAvatar ? (
-                    <img src={avatarPreviewUrl} alt={t('profilePage.avatar.previewAlt')} />
-                  ) : (
-                    <FaUserCircle />
+                <div className="profile-avatar-picker">
+                  <button
+                    type="button"
+                    className="profile-avatar-preview profile-avatar-preview-button"
+                    disabled={saving}
+                    onClick={() => avatarInputRef.current?.click()}
+                    aria-label={t('profilePage.avatar.add')}
+                    title={t('profilePage.avatar.add')}
+                  >
+                    {hasAvatar ? (
+                      <img src={avatarPreviewUrl} alt={t('profilePage.avatar.previewAlt')} />
+                    ) : (
+                      <FaUserCircle />
+                    )}
+                  </button>
+                  {hasAvatar && (
+                    <button
+                      type="button"
+                      className="profile-avatar-remove"
+                      disabled={saving}
+                      onClick={onAvatarRemove}
+                      aria-label={t('profilePage.avatar.remove')}
+                      title={t('profilePage.avatar.remove')}
+                    >
+                      <FaTimes />
+                    </button>
                   )}
                 </div>
                 <div className="profile-avatar-controls">
@@ -50,34 +71,12 @@ function ProfileEditForm({
                       {t('profilePage.avatar.help', { size: maxAvatarSizeMb })}
                     </div>
                   </div>
-                  <div className="d-flex flex-wrap gap-2">
-                    <Button
-                      as="label"
-                      htmlFor="profile-avatar-input"
-                      variant="outline-success"
-                      disabled={saving}
-                    >
-                      <FaUpload className="me-2" />
-                      {hasAvatar ? t('profilePage.avatar.update') : t('profilePage.avatar.add')}
-                    </Button>
-                    {hasAvatar && (
-                      <Button
-                        type="button"
-                        variant="outline-secondary"
-                        onClick={onAvatarRemove}
-                        disabled={saving}
-                      >
-                        <FaTrash className="me-2" />
-                        {t('profilePage.avatar.remove')}
-                      </Button>
-                    )}
-                  </div>
                   <Form.Control
                     ref={avatarInputRef}
                     id="profile-avatar-input"
                     className="visually-hidden"
                     type="file"
-                    accept=".jpg,.png,image/jpeg,image/png"
+                    accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                     onChange={onAvatarChange}
                     disabled={saving}
                   />

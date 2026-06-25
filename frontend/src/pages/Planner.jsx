@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Col, Form, InputGroup, ProgressBar, Row, Spinner } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Form, InputGroup, Modal, ProgressBar, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaBookOpen, FaCalendarAlt, FaCheck, FaDumbbell, FaFireAlt, FaRobot, FaSearch, FaUtensils } from 'react-icons/fa';
 import { getAiPlanSuggestions } from '../features/ai/aiService';
@@ -10,15 +10,28 @@ import { extractProfileFromApi, mapProfileFromApi } from '../features/profile/pr
 import { getActivitiesByDate, createActivityLog, deleteActivityById, getActivityTypes } from '../features/activities/activityService';
 import { extractActivityTypesFromApi, normalizeActivityType } from '../features/activities/activityUtils';
 import { getFoods, getRecipeSuggestions } from '../features/nutrition/nutritionService';
+import { extractFoodsFromApi, normalizeFoodFromApi } from '../features/nutrition/nutritionUtils';
+
+const goalToApi = {
+  lose_weight: 'LOSE_WEIGHT',
+  maintain: 'MAINTAIN_WEIGHT',
+  gain_weight: 'GAIN_WEIGHT',
+  gain_muscle: 'GAIN_MUSCLE',
+  cutting: 'CUTTING',
+  body_recomposition: 'BODY_RECOMPOSITION',
+  improve_health: 'IMPROVE_FITNESS',
+};
 
 function today() {
   return new Date().toLocaleDateString('en-CA');
 }
 
 function mapFoodOption(food) {
+  const normalizedFood = normalizeFoodFromApi(food);
+
   return {
-    id: food.id,
-    name: food.nameVi || food.name,
+    id: normalizedFood.id,
+    name: normalizedFood.nameVi || normalizedFood.name,
   };
 }
 
@@ -32,6 +45,46 @@ const mealTypes = [
 
 const maxSelectedFoods = 6;
 const maxSelectedActivities = 4;
+const foodPageSize = 10;
+const activityPageSize = 10;
+
+function getTotalPagesFromApi(data) {
+  return Number(data?.totalPages || data?.data?.totalPages || 1) || 1;
+}
+
+function getMealShare(mealType) {
+  if (mealType === 'breakfast') return 0.25;
+  if (mealType === 'dinner') return 0.27;
+  if (mealType === 'afternoon_snack' || mealType === 'snack' || mealType === 'snacks') return 0.10;
+  return 0.38;
+}
+
+function getMealBudget(goalCalories, consumedCalories, mealType) {
+  const remainingCalories = Math.max(100, goalCalories - consumedCalories);
+  const mealShareBudget = Math.round(goalCalories * getMealShare(mealType));
+  return Math.max(100, Math.min(mealShareBudget, remainingCalories));
+}
+
+function calculateActivityPreviewCalories(activity, activityType, weightKg) {
+  const duration = getActivityDurationMinutes(activity);
+  const weight = Number(weightKg) || 70;
+
+  if (activityType?.met) {
+    return Math.round(activityType.met * weight * (duration / 60));
+  }
+
+  return Math.round(Number(activity?.caloriesBurned || activity?.calories) || 0);
+}
+
+function getActivityDurationMinutes(activity) {
+  const explicitDuration = Number(activity?.durationMinutes);
+  if (explicitDuration > 0) {
+    return explicitDuration;
+  }
+
+  const amountMatch = String(activity?.amount || '').match(/\d+/);
+  return amountMatch ? Number(amountMatch[0]) : 30;
+}
 
 function Planner() {
   const { i18n, t } = useTranslation();
@@ -40,11 +93,13 @@ function Planner() {
   const [activities, setActivities] = useState([]);
   const [plannerMode, setPlannerMode] = useState('meal');
   const [selectedMeal, setSelectedMeal] = useState('lunch');
-  const [planDate, setPlanDate] = useState(today());
+  const planDate = today();
   const [foodOptions, setFoodOptions] = useState([]);
   const [foodSearchTerm, setFoodSearchTerm] = useState('');
   const [foodSearchResults, setFoodSearchResults] = useState([]);
   const [foodSearchLoading, setFoodSearchLoading] = useState(false);
+  const [foodPage, setFoodPage] = useState(0);
+  const [foodTotalPages, setFoodTotalPages] = useState(1);
   const [selectedFoodNames, setSelectedFoodNames] = useState([]);
   const [recipes, setRecipes] = useState([]);
   const [recipeSearchTerm, setRecipeSearchTerm] = useState('');
@@ -52,6 +107,7 @@ function Planner() {
   const [selectedRecipeId, setSelectedRecipeId] = useState(null);
   const [activityOptions, setActivityOptions] = useState([]);
   const [activitySearchTerm, setActivitySearchTerm] = useState('');
+  const [activityPage, setActivityPage] = useState(0);
   const [selectedActivityNames, setSelectedActivityNames] = useState([]);
   const [suggestion, setSuggestion] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -63,6 +119,7 @@ function Planner() {
   const [deletingActivityId, setDeletingActivityId] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [plannerNotice, setPlannerNotice] = useState(null);
   const [suggestedNames, setSuggestedNames] = useState(() => {
     try { return JSON.parse(sessionStorage.getItem('plannerSuggestedNames')) || {}; } catch { return {}; }
   });
@@ -75,10 +132,21 @@ function Planner() {
   const remaining = Math.max(0, calorieGoal - totals.calories);
   const hasInvalidDailyTotal = totals.calories > calorieGoal * 2;
   const progress = Math.round((totals.calories / Math.max(calorieGoal, 1)) * 100);
+  const dailyActivityGoal = Number(profile?.dailyActivityGoalKcal) || (() => {
+    try {
+      return Number(JSON.parse(localStorage.getItem('activeGoalPlan'))?.dailyActivityGoalKcal) || 0;
+    } catch {
+      return 0;
+    }
+  })();
+  const activityCaloriesToday = activities.reduce((sum, activity) => (
+    sum + Number(activity.caloriesBurned || activity.calories || 0)
+  ), 0);
   const selectedFoodCount = selectedFoodNames.length;
   const selectedActivityCount = selectedActivityNames.length;
   const isRecipeMode = plannerMode === 'recipes';
   const isExerciseMode = plannerMode === 'activity';
+  const activeGoal = goalToApi[profile?.healthGoal] || 'MAINTAIN_WEIGHT';
   const selectedFoodIds = useMemo(() => foodOptions
     .filter((food) => selectedFoodNames.includes(food.name))
     .map((food) => food.id), [foodOptions, selectedFoodNames]);
@@ -86,32 +154,46 @@ function Planner() {
   const selectedFoodOptions = useMemo(() => foodOptions
     .filter((food) => selectedFoodNames.includes(food.name)), [foodOptions, selectedFoodNames]);
   const normalizedFoodSearchTerm = foodSearchTerm.trim();
-  const canSearchFoods = normalizedFoodSearchTerm.length >= 2;
+  const foodResultCount = foodSearchResults.length;
   const normalizedRecipeSearchTerm = recipeSearchTerm.trim();
   const canSearchRecipes = normalizedRecipeSearchTerm.length >= 2 || selectedFoodIds.length > 0;
   const normalizedActivitySearchTerm = activitySearchTerm.trim();
-  const canSearchActivities = normalizedActivitySearchTerm.length >= 2;
   const selectedActivityOptions = useMemo(() => activityOptions.filter((activity) => {
     const name = activity.nameVi || activity.name;
     return selectedActivityNames.includes(name);
   }), [activityOptions, selectedActivityNames]);
-  const activitySearchResults = useMemo(() => {
-    if (!canSearchActivities) {
-      return [];
+  const filteredActivityOptions = useMemo(() => {
+    if (!normalizedActivitySearchTerm) {
+      return activityOptions;
     }
-
     const keyword = normalizedActivitySearchTerm.toLowerCase();
+
     return activityOptions.filter((activity) => {
       const values = [activity.name, activity.nameVi, activity.category]
         .filter(Boolean)
         .map((value) => String(value).toLowerCase());
       return values.some((value) => value.includes(keyword));
     });
-  }, [activityOptions, canSearchActivities, normalizedActivitySearchTerm]);
+  }, [activityOptions, normalizedActivitySearchTerm]);
+  const activityTotalPages = Math.max(1, Math.ceil(filteredActivityOptions.length / activityPageSize));
+  const activitySearchResults = useMemo(() => {
+    const start = activityPage * activityPageSize;
+    return filteredActivityOptions.slice(start, start + activityPageSize);
+  }, [activityPage, filteredActivityOptions]);
 
   const loggedMealsForSlot = useMemo(() => {
     return meals.filter((meal) => meal.type === selectedMeal);
   }, [meals, selectedMeal]);
+
+  const loggedSlotCalories = useMemo(() => {
+    return loggedMealsForSlot.reduce((sum, meal) => sum + (Number(getMealTotals(meal).calories) || 0), 0);
+  }, [loggedMealsForSlot]);
+
+  const effectiveCaloriesConsumed = hasInvalidDailyTotal
+    ? 0
+    : Math.max(0, Math.round(totals.calories - loggedSlotCalories));
+  const availableCaloriesForSelectedMeal = Math.max(0, calorieGoal - effectiveCaloriesConsumed);
+  const selectedMealBudget = getMealBudget(calorieGoal, effectiveCaloriesConsumed, selectedMeal);
 
   const hasLoggedMealInSlot = loggedMealsForSlot.length > 0;
 
@@ -133,6 +215,8 @@ function Planner() {
       (meal.items || []).some((item) => item.name === optionName)
     );
   };
+
+  const findLoggedActivityByName = (activityName) => activities.find((activity) => activity.activityName === activityName);
 
   const getLoggedMealTitle = (meal, fallbackLabel) => {
     const noteText = String(meal.notes || '');
@@ -211,8 +295,9 @@ function Planner() {
     setError('');
     try {
       const params = {
-        maxCalories: Math.max(remaining || calorieGoal, 300),
+        maxCalories: Math.max(Math.round(selectedMealBudget * 1.12), 300),
         limit: 12,
+        goal: activeGoal,
       };
       if (selectedFoodIds.length > 0) {
         params.foodIds = selectedFoodKey;
@@ -227,7 +312,7 @@ function Planner() {
     } finally {
       setRecipesLoading(false);
     }
-  }, [calorieGoal, canSearchRecipes, normalizeRecipeOption, normalizedRecipeSearchTerm, remaining, selectedFoodIds.length, selectedFoodKey, t]);
+  }, [activeGoal, canSearchRecipes, normalizeRecipeOption, normalizedRecipeSearchTerm, selectedFoodIds.length, selectedFoodKey, selectedMealBudget, t]);
 
   const toggleFoodName = (name) => {
     setSelectedFoodNames((current) => {
@@ -236,6 +321,10 @@ function Planner() {
         return current.filter((item) => item !== name);
       }
       if (current.length >= maxSelectedFoods) {
+        setPlannerNotice({
+          title: t('plannerPage.warnings.foodLimitTitle'),
+          message: t('plannerPage.warnings.foodLimitMessage', { max: maxSelectedFoods }),
+        });
         return current;
       }
       return [...current, name];
@@ -251,6 +340,10 @@ function Planner() {
         return current.filter((item) => item !== name);
       }
       if (current.length >= maxSelectedActivities) {
+        setPlannerNotice({
+          title: t('plannerPage.warnings.activityLimitTitle'),
+          message: t('plannerPage.warnings.activityLimitMessage', { max: maxSelectedActivities }),
+        });
         return current;
       }
       return [...current, name];
@@ -320,28 +413,32 @@ function Planner() {
   }, [planDate, t]);
 
   useEffect(() => {
-    if (!canSearchFoods) {
-      setFoodSearchResults([]);
-      setFoodSearchLoading(false);
-      return undefined;
-    }
+    setFoodPage(0);
+  }, [normalizedFoodSearchTerm]);
 
+  useEffect(() => {
+    setActivityPage(0);
+  }, [normalizedActivitySearchTerm]);
+
+  useEffect(() => {
     let cancelled = false;
     setFoodSearchLoading(true);
     const timer = setTimeout(() => {
-      getFoods({ q: normalizedFoodSearchTerm, page: 0, size: 10 })
+      getFoods({
+        ...(normalizedFoodSearchTerm ? { q: normalizedFoodSearchTerm } : {}),
+        page: foodPage,
+        size: foodPageSize,
+      })
         .then((response) => {
           if (cancelled) {
             return;
           }
 
-          const foods = Array.isArray(response.data?.content)
-            ? response.data.content
-            : Array.isArray(response.data)
-              ? response.data
-              : [];
-          const mappedFoods = foods.map(mapFoodOption).filter((food) => food.id && food.name);
+          const mappedFoods = extractFoodsFromApi(response.data)
+            .map(mapFoodOption)
+            .filter((food) => food.id && food.name);
           setFoodSearchResults(mappedFoods);
+          setFoodTotalPages(getTotalPagesFromApi(response.data));
           setFoodOptions((current) => {
             const foodMap = new Map(current.map((food) => [food.id, food]));
             mappedFoods.forEach((food) => foodMap.set(food.id, food));
@@ -351,6 +448,7 @@ function Planner() {
         .catch(() => {
           if (!cancelled) {
             setFoodSearchResults([]);
+            setFoodTotalPages(1);
           }
         })
         .finally(() => {
@@ -364,7 +462,7 @@ function Planner() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [canSearchFoods, normalizedFoodSearchTerm]);
+  }, [foodPage, normalizedFoodSearchTerm]);
 
   useEffect(() => {
     if (loading || !isRecipeMode) {
@@ -381,7 +479,7 @@ function Planner() {
     }, 350);
 
     return () => clearTimeout(timer);
-  }, [canSearchRecipes, isRecipeMode, loadRecipes, loading, normalizedRecipeSearchTerm, remaining, selectedFoodKey]);
+  }, [canSearchRecipes, isRecipeMode, loadRecipes, loading, normalizedRecipeSearchTerm, selectedFoodKey]);
 
   const generate = async () => {
     setGenerating(true);
@@ -400,9 +498,9 @@ function Planner() {
             .filter(Boolean);
       const response = await getAiPlanSuggestions({
         dailyCalorieGoal: calorieGoal,
-        caloriesConsumed: hasInvalidDailyTotal ? 0 : Math.round(totals.calories),
+        caloriesConsumed: effectiveCaloriesConsumed,
         mealType: effectiveMealType,
-        goal: profile?.healthGoal?.toUpperCase() || 'MAINTAIN_WEIGHT',
+        goal: activeGoal,
         weightKg: Number(profile?.weight) || 70,
         targetWeightKg: Number(profile?.targetWeight) || Number(profile?.weight) || 70,
         activityLevel: profile?.activityLevel?.toUpperCase() || 'SEDENTARY',
@@ -445,7 +543,11 @@ function Planner() {
     setError('');
     try {
       const optionCalories = Number(option.calories) || 0;
-      if (optionCalories <= 0 || optionCalories > remaining || optionCalories > Number(suggestion?.mealBudget || remaining)) {
+      const fallbackMealBudgetLimit = isRecipeMode
+        ? Math.round(selectedMealBudget * 1.12)
+        : availableCaloriesForSelectedMeal;
+      const mealBudgetLimit = Math.max(Number(suggestion?.mealBudget) || 0, fallbackMealBudgetLimit);
+      if (optionCalories <= 0 || optionCalories > availableCaloriesForSelectedMeal || optionCalories > mealBudgetLimit) {
         throw new Error(t('plannerPage.errors.overBudget'));
       }
 
@@ -544,18 +646,40 @@ function Planner() {
   };
 
   const handleLogActivity = async (activity, idx) => {
+    const matchedActivityType = findActivityTypeByName(activity.name);
+    const predictedCalories = calculateActivityPreviewCalories(activity, matchedActivityType, profile?.weight);
+    const projectedActivityCalories = activityCaloriesToday + predictedCalories;
+
+    if (dailyActivityGoal > 0 && projectedActivityCalories > dailyActivityGoal) {
+      setPlannerNotice({
+        title: t('plannerPage.warnings.activityOverGoalTitle'),
+        message: t('plannerPage.warnings.activityOverGoalMessage', {
+          current: Math.round(activityCaloriesToday),
+          added: Math.round(predictedCalories),
+          total: Math.round(projectedActivityCalories),
+          goal: Math.round(dailyActivityGoal),
+        }),
+        confirmLabel: t('plannerPage.warnings.continueAnyway'),
+        onConfirm: () => logActivity(activity, idx, matchedActivityType),
+      });
+      return;
+    }
+
+    await logActivity(activity, idx, matchedActivityType);
+  };
+
+  const logActivity = async (activity, idx, matchedActivityType = findActivityTypeByName(activity.name)) => {
     setSaving(true);
     setLoggingActivity(idx);
     setError('');
     setSuccess('');
     const todayDate = planDate;
-    const matchedActivityType = findActivityTypeByName(activity.name);
 
     const payload = {
       activityTypeId: matchedActivityType?.id || null,
       activityName: activity.name,
-      durationMinutes: Number(activity.durationMinutes) || 30,
-      caloriesBurned: Number(activity.caloriesBurned || activity.calories) || 150,
+      durationMinutes: getActivityDurationMinutes(activity),
+      userWeightKg: Number(profile?.weight) || 70,
       loggedAt: `${todayDate}T12:00:00`,
       notes: t('plannerPage.savedNotes.activity'),
       category: matchedActivityType?.category?.toUpperCase() || 'CARDIO',
@@ -662,21 +786,6 @@ function Planner() {
               <FaFireAlt />
             </div>
             <ProgressBar now={Math.min(progress, 100)} variant={progress > 100 ? 'danger' : 'success'} className="mb-3" />
-            <Form.Group className="mb-3">
-              <div className="planner-date-control">
-                <FaCalendarAlt />
-                <Form.Control
-                  type="date"
-                  min={today()}
-                  value={planDate}
-                  onChange={(event) => {
-                    setPlanDate(event.target.value || today());
-                    setSuggestion(null);
-                    setSelectedOption(null);
-                  }}
-                />
-              </div>
-            </Form.Group>    
             <Form.Group>
               <Form.Select
                 value={isExerciseMode ? 'exercise' : selectedMeal}
@@ -740,26 +849,22 @@ function Planner() {
                 </div>
               )}
               <div className="planner-food-picker">
-                {!canSearchFoods && (
-                  <div className="planner-food-empty">{t('plannerPage.searchFoodsHint')}</div>
-                )}
-                {canSearchFoods && foodSearchLoading && (
+                {foodSearchLoading && (
                   <div className="planner-food-empty">
                     <Spinner animation="border" size="sm" className="me-2" />
                     {t('plannerPage.searchingFoods')}
                   </div>
                 )}
-                {canSearchFoods && !foodSearchLoading && foodSearchResults.length === 0 && (
+                {!foodSearchLoading && foodSearchResults.length === 0 && (
                   <div className="planner-food-empty">{t('plannerPage.noFoodResults')}</div>
                 )}
-                {canSearchFoods && !foodSearchLoading && foodSearchResults.map((food) => {
+                {!foodSearchLoading && foodSearchResults.map((food) => {
                   const selected = selectedFoodNames.includes(food.name);
                   return (
                     <button
                       type="button"
                       className={`planner-food-choice${selected ? ' is-selected' : ''}`}
                       key={food.id}
-                      disabled={!selected && selectedFoodCount >= maxSelectedFoods}
                       onClick={() => toggleFoodName(food.name)}
                     >
                       <FaUtensils />
@@ -768,6 +873,31 @@ function Planner() {
                     </button>
                   );
                 })}
+              </div>
+              <div className="planner-food-pagination">
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  disabled={foodSearchLoading || foodPage <= 0}
+                  onClick={() => setFoodPage((current) => Math.max(0, current - 1))}
+                >
+                  {t('plannerPage.previousPage')}
+                </Button>
+                <span>
+                  {t('plannerPage.foodPageInfo', {
+                    page: foodPage + 1,
+                    total: foodTotalPages,
+                    count: foodResultCount,
+                  })}
+                </span>
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  disabled={foodSearchLoading || foodPage + 1 >= foodTotalPages}
+                  onClick={() => setFoodPage((current) => Math.min(foodTotalPages - 1, current + 1))}
+                >
+                  {t('plannerPage.nextPage')}
+                </Button>
               </div>
               <Form.Text muted>{t('plannerPage.selectedFoodsHint', { count: selectedFoodCount, max: maxSelectedFoods })}</Form.Text>
               {isRecipeMode && (
@@ -845,13 +975,10 @@ function Planner() {
                 </div>
               )}
               <div className="planner-food-picker">
-                {!canSearchActivities && (
-                  <div className="planner-food-empty">{t('plannerPage.searchActivitiesHint')}</div>
-                )}
-                {canSearchActivities && activitySearchResults.length === 0 && (
+                {activitySearchResults.length === 0 && (
                   <div className="planner-food-empty">{t('plannerPage.noActivityResults')}</div>
                 )}
-                {canSearchActivities && activitySearchResults.map((activity) => {
+                {activitySearchResults.map((activity) => {
                   const name = activity.nameVi || activity.name;
                   const selected = selectedActivityNames.includes(name);
                   return (
@@ -859,7 +986,6 @@ function Planner() {
                       type="button"
                       className={`planner-food-choice${selected ? ' is-selected' : ''}`}
                       key={activity.id}
-                      disabled={!selected && selectedActivityCount >= maxSelectedActivities}
                       onClick={() => toggleActivityName(name)}
                     >
                       <FaDumbbell />
@@ -869,17 +995,42 @@ function Planner() {
                   );
                 })}
               </div>
+              <div className="planner-food-pagination">
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  disabled={activityPage <= 0}
+                  onClick={() => setActivityPage((current) => Math.max(0, current - 1))}
+                >
+                  {t('plannerPage.previousPage')}
+                </Button>
+                <span>
+                  {t('plannerPage.activityPageInfo', {
+                    page: activityPage + 1,
+                    total: activityTotalPages,
+                    count: filteredActivityOptions.length,
+                  })}
+                </span>
+                <Button
+                  variant="outline-secondary"
+                  size="sm"
+                  disabled={activityPage + 1 >= activityTotalPages}
+                  onClick={() => setActivityPage((current) => Math.min(activityTotalPages - 1, current + 1))}
+                >
+                  {t('plannerPage.nextPage')}
+                </Button>
+              </div>
               <Form.Text muted>{t('plannerPage.selectedActivitiesHint', { count: selectedActivityCount, max: maxSelectedActivities })}</Form.Text>
             </section>
           )}
           {!isRecipeMode && (
             <>
-              <Button className="w-100" variant={isExerciseMode ? 'primary' : 'success'} onClick={generate} disabled={generating || (!isExerciseMode && remaining < 100 && !hasInvalidDailyTotal)}><FaRobot className="me-2" />{generating ? t('plannerPage.generating') : t('plannerPage.createOptions')}</Button>
+              <Button className="w-100" variant={isExerciseMode ? 'primary' : 'success'} onClick={generate} disabled={generating || (!isExerciseMode && availableCaloriesForSelectedMeal < 100 && !hasInvalidDailyTotal)}><FaRobot className="me-2" />{generating ? t('plannerPage.generating') : t('plannerPage.createOptions')}</Button>
               {suggestion && <Button className="w-100 mt-2" variant={isExerciseMode ? 'outline-primary' : 'outline-success'} onClick={generate} disabled={generating}><FaRobot className="me-2" />{t('plannerPage.createOtherOptions')}</Button>}
             </>
           )}
           {hasInvalidDailyTotal && <Alert variant="danger" className="mt-3 mb-0 py-2">{t('plannerPage.invalidTotal')}</Alert>}
-          {!hasInvalidDailyTotal && !isExerciseMode && !isRecipeMode && remaining < 100 && <Alert variant="warning" className="mt-3 mb-0 py-2">{t('plannerPage.insufficientCalories')}</Alert>}
+          {!hasInvalidDailyTotal && !isExerciseMode && !isRecipeMode && availableCaloriesForSelectedMeal < 100 && <Alert variant="warning" className="mt-3 mb-0 py-2">{t('plannerPage.insufficientCalories')}</Alert>}
         </Card.Body></Card>
       </Col>
       <Col lg={8}>
@@ -1112,6 +1263,13 @@ function Planner() {
                 const isExercise = isExerciseMode;
                 const cookingMethod = getOptionCookingMethod(option);
                 const matchedActivityType = isExercise ? findActivityTypeByName(option.name) : null;
+                const loggedActivity = isExercise ? findLoggedActivityByName(option.name) : null;
+                const activityPreviewCalories = loggedActivity
+                  ? Math.round(Number(loggedActivity.caloriesBurned) || 0)
+                  : isExercise
+                    ? calculateActivityPreviewCalories(option, matchedActivityType, profile?.weight)
+                    : 0;
+                const activityDurationMinutes = loggedActivity?.durationMinutes || getActivityDurationMinutes(option);
                 const ingredientCount = Array.isArray(option.ingredients) ? option.ingredients.length : 0;
                 const isBlockedByOtherSelection = isExercise 
                   ? (hasLoggedActivityInSlot && !logged) 
@@ -1128,7 +1286,7 @@ function Planner() {
                           )}
                           <span className={`small fw-semibold text-${isExercise ? 'primary' : 'success'}`}>
                             {isExercise
-                              ? t('plannerPage.caloriesBurned', { calories: option.caloriesBurned || option.calories })
+                              ? t('plannerPage.caloriesBurned', { calories: activityPreviewCalories })
                               : `${option.calories} kcal`}
                           </span>
                         </div>
@@ -1148,9 +1306,9 @@ function Planner() {
                         )}
                         {isExercise && (
                           <div className="d-flex flex-wrap gap-2 mb-3">
-                            {option.durationMinutes && (
+                            {activityDurationMinutes && (
                               <span className="text-secondary small">
-                                {t('plannerPage.minutes', { minutes: option.durationMinutes })}
+                                {t('plannerPage.minutes', { minutes: activityDurationMinutes })}
                               </span>
                             )}
                             {matchedActivityType?.category && (
@@ -1269,18 +1427,23 @@ function Planner() {
                 {suggestion.activities && suggestion.activities.length > 0 && (
                   <Row className="g-3">
                     {suggestion.activities.map((activity, idx) => {
-                      const actLogged = activities.some((act) => act.activityName === activity.name);
+                      const loggedActivity = findLoggedActivityByName(activity.name);
+                      const actLogged = Boolean(loggedActivity);
                       const matchedActivityType = findActivityTypeByName(activity.name);
+                      const activityPreviewCalories = loggedActivity
+                        ? Math.round(Number(loggedActivity.caloriesBurned) || 0)
+                        : calculateActivityPreviewCalories(activity, matchedActivityType, profile?.weight);
+                      const activityDurationMinutes = loggedActivity?.durationMinutes || getActivityDurationMinutes(activity);
                       return (
                         <Col md={6} key={`${activity.name}-${idx}`}>
                           <Card className="border-0 shadow-sm h-100">
                             <Card.Body className="d-flex flex-column">
                               <div className="d-flex justify-content-between gap-2">
                                 <FaDumbbell className="text-primary fs-5" />
-                                <span className="small fw-semibold text-primary">{t('plannerPage.caloriesBurned', { calories: activity.caloriesBurned })}</span>
+                                <span className="small fw-semibold text-primary">{t('plannerPage.caloriesBurned', { calories: activityPreviewCalories })}</span>
                               </div>
                               <h3 className="h5 fw-bold mt-3">{activity.name}</h3>
-                              <p className="text-secondary">{t('plannerPage.durationLabel')}: <strong>{t('plannerPage.minutes', { minutes: activity.durationMinutes })}</strong></p>
+                              <p className="text-secondary">{t('plannerPage.durationLabel')}: <strong>{t('plannerPage.minutes', { minutes: activityDurationMinutes })}</strong></p>
                               {matchedActivityType?.category && (
                                 <div className="mb-3">
                                   <span className="text-secondary small">
@@ -1321,6 +1484,31 @@ function Planner() {
         )}
       </Col>
     </Row>
+    <Modal show={Boolean(plannerNotice)} onHide={() => setPlannerNotice(null)} centered>
+      <Modal.Header closeButton>
+        <Modal.Title>{plannerNotice?.title}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <p className="text-secondary mb-0">{plannerNotice?.message}</p>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="outline-secondary" onClick={() => setPlannerNotice(null)}>
+          {plannerNotice?.onConfirm ? t('common.cancel', 'Hủy') : t('common.close', 'Đóng')}
+        </Button>
+        {plannerNotice?.onConfirm && (
+          <Button
+            variant="warning"
+            onClick={() => {
+              const confirmAction = plannerNotice.onConfirm;
+              setPlannerNotice(null);
+              confirmAction();
+            }}
+          >
+            {plannerNotice.confirmLabel}
+          </Button>
+        )}
+      </Modal.Footer>
+    </Modal>
   </>;
 }
 

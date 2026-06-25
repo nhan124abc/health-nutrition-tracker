@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Modal } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUser } from '../../api/api';
 import { getActivitiesByDate } from '../activities/activityService';
@@ -17,17 +18,16 @@ const settingsStorageKey = 'userSettings';
 const lastSeenStorageKey = 'reminders:lastSeenAt';
 const sentStorageKey = 'reminders:sent';
 const popupStorageKey = 'reminders:popup';
-const activeHeartbeatMs = 2 * 60 * 1000;
 
 const mealReminderSlots = [
-  { id: 'breakfast', label: 'bua sang', path: '/meals', time: '08:00', type: 'breakfast' },
-  { id: 'lunch', label: 'bua trua', path: '/meals', time: '12:00', type: 'lunch' },
-  { id: 'dinner', label: 'bua toi', path: '/meals', time: '18:00', type: 'dinner' },
+  { id: 'breakfast', labelKey: 'reminderNotifier.slots.breakfast', path: '/meals', time: '08:00', type: 'breakfast', kind: 'meal' },
+  { id: 'lunch', labelKey: 'reminderNotifier.slots.lunch', path: '/meals', time: '12:00', type: 'lunch', kind: 'meal' },
+  { id: 'dinner', labelKey: 'reminderNotifier.slots.dinner', path: '/meals', time: '18:00', type: 'dinner', kind: 'meal' },
 ];
 
 const activityReminderSlots = [
-  { id: 'activity-morning', label: 'van dong buoi sang', path: '/activity', time: '09:00' },
-  { id: 'activity-afternoon', label: 'van dong buoi chieu', path: '/activity', time: '15:00' },
+  { id: 'activity-morning', labelKey: 'reminderNotifier.slots.activityMorning', path: '/activity', time: '09:00', kind: 'activity' },
+  { id: 'activity-afternoon', labelKey: 'reminderNotifier.slots.activityAfternoon', path: '/activity', time: '15:00', kind: 'activity' },
 ];
 
 function readJson(key, fallback) {
@@ -50,9 +50,8 @@ function getSlotDate(date, time) {
   return slotDate;
 }
 
-function wasWebClosedAt(slotDate) {
-  const lastSeenAt = Number(localStorage.getItem(lastSeenStorageKey) || 0);
-  return !lastSeenAt || (lastSeenAt < slotDate.getTime() && Date.now() - lastSeenAt > activeHeartbeatMs);
+function isWebActiveNow() {
+  return typeof document !== 'undefined' && !document.hidden && document.hasFocus();
 }
 
 function markOnce(key, storageKey) {
@@ -79,24 +78,42 @@ function readSettings() {
   };
 }
 
-function isMealSlotComplete(meals, completedIds, slot) {
+function getMealSlotReminderState(meals, completedIds, slot) {
   const slotMeals = meals.filter((meal) => meal.type === slot.type);
-  return slotMeals.length > 0 && slotMeals.every((meal) => completedIds.includes(getMealCompletionId(meal)));
-}
+  if (slotMeals.length === 0) {
+    return { status: 'missing', identity: 'none' };
+  }
 
-function isActivitySlotComplete(activities, completedIds) {
-  return activities.length > 0 && activities.every((activity) => completedIds.includes(getActivityCompletionId(activity)));
-}
-
-function buildReminderMessage(slot) {
+  const completionIds = slotMeals.map(getMealCompletionId).filter(Boolean);
   return {
-    subject: `Nhac ${slot.label} luc ${slot.time}`,
-    message: `Ban chua tick hoan thanh ${slot.label} luc ${slot.time}. Hay mo Health Nutrition Tracker de cap nhat nhe.`,
+    status: slotMeals.every((meal) => completedIds.includes(getMealCompletionId(meal))) ? 'complete' : 'incomplete',
+    identity: completionIds.join('|') || slotMeals.map((meal) => meal.id).filter(Boolean).join('|') || 'logged',
+  };
+}
+
+function getActivitySlotReminderState(activities, completedIds) {
+  if (activities.length === 0) {
+    return { status: 'missing', identity: 'none' };
+  }
+
+  const completionIds = activities.map(getActivityCompletionId).filter(Boolean);
+  return {
+    status: activities.every((activity) => completedIds.includes(getActivityCompletionId(activity))) ? 'complete' : 'incomplete',
+    identity: completionIds.join('|') || activities.map((activity) => activity.id).filter(Boolean).join('|') || 'logged',
+  };
+}
+
+function buildReminderMessage(slot, status, t) {
+  const label = t(slot.labelKey);
+  return {
+    subject: t('reminderNotifier.email.subject', { label, time: slot.time }),
+    message: t(`reminderNotifier.email.${slot.kind}.${status}`, { label, time: slot.time }),
   };
 }
 
 function ReminderNotifier() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeReminder, setActiveReminder] = useState(null);
   const checkingRef = useRef(false);
 
@@ -136,29 +153,29 @@ function ReminderNotifier() {
 
       for (const slot of enabledSlots) {
         const slotDate = getSlotDate(today, slot.time);
-        const key = `${today}:${slot.id}`;
 
         if (now < slotDate) {
           continue;
         }
 
-        const complete = slot.type
-          ? isMealSlotComplete(meals, completedMealIds, slot)
-          : isActivitySlotComplete(activities, completedActivityIds);
+        const { status, identity } = slot.kind === 'meal'
+          ? getMealSlotReminderState(meals, completedMealIds, slot)
+          : getActivitySlotReminderState(activities, completedActivityIds);
+        const key = `${today}:${slot.id}:${status}:${identity}`;
 
-        if (complete) {
+        if (status === 'complete') {
           continue;
         }
 
-        if (wasWebClosedAt(slotDate)) {
+        if (!isWebActiveNow()) {
           if (markOnce(key, sentStorageKey)) {
-            await sendReminderEmail(buildReminderMessage(slot));
+            await sendReminderEmail(buildReminderMessage(slot, status, t));
           }
           continue;
         }
 
         if (markOnce(key, popupStorageKey)) {
-          setActiveReminder(slot);
+          setActiveReminder({ ...slot, status });
           break;
         }
       }
@@ -168,7 +185,7 @@ function ReminderNotifier() {
       checkingRef.current = false;
       updateLastSeen();
     }
-  }, [updateLastSeen]);
+  }, [t, updateLastSeen]);
 
   useEffect(() => {
     checkReminders();
@@ -197,8 +214,12 @@ function ReminderNotifier() {
       return '';
     }
 
-    return `Da den gio ${activeReminder.label} (${activeReminder.time}) nhung ban chua tick hoan thanh.`;
-  }, [activeReminder]);
+    const label = t(activeReminder.labelKey);
+    return t(`reminderNotifier.popup.${activeReminder.kind}.${activeReminder.status}`, {
+      label,
+      time: activeReminder.time,
+    });
+  }, [activeReminder, t]);
 
   if (!activeReminder) {
     return null;
@@ -207,14 +228,14 @@ function ReminderNotifier() {
   return (
     <Modal show centered onHide={() => setActiveReminder(null)}>
       <Modal.Header closeButton>
-        <Modal.Title>Nhac nho suc khoe</Modal.Title>
+        <Modal.Title>{t('reminderNotifier.title')}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <p className="text-secondary mb-0">{reminderText}</p>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="outline-secondary" onClick={() => setActiveReminder(null)}>
-          De sau
+          {t('reminderNotifier.later')}
         </Button>
         <Button
           variant="success"
@@ -224,7 +245,7 @@ function ReminderNotifier() {
             navigate(path);
           }}
         >
-          Mo ngay
+          {t('reminderNotifier.openNow')}
         </Button>
       </Modal.Footer>
     </Modal>

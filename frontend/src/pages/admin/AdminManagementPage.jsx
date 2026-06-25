@@ -17,8 +17,21 @@ import {
   updateAdminUser,
   updateAdminUserStatus,
 } from '../../features/admin/adminService';
-import { getAdminActivityTypes, getActivityTypes } from '../../features/activities/activityService';
-import { getFoods } from '../../features/nutrition/nutritionService';
+import {
+  createActivityType,
+  deleteActivityType,
+  getAdminActivityTypes,
+  getActivityTypes,
+  updateActivityType,
+  updateActivityTypeVisibility,
+} from '../../features/activities/activityService';
+import {
+  createFood,
+  deleteFood,
+  getAdminFoodCategories,
+  getFoods,
+  updateFood,
+} from '../../features/nutrition/nutritionService';
 import { cleanText } from '../../features/nutrition/nutritionUtils';
 import { getCurrentUser } from '../../api/api';
 
@@ -167,6 +180,7 @@ function mapFoodRow(food) {
     active,
     verified: Boolean(food.verified),
     macroComplete: hasCompleteMacro(food),
+    raw: food,
   };
 }
 
@@ -198,6 +212,7 @@ function mapActivityTypeRow(activityType) {
     variant: active ? 'success' : 'secondary',
     active,
     hasMet,
+    raw: activityType,
   };
 }
 
@@ -252,17 +267,56 @@ function isTranslationKey(value) {
   );
 }
 
+const emptyFoodForm = {
+  name: '',
+  nameVi: '',
+  brand: '',
+  barcode: '',
+  categoryId: '',
+  servingSizeG: '100',
+  servingDescription: '100g',
+  calories: '0',
+  proteinG: '0',
+  carbsG: '0',
+  fatG: '0',
+  fiberG: '0',
+  sugarG: '0',
+  sodiumMg: '0',
+  imageUrl: '',
+};
+
+const emptyActivityForm = {
+  name: '',
+  nameVi: '',
+  category: 'OTHER',
+  metValue: '3.0',
+  icon: '',
+  description: '',
+  hidden: false,
+};
+
+function toNumberOrNull(value) {
+  if (value === '' || value == null) {
+    return null;
+  }
+  return Number(value);
+}
+
 function AdminManagementPage({ type }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [userRows, setUserRows] = useState([]);
   const [userSummary, setUserSummary] = useState({});
   const [foodRows, setFoodRows] = useState([]);
   const [foodSummary, setFoodSummary] = useState({});
+  const [foodCategories, setFoodCategories] = useState([]);
   const [activityRows, setActivityRows] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [showUserForm, setShowUserForm] = useState(false);
   const [editForm, setEditForm] = useState({ fullName: '', email: '', role: 'USER', active: true });
+  const [catalogForm, setCatalogForm] = useState(emptyFoodForm);
+  const [editingCatalogRow, setEditingCatalogRow] = useState(null);
+  const [showCatalogForm, setShowCatalogForm] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
   const [actionError, setActionError] = useState('');
   const [pendingAction, setPendingAction] = useState('');
@@ -331,13 +385,18 @@ function AdminManagementPage({ type }) {
             locked: summary.lockedUsers ?? summary.locked ?? summary.inactiveUsers,
           });
         } else if (type === 'foods') {
-          const { foods, total } = await loadAllFoods();
+          const [{ foods, total }, categoriesResponse] = await Promise.all([
+            loadAllFoods(),
+            getAdminFoodCategories().catch(() => ({ data: [] })),
+          ]);
+          const categories = categoriesResponse.data?.data ?? categoriesResponse.data ?? [];
 
           if (!isActive) {
             return;
           }
           setFoodRows(foods.map(mapFoodRow));
           setFoodSummary({ total });
+          setFoodCategories(Array.isArray(categories) ? categories : []);
         } else {
           const response = await getAdminActivityTypes().catch(() => getActivityTypes());
           const activityTypes = response.data?.data ?? response.data ?? [];
@@ -424,6 +483,53 @@ function AdminManagementPage({ type }) {
     setShowUserForm(false);
     setEditingUser(null);
     setEditForm({ fullName: '', email: '', role: 'USER', active: true });
+  };
+
+  const openCreateCatalog = () => {
+    setActionError('');
+    setEditingCatalogRow(null);
+    setCatalogForm(type === 'foods' ? emptyFoodForm : emptyActivityForm);
+    setShowCatalogForm(true);
+  };
+
+  const openEditCatalog = (row) => {
+    const raw = row.raw || {};
+    setActionError('');
+    setEditingCatalogRow(row);
+    setCatalogForm(type === 'foods'
+      ? {
+        name: raw.name || '',
+        nameVi: raw.nameVi || '',
+        brand: '',
+        barcode: '',
+        categoryId: raw.category?.id ?? raw.categoryId ?? '',
+        servingSizeG: raw.servingSizeG ?? '100',
+        servingDescription: raw.servingDescription || `${raw.servingSizeG ?? 100}g`,
+        calories: raw.calories ?? '0',
+        proteinG: raw.proteinG ?? '0',
+        carbsG: raw.carbsG ?? '0',
+        fatG: raw.fatG ?? '0',
+        fiberG: raw.fiberG ?? '0',
+        sugarG: raw.sugarG ?? '0',
+        sodiumMg: raw.sodiumMg ?? '0',
+        imageUrl: '',
+      }
+      : {
+        name: raw.name || '',
+        nameVi: raw.nameVi || '',
+        category: raw.category || 'OTHER',
+        metValue: raw.metValue ?? '3.0',
+        icon: raw.icon || '',
+        description: raw.description || '',
+        hidden: Boolean(raw.hidden),
+      });
+    setShowCatalogForm(true);
+  };
+
+  const closeCatalogForm = () => {
+    setShowCatalogForm(false);
+    setEditingCatalogRow(null);
+    setCatalogForm(type === 'foods' ? emptyFoodForm : emptyActivityForm);
   };
 
   const showSuccess = (message) => {
@@ -541,6 +647,116 @@ function AdminManagementPage({ type }) {
     }
   };
 
+  const saveCatalog = async (event) => {
+    event?.preventDefault();
+    setActionError('');
+    setSavingEdit(true);
+
+    try {
+      if (type === 'foods') {
+        const payload = {
+          name: catalogForm.name.trim(),
+          nameVi: catalogForm.nameVi.trim() || null,
+          brand: catalogForm.brand.trim() || null,
+          barcode: catalogForm.barcode.trim() || null,
+          categoryId: toNumberOrNull(catalogForm.categoryId),
+          servingSizeG: toNumberOrNull(catalogForm.servingSizeG),
+          servingDescription: catalogForm.servingDescription.trim() || `${catalogForm.servingSizeG}g`,
+          calories: toNumberOrNull(catalogForm.calories),
+          proteinG: toNumberOrNull(catalogForm.proteinG),
+          carbsG: toNumberOrNull(catalogForm.carbsG),
+          fatG: toNumberOrNull(catalogForm.fatG),
+          fiberG: toNumberOrNull(catalogForm.fiberG) ?? 0,
+          sugarG: toNumberOrNull(catalogForm.sugarG) ?? 0,
+          sodiumMg: toNumberOrNull(catalogForm.sodiumMg) ?? 0,
+          imageUrl: catalogForm.imageUrl.trim() || null,
+        };
+        const response = editingCatalogRow
+          ? await updateFood(editingCatalogRow.id, payload)
+          : await createFood(payload);
+        const savedFood = response.data?.data ?? response.data;
+        const mappedRow = mapFoodRow(savedFood);
+
+        setFoodRows((currentRows) => editingCatalogRow
+          ? currentRows.map((row) => (row.id === editingCatalogRow.id ? mappedRow : row))
+          : [mappedRow, ...currentRows]);
+        if (!editingCatalogRow) {
+          setFoodSummary((summary) => ({ ...summary, total: (summary.total ?? foodRows.length) + 1 }));
+        }
+        showSuccess(editingCatalogRow ? 'Đã cập nhật thực phẩm.' : 'Đã thêm thực phẩm.');
+      } else {
+        const payload = {
+          name: catalogForm.name.trim(),
+          nameVi: catalogForm.nameVi.trim() || null,
+          category: catalogForm.category,
+          metValue: toNumberOrNull(catalogForm.metValue),
+          icon: catalogForm.icon.trim() || null,
+          description: catalogForm.description.trim() || null,
+          hidden: Boolean(catalogForm.hidden),
+        };
+        const response = editingCatalogRow
+          ? await updateActivityType(editingCatalogRow.id, payload)
+          : await createActivityType(payload);
+        const savedActivity = response.data?.data ?? response.data;
+        const mappedRow = mapActivityTypeRow(savedActivity);
+
+        setActivityRows((currentRows) => editingCatalogRow
+          ? currentRows.map((row) => (row.id === editingCatalogRow.id ? mappedRow : row))
+          : [mappedRow, ...currentRows]);
+        showSuccess(editingCatalogRow ? 'Đã cập nhật hoạt động.' : 'Đã thêm hoạt động.');
+      }
+
+      closeCatalogForm();
+    } catch (error) {
+      setActionError(error.response?.data?.message || 'Không thể lưu dữ liệu.');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const removeCatalog = async (row) => {
+    const actionKey = getRowActionKey('delete', row);
+    setActionError('');
+    setPendingAction(actionKey);
+
+    try {
+      if (type === 'foods') {
+        await deleteFood(row.id);
+        setFoodRows((currentRows) => currentRows.filter((currentRow) => currentRow.id !== row.id));
+        setFoodSummary((summary) => ({ ...summary, total: Math.max(0, (summary.total ?? foodRows.length) - 1) }));
+        showSuccess('Đã xóa thực phẩm.');
+      } else {
+        await deleteActivityType(row.id);
+        setActivityRows((currentRows) => currentRows.filter((currentRow) => currentRow.id !== row.id));
+        showSuccess('Đã xóa hoạt động.');
+      }
+    } catch (error) {
+      setActionError(error.response?.data?.message || 'Không thể xóa dữ liệu.');
+    } finally {
+      setPendingAction('');
+    }
+  };
+
+  const toggleActivityStatus = async (row) => {
+    const actionKey = getRowActionKey('status', row);
+    setActionError('');
+    setPendingAction(actionKey);
+
+    try {
+      const response = await updateActivityTypeVisibility(row.id, row.active);
+      const savedActivity = response.data?.data ?? response.data;
+      const mappedRow = mapActivityTypeRow(savedActivity);
+      setActivityRows((currentRows) => currentRows.map((currentRow) => (
+        currentRow.id === row.id ? mappedRow : currentRow
+      )));
+      showSuccess(row.active ? 'Đã ẩn hoạt động.' : 'Đã hiện hoạt động.');
+    } catch (error) {
+      setActionError(error.response?.data?.message || 'Không thể cập nhật trạng thái.');
+    } finally {
+      setPendingAction('');
+    }
+  };
+
   const runConfirmedAction = async () => {
     const action = confirmAction;
     setConfirmAction(null);
@@ -554,8 +770,12 @@ function AdminManagementPage({ type }) {
     try {
       if (action.type === 'status') {
         await toggleUserStatus(action.row);
-      } else if (action.type === 'delete') {
+      } else if (action.type === 'delete' && type === 'users') {
         await removeUser(action.row);
+      } else if (action.type === 'delete') {
+        await removeCatalog(action.row);
+      } else if (action.type === 'catalog-status') {
+        await toggleActivityStatus(action.row);
       }
     } finally {
       setConfirmingAction(false);
@@ -612,6 +832,11 @@ function AdminManagementPage({ type }) {
             <div>
               <h3 className="h5 fw-bold mb-1">{t('admin.table.listTitle')}</h3>
             </div>
+            {type !== 'users' && (
+              <Button variant="success" onClick={openCreateCatalog}>
+                {type === 'foods' ? 'Thêm thực phẩm' : 'Thêm hoạt động'}
+              </Button>
+            )}
             <Form className="admin-table-search">
               <InputGroup>
                 <InputGroup.Text>
@@ -652,7 +877,9 @@ function AdminManagementPage({ type }) {
                   const deleteActionKey = getRowActionKey('delete', row);
                   const visibilityActionLabel = isUserRow
                     ? t(row.active ? 'admin.actions.hideAccount' : 'admin.actions.showAccount')
-                    : t('admin.actions.view');
+                    : type === 'exercises'
+                      ? (row.active ? 'Ẩn hoạt động' : 'Hiện hoạt động')
+                      : t('admin.actions.view');
 
                   return (
                     <tr key={rowKey}>
@@ -685,9 +912,14 @@ function AdminManagementPage({ type }) {
                             size="sm"
                             aria-label={visibilityActionLabel}
                             title={visibilityActionLabel}
-                            disabled={!isUserRow || pendingAction === statusActionKey}
+                            disabled={type === 'foods' || pendingAction === statusActionKey}
                             onClick={() => {
+                              if (type === 'foods') {
+                                return;
+                              }
+
                               if (!isUserRow) {
+                                setConfirmAction({ type: 'catalog-status', row });
                                 return;
                               }
 
@@ -701,15 +933,14 @@ function AdminManagementPage({ type }) {
                           >
                             {pendingAction === statusActionKey
                               ? <Spinner animation="border" size="sm" />
-                              : isUserRow && row.active ? <FaEyeSlash /> : <FaEye />}
+                              : row.active ? <FaEyeSlash /> : <FaEye />}
                           </Button>
                           <Button
                             variant="outline-success"
                             size="sm"
                             aria-label={t('admin.actions.edit')}
                             title={t('admin.actions.edit')}
-                            disabled={!isUserRow}
-                            onClick={() => isUserRow && openEditUser(row)}
+                            onClick={() => (isUserRow ? openEditUser(row) : openEditCatalog(row))}
                           >
                             <FaEdit />
                           </Button>
@@ -718,8 +949,8 @@ function AdminManagementPage({ type }) {
                             size="sm"
                             aria-label={t('admin.actions.delete')}
                             title={t('admin.actions.delete')}
-                            disabled={!isUserRow || pendingAction === deleteActionKey}
-                            onClick={() => isUserRow && setConfirmAction({ type: 'delete', row })}
+                            disabled={pendingAction === deleteActionKey}
+                            onClick={() => setConfirmAction({ type: 'delete', row })}
                           >
                             {pendingAction === deleteActionKey
                               ? <Spinner animation="border" size="sm" />
@@ -811,6 +1042,126 @@ function AdminManagementPage({ type }) {
             </Button>
             <Button type="submit" variant="success" disabled={savingEdit}>
               {savingEdit ? <Spinner animation="border" size="sm" /> : t('admin.actions.edit')}
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+
+      <Modal show={showCatalogForm} onHide={closeCatalogForm} centered size="lg">
+        <Form onSubmit={saveCatalog}>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              {editingCatalogRow
+                ? (type === 'foods' ? 'Sửa thực phẩm' : 'Sửa hoạt động')
+                : (type === 'foods' ? 'Thêm thực phẩm' : 'Thêm hoạt động')}
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {type === 'foods' ? (
+              <Row className="g-3">
+                <Col md={6}>
+                  <Form.Label>Tên thực phẩm</Form.Label>
+                  <Form.Control required value={catalogForm.name} onChange={(event) => setCatalogForm((form) => ({ ...form, name: event.target.value }))} />
+                </Col>
+                <Col md={6}>
+                  <Form.Label>Tên tiếng Việt</Form.Label>
+                  <Form.Control value={catalogForm.nameVi} onChange={(event) => setCatalogForm((form) => ({ ...form, nameVi: event.target.value }))} />
+                </Col>
+                <Col md={6}>
+                  <Form.Label>Danh mục</Form.Label>
+                  <Form.Select value={catalogForm.categoryId} onChange={(event) => setCatalogForm((form) => ({ ...form, categoryId: event.target.value }))}>
+                    <option value="">Chưa chọn</option>
+                    {foodCategories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {cleanText(category.nameVi) || cleanText(category.name)}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Col>
+                <Col md={4}>
+                  <Form.Label>Khẩu phần (g)</Form.Label>
+                  <Form.Control required type="number" min="0.1" step="0.1" value={catalogForm.servingSizeG} onChange={(event) => setCatalogForm((form) => ({ ...form, servingSizeG: event.target.value }))} />
+                </Col>
+                <Col md={6}>
+                  <Form.Label>Mô tả khẩu phần</Form.Label>
+                  <Form.Control value={catalogForm.servingDescription} onChange={(event) => setCatalogForm((form) => ({ ...form, servingDescription: event.target.value }))} />
+                </Col>
+                <Col md={4}>
+                  <Form.Label>Calories</Form.Label>
+                  <Form.Control required type="number" min="0" step="0.1" value={catalogForm.calories} onChange={(event) => setCatalogForm((form) => ({ ...form, calories: event.target.value }))} />
+                </Col>
+                <Col md={4}>
+                  <Form.Label>Protein (g)</Form.Label>
+                  <Form.Control required type="number" min="0" step="0.1" value={catalogForm.proteinG} onChange={(event) => setCatalogForm((form) => ({ ...form, proteinG: event.target.value }))} />
+                </Col>
+                <Col md={4}>
+                  <Form.Label>Carbs (g)</Form.Label>
+                  <Form.Control required type="number" min="0" step="0.1" value={catalogForm.carbsG} onChange={(event) => setCatalogForm((form) => ({ ...form, carbsG: event.target.value }))} />
+                </Col>
+                <Col md={4}>
+                  <Form.Label>Fat (g)</Form.Label>
+                  <Form.Control required type="number" min="0" step="0.1" value={catalogForm.fatG} onChange={(event) => setCatalogForm((form) => ({ ...form, fatG: event.target.value }))} />
+                </Col>
+                <Col md={4}>
+                  <Form.Label>Fiber (g)</Form.Label>
+                  <Form.Control type="number" min="0" step="0.1" value={catalogForm.fiberG} onChange={(event) => setCatalogForm((form) => ({ ...form, fiberG: event.target.value }))} />
+                </Col>
+                <Col md={4}>
+                  <Form.Label>Sugar (g)</Form.Label>
+                  <Form.Control type="number" min="0" step="0.1" value={catalogForm.sugarG} onChange={(event) => setCatalogForm((form) => ({ ...form, sugarG: event.target.value }))} />
+                </Col>
+                <Col md={4}>
+                  <Form.Label>Sodium (mg)</Form.Label>
+                  <Form.Control type="number" min="0" step="0.1" value={catalogForm.sodiumMg} onChange={(event) => setCatalogForm((form) => ({ ...form, sodiumMg: event.target.value }))} />
+                </Col>
+              </Row>
+            ) : (
+              <Row className="g-3">
+                <Col md={6}>
+                  <Form.Label>Tên hoạt động</Form.Label>
+                  <Form.Control required value={catalogForm.name} onChange={(event) => setCatalogForm((form) => ({ ...form, name: event.target.value }))} />
+                </Col>
+                <Col md={6}>
+                  <Form.Label>Tên tiếng Việt</Form.Label>
+                  <Form.Control value={catalogForm.nameVi} onChange={(event) => setCatalogForm((form) => ({ ...form, nameVi: event.target.value }))} />
+                </Col>
+                <Col md={4}>
+                  <Form.Label>Nhóm</Form.Label>
+                  <Form.Select value={catalogForm.category} onChange={(event) => setCatalogForm((form) => ({ ...form, category: event.target.value }))}>
+                    {['CARDIO', 'STRENGTH', 'FLEXIBILITY', 'SPORTS', 'DAILY', 'OTHER'].map((category) => (
+                      <option key={category} value={category}>{formatEnum(category)}</option>
+                    ))}
+                  </Form.Select>
+                </Col>
+                <Col md={4}>
+                  <Form.Label>MET</Form.Label>
+                  <Form.Control required type="number" min="0.1" max="50" step="0.1" value={catalogForm.metValue} onChange={(event) => setCatalogForm((form) => ({ ...form, metValue: event.target.value }))} />
+                </Col>
+                <Col md={4}>
+                  <Form.Label>Icon</Form.Label>
+                  <Form.Control value={catalogForm.icon} onChange={(event) => setCatalogForm((form) => ({ ...form, icon: event.target.value }))} />
+                </Col>
+                <Col md={12}>
+                  <Form.Label>Mô tả</Form.Label>
+                  <Form.Control as="textarea" rows={2} value={catalogForm.description} onChange={(event) => setCatalogForm((form) => ({ ...form, description: event.target.value }))} />
+                </Col>
+                <Col md={12}>
+                  <Form.Check
+                    type="switch"
+                    label="Ẩn hoạt động này"
+                    checked={catalogForm.hidden}
+                    onChange={(event) => setCatalogForm((form) => ({ ...form, hidden: event.target.checked }))}
+                  />
+                </Col>
+              </Row>
+            )}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button type="button" variant="outline-secondary" onClick={closeCatalogForm}>
+              {t('common.close')}
+            </Button>
+            <Button type="submit" variant="success" disabled={savingEdit}>
+              {savingEdit ? <Spinner animation="border" size="sm" /> : 'Lưu'}
             </Button>
           </Modal.Footer>
         </Form>

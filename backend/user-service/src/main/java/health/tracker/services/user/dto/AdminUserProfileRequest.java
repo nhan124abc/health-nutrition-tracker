@@ -23,6 +23,9 @@ public class AdminUserProfileRequest {
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
     private String username;
 
+    @Size(max = 500, message = "Avatar URL must not exceed 500 characters")
+    private String avatarUrl;
+
     @JsonFormat(pattern = "yyyy-MM-dd")
     @Past(message = "Date of birth must be in the past")
     private LocalDate dateOfBirth;

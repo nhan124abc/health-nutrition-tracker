@@ -253,10 +253,19 @@ export function saveStoredProfileAvatar(account, avatarUrl) {
 
 export function mergeProfileAvatar(profile, account) {
   const profileWithRegisteredName = withRegisteredName(profile, account);
+  const accountAvatarUrl = account?.avatarUrl || account?.profilePictureUrl || account?.pictureUrl || '';
 
   if (profile.avatarUrl) {
     saveStoredProfileAvatar(account, profile.avatarUrl);
     return profileWithRegisteredName;
+  }
+
+  if (accountAvatarUrl) {
+    saveStoredProfileAvatar(account, accountAvatarUrl);
+    return {
+      ...profileWithRegisteredName,
+      avatarUrl: accountAvatarUrl,
+    };
   }
 
   return {

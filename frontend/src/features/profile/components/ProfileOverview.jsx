@@ -1,7 +1,7 @@
 import { Card, Col, Row } from 'react-bootstrap';
 import { FaUserCircle } from 'react-icons/fa';
 
-function ProfileOverview({ account, bmi, profile, t }) {
+function ProfileOverview({ account, avatarVersion, bmi, profile, t, withImageCacheBust }) {
   const summaryItems = [
     ['BMI', bmi || '-'],
     [t('health.bmr', 'BMR'), profile.bmr ? `${profile.bmr} kcal` : '-'],
@@ -21,7 +21,10 @@ function ProfileOverview({ account, bmi, profile, t }) {
             <div className="profile-overview-heading">
               <div className="profile-avatar-preview profile-avatar-preview-sm">
                 {profile.avatarUrl ? (
-                  <img src={profile.avatarUrl} alt={t('profilePage.avatar.previewAlt')} />
+                  <img
+                    src={withImageCacheBust(profile.avatarUrl, avatarVersion)}
+                    alt={t('profilePage.avatar.previewAlt')}
+                  />
                 ) : (
                   <FaUserCircle />
                 )}

@@ -5,6 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { FaPrint } from 'react-icons/fa';
 import { getCurrentUser } from '../../api/api';
 import authConfig from '../../config/authConfig';
+import { getAuthenticatedUser, updateAuthenticatedUserAvatar, uploadAuthenticatedUserAvatar } from '../auth/authService';
 import ProfileEditForm from './components/ProfileEditForm';
 import ProfileOverview from './components/ProfileOverview';
 import ProfileTabs from './components/ProfileTabs';
@@ -25,6 +26,18 @@ import {
 
 const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
 const MAX_AVATAR_SIZE_MB = MAX_AVATAR_SIZE_BYTES / (1024 * 1024);
+
+function withImageCacheBust(url, version) {
+  if (!url) {
+    return '';
+  }
+
+  if (url.startsWith('blob:') || url.startsWith('data:')) {
+    return url;
+  }
+
+  return `${url}${url.includes('?') ? '&' : '?'}v=${version}`;
+}
 
 function updateStoredAccount(accountPatch = {}) {
   const currentUser = getCurrentUser();
@@ -59,6 +72,9 @@ function Profile() {
   const [error, setError] = useState('');
   const [avatarError, setAvatarError] = useState('');
   const [avatarDraftUrl, setAvatarDraftUrl] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarMarkedForRemoval, setAvatarMarkedForRemoval] = useState(false);
+  const [avatarVersion, setAvatarVersion] = useState(Date.now());
 
   useEffect(() => {
     if (activeTab === 'metrics' || activeTab === 'notifications') {
@@ -74,9 +90,10 @@ function Profile() {
       setError('');
 
       try {
-        const [profileResponse, metricsResponse] = await Promise.allSettled([
+        const [profileResponse, metricsResponse, accountResponse] = await Promise.allSettled([
           getProfile(),
           getBodyMetrics({ page: 0, size: 20 }),
+          getAuthenticatedUser(),
         ]);
 
         if (!isMounted) {
@@ -84,7 +101,9 @@ function Profile() {
         }
 
         if (profileResponse.status === 'fulfilled') {
-          const currentAccount = getCurrentUser();
+          const currentAccount = accountResponse.status === 'fulfilled'
+            ? updateStoredAccount(accountResponse.value.data)
+            : getCurrentUser();
           const loadedProfile = mergeProfileAvatar(
             mapProfileFromApi(extractProfileFromApi(profileResponse.value.data)),
             currentAccount
@@ -92,6 +111,9 @@ function Profile() {
           setProfile(loadedProfile);
           setEditProfile(loadedProfile);
           setAvatarDraftUrl(null);
+          setAvatarFile(null);
+          setAvatarMarkedForRemoval(false);
+          setAvatarVersion(Date.now());
         } else {
           setError(getApiErrorMessage(profileResponse.reason, t('profilePage.loadError')));
         }
@@ -106,7 +128,7 @@ function Profile() {
           ));
         }
 
-        setAccount(getCurrentUser());
+        setAccount(accountResponse.status === 'fulfilled' ? accountResponse.value.data : getCurrentUser());
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -120,6 +142,12 @@ function Profile() {
       isMounted = false;
     };
   }, [t]);
+
+  useEffect(() => () => {
+    if (avatarDraftUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(avatarDraftUrl);
+    }
+  }, [avatarDraftUrl]);
 
   const bmi = useMemo(() => {
     const height = Number(profile.height);
@@ -146,7 +174,7 @@ function Profile() {
     }
 
     const fileName = file.name.toLowerCase();
-    const hasAllowedExtension = fileName.endsWith('.jpg') || fileName.endsWith('.png');
+    const hasAllowedExtension = fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || fileName.endsWith('.png');
     const hasAllowedType = file.type === 'image/jpeg' || file.type === 'image/png';
 
     if (!hasAllowedExtension || !hasAllowedType) {
@@ -161,21 +189,23 @@ function Profile() {
       return;
     }
 
-    const reader = new FileReader();
+    if (avatarDraftUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(avatarDraftUrl);
+    }
 
-    reader.onload = () => {
-      setAvatarDraftUrl(reader.result || '');
-    };
-
-    reader.onerror = () => {
-      setAvatarError(t('profilePage.avatar.readError'));
-    };
-
-    reader.readAsDataURL(file);
+    setAvatarFile(file);
+    setAvatarMarkedForRemoval(false);
+    setAvatarDraftUrl(URL.createObjectURL(file));
+    event.target.value = '';
   };
 
   const handleAvatarRemove = () => {
     setAvatarError('');
+    if (avatarDraftUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(avatarDraftUrl);
+    }
+    setAvatarFile(null);
+    setAvatarMarkedForRemoval(true);
     setAvatarDraftUrl('');
 
     if (avatarInputRef.current) {
@@ -190,20 +220,30 @@ function Profile() {
     setSaving(true);
 
     try {
+      let savedAvatarUrl = editProfile.avatarUrl || '';
+
+      if (avatarFile) {
+        const avatarResponse = await uploadAuthenticatedUserAvatar(avatarFile);
+        savedAvatarUrl = avatarResponse.data?.avatarUrl || '';
+      } else if (avatarMarkedForRemoval) {
+        const avatarResponse = await updateAuthenticatedUserAvatar('');
+        savedAvatarUrl = avatarResponse.data?.avatarUrl || '';
+      }
+
       const profileToSave = {
         ...editProfile,
-        avatarUrl: avatarDraftUrl === null ? editProfile.avatarUrl : avatarDraftUrl,
+        avatarUrl: savedAvatarUrl,
       };
       const [response, accountResponse] = await Promise.all([
         updateProfile(mapProfileToApi(profileToSave)),
         updateAccountProfile({ fullName: profileToSave.username.trim() }),
       ]);
       const responseProfile = mapProfileFromApi(extractProfileFromApi(response.data));
-      const updatedAccount = updateStoredAccount(accountResponse.data);
+      const updatedAccount = updateStoredAccount({ ...accountResponse.data, avatarUrl: savedAvatarUrl });
       const updatedProfile = mergeProfileAvatar(
         {
           ...responseProfile,
-          avatarUrl: profileToSave.avatarUrl === '' ? '' : responseProfile.avatarUrl || profileToSave.avatarUrl,
+          avatarUrl: savedAvatarUrl,
         },
         updatedAccount
       );
@@ -212,7 +252,13 @@ function Profile() {
       setEditProfile(updatedProfile);
       setAccount(updatedAccount);
       saveStoredProfileAvatar(updatedAccount, updatedProfile.avatarUrl);
+      if (avatarDraftUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(avatarDraftUrl);
+      }
       setAvatarDraftUrl(null);
+      setAvatarFile(null);
+      setAvatarMarkedForRemoval(false);
+      setAvatarVersion(Date.now());
       window.dispatchEvent(new CustomEvent('profile:updated', { detail: updatedProfile }));
 
       if (Number(profile.weight) !== Number(updatedProfile.weight) && Number(updatedProfile.weight) > 0) {
@@ -267,14 +313,24 @@ function Profile() {
       ) : (
         <>
           {activeTab === 'overview' && (
-            <ProfileOverview account={account} bmi={bmi} profile={profile} t={t} />
+            <ProfileOverview
+              account={account}
+              avatarVersion={avatarVersion}
+              bmi={bmi}
+              profile={profile}
+              t={t}
+              withImageCacheBust={withImageCacheBust}
+            />
           )}
 
           {activeTab === 'edit' && (
             <ProfileEditForm
               avatarError={avatarError}
               avatarInputRef={avatarInputRef}
-              avatarPreviewUrl={avatarDraftUrl === null ? editProfile.avatarUrl : avatarDraftUrl}
+              avatarPreviewUrl={withImageCacheBust(
+                avatarDraftUrl === null ? editProfile.avatarUrl : avatarDraftUrl,
+                avatarVersion
+              )}
               maxAvatarSizeMb={MAX_AVATAR_SIZE_MB}
               onAvatarChange={handleAvatarChange}
               onAvatarRemove={handleAvatarRemove}

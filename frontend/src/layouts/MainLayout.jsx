@@ -22,6 +22,7 @@ import { getCurrentUser, logout } from '../api/api';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { clearChatHistory, getChatHistory, sendChatMessage } from '../features/ai/aiService';
 import AuthTimeoutWatcher from '../features/auth/AuthTimeoutWatcher';
+import { getAuthenticatedUser } from '../features/auth/authService';
 import { getProfile } from '../features/profile/profileService';
 import ReminderNotifier from '../features/reminders/ReminderNotifier';
 import {
@@ -35,6 +36,18 @@ const SIDEBAR_DEFAULT_WIDTH = 264;
 const SIDEBAR_MIN_WIDTH = 84;
 const SIDEBAR_MAX_WIDTH = 340;
 const SIDEBAR_COLLAPSE_THRESHOLD = 128;
+
+function withImageCacheBust(url, version) {
+  if (!url) {
+    return '';
+  }
+
+  if (url.startsWith('blob:') || url.startsWith('data:')) {
+    return url;
+  }
+
+  return `${url}${url.includes('?') ? '&' : '?'}v=${version}`;
+}
 
 const menuItems = [
   { to: '/dashboard', labelKey: 'nav.dashboard', icon: FaHome },
@@ -60,6 +73,8 @@ function MainLayout() {
   const [aiError, setAiError] = useState('');
   const [showProfileSummary, setShowProfileSummary] = useState(false);
   const [currentProfile, setCurrentProfile] = useState(null);
+  const [profileAvatarVersion, setProfileAvatarVersion] = useState(Date.now());
+  const [profileAvatarFailed, setProfileAvatarFailed] = useState(false);
   const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
   const [showProfileRequiredModal, setShowProfileRequiredModal] = useState(false);
   const [missingProfileFields, setMissingProfileFields] = useState([]);
@@ -93,19 +108,36 @@ function MainLayout() {
   useEffect(() => {
     let isActive = true;
 
-    getProfile()
-      .then((response) => {
+    Promise.allSettled([getProfile(), getAuthenticatedUser()])
+      .then(([profileResult, accountResult]) => {
         if (!isActive) {
           return;
         }
 
+        const freshAccount = accountResult.status === 'fulfilled'
+          ? accountResult.value.data
+          : getCurrentUser();
+        if (freshAccount) {
+          localStorage.setItem('authUser', JSON.stringify(freshAccount));
+          setCurrentUser(freshAccount);
+        }
+
+        if (profileResult.status !== 'fulfilled') {
+          setCurrentProfile(null);
+          setMissingProfileFields([]);
+          setShowProfileRequiredModal(false);
+          return;
+        }
+
         const profile = mergeProfileAvatar(
-          mapProfileFromApi(extractProfileFromApi(response.data)),
-          getCurrentUser()
+          mapProfileFromApi(extractProfileFromApi(profileResult.value.data)),
+          freshAccount
         );
         const missingFields = getMissingRequiredProfileFields(profile);
 
         setCurrentProfile(profile);
+        setProfileAvatarVersion(Date.now());
+        setProfileAvatarFailed(false);
         setMissingProfileFields(missingFields);
         setShowProfileRequiredModal(missingFields.length > 0 && location.pathname !== '/profile');
       })
@@ -128,6 +160,8 @@ function MainLayout() {
       const missingFields = getMissingRequiredProfileFields(profile);
 
       setCurrentProfile(profile);
+      setProfileAvatarVersion(Date.now());
+      setProfileAvatarFailed(false);
       setMissingProfileFields(missingFields);
       setShowProfileRequiredModal(missingFields.length > 0 && location.pathname !== '/profile');
     };
@@ -378,13 +412,17 @@ function MainLayout() {
             <button
               type="button"
               ref={profileButtonRef}
-              className={`btn btn-light layout-user-toggle${currentProfile?.avatarUrl ? ' layout-user-avatar-toggle' : ''}`}
+              className={`btn btn-light layout-user-toggle${currentProfile?.avatarUrl && !profileAvatarFailed ? ' layout-user-avatar-toggle' : ''}`}
               onClick={() => setShowProfileSummary((current) => !current)}
               aria-label={t('nav.profile')}
               title={t('nav.profile')}
             >
-              {currentProfile?.avatarUrl ? (
-                <img src={currentProfile.avatarUrl} alt={t('nav.profile')} />
+              {currentProfile?.avatarUrl && !profileAvatarFailed ? (
+                <img
+                  src={withImageCacheBust(currentProfile.avatarUrl, profileAvatarVersion)}
+                  alt={t('nav.profile')}
+                  onError={() => setProfileAvatarFailed(true)}
+                />
               ) : (
                 <FaUserCircle />
               )}

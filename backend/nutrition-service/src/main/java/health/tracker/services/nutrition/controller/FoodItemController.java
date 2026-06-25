@@ -90,6 +90,26 @@ public class FoodItemController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PutMapping("/foods/{id}")
+    public ResponseEntity<FoodItemResponse> update(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Long id,
+            @Valid @RequestBody FoodItemRequest request) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(foodItemService.update(id, request));
+    }
+
+    @DeleteMapping("/foods/{id}")
+    public ResponseEntity<Void> delete(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Long id) {
+
+        requireAdmin(role);
+        foodItemService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
     /**
      * GET /api/v1/nutrition/categories
      * Lấy danh sách tất cả danh mục thực phẩm.
