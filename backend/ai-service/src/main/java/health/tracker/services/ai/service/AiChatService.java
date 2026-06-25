@@ -41,6 +41,7 @@ public class AiChatService {
     private final int userDailyLimit;
     private final ObjectMapper objectMapper;
     private final NutritionCatalogClient nutritionCatalogClient;
+    private final ActivityCatalogClient activityCatalogClient;
 
     public AiChatService(
             ObjectProvider<ChatClient.Builder> chatClientBuilderProvider,
@@ -48,6 +49,7 @@ public class AiChatService {
             AiUsageLimitRepository usageLimitRepository,
             ObjectMapper objectMapper,
             NutritionCatalogClient nutritionCatalogClient,
+            ActivityCatalogClient activityCatalogClient,
             @Value("${spring.ai.openai.chat.options.model:llama-3.1-8b-instant}") String model,
             @Value("${ai.limits.guest-daily:5}") int guestDailyLimit,
             @Value("${ai.limits.user-daily:50}") int userDailyLimit) {
@@ -56,6 +58,7 @@ public class AiChatService {
         this.usageLimitRepository = usageLimitRepository;
         this.objectMapper = objectMapper;
         this.nutritionCatalogClient = nutritionCatalogClient;
+        this.activityCatalogClient = activityCatalogClient;
         this.model = model;
         this.guestDailyLimit = guestDailyLimit;
         this.userDailyLimit = userDailyLimit;
@@ -237,6 +240,16 @@ public class AiChatService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
+    private String normalizeGoal(String goal) {
+        String normalized = normalize(goal);
+        if (normalized == null) {
+            return "MAINTAIN_WEIGHT";
+        }
+
+        normalized = normalized.toUpperCase();
+        return "IMPROVE_HEALTH".equals(normalized) ? "IMPROVE_FITNESS" : normalized;
+    }
+
     private record ChatOwner(String userId, String guestId) {
         boolean isAuthenticated() {
             return userId != null;
@@ -246,7 +259,7 @@ public class AiChatService {
     @Transactional
     public String generateDailyPlan(String userId, String guestId, PlannerSuggestRequest context) {
         if ("exercise".equalsIgnoreCase(context.getMealType())) {
-            return PlannerRuleEngine.generatePlan(context);
+            return generateFallbackPlan(context);
         }
 
         int budget = calculateMealBudget(context);
@@ -265,11 +278,11 @@ public class AiChatService {
         ChatClient.Builder builder = chatClientBuilderProvider.getIfAvailable();
         if (builder == null) {
             log.warn("AI model is unavailable; using planner fallback");
-            return PlannerRuleEngine.generatePlan(context);
+            return generateFallbackPlan(context);
         }
 
         try {
-            List<NutritionCatalogClient.FoodCandidate> foods = nutritionCatalogClient.getFoods(100);
+            List<NutritionCatalogClient.FoodCandidate> foods = getPlannerFoodCatalog(context);
             if (foods.size() < 2) throw new IllegalStateException("Nutrition database has too few foods");
             String prompt = buildPlannerPrompt(context, budget, calorieBuffer, foods);
             String raw = builder
@@ -289,6 +302,15 @@ public class AiChatService {
             return normalized;
         } catch (Exception exception) {
             log.warn("AI planner failed; using rule fallback: {}", exception.getMessage());
+            return generateFallbackPlan(context);
+        }
+    }
+
+    private String generateFallbackPlan(PlannerSuggestRequest context) {
+        try {
+            return PlannerRuleEngine.generatePlan(context, activityCatalogClient.getActivityTypes());
+        } catch (Exception exception) {
+            log.warn("Activity catalog lookup failed; using static activity estimates: {}", exception.getMessage());
             return PlannerRuleEngine.generatePlan(context);
         }
     }
@@ -313,6 +335,8 @@ public class AiChatService {
 
     private String buildPlannerPrompt(PlannerSuggestRequest context, int budget, int calorieBuffer,
                                       List<NutritionCatalogClient.FoodCandidate> foods) {
+        List<Long> requiredFoodIds = selectedFoodIdsInCatalog(context, foods);
+        int maxIngredientCount = Math.max(4, Math.min(6, requiredFoodIds.size() + 3));
         String catalog = foods.stream()
                 .map(food -> "%d | %s | serving %sg | %s kcal | P%s C%s F%s".formatted(
                         food.id(), food.name(), food.servingSizeG(), food.calories(),
@@ -322,12 +346,14 @@ public class AiChatService {
                 Create exactly 2 different Vietnamese meal dishes for meal type: %s.
                 Each dish must be made from 2 to 4 ingredients selected from the database catalog below.
                 Goal: %s. Weight: %s kg. Target weight: %s kg. Activity level: %s.
+                Goal guidance: %s.
                 Daily calorie goal: %s kcal. Calories already consumed: %s kcal.
                 Target calories for EACH suggested dish: %d kcal.
                 Acceptable calories for EACH suggested dish: %d to %d kcal.
                 User selected foods or ingredients: %s.
                 Preferred cooking method: %s.
                 Do not use these previous dish or food names: %s.
+                Required selected food ids for every suggested dish: %s.
                 Database catalog (id | name | serving | nutrition): %s
 
                 Return exactly this JSON shape:
@@ -356,17 +382,30 @@ public class AiChatService {
                   ]
                 }
                 Use only ids from the catalog. Do not invent food nutrition values.
-                If the user selected foods, each dish should use at least one selected food when it exists in the catalog.
+                Each dish must have 2 to %d ingredients.
+                If required selected food ids is not empty, every dish must include all required selected food ids.
                 If a cooking method is provided, describe steps that follow that method.
                 The dish name may combine the selected ingredients, for example "Com ga ap chao voi bong cai".
                 """.formatted(
-                context.getMealType(), context.getGoal(), context.getWeightKg(), context.getTargetWeightKg(),
-                context.getActivityLevel(), context.getDailyCalorieGoal(), context.getCaloriesConsumed(), budget,
+                context.getMealType(), normalizeGoal(context.getGoal()), context.getWeightKg(), context.getTargetWeightKg(),
+                context.getActivityLevel(), goalGuidance(context.getGoal()), context.getDailyCalorieGoal(), context.getCaloriesConsumed(), budget,
                 Math.max(100, budget - calorieBuffer), budget,
                 normalizedList(context.getSelectedFoodNames()),
                 blankToDefault(context.getCookingMethod(), "not specified"),
-                context.getExcludedFoodNames() == null ? List.of() : context.getExcludedFoodNames(), catalog, budget,
-                calorieBuffer);
+                context.getExcludedFoodNames() == null ? List.of() : context.getExcludedFoodNames(),
+                requiredFoodIds, catalog, budget, calorieBuffer, maxIngredientCount);
+    }
+
+    private String goalGuidance(String goal) {
+        return switch (normalizeGoal(goal)) {
+            case "LOSE_WEIGHT" -> "prioritize high protein, vegetables, lower calorie density, and controlled carbs";
+            case "CUTTING" -> "prioritize high protein, low-to-moderate fat, high fiber, and muscle-preserving meals";
+            case "GAIN_WEIGHT" -> "prioritize adequate calories, carbs, healthy fats, and enough protein";
+            case "GAIN_MUSCLE" -> "prioritize high protein, sufficient carbs around training, and moderate healthy fats";
+            case "BODY_RECOMPOSITION" -> "prioritize high protein, balanced calories, vegetables, and steady carbs";
+            case "IMPROVE_FITNESS" -> "prioritize balanced macros, micronutrient-rich foods, and sustained energy";
+            default -> "prioritize balanced macros and stable calories";
+        };
     }
 
     private String validateAndNormalizePlan(String raw, int budget, int calorieBuffer, PlannerSuggestRequest context,
@@ -387,6 +426,7 @@ public class AiChatService {
         ArrayNode normalizedOptions = result.putArray("options");
         Map<Long, NutritionCatalogClient.FoodCandidate> foodById = new HashMap<>();
         foods.forEach(food -> foodById.put(food.id(), food));
+        List<Long> requiredFoodIds = selectedFoodIdsInCatalog(context, foods);
 
         for (int i = 0; i < 2; i++) {
             JsonNode option = options.get(i);
@@ -412,6 +452,9 @@ public class AiChatService {
             }
             if (baseCalories.signum() <= 0) {
                 throw new IllegalArgumentException("AI selected ingredients with invalid calories");
+            }
+            if (!usedFoodIds.containsAll(requiredFoodIds)) {
+                throw new IllegalArgumentException("AI omitted a required selected food");
             }
 
             BigDecimal targetCalories = BigDecimal.valueOf(budget);
@@ -478,6 +521,25 @@ public class AiChatService {
         return objectMapper.writeValueAsString(result);
     }
 
+    private List<NutritionCatalogClient.FoodCandidate> getPlannerFoodCatalog(PlannerSuggestRequest context) {
+        Map<Long, NutritionCatalogClient.FoodCandidate> foods = new java.util.LinkedHashMap<>();
+        nutritionCatalogClient.getFoods(100)
+                .forEach(food -> foods.putIfAbsent(food.id(), food));
+        nutritionCatalogClient.getFoodsByIds(normalizedLongList(context.getSelectedFoodIds()))
+                .forEach(food -> foods.putIfAbsent(food.id(), food));
+        return foods.values().stream().toList();
+    }
+
+    private List<Long> selectedFoodIdsInCatalog(PlannerSuggestRequest context,
+                                                List<NutritionCatalogClient.FoodCandidate> foods) {
+        java.util.Set<Long> availableFoodIds = foods.stream()
+                .map(NutritionCatalogClient.FoodCandidate::id)
+                .collect(java.util.stream.Collectors.toSet());
+        return normalizedLongList(context.getSelectedFoodIds()).stream()
+                .filter(availableFoodIds::contains)
+                .toList();
+    }
+
     private String normalizeRecipeSuggestions(List<NutritionCatalogClient.RecipeCandidate> recipes,
                                               int budget,
                                               int calorieBuffer,
@@ -535,25 +597,26 @@ public class AiChatService {
         }
 
         Map<Long, NutritionCatalogClient.RecipeCandidate> recipes = new java.util.LinkedHashMap<>();
+        String goal = normalizeGoal(context.getGoal());
         if (!selectedFoodIds.isEmpty()) {
-            nutritionCatalogClient.getRecipes(maxCalories, null, selectedFoodIds, 12)
+            nutritionCatalogClient.getRecipes(maxCalories, null, selectedFoodIds, goal, 12)
                     .forEach(recipe -> recipes.putIfAbsent(recipe.id(), recipe));
         }
 
         if (keywords.isEmpty()) {
             if (recipes.isEmpty()) {
-                return nutritionCatalogClient.getRecipes(maxCalories, 12);
+                return nutritionCatalogClient.getRecipes(maxCalories, null, null, goal, 12);
             }
             return recipes.values().stream().toList();
         }
 
         for (String keyword : keywords) {
-            nutritionCatalogClient.getRecipes(maxCalories, keyword, 12)
+            nutritionCatalogClient.getRecipes(maxCalories, keyword, null, goal, 12)
                     .forEach(recipe -> recipes.putIfAbsent(recipe.id(), recipe));
         }
 
         if (recipes.size() < 2) {
-            nutritionCatalogClient.getRecipes(maxCalories, 12)
+            nutritionCatalogClient.getRecipes(maxCalories, null, null, goal, 12)
                     .forEach(recipe -> recipes.putIfAbsent(recipe.id(), recipe));
         }
         return recipes.values().stream().toList();
@@ -573,10 +636,11 @@ public class AiChatService {
                                           PlannerSuggestRequest context) {
         List<Long> selectedFoodIds = normalizedLongList(context.getSelectedFoodIds());
         if (!selectedFoodIds.isEmpty()) {
-            boolean matchesId = recipe.ingredients().stream()
+            java.util.Set<Long> recipeFoodIds = recipe.ingredients().stream()
                     .map(NutritionCatalogClient.RecipeIngredientCandidate::foodItemId)
-                    .anyMatch(selectedFoodIds::contains);
-            if (matchesId) {
+                    .collect(java.util.stream.Collectors.toSet());
+            boolean matchesAllIds = recipeFoodIds.containsAll(selectedFoodIds);
+            if (matchesAllIds) {
                 return true;
             }
         }
@@ -591,7 +655,7 @@ public class AiChatService {
                         .map(NutritionCatalogClient.RecipeIngredientCandidate::name)
                         .toList()).toLowerCase();
         return selectedFoods.stream()
-                .anyMatch(food -> searchable.contains(food.toLowerCase()));
+                .allMatch(food -> searchable.contains(food.toLowerCase()));
     }
 
     private boolean matchesCookingMethod(NutritionCatalogClient.RecipeCandidate recipe,

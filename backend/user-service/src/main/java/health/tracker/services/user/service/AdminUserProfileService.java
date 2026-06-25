@@ -73,6 +73,7 @@ public class AdminUserProfileService {
         UserProfile profile = UserProfile.builder()
                 .userId(request.getUserId())
                 .username(trimToNull(request.getUsername()))
+                .avatarUrl(normalizeAvatarUrl(request.getAvatarUrl()))
                 .dateOfBirth(request.getDateOfBirth())
                 .gender(request.getGender())
                 .heightCm(request.getHeightCm())
@@ -96,6 +97,7 @@ public class AdminUserProfileService {
         validateUsername(request.getUsername(), userId);
 
         if (request.getUsername() != null) profile.setUsername(trimToNull(request.getUsername()));
+        if (request.getAvatarUrl() != null) profile.setAvatarUrl(normalizeAvatarUrl(request.getAvatarUrl()));
         if (request.getDateOfBirth() != null) profile.setDateOfBirth(request.getDateOfBirth());
         if (request.getGender() != null) profile.setGender(request.getGender());
         if (request.getHeightCm() != null) profile.setHeightCm(request.getHeightCm());
@@ -160,6 +162,19 @@ public class AdminUserProfileService {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
+    private String normalizeAvatarUrl(String avatarUrl) {
+        if (avatarUrl == null || avatarUrl.isBlank()) {
+            return null;
+        }
+
+        String normalized = avatarUrl.trim().replace("\\", "/");
+        if (!normalized.startsWith("/img/") || normalized.contains("..")
+                || !normalized.toLowerCase().matches("^/img/.+\\.(jpg|jpeg|png)$")) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Avatar URL must point to a JPG or PNG inside /img/");
+        }
+        return normalized;
+    }
+
     private void applyNutritionTargets(UserProfile profile, Integer manualCalorieGoal) {
         NutritionGoalCalculator.NutritionTargets targets = nutritionGoalCalculator.calculate(profile, manualCalorieGoal);
         if (targets.dailyCalorieGoal() == null) {
@@ -200,6 +215,7 @@ public class AdminUserProfileService {
                 .id(profile.getId())
                 .userId(profile.getUserId())
                 .username(profile.getUsername())
+                .avatarUrl(profile.getAvatarUrl())
                 .dateOfBirth(profile.getDateOfBirth())
                 .gender(profile.getGender())
                 .heightCm(profile.getHeightCm())

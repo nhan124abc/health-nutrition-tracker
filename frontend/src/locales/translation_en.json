@@ -640,6 +640,8 @@
       "title": "System catalogs",
       "foodsTitle": "Food catalog",
       "activitiesTitle": "Activity catalog",
+      "foodsDescription": "Create, edit, hide, or delete food groups used by filters and food data.",
+      "activitiesDescription": "Create, edit, hide, or delete activity types used for MET and calorie calculations.",
       "foodCategoriesTitle": "Food categories",
       "activityCategoriesTitle": "Activity categories",
       "back": "Back to catalogs",
@@ -655,6 +657,7 @@
       "totalCategoryBlocks": "Total categories",
       "totalDataItems": "Total data items",
       "description": "Description",
+      "systemItem": "System data",
       "toggleHidden": "Show/hide category",
       "hidden": "Hidden",
       "visible": "Visible",
@@ -662,6 +665,19 @@
       "deleteFoodCategoryConfirm": "Are you sure you want to delete the food category \"{{name}}\"?",
       "deleteActivityCategoryConfirm": "Are you sure you want to delete the activity category \"{{name}}\"?",
       "linkedFoodCategoryBlocked": "This category cannot be deleted or locked while foods still exist in it."
+    },
+    "catalogData": {
+      "foodCreateSuccess": "Food has been added.",
+      "foodUpdateSuccess": "Food has been updated.",
+      "foodDeleteSuccess": "Food has been deleted.",
+      "activityCreateSuccess": "Activity has been added.",
+      "activityUpdateSuccess": "Activity has been updated.",
+      "activityDeleteSuccess": "Activity has been deleted.",
+      "activityHideSuccess": "Activity has been hidden.",
+      "activityShowSuccess": "Activity has been restored.",
+      "saveError": "Unable to save data.",
+      "deleteError": "Unable to delete data.",
+      "statusError": "Unable to update status."
     }
   },
   "auth": {
@@ -902,6 +918,39 @@
       "bodyMetricsReminder": "Body metrics reminders",
       "activityReminder": "Activity reminders",
       "weeklyReport": "Weekly report summary"
+    }
+  },
+  "reminderNotifier": {
+    "title": "Health reminder",
+    "later": "Later",
+    "openNow": "Open now",
+    "slots": {
+      "breakfast": "breakfast",
+      "lunch": "lunch",
+      "dinner": "dinner",
+      "activityMorning": "morning activity",
+      "activityAfternoon": "afternoon activity"
+    },
+    "popup": {
+      "meal": {
+        "missing": "It is time for {{label}} ({{time}}), but this meal has not been logged yet. Update your diary so your calories stay accurate.",
+        "incomplete": "You logged {{label}} ({{time}}), but it has not been marked as completed yet."
+      },
+      "activity": {
+        "missing": "It is time for {{label}} ({{time}}), but no activity has been logged today.",
+        "incomplete": "You logged activity today, but it has not been marked as completed yet."
+      }
+    },
+    "email": {
+      "subject": "{{label}} reminder at {{time}}",
+      "meal": {
+        "missing": "{{label}} has not been logged at {{time}}. Open Health Nutrition Tracker to update today's meal diary.",
+        "incomplete": "{{label}} has been logged but not marked as completed. Open Health Nutrition Tracker to update it."
+      },
+      "activity": {
+        "missing": "{{label}} has not been logged at {{time}}. Open Health Nutrition Tracker to update today's activity.",
+        "incomplete": "You logged activity today but have not marked it as completed. Open Health Nutrition Tracker to update it."
+      }
     }
   },
   "foodDiaryPage": {
@@ -1210,6 +1259,15 @@
     "selectedActivities": "Activity types to use",
     "selectedActivitiesHint": "Selected {{count}}/{{max}} activity types. AI will prioritize suggestions from your choices.",
     "clearActivities": "Clear",
+    "warnings": {
+      "foodLimitTitle": "Too many foods selected",
+      "foodLimitMessage": "One meal should use at most {{max}} foods so the suggestion does not become overloaded.",
+      "activityLimitTitle": "Too many activities selected",
+      "activityLimitMessage": "One day should use at most {{max}} activity types so the plan stays realistic.",
+      "activityOverGoalTitle": "Daily activity target exceeded",
+      "activityOverGoalMessage": "You have burned {{current}} kcal. This activity adds about {{added}} kcal, totaling {{total}} kcal, above your {{goal}} kcal/day target.",
+      "continueAnyway": "Log anyway"
+    },
     "sections": {
       "plan": "Plan",
       "planDescription": "Choose date, meal slot, and calorie target.",
@@ -1280,6 +1338,9 @@
     "searchFoodsHint": "Enter at least 2 characters to search foods.",
     "searchingFoods": "Searching foods...",
     "noFoodResults": "No matching foods found.",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "foodPageInfo": "Page {{page}}/{{total}} · {{count}} foods",
     "searchRecipes": "Search recipes",
     "searchRecipesPlaceholder": "Enter a recipe or meal name...",
     "searchRecipesHint": "Enter at least 2 characters or select foods to find recipes.",
@@ -1287,6 +1348,7 @@
     "searchActivities": "Search activities",
     "searchActivitiesPlaceholder": "Enter an activity to exercise...",
     "searchActivitiesHint": "Enter at least 2 characters to search activities.",
+    "activityPageInfo": "Page {{page}}/{{total}} · {{count}} activities",
     "noActivityResults": "No matching activities found."
   },
   "goalPlannerPage": {
@@ -1314,6 +1376,7 @@
       "unsafe": "Unsafe",
       "activity": "Activity",
       "change": "Change {{weight}} kg/week · {{energy}} kcal/day",
+      "stableActivity": "Maintain weight · daily activity target",
       "choose": "Choose this option",
       "applying": "Applying..."
     },

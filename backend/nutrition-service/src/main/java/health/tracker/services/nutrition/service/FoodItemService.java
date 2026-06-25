@@ -99,6 +99,56 @@ public class FoodItemService {
 
     // ─── Mapper ───────────────────────────────────────────────────────────────
 
+    @Transactional
+    public FoodItemResponse update(Long id, FoodItemRequest request) {
+        FoodItem food = foodItemRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Food item not found: " + id));
+
+        if (request.getBarcode() != null &&
+                foodItemRepository.findByBarcode(request.getBarcode())
+                        .filter(existing -> !existing.getId().equals(id))
+                        .isPresent()) {
+            throw new AppException(HttpStatus.CONFLICT,
+                    "Barcode '" + request.getBarcode() + "' already exists");
+        }
+
+        FoodCategory category = null;
+        if (request.getCategoryId() != null) {
+            category = categoryRepository.findById(request.getCategoryId())
+                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                            "Category not found: " + request.getCategoryId()));
+            if (category.isHidden()) {
+                throw new AppException(HttpStatus.BAD_REQUEST,
+                        "Category is hidden: " + request.getCategoryId());
+            }
+        }
+
+        food.setName(request.getName());
+        food.setNameVi(request.getNameVi());
+        food.setBrand(request.getBrand());
+        food.setBarcode(request.getBarcode());
+        food.setCategory(category);
+        food.setServingSizeG(request.getServingSizeG());
+        food.setServingDescription(request.getServingDescription());
+        food.setCalories(request.getCalories());
+        food.setProteinG(request.getProteinG());
+        food.setCarbsG(request.getCarbsG());
+        food.setFatG(request.getFatG());
+        food.setFiberG(request.getFiberG() != null ? request.getFiberG() : java.math.BigDecimal.ZERO);
+        food.setSugarG(request.getSugarG() != null ? request.getSugarG() : java.math.BigDecimal.ZERO);
+        food.setSodiumMg(request.getSodiumMg() != null ? request.getSodiumMg() : java.math.BigDecimal.ZERO);
+        food.setImageUrl(request.getImageUrl());
+
+        return toResponse(foodItemRepository.save(food));
+    }
+
+    @Transactional
+    public void delete(Long id) {
+        FoodItem food = foodItemRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Food item not found: " + id));
+        foodItemRepository.delete(food);
+    }
+
     private FoodItemResponse toResponse(FoodItem f) {
         FoodItemResponse.CategoryInfo catInfo = null;
         if (f.getCategory() != null) {

@@ -65,6 +65,7 @@ public class UserProfileService {
 
         // Áp patch các field có giá trị
         if (request.getUsername()       != null) profile.setUsername(request.getUsername());
+        if (request.getAvatarUrl()      != null) profile.setAvatarUrl(normalizeAvatarUrl(request.getAvatarUrl()));
         if (request.getDateOfBirth()    != null) profile.setDateOfBirth(request.getDateOfBirth());
         if (request.getGender()         != null) profile.setGender(request.getGender());
         if (request.getHeightCm()       != null) profile.setHeightCm(request.getHeightCm());
@@ -232,7 +233,7 @@ public class UserProfileService {
 
         return UserProfileResponse.builder()
                 .id(p.getId()).userId(p.getUserId())
-                .username(p.getUsername()).dateOfBirth(p.getDateOfBirth())
+                .username(p.getUsername()).avatarUrl(p.getAvatarUrl()).dateOfBirth(p.getDateOfBirth())
                 .gender(p.getGender()).heightCm(p.getHeightCm()).weightKg(p.getWeightKg())
                 .activityLevel(p.getActivityLevel()).goal(p.getGoal())
                 .targetWeightKg(p.getTargetWeightKg())
@@ -248,6 +249,19 @@ public class UserProfileService {
                 .hidden(p.isHidden())
                 .createdAt(p.getCreatedAt()).updatedAt(p.getUpdatedAt())
                 .build();
+    }
+
+    private String normalizeAvatarUrl(String avatarUrl) {
+        if (avatarUrl == null || avatarUrl.isBlank()) {
+            return null;
+        }
+
+        String normalized = avatarUrl.trim().replace("\\", "/");
+        if (!normalized.startsWith("/img/") || normalized.contains("..")
+                || !normalized.toLowerCase().matches("^/img/.+\\.(jpg|jpeg|png)$")) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Avatar URL must point to a JPG or PNG inside /img/");
+        }
+        return normalized;
     }
 
     private BodyMetricResponse toMetricResponse(BodyMetric m) {

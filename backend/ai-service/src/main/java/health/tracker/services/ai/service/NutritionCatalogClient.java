@@ -57,15 +57,44 @@ public class NutritionCatalogClient {
         return foods;
     }
 
+    public List<FoodCandidate> getFoodsByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+
+        List<FoodCandidate> foods = new ArrayList<>();
+        ids.stream()
+                .filter(java.util.Objects::nonNull)
+                .filter(id -> id > 0)
+                .distinct()
+                .forEach(id -> {
+                    try {
+                        JsonNode item = restClient.get()
+                                .uri(uri -> uri.path("/api/v1/nutrition/foods/{id}").build(id))
+                                .retrieve()
+                                .body(JsonNode.class);
+                        FoodCandidate food = toFoodCandidate(item);
+                        if (food != null) {
+                            foods.add(food);
+                        }
+                    } catch (Exception exception) {
+                        log.warn("Unable to load selected food id {} from nutrition-service: {}", id, exception.getMessage());
+                    }
+                });
+        return foods;
+    }
+
     public List<RecipeCandidate> getRecipes(int maxCalories, int limit) {
-        return getRecipes(maxCalories, null, limit);
+        return getRecipes(maxCalories, null, null, null, limit);
     }
 
     public List<RecipeCandidate> getRecipes(int maxCalories, String keyword, int limit) {
-        return getRecipes(maxCalories, keyword, null, limit);
+        return getRecipes(maxCalories, keyword, null, null, limit);
     }
 
     public List<RecipeCandidate> getRecipes(int maxCalories, String keyword, List<Long> foodIds, int limit) {
+        return getRecipes(maxCalories, keyword, foodIds, null, limit);
+    }
+
+    public List<RecipeCandidate> getRecipes(int maxCalories, String keyword, List<Long> foodIds, String goal, int limit) {
         JsonNode items = restClient.get()
                 .uri(uri -> uri.path("/api/v1/nutrition/recipes/suggestions")
                         .queryParam("maxCalories", maxCalories)
@@ -77,6 +106,9 @@ public class NutritionCatalogClient {
                                 .map(ids -> ids.stream()
                                         .map(String::valueOf)
                                         .collect(java.util.stream.Collectors.joining(","))))
+                        .queryParamIfPresent("goal", java.util.Optional.ofNullable(goal)
+                                .map(String::trim)
+                                .filter(value -> !value.isBlank()))
                         .queryParam("limit", Math.min(limit, 20))
                         .build())
                 .retrieve()
@@ -122,6 +154,27 @@ public class NutritionCatalogClient {
 
     private BigDecimal decimal(JsonNode node, String field) {
         return node.path(field).isNumber() ? node.path(field).decimalValue() : BigDecimal.ZERO;
+    }
+
+    private FoodCandidate toFoodCandidate(JsonNode item) {
+        if (item == null || item.isMissingNode() || item.isNull()) return null;
+
+        BigDecimal calories = decimal(item, "calories");
+        BigDecimal serving = decimal(item, "servingSizeG");
+        if (calories.signum() <= 0 || serving.signum() <= 0) return null;
+
+        return new FoodCandidate(
+                item.path("id").asLong(),
+                text(item, "nameVi", text(item, "name", "Food")),
+                serving,
+                text(item, "servingDescription", "1 serving"),
+                calories,
+                decimal(item, "proteinG"),
+                decimal(item, "carbsG"),
+                decimal(item, "fatG"),
+                decimal(item, "fiberG"),
+                decimal(item, "sodiumMg")
+        );
     }
 
     private String text(JsonNode node, String field, String fallback) {

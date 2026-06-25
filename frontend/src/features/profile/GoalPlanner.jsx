@@ -3,7 +3,23 @@ import { Alert, Button, Card, Col, Form, ProgressBar, Row, Spinner } from 'react
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { applyGoalPlan, getGoalPlanSuggestions, getProfile } from './profileService';
-import { extractProfileFromApi, mapProfileFromApi } from './profileUtils';
+import { extractProfileFromApi, goalOptions, mapProfileFromApi } from './profileUtils';
+
+const goalValueToApi = {
+  lose_weight: 'LOSE_WEIGHT',
+  maintain: 'MAINTAIN_WEIGHT',
+  gain_weight: 'GAIN_WEIGHT',
+  gain_muscle: 'GAIN_MUSCLE',
+  cutting: 'CUTTING',
+  body_recomposition: 'BODY_RECOMPOSITION',
+  improve_health: 'IMPROVE_FITNESS',
+};
+
+const goalsWithTargetChange = new Set(['LOSE_WEIGHT', 'GAIN_WEIGHT', 'GAIN_MUSCLE', 'CUTTING']);
+
+function needsTargetChange(goal) {
+  return goalsWithTargetChange.has(goal);
+}
 
 function GoalPlanner() {
   const navigate = useNavigate();
@@ -14,6 +30,7 @@ function GoalPlanner() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [applying, setApplying] = useState(false);
+  const showTargetChange = needsTargetChange(form.goal);
 
   useEffect(() => {
     getProfile().then((response) => {
@@ -30,7 +47,7 @@ function GoalPlanner() {
     try {
       const payload = {
         goal: form.goal,
-        targetChangeKg: form.goal === 'MAINTAIN_WEIGHT' ? 0.1 : Number(form.targetChangeKg),
+        targetChangeKg: showTargetChange ? Number(form.targetChangeKg) : 0.1,
         ...(form.targetWeeks ? { targetWeeks: Number(form.targetWeeks) } : {}),
       };
       const response = await getGoalPlanSuggestions(payload);
@@ -48,7 +65,7 @@ function GoalPlanner() {
     try {
       await applyGoalPlan({
         goal: form.goal,
-        targetChangeKg: form.goal === 'MAINTAIN_WEIGHT' ? 0.1 : Number(form.targetChangeKg),
+        targetChangeKg: showTargetChange ? Number(form.targetChangeKg) : 0.1,
         targetWeeks: option.weeks,
       });
       localStorage.setItem('activeGoalPlan', JSON.stringify({ ...option, goal: form.goal, targetWeightKg: plan.targetWeightKg }));
@@ -65,6 +82,19 @@ function GoalPlanner() {
   }
 
   const numberFormatter = new Intl.NumberFormat(i18n.language);
+  const getOptionChangeText = (option) => {
+    const weeklyWeightChange = Number(option.weeklyWeightChangeKg) || 0;
+    const dailyEnergyChange = Number(option.dailyEnergyChangeKcal) || 0;
+
+    if (weeklyWeightChange === 0 && dailyEnergyChange === 0) {
+      return t('goalPlannerPage.option.stableActivity');
+    }
+
+    return t('goalPlannerPage.option.change', {
+      weight: option.weeklyWeightChangeKg,
+      energy: numberFormatter.format(option.dailyEnergyChangeKcal),
+    });
+  };
 
   return (
     <>
@@ -86,12 +116,12 @@ function GoalPlanner() {
               <Form.Group className="mb-3">
                 <Form.Label>{t('goalPlannerPage.form.goal')}</Form.Label>
                 <Form.Select value={form.goal} onChange={(event) => setForm({ ...form, goal: event.target.value })}>
-                  <option value="LOSE_WEIGHT">{t('goalPlannerPage.goals.loseWeight')}</option>
-                  <option value="GAIN_WEIGHT">{t('goalPlannerPage.goals.gainWeight')}</option>
-                  <option value="MAINTAIN_WEIGHT">{t('goalPlannerPage.goals.maintainWeight')}</option>
+                  {goalOptions.map((goal) => (
+                    <option value={goalValueToApi[goal.value]} key={goal.value}>{t(goal.labelKey)}</option>
+                  ))}
                 </Form.Select>
               </Form.Group>
-              {form.goal !== 'MAINTAIN_WEIGHT' && (
+              {showTargetChange && (
                 <Form.Group className="mb-3">
                   <Form.Label>
                     {t('goalPlannerPage.form.targetChange')}
@@ -144,12 +174,7 @@ function GoalPlanner() {
                         <p className="mb-2">
                           {t('goalPlannerPage.option.activity')}: <strong>{numberFormatter.format(option.dailyActivityGoalKcal)} {t('goalPlannerPage.units.kcalPerDay')}</strong>
                         </p>
-                        <p className="small text-secondary">
-                          {t('goalPlannerPage.option.change', {
-                            weight: option.weeklyWeightChangeKg,
-                            energy: numberFormatter.format(option.dailyEnergyChangeKcal),
-                          })}
-                        </p>
+                        <p className="small text-secondary">{getOptionChangeText(option)}</p>
                         <ProgressBar now={Math.min(100, (plan.safeMinimumWeeks / option.weeks) * 100)} variant={option.safe ? 'success' : 'danger'} className="mb-3" />
                         <Button className="w-100" variant={option.safe ? 'success' : 'outline-danger'} disabled={!option.safe || applying} onClick={() => choosePlan(option)}>
                           {applying ? t('goalPlannerPage.option.applying') : t('goalPlannerPage.option.choose')}

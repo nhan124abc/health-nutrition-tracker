@@ -24,7 +24,8 @@ public class RecipeController {
             @RequestParam(required = false) BigDecimal maxCalories,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) List<Long> foodIds,
+            @RequestParam(required = false) String goal,
             @RequestParam(defaultValue = "6") int limit) {
-        return ResponseEntity.ok(recipeService.suggest(maxCalories, q, foodIds, limit));
+        return ResponseEntity.ok(recipeService.suggest(maxCalories, q, foodIds, goal, limit));
     }
 }

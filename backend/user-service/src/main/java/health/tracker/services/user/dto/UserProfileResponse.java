@@ -16,6 +16,7 @@ public class UserProfileResponse {
     private Long id;
     private Long userId;
     private String username;
+    private String avatarUrl;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate dateOfBirth;

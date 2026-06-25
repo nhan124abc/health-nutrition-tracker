@@ -1,6 +1,7 @@
 package health.tracker.services.ai.service;
 
 import health.tracker.services.ai.dto.PlannerSuggestRequest;
+import health.tracker.services.ai.service.ActivityCatalogClient.ActivityCandidate;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,8 +9,12 @@ import java.util.List;
 public class PlannerRuleEngine {
 
     public static String generatePlan(PlannerSuggestRequest context) {
+        return generatePlan(context, List.of());
+    }
+
+    public static String generatePlan(PlannerSuggestRequest context, List<ActivityCandidate> activityCatalog) {
         int goalCalories = context.getDailyCalorieGoal() != null ? context.getDailyCalorieGoal() : 2000;
-        String goal = context.getGoal() != null ? context.getGoal().toUpperCase() : "MAINTAIN_WEIGHT";
+        String goal = normalizeGoal(context.getGoal());
         double weight = context.getWeightKg() != null ? context.getWeightKg() : 70.0;
         String mealType = context.getMealType() != null ? context.getMealType().toLowerCase() : "lunch";
         int offset = context.getSuggestionOffset() != null ? context.getSuggestionOffset() : 0;
@@ -17,7 +22,7 @@ public class PlannerRuleEngine {
         int dayOfWeek = LocalDate.now().getDayOfWeek().getValue();
 
         if ("exercise".equals(mealType)) {
-            List<ActivityInfo> exerciseOptions = getExerciseOptions(context, goal, weight, dayOfWeek + offset);
+            List<ActivityInfo> exerciseOptions = getExerciseOptions(context, goal, weight, dayOfWeek + offset, activityCatalog);
             ActivityInfo act1 = exerciseOptions.get(0);
             ActivityInfo act2 = exerciseOptions.get(1);
 
@@ -26,11 +31,11 @@ public class PlannerRuleEngine {
             sb.append("  \"message\": \"Gợi ý hoạt động vận động lành mạnh, phù hợp với thể trạng của bạn.\",\n");
             sb.append("  \"mealBudget\": 0,\n");
             sb.append("  \"options\": [\n");
-            sb.append(String.format("    { \"name\": \"%s\", \"amount\": \"%d phút\", \"servingSizeG\": 0, \"calories\": %d, \"caloriesBurned\": %d, \"proteinG\": 0, \"carbsG\": 0, \"fatG\": 0 }",
-                    act1.name, act1.durationMinutes, act1.caloriesBurned, act1.caloriesBurned));
+            sb.append(String.format("    { \"name\": \"%s\", \"amount\": \"%d phút\", \"durationMinutes\": %d, \"servingSizeG\": 0, \"calories\": %d, \"caloriesBurned\": %d, \"proteinG\": 0, \"carbsG\": 0, \"fatG\": 0 }",
+                    act1.name, act1.durationMinutes, act1.durationMinutes, act1.caloriesBurned, act1.caloriesBurned));
             sb.append(",\n");
-            sb.append(String.format("    { \"name\": \"%s\", \"amount\": \"%d phút\", \"servingSizeG\": 0, \"calories\": %d, \"caloriesBurned\": %d, \"proteinG\": 0, \"carbsG\": 0, \"fatG\": 0 }\n",
-                    act2.name, act2.durationMinutes, act2.caloriesBurned, act2.caloriesBurned));
+            sb.append(String.format("    { \"name\": \"%s\", \"amount\": \"%d phút\", \"durationMinutes\": %d, \"servingSizeG\": 0, \"calories\": %d, \"caloriesBurned\": %d, \"proteinG\": 0, \"carbsG\": 0, \"fatG\": 0 }\n",
+                    act2.name, act2.durationMinutes, act2.durationMinutes, act2.caloriesBurned, act2.caloriesBurned));
             sb.append("  ]\n");
             sb.append("}");
             return sb.toString();
@@ -45,10 +50,22 @@ public class PlannerRuleEngine {
             proteinRatio = 0.30;
             carbsRatio = 0.45;
             fatRatio = 0.25;
-        } else if ("LOSE_WEIGHT".equals(goal)) {
+        } else if ("GAIN_WEIGHT".equals(goal)) {
+            proteinRatio = 0.20;
+            carbsRatio = 0.55;
+            fatRatio = 0.25;
+        } else if ("BODY_RECOMPOSITION".equals(goal)) {
+            proteinRatio = 0.35;
+            carbsRatio = 0.40;
+            fatRatio = 0.25;
+        } else if (isFatLossGoal(goal)) {
             proteinRatio = 0.35;
             carbsRatio = 0.35;
             fatRatio = 0.30;
+        } else if ("IMPROVE_FITNESS".equals(goal)) {
+            proteinRatio = 0.28;
+            carbsRatio = 0.47;
+            fatRatio = 0.25;
         }
 
         // 2. Budget calculation based on meal slot
@@ -80,7 +97,7 @@ public class PlannerRuleEngine {
         MealOption m2 = calculateMealOption(opt2[0], mealBudget, proteinRatio, carbsRatio, fatRatio, density2, opt2[1]);
 
         // 4. Exercise recommendations (2 options)
-        List<ActivityInfo> activities = getActivities(goal, weight, dayOfWeek + offset);
+        List<ActivityInfo> activities = getActivities(goal, weight, dayOfWeek + offset, activityCatalog);
 
         // 5. Construct JSON response
         StringBuilder sb = new StringBuilder();
@@ -125,11 +142,17 @@ public class PlannerRuleEngine {
         String name;
         int durationMinutes;
         int caloriesBurned;
+        double met;
         
         ActivityInfo(String name, int durationMinutes, int caloriesBurned) {
+            this(name, durationMinutes, caloriesBurned, 0);
+        }
+
+        ActivityInfo(String name, int durationMinutes, int caloriesBurned, double met) {
             this.name = name;
             this.durationMinutes = durationMinutes;
             this.caloriesBurned = caloriesBurned;
+            this.met = met;
         }
     }
 
@@ -227,7 +250,8 @@ public class PlannerRuleEngine {
                 .anyMatch(item -> item.equalsIgnoreCase(name));
     }
 
-    private static List<ActivityInfo> getExerciseOptions(PlannerSuggestRequest context, String goal, double weight, int index) {
+    private static List<ActivityInfo> getExerciseOptions(PlannerSuggestRequest context, String goal, double weight, int index,
+                                                         List<ActivityCandidate> activityCatalog) {
         List<ActivityInfo> pool = new ArrayList<>();
         if (context.getSelectedActivityNames() != null && !context.getSelectedActivityNames().isEmpty()) {
             List<String> selectedNames = context.getSelectedActivityNames().stream()
@@ -236,11 +260,11 @@ public class PlannerRuleEngine {
                     .toList();
             for (String name : selectedNames) {
                 int duration = estimateDurationMinutes(name);
-                pool.add(new ActivityInfo(name.trim(), duration, calculateCaloriesBurned(estimateMet(name), weight, duration)));
+                pool.add(buildActivityInfo(name.trim(), duration, weight, activityCatalog));
             }
         }
 
-        if ("LOSE_WEIGHT".equals(goal)) {
+        if (isFatLossGoal(goal)) {
             pool.add(new ActivityInfo("Chạy bộ ngoài trời (Cardio giảm mỡ)", 35, calculateCaloriesBurned(8.0, weight, 35)));
             pool.add(new ActivityInfo("Tập HIIT toàn thân đốt mỡ nhanh", 25, calculateCaloriesBurned(8.0, weight, 25)));
             pool.add(new ActivityInfo("Đạp xe thể thao (Cardio sức bền)", 45, calculateCaloriesBurned(6.0, weight, 45)));
@@ -248,7 +272,7 @@ public class PlannerRuleEngine {
             pool.add(new ActivityInfo("Bơi lội tự do rèn luyện toàn thân", 40, calculateCaloriesBurned(7.0, weight, 40)));
             pool.add(new ActivityInfo("Đi bộ nhanh ngoài công viên", 50, calculateCaloriesBurned(4.5, weight, 50)));
             pool.add(new ActivityInfo("Tập Yoga kéo giãn sâu toàn thân", 35, calculateCaloriesBurned(2.5, weight, 35)));
-        } else if ("GAIN_MUSCLE".equals(goal)) {
+        } else if (isStrengthGoal(goal)) {
             pool.add(new ActivityInfo("Tập Gym - Nhóm cơ Chest & Triceps (Kháng lực)", 50, calculateCaloriesBurned(5.0, weight, 50)));
             pool.add(new ActivityInfo("Tập Gym - Nhóm cơ Back & Biceps (Tăng lực kéo)", 50, calculateCaloriesBurned(5.0, weight, 50)));
             pool.add(new ActivityInfo("Tập Gym - Cơ đùi và cơ mông (Lower Body)", 45, calculateCaloriesBurned(5.5, weight, 45)));
@@ -265,6 +289,10 @@ public class PlannerRuleEngine {
             pool.add(new ActivityInfo("Tập thể dục tự do tại nhà", 35, calculateCaloriesBurned(3.5, weight, 35)));
             pool.add(new ActivityInfo("Tập Yoga thư giãn phục hồi tinh thần", 40, calculateCaloriesBurned(2.5, weight, 40)));
         }
+
+        pool = pool.stream()
+                .map(activity -> resolveActivityInfo(activity, weight, activityCatalog))
+                .toList();
 
         List<ActivityInfo> result = new ArrayList<>();
         int size = pool.size();
@@ -302,10 +330,60 @@ public class PlannerRuleEngine {
         return 4.5;
     }
 
-    private static List<ActivityInfo> getActivities(String goal, double weight, int index) {
+    private static ActivityInfo buildActivityInfo(String name, int durationMinutes, double weight,
+                                                  List<ActivityCandidate> activityCatalog) {
+        return resolveActivityInfo(new ActivityInfo(name, durationMinutes, 0), weight, activityCatalog);
+    }
+
+    private static ActivityInfo resolveActivityInfo(ActivityInfo activity, double weight,
+                                                    List<ActivityCandidate> activityCatalog) {
+        double met = findCatalogMet(activity.name, activityCatalog);
+        if (met <= 0) {
+            met = activity.met > 0 ? activity.met : estimateMet(activity.name);
+        }
+
+        return new ActivityInfo(
+                activity.name,
+                activity.durationMinutes,
+                calculateCaloriesBurned(met, weight, activity.durationMinutes),
+                met
+        );
+    }
+
+    private static double findCatalogMet(String activityName, List<ActivityCandidate> activityCatalog) {
+        if (activityName == null || activityCatalog == null || activityCatalog.isEmpty()) {
+            return 0;
+        }
+
+        String normalized = normalizeText(activityName);
+        for (ActivityCandidate candidate : activityCatalog) {
+            if (normalized.equals(normalizeText(candidate.name()))
+                    || normalized.equals(normalizeText(candidate.nameVi()))) {
+                return candidate.metValue().doubleValue();
+            }
+        }
+        for (ActivityCandidate candidate : activityCatalog) {
+            String name = normalizeText(candidate.name());
+            String nameVi = normalizeText(candidate.nameVi());
+            if ((!name.isBlank() && (normalized.contains(name) || name.contains(normalized)))
+                    || (!nameVi.isBlank() && (normalized.contains(nameVi) || nameVi.contains(normalized)))) {
+                return candidate.metValue().doubleValue();
+            }
+        }
+        return 0;
+    }
+
+    private static String normalizeText(String value) {
+        return value == null
+                ? ""
+                : value.trim().toLowerCase().replaceAll("\\s+", " ");
+    }
+
+    private static List<ActivityInfo> getActivities(String goal, double weight, int index,
+                                                    List<ActivityCandidate> activityCatalog) {
         List<ActivityInfo> list = new ArrayList<>();
         int key = Math.abs(index) % 7;
-        if ("LOSE_WEIGHT".equals(goal)) {
+        if (isFatLossGoal(goal)) {
             switch (key) {
                 case 0:
                     list.add(new ActivityInfo("Chạy bộ ngoài trời (Cardio giảm mỡ)", 35, calculateCaloriesBurned(8.0, weight, 35)));
@@ -330,7 +408,7 @@ public class PlannerRuleEngine {
                 default:
                     list.add(new ActivityInfo("Tập Yoga kéo giãn sâu toàn thân", 35, calculateCaloriesBurned(2.5, weight, 35)));
             }
-        } else if ("GAIN_MUSCLE".equals(goal)) {
+        } else if (isStrengthGoal(goal)) {
             switch (key) {
                 case 0:
                     list.add(new ActivityInfo("Tập Gym - Nhóm cơ Chest & Triceps (Kháng lực)", 50, calculateCaloriesBurned(5.0, weight, 50)));
@@ -377,7 +455,26 @@ public class PlannerRuleEngine {
                     list.add(new ActivityInfo("Tập Yoga thư giãn phục hồi tinh thần", 40, calculateCaloriesBurned(2.5, weight, 40)));
             }
         }
-        return list;
+        return list.stream()
+                .map(activity -> resolveActivityInfo(activity, weight, activityCatalog))
+                .toList();
+    }
+
+    private static String normalizeGoal(String goal) {
+        if (goal == null || goal.isBlank()) {
+            return "MAINTAIN_WEIGHT";
+        }
+
+        String normalized = goal.trim().toUpperCase();
+        return "IMPROVE_HEALTH".equals(normalized) ? "IMPROVE_FITNESS" : normalized;
+    }
+
+    private static boolean isFatLossGoal(String goal) {
+        return "LOSE_WEIGHT".equals(goal) || "CUTTING".equals(goal);
+    }
+
+    private static boolean isStrengthGoal(String goal) {
+        return "GAIN_MUSCLE".equals(goal) || "GAIN_WEIGHT".equals(goal) || "BODY_RECOMPOSITION".equals(goal);
     }
 
     private static int calculateCaloriesBurned(double met, double weight, int durationMinutes) {

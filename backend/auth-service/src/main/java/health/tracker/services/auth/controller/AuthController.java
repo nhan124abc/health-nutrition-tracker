@@ -338,7 +338,7 @@ public class AuthController {
             baseName = "avatar";
         }
 
-        return "admin-" + userId + "-" + System.currentTimeMillis() + "-" + baseName + extension;
+        return "avatar-" + userId + "-" + System.currentTimeMillis() + "-" + baseName + extension;
     }
 
     private Path resolveAvatarUploadDirectory() {

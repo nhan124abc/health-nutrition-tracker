@@ -23,6 +23,12 @@ public class GoalPlanRequest {
     private Integer targetWeeks;
 
     public enum PlanGoal {
-        LOSE_WEIGHT, GAIN_WEIGHT, MAINTAIN_WEIGHT
+        LOSE_WEIGHT,
+        MAINTAIN_WEIGHT,
+        GAIN_WEIGHT,
+        GAIN_MUSCLE,
+        CUTTING,
+        BODY_RECOMPOSITION,
+        IMPROVE_FITNESS
     }
 }

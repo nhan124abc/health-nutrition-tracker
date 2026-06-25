@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,8 +23,10 @@ public class RecipeService {
     private final RecipeRepository recipeRepository;
 
     @Transactional(readOnly = true)
-    public List<RecipeSuggestionResponse> suggest(BigDecimal maxCalories, String keyword, List<Long> foodIds, int limit) {
+    public List<RecipeSuggestionResponse> suggest(BigDecimal maxCalories, String keyword, List<Long> foodIds,
+                                                  String goal, int limit) {
         int safeLimit = Math.max(1, Math.min(limit, 20));
+        int candidateLimit = Math.min(20, Math.max(safeLimit, safeLimit * 3));
         String normalizedKeyword = keyword == null || keyword.isBlank() ? null : keyword.trim();
 
         Map<Long, Recipe> recipes = new LinkedHashMap<>();
@@ -31,16 +35,18 @@ public class RecipeService {
                 .distinct()
                 .toList();
         if (!safeFoodIds.isEmpty()) {
-            recipeRepository.findSuggestionsByFoodIds(maxCalories, safeFoodIds, PageRequest.of(0, safeLimit))
+            recipeRepository.findSuggestionsByFoodIds(maxCalories, safeFoodIds, PageRequest.of(0, candidateLimit))
                     .forEach(recipe -> recipes.putIfAbsent(recipe.getId(), recipe));
         }
 
-        if (recipes.size() < safeLimit) {
-            recipeRepository.findSuggestions(maxCalories, normalizedKeyword, PageRequest.of(0, safeLimit))
+        if (recipes.size() < candidateLimit) {
+            recipeRepository.findSuggestions(maxCalories, normalizedKeyword, PageRequest.of(0, candidateLimit))
                     .forEach(recipe -> recipes.putIfAbsent(recipe.getId(), recipe));
         }
 
         return recipes.values().stream()
+                .sorted(Comparator.comparingDouble((Recipe recipe) -> goalScore(recipe, goal)).reversed()
+                        .thenComparing(Recipe::getId))
                 .limit(safeLimit)
                 .map(this::toSuggestion)
                 .toList();
@@ -77,5 +83,36 @@ public class RecipeService {
 
     private BigDecimal value(BigDecimal value) {
         return value == null ? BigDecimal.ZERO : value;
+    }
+
+    private double goalScore(Recipe recipe, String goal) {
+        BigDecimal calories = value(recipe.getTotalCalories());
+        if (calories.signum() <= 0) {
+            return 0;
+        }
+
+        double proteinShare = calorieShare(value(recipe.getTotalProteinG()), 4, calories);
+        double carbShare = calorieShare(value(recipe.getTotalCarbsG()), 4, calories);
+        double fatShare = calorieShare(value(recipe.getTotalFatG()), 9, calories);
+        double energyScore = Math.min(1.0, calories.doubleValue() / 650.0);
+        String normalizedGoal = goal == null ? "MAINTAIN_WEIGHT" : goal.trim().toUpperCase();
+
+        return switch (normalizedGoal) {
+            case "LOSE_WEIGHT", "CUTTING" -> proteinShare * 1.8 + (1.0 - fatShare) * 0.5 + (1.0 - energyScore) * 0.2;
+            case "GAIN_MUSCLE", "BODY_RECOMPOSITION" -> proteinShare * 1.6 + carbShare * 0.5 + (1.0 - fatShare) * 0.2;
+            case "GAIN_WEIGHT" -> energyScore * 0.8 + carbShare * 0.7 + proteinShare * 0.6;
+            case "IMPROVE_FITNESS" -> proteinShare * 0.9 + carbShare * 0.6 + (1.0 - Math.abs(fatShare - 0.25)) * 0.4;
+            default -> proteinShare * 0.8 + carbShare * 0.5 + (1.0 - Math.abs(fatShare - 0.25)) * 0.3;
+        };
+    }
+
+    private double calorieShare(BigDecimal grams, int kcalPerGram, BigDecimal totalCalories) {
+        if (totalCalories.signum() <= 0) {
+            return 0;
+        }
+
+        return grams.multiply(BigDecimal.valueOf(kcalPerGram))
+                .divide(totalCalories, 4, RoundingMode.HALF_UP)
+                .doubleValue();
     }
 }

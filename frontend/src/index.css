@@ -2169,6 +2169,21 @@ tr.is-completed {
   opacity: 0.45;
 }
 
+.planner-food-pagination {
+  align-items: center;
+  color: #6c757d;
+  display: flex;
+  font-size: 0.82rem;
+  gap: 0.6rem;
+  justify-content: space-between;
+  margin-top: 0.65rem;
+}
+
+.planner-food-pagination span {
+  min-width: 0;
+  text-align: center;
+}
+
 .planner-clear-foods {
   color: var(--health-primary-dark);
   font-weight: 750;

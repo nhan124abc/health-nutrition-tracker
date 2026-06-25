@@ -21,6 +21,8 @@ public class GoalPlanService {
     private static final BigDecimal KCAL_PER_KG = BigDecimal.valueOf(7700);
     private static final BigDecimal SAFE_LOSS_PER_WEEK_KG = BigDecimal.valueOf(0.75);
     private static final BigDecimal SAFE_GAIN_PER_WEEK_KG = BigDecimal.valueOf(0.5);
+    private static final BigDecimal ACTIVITY_MIN_TDEE_RATIO = BigDecimal.valueOf(0.04);
+    private static final BigDecimal ACTIVITY_MAX_TDEE_RATIO = BigDecimal.valueOf(0.18);
 
     private final UserProfileRepository profileRepository;
     private final NutritionGoalCalculator calculator;
@@ -34,12 +36,12 @@ public class GoalPlanService {
             throw new AppException(HttpStatus.BAD_REQUEST, "Weight, height, date of birth and gender are required");
         }
 
-        BigDecimal change = request.getGoal() == GoalPlanRequest.PlanGoal.MAINTAIN_WEIGHT
+        BigDecimal change = isWeightStableGoal(request.getGoal())
                 ? BigDecimal.ZERO : request.getTargetChangeKg();
         BigDecimal targetWeight = switch (request.getGoal()) {
-            case LOSE_WEIGHT -> profile.getWeightKg().subtract(change);
-            case GAIN_WEIGHT -> profile.getWeightKg().add(change);
-            case MAINTAIN_WEIGHT -> profile.getWeightKg();
+            case LOSE_WEIGHT, CUTTING -> profile.getWeightKg().subtract(change);
+            case GAIN_WEIGHT, GAIN_MUSCLE -> profile.getWeightKg().add(change);
+            case MAINTAIN_WEIGHT, BODY_RECOMPOSITION, IMPROVE_FITNESS -> profile.getWeightKg();
         };
         if (targetWeight.compareTo(BigDecimal.ONE) < 0) {
             throw new AppException(HttpStatus.BAD_REQUEST, "Target weight must be greater than 1 kg");
@@ -79,22 +81,30 @@ public class GoalPlanService {
 
         UserProfile profile = profileRepository.findByUserId(userId).orElseThrow();
         profile.setTargetWeightKg(plan.getTargetWeightKg());
-        profile.setDailyCalorieGoal(selected.getDailyCalorieGoal());
         profile.setPlanStartDate(java.time.LocalDate.now());
         profile.setPlanDurationWeeks(request.getTargetWeeks() != null ? request.getTargetWeeks() : selected.getWeeks());
         profile.setDailyActivityGoalKcal(selected.getDailyActivityGoalKcal());
         profile.setGoal(switch (request.getGoal()) {
             case LOSE_WEIGHT -> UserProfile.Goal.LOSE_WEIGHT;
             case MAINTAIN_WEIGHT -> UserProfile.Goal.MAINTAIN_WEIGHT;
-            case GAIN_WEIGHT -> UserProfile.Goal.GAIN_MUSCLE;
+            case GAIN_WEIGHT -> UserProfile.Goal.GAIN_WEIGHT;
+            case GAIN_MUSCLE -> UserProfile.Goal.GAIN_MUSCLE;
+            case CUTTING -> UserProfile.Goal.CUTTING;
+            case BODY_RECOMPOSITION -> UserProfile.Goal.BODY_RECOMPOSITION;
+            case IMPROVE_FITNESS -> UserProfile.Goal.IMPROVE_FITNESS;
         });
+        NutritionGoalCalculator.NutritionTargets targets = calculator.calculate(profile, selected.getDailyCalorieGoal());
+        profile.setDailyCalorieGoal(selected.getDailyCalorieGoal());
+        profile.setDailyProteinGoalG(targets.dailyProteinGoalG());
+        profile.setDailyCarbsGoalG(targets.dailyCarbsGoalG());
+        profile.setDailyFatGoalG(targets.dailyFatGoalG());
         profileRepository.save(profile);
         return selected;
     }
 
     private int minimumSafeWeeks(BigDecimal change, GoalPlanRequest.PlanGoal goal) {
-        if (goal == GoalPlanRequest.PlanGoal.MAINTAIN_WEIGHT) return 1;
-        BigDecimal weekly = goal == GoalPlanRequest.PlanGoal.LOSE_WEIGHT
+        if (isWeightStableGoal(goal)) return 1;
+        BigDecimal weekly = isWeightLossGoal(goal)
                 ? SAFE_LOSS_PER_WEEK_KG : SAFE_GAIN_PER_WEEK_KG;
         return Math.max(1, change.divide(weekly, 0, RoundingMode.CEILING).intValue());
     }
@@ -102,15 +112,14 @@ public class GoalPlanService {
     private GoalPlanResponse.Option option(UserProfile profile, int tdee, GoalPlanRequest.PlanGoal goal,
                                            BigDecimal change, int weeks, int safeWeeks, boolean custom) {
         int days = weeks * 7;
-        int dailyChange = goal == GoalPlanRequest.PlanGoal.MAINTAIN_WEIGHT ? 0
+        int dailyChange = isWeightStableGoal(goal) ? 0
                 : change.multiply(KCAL_PER_KG).divide(BigDecimal.valueOf(days), 0, RoundingMode.HALF_UP).intValue();
-        int activityGoal = goal == GoalPlanRequest.PlanGoal.LOSE_WEIGHT
-                ? Math.min(350, (int) Math.round(dailyChange * 0.35)) : 0;
+        int activityGoal = dailyActivityGoal(profile, tdee, goal, dailyChange);
         int foodChange = Math.max(0, dailyChange - activityGoal);
         int calories = switch (goal) {
-            case LOSE_WEIGHT -> tdee - foodChange;
-            case GAIN_WEIGHT -> tdee + dailyChange;
-            case MAINTAIN_WEIGHT -> tdee;
+            case LOSE_WEIGHT, CUTTING -> tdee - foodChange;
+            case GAIN_WEIGHT, GAIN_MUSCLE -> tdee + dailyChange;
+            case MAINTAIN_WEIGHT, BODY_RECOMPOSITION, IMPROVE_FITNESS -> tdee;
         };
         int minimumCalories = profile.getGender() == UserProfile.Gender.MALE ? 1500 : 1200;
         boolean safe = weeks >= safeWeeks && calories >= minimumCalories && dailyChange <= 1000;
@@ -122,5 +131,58 @@ public class GoalPlanService {
                 .weeklyWeightChangeKg(weeks == 0 ? BigDecimal.ZERO : change.divide(BigDecimal.valueOf(weeks), 2, RoundingMode.HALF_UP))
                 .dailyEnergyChangeKcal(dailyChange).dailyCalorieGoal(Math.max(minimumCalories, calories))
                 .dailyActivityGoalKcal(activityGoal).safe(safe).message(message).build();
+    }
+
+    private boolean isWeightLossGoal(GoalPlanRequest.PlanGoal goal) {
+        return goal == GoalPlanRequest.PlanGoal.LOSE_WEIGHT || goal == GoalPlanRequest.PlanGoal.CUTTING;
+    }
+
+    private int dailyActivityGoal(UserProfile profile, int tdee, GoalPlanRequest.PlanGoal goal, int dailyChange) {
+        BigDecimal goalRatio = switch (goal) {
+            case LOSE_WEIGHT, CUTTING -> BigDecimal.valueOf(0.10);
+            case BODY_RECOMPOSITION -> BigDecimal.valueOf(0.12);
+            case IMPROVE_FITNESS -> BigDecimal.valueOf(0.10);
+            case GAIN_MUSCLE -> BigDecimal.valueOf(0.09);
+            case MAINTAIN_WEIGHT -> BigDecimal.valueOf(0.07);
+            case GAIN_WEIGHT -> BigDecimal.valueOf(0.05);
+        };
+        BigDecimal levelMultiplier = activityLevelMultiplier(profile.getActivityLevel());
+        int tdeeBasedGoal = BigDecimal.valueOf(tdee)
+                .multiply(goalRatio)
+                .multiply(levelMultiplier)
+                .setScale(0, RoundingMode.HALF_UP)
+                .intValue();
+        int deficitBasedGoal = isWeightLossGoal(goal) ? (int) Math.round(dailyChange * 0.35) : 0;
+        int rawGoal = Math.max(tdeeBasedGoal, deficitBasedGoal);
+        int minGoal = BigDecimal.valueOf(tdee)
+                .multiply(ACTIVITY_MIN_TDEE_RATIO)
+                .setScale(0, RoundingMode.HALF_UP)
+                .intValue();
+        int maxGoal = BigDecimal.valueOf(tdee)
+                .multiply(ACTIVITY_MAX_TDEE_RATIO)
+                .setScale(0, RoundingMode.HALF_UP)
+                .intValue();
+
+        return Math.max(minGoal, Math.min(maxGoal, rawGoal));
+    }
+
+    private BigDecimal activityLevelMultiplier(UserProfile.ActivityLevel activityLevel) {
+        UserProfile.ActivityLevel level = activityLevel != null
+                ? activityLevel
+                : UserProfile.ActivityLevel.SEDENTARY;
+
+        return switch (level) {
+            case SEDENTARY -> BigDecimal.valueOf(0.85);
+            case LIGHTLY_ACTIVE -> BigDecimal.valueOf(0.95);
+            case MODERATELY_ACTIVE -> BigDecimal.ONE;
+            case VERY_ACTIVE -> BigDecimal.valueOf(1.10);
+            case EXTRA_ACTIVE -> BigDecimal.valueOf(1.20);
+        };
+    }
+
+    private boolean isWeightStableGoal(GoalPlanRequest.PlanGoal goal) {
+        return goal == GoalPlanRequest.PlanGoal.MAINTAIN_WEIGHT
+                || goal == GoalPlanRequest.PlanGoal.BODY_RECOMPOSITION
+                || goal == GoalPlanRequest.PlanGoal.IMPROVE_FITNESS;
     }
 }
