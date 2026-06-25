@@ -1,5 +1,22 @@
 import api from '../../api/api';
+import { getAccessToken, getCurrentUserRole } from '../../api/api';
 import activityConfig from '../../config/activityConfig';
+
+function withAdminAuth() {
+  const token = getAccessToken();
+  const role = getCurrentUserRole();
+  const headers = {};
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  if (role) {
+    headers['X-User-Role'] = role;
+  }
+
+  return { headers };
+}
 
 export function getActivitiesByDate(date) {
   return api.get(activityConfig.endpoints.listByDate, {
@@ -21,6 +38,30 @@ export function deleteActivityById(id) {
 
 export function getActivityTypes() {
   return api.get(activityConfig.endpoints.listTypes);
+}
+
+export function getAdminActivityTypes(params = {}) {
+  return api.get(activityConfig.endpoints.adminTypes, { ...withAdminAuth(), params });
+}
+
+export function createActivityType(payload) {
+  return api.post(activityConfig.endpoints.adminTypes, payload, withAdminAuth());
+}
+
+export function updateActivityType(id, payload) {
+  return api.put(activityConfig.endpoints.adminTypeDetail(id), payload, withAdminAuth());
+}
+
+export function deleteActivityType(id) {
+  return api.delete(activityConfig.endpoints.adminTypeDetail(id), withAdminAuth());
+}
+
+export function updateActivityTypeVisibility(id, hidden) {
+  const endpoint = hidden
+    ? activityConfig.endpoints.adminTypeHide(id)
+    : activityConfig.endpoints.adminTypeRestore(id);
+
+  return api.patch(endpoint, {}, withAdminAuth());
 }
 
 export function getActivitySummary(date) {

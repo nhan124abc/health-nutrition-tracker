@@ -1,4 +1,5 @@
 import api from '../../api/api';
+import authConfig from '../../config/authConfig';
 import profileConfig from '../../config/profileConfig';
 
 export function getProfile() {
@@ -7,6 +8,10 @@ export function getProfile() {
 
 export function updateProfile(payload) {
   return api.put(profileConfig.endpoints.profile, payload);
+}
+
+export function updateAccountProfile(payload) {
+  return api.put(authConfig.endpoints.me, payload);
 }
 
 export function getBodyMetrics(params = {}) {

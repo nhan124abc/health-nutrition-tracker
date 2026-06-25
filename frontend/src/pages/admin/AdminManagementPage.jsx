@@ -11,7 +11,12 @@ import {
   FaUsers,
   FaUtensils,
 } from 'react-icons/fa';
-import { getAdminUsers } from '../../features/admin/adminService';
+import {
+  deleteAdminUser,
+  getAdminUsers,
+  updateAdminUser,
+  updateAdminUserStatus,
+} from '../../features/admin/adminService';
 import { getActivityTypes } from '../../features/activities/activityService';
 import { getFoods } from '../../features/nutrition/nutritionService';
 import { cleanText } from '../../features/nutrition/nutritionUtils';
@@ -45,11 +50,13 @@ function extractUsers(payload) {
 }
 
 function mapUserRow(user) {
-  const active = user.active ?? user.isActive ?? user.enabled ?? !user.locked;
+  const active = user.hidden != null
+    ? !user.hidden
+    : user.active ?? user.isActive ?? user.enabled ?? !user.locked;
   const role = String(user.role || 'USER').replace(/^ROLE_/, '').toUpperCase();
 
   return {
-    id: user.id ?? user.userId ?? user.email,
+    id: user.userId ?? user.id ?? user.email,
     cells: [
       user.fullName || user.name || user.username || '-',
       user.email || '-',
@@ -68,6 +75,35 @@ function extractPage(payload) {
     content: Array.isArray(data.content) ? data.content : [],
     totalPages: Number(data.totalPages) || 0,
     totalElements: Number(data.totalElements) || 0,
+  };
+}
+
+async function loadAllAdminUsers() {
+  const firstResponse = await getAdminUsers({ page: 0, size: 100 });
+  const firstPayload = firstResponse.data?.data ?? firstResponse.data ?? {};
+  const firstUsers = extractUsers(firstResponse.data);
+  const totalPages = Number(firstPayload.totalPages) || 0;
+
+  if (totalPages <= 1) {
+    return {
+      users: firstUsers,
+      summary: firstPayload,
+    };
+  }
+
+  const remainingResponses = await Promise.all(
+    Array.from(
+      { length: totalPages - 1 },
+      (_, index) => getAdminUsers({ page: index + 1, size: 100 })
+    )
+  );
+
+  return {
+    users: [
+      ...firstUsers,
+      ...remainingResponses.flatMap((response) => extractUsers(response.data)),
+    ],
+    summary: firstPayload,
   };
 }
 
@@ -148,6 +184,16 @@ function mapActivityTypeRow(activityType) {
   };
 }
 
+function getAdminActionErrorMessage(error, fallback) {
+  const message = error.response?.data?.message || '';
+
+  if (/authorization header|invalid or expired jwt|unauthorized/i.test(message)) {
+    return 'Phiên đăng nhập admin đã hết hạn hoặc token không hợp lệ. Vui lòng đăng nhập lại rồi thử mở khóa tài khoản.';
+  }
+
+  return message || fallback;
+}
+
 function AdminManagementPage({ type }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [userRows, setUserRows] = useState([]);
@@ -156,6 +202,15 @@ function AdminManagementPage({ type }) {
   const [foodSummary, setFoodSummary] = useState({});
   const [activityRows, setActivityRows] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [showUserForm, setShowUserForm] = useState(false);
+  const [editForm, setEditForm] = useState({ fullName: '', email: '', role: 'USER', active: true });
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [actionError, setActionError] = useState('');
+  const [pendingAction, setPendingAction] = useState('');
+  const [confirmAction, setConfirmAction] = useState(null);
+  const [confirmingAction, setConfirmingAction] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(['users', 'foods', 'exercises'].includes(type));
   const [loadError, setLoadError] = useState('');
   const { t } = useTranslation();
@@ -204,18 +259,17 @@ function AdminManagementPage({ type }) {
 
       try {
         if (type === 'users') {
-          const response = await getAdminUsers({ page: 0, size: 100 });
-          const payload = response.data?.data ?? response.data ?? {};
-          const mappedUsers = extractUsers(response.data).map(mapUserRow);
+          const { users, summary } = await loadAllAdminUsers();
+          const mappedUsers = users.map(mapUserRow);
 
           if (!isActive) {
             return;
           }
           setUserRows(mappedUsers);
           setUserSummary({
-            total: payload.totalUsers ?? payload.totalElements,
-            active: payload.activeUsers ?? payload.active,
-            locked: payload.lockedUsers ?? payload.locked ?? payload.inactiveUsers,
+            total: summary.totalUsers ?? summary.totalElements ?? mappedUsers.length,
+            active: summary.activeUsers ?? summary.active,
+            locked: summary.lockedUsers ?? summary.locked ?? summary.inactiveUsers,
           });
         } else if (type === 'foods') {
           const { foods, total } = await loadAllFoods();
@@ -279,6 +333,150 @@ function AdminManagementPage({ type }) {
   const displayCell = (cell) => (
     typeof cell === 'string' && cell.startsWith('admin.') ? t(cell) : cell
   );
+
+  const getRowActionKey = (action, row) => `${action}:${row.id}`;
+
+  const updateUserRow = (id, updater) => {
+    setUserRows((currentRows) =>
+      currentRows.map((row) => {
+        if (row.id !== id) {
+          return row;
+        }
+
+        const nextRaw = typeof updater === 'function' ? updater(row.raw, row) : updater;
+        return mapUserRow({ ...row.raw, ...nextRaw });
+      })
+    );
+  };
+
+  const openEditUser = (row) => {
+    setActionError('');
+    setEditingUser(row);
+    setShowUserForm(true);
+    setEditForm({
+      fullName: row.raw?.fullName || row.raw?.name || row.raw?.username || '',
+      email: row.raw?.email || '',
+      role: String(row.raw?.role || row.cells[2] || 'USER').replace(/^ROLE_/, '').toUpperCase(),
+      active: row.active,
+    });
+  };
+
+  const closeUserForm = () => {
+    setShowUserForm(false);
+    setEditingUser(null);
+    setEditForm({ fullName: '', email: '', role: 'USER', active: true });
+  };
+
+  const showSuccess = (message) => {
+    setSuccessMessage(message);
+  };
+
+  const toggleUserStatus = async (row) => {
+    const actionKey = getRowActionKey('status', row);
+    const nextActive = !row.active;
+
+    setActionError('');
+    setPendingAction(actionKey);
+
+    try {
+      const response = await updateAdminUserStatus(row.id, nextActive);
+      const responseUser = response.data?.data ?? response.data;
+      updateUserRow(row.id, {
+        ...(typeof responseUser === 'object' ? responseUser : {}),
+        active: nextActive,
+        enabled: nextActive,
+        hidden: !nextActive,
+        locked: !nextActive,
+      });
+      setUserSummary((summary) => ({
+        ...summary,
+        active: summary.active == null ? summary.active : summary.active + (nextActive ? 1 : -1),
+        locked: summary.locked == null ? summary.locked : summary.locked + (nextActive ? -1 : 1),
+      }));
+      showSuccess(nextActive ? 'Đã mở khóa tài khoản thành công.' : 'Đã khóa tài khoản thành công.');
+    } catch (error) {
+      setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`)));
+    } finally {
+      setPendingAction('');
+    }
+  };
+
+  const saveUserEdit = async (event) => {
+    event?.preventDefault();
+
+    setActionError('');
+    setSavingEdit(true);
+
+    try {
+      const payload = {
+        fullName: editForm.fullName.trim(),
+        email: editForm.email.trim(),
+        role: editForm.role,
+        active: editForm.active,
+      };
+      const response = await updateAdminUser(editingUser.id, payload);
+      const responseUser = response.data?.data ?? response.data;
+      updateUserRow(editingUser.id, typeof responseUser === 'object' ? responseUser : payload);
+
+      if (editingUser && editingUser.active !== editForm.active) {
+        setUserSummary((summary) => ({
+          ...summary,
+          active: summary.active == null ? summary.active : summary.active + (editForm.active ? 1 : -1),
+          locked: summary.locked == null ? summary.locked : summary.locked + (editForm.active ? -1 : 1),
+        }));
+      }
+      closeUserForm();
+      showSuccess('Đã cập nhật người dùng thành công.');
+    } catch (error) {
+      setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`)));
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const removeUser = async (row) => {
+    const actionKey = getRowActionKey('delete', row);
+    setActionError('');
+    setPendingAction(actionKey);
+
+    try {
+      await deleteAdminUser(row.id);
+      setUserRows((currentRows) => currentRows.filter((currentRow) => currentRow.id !== row.id));
+      setUserSummary((summary) => ({
+        ...summary,
+        total: summary.total == null ? summary.total : Math.max(0, summary.total - 1),
+        active: summary.active == null || !row.active ? summary.active : Math.max(0, summary.active - 1),
+        locked: summary.locked == null || row.active ? summary.locked : Math.max(0, summary.locked - 1),
+      }));
+      showSuccess('Đã xóa người dùng thành công.');
+    } catch (error) {
+      setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`)));
+    } finally {
+      setPendingAction('');
+    }
+  };
+
+  const runConfirmedAction = async () => {
+    const action = confirmAction;
+    setConfirmAction(null);
+
+    if (!action) {
+      return;
+    }
+
+    setConfirmingAction(true);
+
+    try {
+      if (action.type === 'status') {
+        await toggleUserStatus(action.row);
+      } else if (action.type === 'delete') {
+        await removeUser(action.row);
+      }
+    } finally {
+      setConfirmingAction(false);
+    }
+  };
+
   const userDetailRows = selectedUser ? [
     [t('admin.table.name'), selectedUser.cells[0]],
     [t('admin.table.email'), selectedUser.cells[1]],
@@ -321,6 +519,7 @@ function AdminManagementPage({ type }) {
         </Alert>
       )}
       {loadError && <Alert variant="danger">{loadError}</Alert>}
+      {actionError && <Alert variant="danger">{actionError}</Alert>}
 
       <Card className="admin-card border-0 shadow-sm">
         <Card.Body>
@@ -364,6 +563,8 @@ function AdminManagementPage({ type }) {
                 {filteredRows.map((row) => {
                   const rowKey = row.id || row.cells.join('-');
                   const isUserRow = type === 'users';
+                  const statusActionKey = getRowActionKey('status', row);
+                  const deleteActionKey = getRowActionKey('delete', row);
                   const visibilityActionLabel = isUserRow
                     ? t(row.active ? 'admin.actions.hideAccount' : 'admin.actions.showAccount')
                     : t('admin.actions.view');
@@ -399,16 +600,20 @@ function AdminManagementPage({ type }) {
                             size="sm"
                             aria-label={visibilityActionLabel}
                             title={visibilityActionLabel}
-                            disabled
+                            disabled={!isUserRow || pendingAction === statusActionKey}
+                            onClick={() => isUserRow && setConfirmAction({ type: 'status', row })}
                           >
-                            {isUserRow && row.active ? <FaEyeSlash /> : <FaEye />}
+                            {pendingAction === statusActionKey
+                              ? <Spinner animation="border" size="sm" />
+                              : isUserRow && row.active ? <FaEyeSlash /> : <FaEye />}
                           </Button>
                           <Button
                             variant="outline-success"
                             size="sm"
                             aria-label={t('admin.actions.edit')}
                             title={t('admin.actions.edit')}
-                            disabled
+                            disabled={!isUserRow}
+                            onClick={() => isUserRow && openEditUser(row)}
                           >
                             <FaEdit />
                           </Button>
@@ -417,9 +622,12 @@ function AdminManagementPage({ type }) {
                             size="sm"
                             aria-label={t('admin.actions.delete')}
                             title={t('admin.actions.delete')}
-                            disabled
+                            disabled={!isUserRow || pendingAction === deleteActionKey}
+                            onClick={() => isUserRow && setConfirmAction({ type: 'delete', row })}
                           >
-                            <FaTrash />
+                            {pendingAction === deleteActionKey
+                              ? <Spinner animation="border" size="sm" />
+                              : <FaTrash />}
                           </Button>
                         </div>
                       </td>
@@ -448,6 +656,103 @@ function AdminManagementPage({ type }) {
         </Modal.Body>
         <Modal.Footer>
           <Button variant="success" onClick={() => setSelectedUser(null)}>
+            {t('common.close')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showUserForm} onHide={closeUserForm} centered>
+        <Form onSubmit={(event) => {
+          event.preventDefault();
+          saveUserEdit();
+        }}>
+          <Modal.Header closeButton>
+            <Modal.Title>{t('admin.actions.edit')}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Row className="g-3">
+              <Col md={12}>
+                <Form.Label>{t('admin.table.name')}</Form.Label>
+                <Form.Control
+                  value={editForm.fullName}
+                  onChange={(event) => setEditForm((form) => ({ ...form, fullName: event.target.value }))}
+                />
+              </Col>
+              <Col md={12}>
+                <Form.Label>{t('admin.table.email')}</Form.Label>
+                <Form.Control
+                  type="email"
+                  value={editForm.email}
+                  onChange={(event) => setEditForm((form) => ({ ...form, email: event.target.value }))}
+                  required
+                />
+              </Col>
+              <Col md={6}>
+                <Form.Label>{t('admin.table.role')}</Form.Label>
+                <Form.Select
+                  value={editForm.role}
+                  onChange={(event) => setEditForm((form) => ({ ...form, role: event.target.value }))}
+                >
+                  <option value="USER">USER</option>
+                  <option value="ADMIN">ADMIN</option>
+                </Form.Select>
+              </Col>
+              <Col md={6}>
+                <Form.Label>{t('admin.table.status')}</Form.Label>
+                <Form.Select
+                  value={editForm.active ? 'active' : 'locked'}
+                  onChange={(event) => setEditForm((form) => ({ ...form, active: event.target.value === 'active' }))}
+                >
+                  <option value="active">{t('admin.status.active')}</option>
+                  <option value="locked">{t('admin.status.locked')}</option>
+                </Form.Select>
+              </Col>
+            </Row>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button type="button" variant="outline-secondary" onClick={closeUserForm}>
+              {t('common.close')}
+            </Button>
+            <Button type="submit" variant="success" disabled={savingEdit}>
+              {savingEdit ? <Spinner animation="border" size="sm" /> : t('admin.actions.edit')}
+            </Button>
+          </Modal.Footer>
+        </Form>
+      </Modal>
+
+      <Modal show={Boolean(confirmAction)} onHide={() => setConfirmAction(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Xác nhận thao tác</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {confirmAction?.type === 'delete' && 'Bạn có chắc muốn xóa người dùng này?'}
+          {confirmAction?.type === 'status' && (
+            confirmAction.row?.active
+              ? 'Bạn có chắc muốn khóa tài khoản này?'
+              : 'Bạn có chắc muốn mở khóa tài khoản này?'
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setConfirmAction(null)}>
+            {t('common.close')}
+          </Button>
+          <Button
+            variant={confirmAction?.type === 'delete' ? 'danger' : 'success'}
+            onClick={runConfirmedAction}
+            disabled={confirmingAction}
+          >
+            Xác nhận
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={Boolean(successMessage)} onHide={() => setSuccessMessage('')} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Thành công</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{successMessage}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={() => setSuccessMessage('')}>
             {t('common.close')}
           </Button>
         </Modal.Footer>

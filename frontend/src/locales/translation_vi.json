@@ -360,6 +360,7 @@
     "noAccount": "Chưa có tài khoản?",
     "registerNow": "Đăng ký ngay",
     "loginError": "Không thể đăng nhập. Vui lòng thử lại.",
+    "accountLocked": "Tài khoản của bạn đã bị khóa và không thể truy cập.",
     "oauthLoginError": "Không thể đăng nhập bằng Google hoặc Facebook. Vui lòng kiểm tra tài khoản và thử lại.",
     "missingToken": "Backend chưa trả access token.",
     "registerTitle": "Tạo tài khoản",
@@ -687,6 +688,10 @@
     },
     "title": "Profile sức khỏe",
     "savedMessage": "Đã lưu hồ sơ thành công.",
+    "updateSuccess": {
+      "title": "Thành công",
+      "message": "Đã cập nhật hồ sơ thành công."
+    },
     "metricsLoadError": "Không thể tải lịch sử chỉ số cơ thể.",
     "noMetrics": "Chưa có dữ liệu chỉ số cơ thể.",
     "selectGender": "Chọn giới tính",
@@ -1288,6 +1293,7 @@
       "editCategory": "Sửa danh mục",
       "totalCategoryBlocks": "Tổng danh mục",
       "totalDataItems": "Tổng dữ liệu",
+      "description": "Mô tả",
       "toggleHidden": "Ẩn/hiện danh mục",
       "hidden": "Đã ẩn",
       "visible": "Đang hiện"

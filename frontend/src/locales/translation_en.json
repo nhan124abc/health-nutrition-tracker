@@ -636,6 +636,7 @@
       "editCategory": "Edit category",
       "totalCategoryBlocks": "Total categories",
       "totalDataItems": "Total data items",
+      "description": "Description",
       "toggleHidden": "Show/hide category",
       "hidden": "Hidden",
       "visible": "Visible"
@@ -653,6 +654,7 @@
     "noAccount": "No account?",
     "registerNow": "Register now",
     "loginError": "Unable to log in. Please try again.",
+    "accountLocked": "Your account has been locked and cannot be accessed.",
     "oauthLoginError": "Unable to log in with Google or Facebook. Please check your account and try again.",
     "missingToken": "Backend did not return an access token.",
     "registerTitle": "Create account",
@@ -1023,6 +1025,10 @@
   "profilePage": {
     "title": "Health profile",
     "savedMessage": "Profile saved successfully.",
+    "updateSuccess": {
+      "title": "Success",
+      "message": "Profile updated successfully."
+    },
     "completion": {
       "title": "Complete your profile",
       "description": "Some required profile fields are still missing. Please update them so the app can calculate goals and suggestions correctly.",
