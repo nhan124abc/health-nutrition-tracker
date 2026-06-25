@@ -622,6 +622,8 @@
       "title": "System catalogs",
       "foodsTitle": "Food catalog",
       "activitiesTitle": "Activity catalog",
+      "foodsDescription": "Create, edit, hide, or delete food groups used by filters and food data.",
+      "activitiesDescription": "Create, edit, hide, or delete activity types used for MET and calorie calculations.",
       "foodCategoriesTitle": "Food categories",
       "activityCategoriesTitle": "Activity categories",
       "back": "Back to catalogs",
@@ -637,6 +639,7 @@
       "totalCategoryBlocks": "Total categories",
       "totalDataItems": "Total data items",
       "description": "Description",
+      "systemItem": "System data",
       "toggleHidden": "Show/hide category",
       "hidden": "Hidden",
       "visible": "Visible"

@@ -46,8 +46,6 @@ const catalogItems = [
 const emptyFoodCategoryForm = {
   name: '',
   nameVi: '',
-  icon: '',
-  description: '',
   hidden: false,
 };
 
@@ -56,8 +54,6 @@ const emptyActivityTypeForm = {
   nameVi: '',
   category: 'OTHER',
   metValue: 3,
-  icon: '',
-  description: '',
   hidden: false,
   system: true,
 };
@@ -84,8 +80,6 @@ function mapFoodCategory(category = {}) {
     name: name || '-',
     nameRaw: normalizedCategory.name || '',
     nameVi: normalizedCategory.nameVi || '',
-    icon: category.icon || '',
-    description: category.description || '',
     hidden: Boolean(category.hidden),
     count: getCategoryItemCount(category),
     raw: category,
@@ -117,8 +111,6 @@ function mapActivityType(type = {}) {
     nameVi: normalizedType.nameVi || '',
     category: String(type.category || normalizedType.category || 'OTHER').toUpperCase(),
     metValue: Number(type.metValue ?? normalizedType.met ?? 3),
-    icon: type.icon || '',
-    description: type.description || '',
     hidden: Boolean(type.hidden),
     system: type.system ?? true,
     count: 1,
@@ -154,9 +146,16 @@ function AdminCatalogs({ type = 'overview' }) {
 
       try {
         if (isFoodCategories) {
-          const response = await getAdminFoodCategories().catch(() => getFoodCategories());
-          const foodCategories = extractCategoriesFromApi(response.data)
+          const [categoryResponse, foodsResponse] = await Promise.all([
+            getAdminFoodCategories().catch(() => getFoodCategories()),
+            getFoods({ page: 0, size: 1000 }).catch(() => null),
+          ]);
+          const foods = foodsResponse
+            ? extractFoodsFromApi(foodsResponse.data).map(normalizeFoodFromApi)
+            : [];
+          const foodCategories = extractCategoriesFromApi(categoryResponse.data)
             .map(mapFoodCategory)
+            .map((category) => mapDerivedFoodCategory(category, foods))
             .filter((category) => category.id && category.name)
             .sort((left, right) => left.name.localeCompare(right.name));
           const categoriesFromDb = foodCategories.length
@@ -233,16 +232,12 @@ function AdminCatalogs({ type = 'overview' }) {
         nameVi: item.nameVi || '',
         category: item.category || 'OTHER',
         metValue: item.metValue || 3,
-        icon: item.icon || '',
-        description: item.description || '',
         hidden: item.hidden,
         system: item.system,
       }
       : {
         name: item.nameRaw || item.name || '',
         nameVi: item.nameVi || '',
-        icon: item.icon || '',
-        description: item.description || '',
         hidden: item.hidden,
       });
   };
@@ -312,16 +307,12 @@ function AdminCatalogs({ type = 'overview' }) {
           nameVi: form.nameVi.trim() || null,
           category: form.category,
           metValue: Number(form.metValue),
-          icon: form.icon.trim() || null,
-          description: form.description.trim() || null,
           hidden: form.hidden,
           system: form.system,
         }
         : {
           name: form.name.trim(),
           nameVi: form.nameVi.trim() || null,
-          icon: form.icon.trim() || null,
-          description: form.description.trim() || null,
           hidden: form.hidden,
         };
 
@@ -408,7 +399,11 @@ function AdminCatalogs({ type = 'overview' }) {
                 <div>
                   <h3 className="h5 fw-bold mb-1">{t('admin.catalogs.categoryList')}</h3>
                 </div>
-                <Button variant="success" onClick={openCreateModal}>
+                <Button
+                  variant="success"
+                  onClick={openCreateModal}
+                  title={t('admin.catalogs.addCategory')}
+                >
                   <FaPlus className="me-2" />
                   {t('admin.catalogs.addCategory')}
                 </Button>
@@ -418,6 +413,7 @@ function AdminCatalogs({ type = 'overview' }) {
                   <thead>
                     <tr>
                       <th>{t('admin.catalogs.categoryName')}</th>
+                      <th>{t('admin.catalogs.itemCount')}</th>
                       <th>{t('admin.table.status')}</th>
                       <th className="text-end">{t('admin.table.actions')}</th>
                     </tr>
@@ -437,6 +433,7 @@ function AdminCatalogs({ type = 'overview' }) {
                               </div>
                             )}
                           </td>
+                          <td>{category.count}</td>
                           <td>
                             <span className={`small fw-semibold text-${category.hidden ? 'secondary' : 'success'}`}>
                               {t(category.hidden ? 'admin.status.locked' : 'admin.status.active')}
@@ -484,7 +481,7 @@ function AdminCatalogs({ type = 'overview' }) {
                     })}
                     {categories.length === 0 && (
                       <tr>
-                        <td colSpan={3} className="text-center text-secondary py-4">
+                        <td colSpan={4} className="text-center text-secondary py-4">
                           {t('admin.table.empty')}
                         </td>
                       </tr>
@@ -548,22 +545,6 @@ function AdminCatalogs({ type = 'overview' }) {
                       </>
                     )}
                     <Col md={12}>
-                      <Form.Label>Icon</Form.Label>
-                      <Form.Control
-                        value={form.icon}
-                        onChange={(event) => setForm((current) => ({ ...current, icon: event.target.value }))}
-                      />
-                    </Col>
-                    <Col md={12}>
-                      <Form.Label>{t('admin.catalogs.description')}</Form.Label>
-                      <Form.Control
-                        as="textarea"
-                        rows={3}
-                        value={form.description}
-                        onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
-                      />
-                    </Col>
-                    <Col md={12}>
                       <Form.Check
                         type="switch"
                         id="catalog-hidden"
@@ -572,13 +553,34 @@ function AdminCatalogs({ type = 'overview' }) {
                         onChange={(event) => setForm((current) => ({ ...current, hidden: event.target.checked }))}
                       />
                     </Col>
+                    {isActivityCategories && (
+                      <Col md={12}>
+                        <Form.Check
+                          type="switch"
+                          id="catalog-system"
+                          label={t('admin.catalogs.systemItem')}
+                          checked={form.system}
+                          onChange={(event) => setForm((current) => ({ ...current, system: event.target.checked }))}
+                        />
+                      </Col>
+                    )}
                   </Row>
                 </Modal.Body>
                 <Modal.Footer>
-                  <Button type="button" variant="outline-secondary" onClick={resetForm}>
+                  <Button
+                    type="button"
+                    variant="outline-secondary"
+                    onClick={resetForm}
+                    title={t('common.close')}
+                  >
                     {t('common.close')}
                   </Button>
-                  <Button type="submit" variant="success" disabled={saving}>
+                  <Button
+                    type="submit"
+                    variant="success"
+                    disabled={saving}
+                    title={t(editingItem ? 'admin.actions.edit' : 'admin.catalogs.addCategory')}
+                  >
                     {saving ? <Spinner animation="border" size="sm" /> : t(editingItem ? 'admin.actions.edit' : 'admin.catalogs.addCategory')}
                   </Button>
                 </Modal.Footer>
@@ -610,7 +612,6 @@ function AdminCatalogs({ type = 'overview' }) {
                     <Icon />
                   </div>
                   <h3>{t(item.titleKey)}</h3>
-                  <p>{t(item.descriptionKey)}</p>
                 </Card.Body>
               </Card>
             </Col>

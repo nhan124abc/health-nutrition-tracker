@@ -1327,6 +1327,8 @@
       "title": "Quản lý danh mục",
       "foodsTitle": "Danh mục thực phẩm",
       "activitiesTitle": "Danh mục hoạt động",
+      "foodsDescription": "Thêm, sửa, ẩn hoặc xóa các nhóm thực phẩm dùng cho bộ lọc và dữ liệu món ăn.",
+      "activitiesDescription": "Thêm, sửa, ẩn hoặc xóa các loại hoạt động dùng để tính MET và calo vận động.",
       "foodCategoriesTitle": "Danh mục thực phẩm",
       "activityCategoriesTitle": "Danh mục hoạt động",
       "back": "Quay lại danh mục",
@@ -1342,6 +1344,7 @@
       "totalCategoryBlocks": "Tổng danh mục",
       "totalDataItems": "Tổng dữ liệu",
       "description": "Mô tả",
+      "systemItem": "Dữ liệu hệ thống",
       "toggleHidden": "Ẩn/hiện danh mục",
       "hidden": "Đã ẩn",
       "visible": "Đang hiện"
