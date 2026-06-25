@@ -172,12 +172,14 @@ public class AuthController {
     @PutMapping("/admin/users/{userId}")
     public ResponseEntity<AdminUsersResponse.UserItem> updateAdminUser(
             @RequestHeader("X-User-Role") String role,
+            @RequestHeader(value = "X-User-Id", required = false) Long currentUserId,
             @PathVariable Long userId,
             @RequestBody Map<String, Object> request) {
 
         requireAdmin(role);
         return ResponseEntity.ok(adminUserService.updateUser(
                 userId,
+                currentUserId,
                 asString(request.get("fullName")),
                 asString(request.get("email")),
                 asString(request.get("role")),
@@ -188,19 +190,21 @@ public class AuthController {
     @PatchMapping("/admin/users/{userId}/lock")
     public ResponseEntity<AdminUsersResponse.UserItem> lockAdminUser(
             @RequestHeader("X-User-Role") String role,
+            @RequestHeader(value = "X-User-Id", required = false) Long currentUserId,
             @PathVariable Long userId) {
 
         requireAdmin(role);
-        return ResponseEntity.ok(adminUserService.setUserActive(userId, false));
+        return ResponseEntity.ok(adminUserService.setUserActive(userId, currentUserId, false));
     }
 
     @PatchMapping("/admin/users/{userId}/unlock")
     public ResponseEntity<AdminUsersResponse.UserItem> unlockAdminUser(
             @RequestHeader("X-User-Role") String role,
+            @RequestHeader(value = "X-User-Id", required = false) Long currentUserId,
             @PathVariable Long userId) {
 
         requireAdmin(role);
-        return ResponseEntity.ok(adminUserService.setUserActive(userId, true));
+        return ResponseEntity.ok(adminUserService.setUserActive(userId, currentUserId, true));
     }
 
     @DeleteMapping("/admin/users/{userId}")
