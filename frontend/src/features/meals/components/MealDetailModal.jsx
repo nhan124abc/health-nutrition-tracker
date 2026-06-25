@@ -21,7 +21,7 @@ function MealDetailModal({ loading, meal, onClose, t }) {
         <Modal.Title>{getTitle()}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        {loading && <div className="alert alert-light border">Loading meal detail...</div>}
+        {loading && <div className="alert alert-light border">{t('foodDiaryPage.loadingDetail')}</div>}
         {meal && (
           <>
             <p className="text-secondary mb-3">{notes || t('common.noNotes')}</p>

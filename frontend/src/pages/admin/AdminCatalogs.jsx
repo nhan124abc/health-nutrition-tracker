@@ -126,6 +126,14 @@ function mapActivityType(type = {}) {
   };
 }
 
+function isLinkedFoodCategoryError(error) {
+  const message = String(error.response?.data?.message || error.message || '').toLowerCase();
+  return message.includes('food item')
+    || message.includes('food(s)')
+    || message.includes('thực phẩm')
+    || message.includes('thuc pham');
+}
+
 function AdminCatalogs({ type = 'overview' }) {
   const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
@@ -137,6 +145,8 @@ function AdminCatalogs({ type = 'overview' }) {
   const [showFormModal, setShowFormModal] = useState(false);
   const [form, setForm] = useState(emptyFoodCategoryForm);
   const [saving, setSaving] = useState(false);
+  const [noticeKey, setNoticeKey] = useState('');
+  const [deleteCandidate, setDeleteCandidate] = useState(null);
   const isFoodCategories = type === 'food';
   const isActivityCategories = type === 'activity';
 
@@ -204,10 +214,14 @@ function AdminCatalogs({ type = 'overview' }) {
     const message = requestError.response?.data?.message || '';
 
     if (/authorization header|invalid or expired jwt|unauthorized/i.test(message)) {
-      return 'Phiên đăng nhập admin đã hết hạn hoặc token không hợp lệ. Vui lòng đăng nhập lại rồi thử lại.';
+      return t('admin.common.sessionExpired');
     }
 
     return message || t('admin.catalogs.loadError');
+  };
+
+  const showLinkedFoodNotice = () => {
+    setNoticeKey('admin.catalogs.linkedFoodCategoryBlocked');
   };
 
   const resetForm = () => {
@@ -270,17 +284,33 @@ function AdminCatalogs({ type = 'overview' }) {
       const data = response.data?.data ?? response.data ?? { hidden: nextHidden };
       updateCategoryRow(item.id, { ...data, hidden: nextHidden });
     } catch (requestError) {
-      setActionError(getActionError(requestError));
+      if (isFoodCategories && nextHidden && isLinkedFoodCategoryError(requestError)) {
+        showLinkedFoodNotice();
+      } else {
+        setActionError(getActionError(requestError));
+      }
     } finally {
       setPendingAction('');
     }
   };
 
-  const deleteItem = async (item) => {
-    if (!window.confirm(t('admin.actions.delete'))) {
+  const requestDeleteItem = (item) => {
+    setActionError('');
+    setDeleteCandidate(item);
+  };
+
+  const closeDeletePopup = () => {
+    if (!pendingAction.startsWith('delete:')) {
+      setDeleteCandidate(null);
+    }
+  };
+
+  const confirmDeleteItem = async () => {
+    if (!deleteCandidate) {
       return;
     }
 
+    const item = deleteCandidate;
     const actionKey = `delete:${item.id}`;
 
     setActionError('');
@@ -293,8 +323,14 @@ function AdminCatalogs({ type = 'overview' }) {
         await deleteFoodCategory(item.id);
       }
       setCategories((current) => current.filter((category) => String(category.id) !== String(item.id)));
+      setDeleteCandidate(null);
     } catch (requestError) {
-      setActionError(getActionError(requestError));
+      if (isFoodCategories && isLinkedFoodCategoryError(requestError)) {
+        showLinkedFoodNotice();
+        setDeleteCandidate(null);
+      } else {
+        setActionError(getActionError(requestError));
+      }
     } finally {
       setPendingAction('');
     }
@@ -471,7 +507,7 @@ function AdminCatalogs({ type = 'overview' }) {
                                 aria-label={t('admin.actions.delete')}
                                 title={t('admin.actions.delete')}
                                 disabled={pendingAction === deleteActionKey}
-                                onClick={() => deleteItem(category)}
+                                onClick={() => requestDeleteItem(category)}
                               >
                                 {pendingAction === deleteActionKey
                                   ? <Spinner animation="border" size="sm" />
@@ -548,7 +584,7 @@ function AdminCatalogs({ type = 'overview' }) {
                       </>
                     )}
                     <Col md={12}>
-                      <Form.Label>Icon</Form.Label>
+                      <Form.Label>{t('admin.table.icon')}</Form.Label>
                       <Form.Control
                         value={form.icon}
                         onChange={(event) => setForm((current) => ({ ...current, icon: event.target.value }))}
@@ -583,6 +619,47 @@ function AdminCatalogs({ type = 'overview' }) {
                   </Button>
                 </Modal.Footer>
               </Form>
+            </Modal>
+
+            <Modal show={Boolean(noticeKey)} onHide={() => setNoticeKey('')} centered>
+              <Modal.Header closeButton>
+                <Modal.Title>{t('admin.profile.notifications')}</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>{noticeKey ? t(noticeKey) : ''}</Modal.Body>
+              <Modal.Footer>
+                <Button variant="success" onClick={() => setNoticeKey('')}>
+                  {t('common.close')}
+                </Button>
+              </Modal.Footer>
+            </Modal>
+
+            <Modal show={Boolean(deleteCandidate)} onHide={closeDeletePopup} centered>
+              <Modal.Header closeButton={!pendingAction.startsWith('delete:')}>
+                <Modal.Title>{t('admin.catalogs.deleteConfirmTitle')}</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                {t(isFoodCategories ? 'admin.catalogs.deleteFoodCategoryConfirm' : 'admin.catalogs.deleteActivityCategoryConfirm', {
+                  name: deleteCandidate?.name || '',
+                })}
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  type="button"
+                  variant="outline-secondary"
+                  onClick={closeDeletePopup}
+                  disabled={pendingAction.startsWith('delete:')}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="danger"
+                  onClick={confirmDeleteItem}
+                  disabled={pendingAction.startsWith('delete:')}
+                >
+                  {pendingAction.startsWith('delete:') ? <Spinner animation="border" size="sm" /> : t('admin.actions.delete')}
+                </Button>
+              </Modal.Footer>
             </Modal>
           </>
         )}
