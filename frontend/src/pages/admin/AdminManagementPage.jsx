@@ -201,11 +201,11 @@ function mapActivityTypeRow(activityType) {
   };
 }
 
-function getAdminActionErrorMessage(error, fallback) {
+function getAdminActionErrorMessage(error, fallback, sessionExpiredMessage) {
   const message = error.response?.data?.message || '';
 
   if (/authorization header|invalid or expired jwt|unauthorized/i.test(message)) {
-    return 'Phiên đăng nhập admin đã hết hạn hoặc token không hợp lệ. Vui lòng đăng nhập lại rồi thử mở khóa tài khoản.';
+    return sessionExpiredMessage;
   }
 
   return message || fallback;
@@ -268,8 +268,8 @@ function AdminManagementPage({ type }) {
   const [pendingAction, setPendingAction] = useState('');
   const [confirmAction, setConfirmAction] = useState(null);
   const [confirmingAction, setConfirmingAction] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [noticeMessage, setNoticeMessage] = useState('');
+  const [successKey, setSuccessKey] = useState('');
+  const [noticeKey, setNoticeKey] = useState('');
   const [loading, setLoading] = useState(['users', 'foods', 'exercises'].includes(type));
   const [loadError, setLoadError] = useState('');
   const { t } = useTranslation();
@@ -426,12 +426,12 @@ function AdminManagementPage({ type }) {
     setEditForm({ fullName: '', email: '', role: 'USER', active: true });
   };
 
-  const showSuccess = (message) => {
-    setSuccessMessage(message);
+  const showSuccess = (key) => {
+    setSuccessKey(key);
   };
 
   const showSelfLockNotice = () => {
-    setNoticeMessage('Kh\u00f4ng th\u1ec3 kh\u00f3a t\u00e0i kho\u1ea3n \u0111ang \u0111\u0103ng nh\u1eadp.');
+    setNoticeKey('admin.users.cannotLockLoggedIn');
   };
 
   const shouldPreventSelfLock = (row, nextActive) => (
@@ -465,12 +465,12 @@ function AdminManagementPage({ type }) {
         active: summary.active == null ? summary.active : summary.active + (nextActive ? 1 : -1),
         locked: summary.locked == null ? summary.locked : summary.locked + (nextActive ? -1 : 1),
       }));
-      showSuccess(nextActive ? 'Đã mở khóa tài khoản thành công.' : 'Đã khóa tài khoản thành công.');
+      showSuccess(nextActive ? 'admin.users.unlockSuccess' : 'admin.users.lockSuccess');
     } catch (error) {
       if (isSelfLockError(error)) {
         showSelfLockNotice();
       } else {
-        setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`)));
+        setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`), t('admin.common.sessionExpired')));
       }
     } finally {
       setPendingAction('');
@@ -507,12 +507,12 @@ function AdminManagementPage({ type }) {
         }));
       }
       closeUserForm();
-      showSuccess('Đã cập nhật người dùng thành công.');
+      showSuccess('admin.users.updateSuccess');
     } catch (error) {
       if (isSelfLockError(error)) {
         showSelfLockNotice();
       } else {
-        setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`)));
+        setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`), t('admin.common.sessionExpired')));
       }
     } finally {
       setSavingEdit(false);
@@ -533,9 +533,9 @@ function AdminManagementPage({ type }) {
         active: summary.active == null || !row.active ? summary.active : Math.max(0, summary.active - 1),
         locked: summary.locked == null || row.active ? summary.locked : Math.max(0, summary.locked - 1),
       }));
-      showSuccess('Đã xóa người dùng thành công.');
+      showSuccess('admin.users.deleteSuccess');
     } catch (error) {
-      setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`)));
+      setActionError(getAdminActionErrorMessage(error, t(`${pageKey}.loadError`), t('admin.common.sessionExpired')));
     } finally {
       setPendingAction('');
     }
@@ -818,14 +818,14 @@ function AdminManagementPage({ type }) {
 
       <Modal show={Boolean(confirmAction)} onHide={() => setConfirmAction(null)} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Xác nhận thao tác</Modal.Title>
+          <Modal.Title>{t('admin.users.confirmTitle')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {confirmAction?.type === 'delete' && 'Bạn có chắc muốn xóa người dùng này?'}
+          {confirmAction?.type === 'delete' && t('admin.users.confirmDelete')}
           {confirmAction?.type === 'status' && (
             confirmAction.row?.active
-              ? 'Bạn có chắc muốn khóa tài khoản này?'
-              : 'Bạn có chắc muốn mở khóa tài khoản này?'
+              ? t('admin.users.confirmLock')
+              : t('admin.users.confirmUnlock')
           )}
         </Modal.Body>
         <Modal.Footer>
@@ -837,30 +837,30 @@ function AdminManagementPage({ type }) {
             onClick={runConfirmedAction}
             disabled={confirmingAction}
           >
-            Xác nhận
+            {t('admin.users.confirmAction')}
           </Button>
         </Modal.Footer>
       </Modal>
 
-      <Modal show={Boolean(successMessage)} onHide={() => setSuccessMessage('')} centered>
+      <Modal show={Boolean(successKey)} onHide={() => setSuccessKey('')} centered>
         <Modal.Header closeButton>
-          <Modal.Title>Thành công</Modal.Title>
+          <Modal.Title>{t('admin.users.successTitle')}</Modal.Title>
         </Modal.Header>
-        <Modal.Body>{successMessage}</Modal.Body>
+        <Modal.Body>{successKey ? t(successKey) : ''}</Modal.Body>
         <Modal.Footer>
-          <Button variant="success" onClick={() => setSuccessMessage('')}>
+          <Button variant="success" onClick={() => setSuccessKey('')}>
             {t('common.close')}
           </Button>
         </Modal.Footer>
       </Modal>
 
-      <Modal show={Boolean(noticeMessage)} onHide={() => setNoticeMessage('')} centered>
+      <Modal show={Boolean(noticeKey)} onHide={() => setNoticeKey('')} centered>
         <Modal.Header closeButton>
-          <Modal.Title>{'Th\u00f4ng b\u00e1o'}</Modal.Title>
+          <Modal.Title>{t('admin.users.noticeTitle')}</Modal.Title>
         </Modal.Header>
-        <Modal.Body>{noticeMessage}</Modal.Body>
+        <Modal.Body>{noticeKey ? t(noticeKey) : ''}</Modal.Body>
         <Modal.Footer>
-          <Button variant="success" onClick={() => setNoticeMessage('')}>
+          <Button variant="success" onClick={() => setNoticeKey('')}>
             {t('common.close')}
           </Button>
         </Modal.Footer>

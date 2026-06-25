@@ -36,7 +36,8 @@
     "aiClearError": "Không thể xóa lịch sử chat."
   },
   "sidebar": {
-    "title": "Theo dõi sức khỏe"
+    "title": "Theo dõi sức khỏe",
+    "resize": "Điều chỉnh thanh bên"
   },
   "user": {
     "name": "Người dùng",
@@ -431,7 +432,8 @@
       "eyebrow": "Mục tiêu chính của bạn",
       "targetWeight": "Tiến độ cân nặng",
       "update": "Cập nhật mục tiêu",
-      "notSet": "Thiết lập mục tiêu sức khỏe"
+      "notSet": "Thiết lập mục tiêu sức khỏe",
+      "weekMilestone": "Tuần {{week}}"
     },
     "stats": {
       "consumed": "Calories nạp vào",
@@ -446,7 +448,18 @@
     "goals": {
       "title": "Mục tiêu trong ngày",
       "calorie": "Mục tiêu calorie",
-      "water": "Nước đã uống"
+      "water": "Nước đã uống",
+      "activity": "Mục tiêu vận động"
+    },
+    "status": {
+      "calorieOver": "⚠ Vượt hạn mức ({{percent}}%)",
+      "calorieNearLimit": "⚠ Sắp đạt giới hạn ({{percent}}%)",
+      "calorieLowLate": "ℹ Nạp thiếu, bổ sung bữa phụ",
+      "calorieReasonable": "✓ Hợp lý ({{percent}}%)",
+      "noGoal": "Chưa có mục tiêu",
+      "activityExcellent": "🎉 Vượt mục tiêu tốt! ({{percent}}%)",
+      "activityComplete": "✓ Đạt mục tiêu ({{percent}}%)",
+      "activityRemaining": "🏃 Cần đốt thêm {{calories}} kcal"
     }
   },
   "reportsPage": {
@@ -499,6 +512,18 @@
     "reminderDue": "Đã {{minutes}} phút từ lần uống nước gần nhất.",
     "goalReached": "Bạn đã hoàn thành mục tiêu nước hôm nay."
   },
+  "reminders": {
+    "title": "Nhắc nhở sức khỏe",
+    "popupMessage": "Đã đến giờ {{label}} ({{time}}) nhưng bạn chưa đánh dấu hoàn thành.",
+    "later": "Để sau",
+    "openNow": "Mở ngay",
+    "emailSubject": "Nhắc {{label}} lúc {{time}}",
+    "emailMessage": "Bạn chưa đánh dấu hoàn thành {{label}} lúc {{time}}. Hãy mở Health Nutrition Tracker để cập nhật.",
+    "slots": {
+      "morningActivity": "vận động buổi sáng",
+      "afternoonActivity": "vận động buổi chiều"
+    }
+  },
   "settingsPage": {
     "title": "Cài đặt",
     "notifications": {
@@ -549,6 +574,15 @@
     "sampleNotes": {
       "lightBreakfast": "Ăn nhẹ trước khi đi làm"
     },
+    "summary": {
+      "over": "Đã vượt {{calories}} kcal",
+      "nearLimit": "Sắp đạt giới hạn calo hôm nay",
+      "remaining": "Còn khoảng {{calories}} kcal",
+      "reasonable": "Lượng calo đang ở mức hợp lý",
+      "progress": "Tiến độ"
+    },
+    "loadingDetail": "Đang tải chi tiết bữa ăn...",
+    "detailError": "Không thể tải chi tiết bữa ăn.",
     "notFound": "Không tìm thấy bữa ăn nào cho ngày này.",
     "loadingMeals": "Đang tải bữa ăn...",
     "water": {
@@ -642,6 +676,10 @@
     "saveError": "Không thể lưu hoạt động.",
     "deleteError": "Không thể xóa hoạt động.",
     "confirmDelete": "Xóa hoạt động này?",
+    "summary": {
+      "goalComplete": "Đã hoàn thành mục tiêu vận động",
+      "remaining": "Còn {{calories}} kcal cần vận động"
+    },
     "categories": {
       "cardio": "Cardio",
       "strength": "Sức mạnh",
@@ -983,6 +1021,7 @@
       "role": "Vai trò",
       "updateTitle": "Cập nhật hồ sơ",
       "saved": "Đã cập nhật hồ sơ admin.",
+      "notifications": "Thông báo",
       "fullName": "Họ và tên",
       "tabs": {
         "overview": "Hồ sơ",
@@ -1002,7 +1041,8 @@
       "servicePlan": "Gói dịch vụ",
       "permission": "Phân quyền",
       "security": "Bảo mật",
-      "viewAll": "Xem tất cả"
+      "viewAll": "Xem tất cả",
+      "sessionExpired": "Phiên đăng nhập admin đã hết hạn hoặc token không hợp lệ. Vui lòng đăng nhập lại rồi thử lại."
     },
     "status": {
       "active": "Đang hoạt động",
@@ -1038,6 +1078,20 @@
       "hideAccount": "\u1ea8n t\u00e0i kho\u1ea3n",
       "showAccount": "Hi\u1ec7n t\u00e0i kho\u1ea3n"
     },
+    "users": {
+      "confirmTitle": "Xác nhận thao tác",
+      "confirmDelete": "Bạn có chắc muốn xóa người dùng này?",
+      "confirmLock": "Bạn có chắc muốn khóa tài khoản này?",
+      "confirmUnlock": "Bạn có chắc muốn mở khóa tài khoản này?",
+      "confirmAction": "Xác nhận",
+      "successTitle": "Thành công",
+      "noticeTitle": "Thông báo",
+      "lockSuccess": "Đã khóa tài khoản thành công.",
+      "unlockSuccess": "Đã mở khóa tài khoản thành công.",
+      "updateSuccess": "Đã cập nhật người dùng thành công.",
+      "deleteSuccess": "Đã xóa người dùng thành công.",
+      "cannotLockLoggedIn": "Không thể khóa tài khoản đang đăng nhập."
+    },
     "table": {
       "listTitle": "Danh sách dữ liệu",
       "listDescription": "Tìm kiếm, xem chi tiết, chỉnh sửa hoặc duyệt dữ liệu.",
@@ -1059,6 +1113,7 @@
       "caloriesBurned": "Calo tiêu hao",
       "intensity": "Cường độ",
       "met": "MET",
+      "icon": "Biểu tượng",
       "source": "Nguồn",
       "title": "Tiêu đề",
       "category": "Chuyên mục",
@@ -1297,7 +1352,11 @@
       "description": "Mô tả",
       "toggleHidden": "Ẩn/hiện danh mục",
       "hidden": "Đã ẩn",
-      "visible": "Đang hiện"
+      "visible": "Đang hiện",
+      "deleteConfirmTitle": "Xóa danh mục",
+      "deleteFoodCategoryConfirm": "Bạn có chắc muốn xóa danh mục thực phẩm \"{{name}}\"?",
+      "deleteActivityCategoryConfirm": "Bạn có chắc muốn xóa danh mục hoạt động \"{{name}}\"?",
+      "linkedFoodCategoryBlocked": "Không thể xóa hoặc tạm khóa danh mục khi đã có thực phẩm tồn tại."
     }
   }
 }

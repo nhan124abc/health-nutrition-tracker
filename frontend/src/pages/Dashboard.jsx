@@ -267,10 +267,10 @@ function Dashboard() {
   const isLate = currentHour >= 20;
 
   const getCalorieStatusLabel = () => {
-    if (goalPercent > 100) return <span className="text-danger small fw-bold">⚠ Vượt hạn mức ({goalPercent}%)</span>;
-    if (goalPercent >= 90) return <span className="text-warning small fw-bold">⚠ Sắp đạt giới hạn ({goalPercent}%)</span>;
-    if (isLate && goalPercent < 70) return <span className="text-info small fw-semibold">ℹ Nạp thiếu, bổ sung bữa phụ</span>;
-    return <span className="text-success small fw-semibold">✓ Hợp lý ({goalPercent}%)</span>;
+    if (goalPercent > 100) return <span className="text-danger small fw-bold">{t('dashboardPage.status.calorieOver', { percent: goalPercent })}</span>;
+    if (goalPercent >= 90) return <span className="text-warning small fw-bold">{t('dashboardPage.status.calorieNearLimit', { percent: goalPercent })}</span>;
+    if (isLate && goalPercent < 70) return <span className="text-info small fw-semibold">{t('dashboardPage.status.calorieLowLate')}</span>;
+    return <span className="text-success small fw-semibold">{t('dashboardPage.status.calorieReasonable', { percent: goalPercent })}</span>;
   };
 
   const activityPercent = dailySummary.dailyActivityGoalKcal > 0
@@ -305,11 +305,11 @@ function Dashboard() {
 
   const getActivityStatusLabel = () => {
     if (!dailySummary.dailyActivityGoalKcal) {
-      return <span className="text-secondary small">Chưa có mục tiêu</span>;
+      return <span className="text-secondary small">{t('dashboardPage.status.noGoal')}</span>;
     }
-    if (activityPercent >= 120) return <span className="text-success small fw-bold">🎉 Vượt mục tiêu tốt! ({activityPercent}%)</span>;
-    if (activityPercent >= 100) return <span className="text-success small fw-bold">✓ Đạt mục tiêu ({activityPercent}%)</span>;
-    return <span className="text-primary small fw-semibold">🏃 Cần đốt thêm {Math.max(0, dailySummary.dailyActivityGoalKcal - dailySummary.caloriesBurned)} kcal</span>;
+    if (activityPercent >= 120) return <span className="text-success small fw-bold">{t('dashboardPage.status.activityExcellent', { percent: activityPercent })}</span>;
+    if (activityPercent >= 100) return <span className="text-success small fw-bold">{t('dashboardPage.status.activityComplete', { percent: activityPercent })}</span>;
+    return <span className="text-primary small fw-semibold">{t('dashboardPage.status.activityRemaining', { calories: Math.max(0, dailySummary.dailyActivityGoalKcal - dailySummary.caloriesBurned) })}</span>;
   };
 
   const getNextWeightMilestone = () => {
@@ -431,7 +431,7 @@ function Dashboard() {
                   </strong>
                   {nextMilestone && (
                     <div className="text-secondary small mt-1" style={{ fontSize: '0.82rem' }}>
-                      Tuần {nextMilestone.weekNumber}: <strong>{nextMilestone.targetWeightKg} kg</strong> ({new Date(`${nextMilestone.date}T12:00:00`).toLocaleDateString('vi-VN', { month: '2-digit', day: '2-digit' })})
+                      {t('dashboardPage.goalBanner.weekMilestone', { week: nextMilestone.weekNumber })}: <strong>{nextMilestone.targetWeightKg} kg</strong> ({new Date(`${nextMilestone.date}T12:00:00`).toLocaleDateString(i18n.language, { month: '2-digit', day: '2-digit' })})
                     </div>
                   )}
                 </div>
@@ -459,7 +459,7 @@ function Dashboard() {
               <Col lg={3} md={6}>
                 <div className="dashboard-goal-metric">
                   <div className="d-flex justify-content-between gap-2">
-                    <span>Mục tiêu vận động</span>
+                    <span>{t('dashboardPage.goals.activity')}</span>
                     {getActivityStatusLabel()}
                   </div>
                   <strong>{dailySummary.caloriesBurned} / {dailySummary.dailyActivityGoalKcal || 300} kcal</strong>

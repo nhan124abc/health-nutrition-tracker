@@ -416,7 +416,7 @@ function MainLayout() {
         <div
           className="layout-sidebar-resizer"
           role="separator"
-          aria-label="Resize sidebar"
+          aria-label={t('sidebar.resize')}
           aria-orientation="vertical"
           aria-valuemin={SIDEBAR_MIN_WIDTH}
           aria-valuemax={SIDEBAR_MAX_WIDTH}

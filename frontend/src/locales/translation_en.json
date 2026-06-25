@@ -36,7 +36,8 @@
     "aiClearError": "Unable to clear chat history."
   },
   "sidebar": {
-    "title": "Navigation"
+    "title": "Navigation",
+    "resize": "Resize sidebar"
   },
   "user": {
     "name": "User",
@@ -327,6 +328,7 @@
       "role": "Role",
       "updateTitle": "Update profile",
       "saved": "Admin profile updated.",
+      "notifications": "Notification",
       "fullName": "Full name",
       "tabs": {
         "overview": "Profile",
@@ -346,7 +348,8 @@
       "servicePlan": "Service plan",
       "permission": "Permission",
       "security": "Security",
-      "viewAll": "View all"
+      "viewAll": "View all",
+      "sessionExpired": "The admin session has expired or the token is invalid. Please log in again and try again."
     },
     "status": {
       "active": "Active",
@@ -382,6 +385,20 @@
       "hideAccount": "Hide account",
       "showAccount": "Show account"
     },
+    "users": {
+      "confirmTitle": "Confirm action",
+      "confirmDelete": "Are you sure you want to delete this user?",
+      "confirmLock": "Are you sure you want to lock this account?",
+      "confirmUnlock": "Are you sure you want to unlock this account?",
+      "confirmAction": "Confirm",
+      "successTitle": "Success",
+      "noticeTitle": "Notice",
+      "lockSuccess": "Account locked successfully.",
+      "unlockSuccess": "Account unlocked successfully.",
+      "updateSuccess": "User updated successfully.",
+      "deleteSuccess": "User deleted successfully.",
+      "cannotLockLoggedIn": "Cannot lock an account that is currently logged in."
+    },
     "table": {
       "listTitle": "User list",
       "searchPlaceholder": "Search this table...",
@@ -402,6 +419,7 @@
       "caloriesBurned": "Calories burned",
       "intensity": "Intensity",
       "met": "MET",
+      "icon": "Icon",
       "source": "Source",
       "title": "Title",
       "category": "Category",
@@ -639,7 +657,11 @@
       "description": "Description",
       "toggleHidden": "Show/hide category",
       "hidden": "Hidden",
-      "visible": "Visible"
+      "visible": "Visible",
+      "deleteConfirmTitle": "Delete category",
+      "deleteFoodCategoryConfirm": "Are you sure you want to delete the food category \"{{name}}\"?",
+      "deleteActivityCategoryConfirm": "Are you sure you want to delete the activity category \"{{name}}\"?",
+      "linkedFoodCategoryBlocked": "This category cannot be deleted or locked while foods still exist in it."
     }
   },
   "auth": {
@@ -779,7 +801,8 @@
       "eyebrow": "Your main goal",
       "targetWeight": "Weight progress",
       "update": "Update goal",
-      "notSet": "Set your health goal"
+      "notSet": "Set your health goal",
+      "weekMilestone": "Week {{week}}"
     },
     "stats": {
       "consumed": "Calories consumed",
@@ -794,7 +817,18 @@
     "goals": {
       "title": "Daily goals",
       "calorie": "Calorie goal",
-      "water": "Water intake"
+      "water": "Water intake",
+      "activity": "Activity goal"
+    },
+    "status": {
+      "calorieOver": "⚠ Over limit ({{percent}}%)",
+      "calorieNearLimit": "⚠ Near limit ({{percent}}%)",
+      "calorieLowLate": "ℹ Low intake, add a snack",
+      "calorieReasonable": "✓ Reasonable ({{percent}}%)",
+      "noGoal": "No goal set",
+      "activityExcellent": "🎉 Great goal progress! ({{percent}}%)",
+      "activityComplete": "✓ Goal reached ({{percent}}%)",
+      "activityRemaining": "🏃 Burn {{calories}} kcal more"
     }
   },
   "reportsPage": {
@@ -847,6 +881,18 @@
     "reminderDue": "It has been {{minutes}} minutes since your last water log.",
     "goalReached": "Today's water goal is complete."
   },
+  "reminders": {
+    "title": "Health reminder",
+    "popupMessage": "It is time for {{label}} ({{time}}), but you have not marked it complete.",
+    "later": "Later",
+    "openNow": "Open now",
+    "emailSubject": "Reminder: {{label}} at {{time}}",
+    "emailMessage": "You have not marked {{label}} at {{time}} complete. Open Health Nutrition Tracker to update it.",
+    "slots": {
+      "morningActivity": "morning activity",
+      "afternoonActivity": "afternoon activity"
+    }
+  },
   "settingsPage": {
     "title": "Settings",
     "notifications": {
@@ -897,6 +943,15 @@
     "sampleNotes": {
       "lightBreakfast": "Light breakfast before work"
     },
+    "summary": {
+      "over": "Over by {{calories}} kcal",
+      "nearLimit": "Near today's calorie limit",
+      "remaining": "About {{calories}} kcal remaining",
+      "reasonable": "Calories are in a reasonable range",
+      "progress": "Progress"
+    },
+    "loadingDetail": "Loading meal detail...",
+    "detailError": "Could not load meal detail.",
     "notFound": "No meals found for this date.",
     "loadingMeals": "Loading meals...",
     "water": {
@@ -990,6 +1045,10 @@
     "saveError": "Could not save activity.",
     "deleteError": "Could not delete activity.",
     "confirmDelete": "Delete this activity log?",
+    "summary": {
+      "goalComplete": "Activity goal completed",
+      "remaining": "{{calories}} kcal remaining"
+    },
     "categories": {
       "cardio": "Cardio",
       "strength": "Strength",

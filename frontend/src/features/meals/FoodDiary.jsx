@@ -91,7 +91,7 @@ function FoodDiary() {
       setSelectedMealDetail(normalizeMealFromApi(extractMealFromApi(response.data)));
     } catch (error) {
       console.error('[FoodDiary] Error fetching meal detail:', error);
-      setMealError(error.response?.data?.message || 'Could not load meal detail.');
+      setMealError(error.response?.data?.message || t('foodDiaryPage.detailError'));
     } finally {
       setLoadingMealDetail(false);
     }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Modal } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUser } from '../../api/api';
 import { getActivitiesByDate } from '../activities/activityService';
@@ -20,14 +21,14 @@ const popupStorageKey = 'reminders:popup';
 const activeHeartbeatMs = 2 * 60 * 1000;
 
 const mealReminderSlots = [
-  { id: 'breakfast', label: 'bua sang', path: '/meals', time: '08:00', type: 'breakfast' },
-  { id: 'lunch', label: 'bua trua', path: '/meals', time: '12:00', type: 'lunch' },
-  { id: 'dinner', label: 'bua toi', path: '/meals', time: '18:00', type: 'dinner' },
+  { id: 'breakfast', labelKey: 'foodDiaryPage.mealTypes.breakfast', path: '/meals', time: '08:00', type: 'breakfast' },
+  { id: 'lunch', labelKey: 'foodDiaryPage.mealTypes.lunch', path: '/meals', time: '12:00', type: 'lunch' },
+  { id: 'dinner', labelKey: 'foodDiaryPage.mealTypes.dinner', path: '/meals', time: '18:00', type: 'dinner' },
 ];
 
 const activityReminderSlots = [
-  { id: 'activity-morning', label: 'van dong buoi sang', path: '/activity', time: '09:00' },
-  { id: 'activity-afternoon', label: 'van dong buoi chieu', path: '/activity', time: '15:00' },
+  { id: 'activity-morning', labelKey: 'reminders.slots.morningActivity', path: '/activity', time: '09:00' },
+  { id: 'activity-afternoon', labelKey: 'reminders.slots.afternoonActivity', path: '/activity', time: '15:00' },
 ];
 
 function readJson(key, fallback) {
@@ -88,15 +89,17 @@ function isActivitySlotComplete(activities, completedIds) {
   return activities.length > 0 && activities.every((activity) => completedIds.includes(getActivityCompletionId(activity)));
 }
 
-function buildReminderMessage(slot) {
+function buildReminderMessage(slot, t) {
+  const label = t(slot.labelKey);
   return {
-    subject: `Nhac ${slot.label} luc ${slot.time}`,
-    message: `Ban chua tick hoan thanh ${slot.label} luc ${slot.time}. Hay mo Health Nutrition Tracker de cap nhat nhe.`,
+    subject: t('reminders.emailSubject', { label, time: slot.time }),
+    message: t('reminders.emailMessage', { label, time: slot.time }),
   };
 }
 
 function ReminderNotifier() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeReminder, setActiveReminder] = useState(null);
   const checkingRef = useRef(false);
 
@@ -152,7 +155,7 @@ function ReminderNotifier() {
 
         if (wasWebClosedAt(slotDate)) {
           if (markOnce(key, sentStorageKey)) {
-            await sendReminderEmail(buildReminderMessage(slot));
+            await sendReminderEmail(buildReminderMessage(slot, t));
           }
           continue;
         }
@@ -168,7 +171,7 @@ function ReminderNotifier() {
       checkingRef.current = false;
       updateLastSeen();
     }
-  }, [updateLastSeen]);
+  }, [t, updateLastSeen]);
 
   useEffect(() => {
     checkReminders();
@@ -197,8 +200,11 @@ function ReminderNotifier() {
       return '';
     }
 
-    return `Da den gio ${activeReminder.label} (${activeReminder.time}) nhung ban chua tick hoan thanh.`;
-  }, [activeReminder]);
+    return t('reminders.popupMessage', {
+      label: t(activeReminder.labelKey),
+      time: activeReminder.time,
+    });
+  }, [activeReminder, t]);
 
   if (!activeReminder) {
     return null;
@@ -207,14 +213,14 @@ function ReminderNotifier() {
   return (
     <Modal show centered onHide={() => setActiveReminder(null)}>
       <Modal.Header closeButton>
-        <Modal.Title>Nhac nho suc khoe</Modal.Title>
+        <Modal.Title>{t('reminders.title')}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <p className="text-secondary mb-0">{reminderText}</p>
       </Modal.Body>
       <Modal.Footer>
         <Button variant="outline-secondary" onClick={() => setActiveReminder(null)}>
-          De sau
+          {t('reminders.later')}
         </Button>
         <Button
           variant="success"
@@ -224,7 +230,7 @@ function ReminderNotifier() {
             navigate(path);
           }}
         >
-          Mo ngay
+          {t('reminders.openNow')}
         </Button>
       </Modal.Footer>
     </Modal>

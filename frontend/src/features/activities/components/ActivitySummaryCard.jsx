@@ -13,7 +13,9 @@ function ActivitySummaryCard({ activityGoal = 0, activityTypes, logCount, summar
         </div>
         {activityGoal > 0 && <>
           <div className={`alert alert-${percent >= 100 ? 'success' : 'warning'} py-2 small mt-3 mb-2`}>
-            {percent >= 100 ? 'Đã hoàn thành mục tiêu vận động' : `Còn ${Math.max(0, activityGoal - summary.calories)} kcal cần vận động`}
+            {percent >= 100
+              ? t('activityPage.summary.goalComplete')
+              : t('activityPage.summary.remaining', { calories: Math.max(0, activityGoal - summary.calories) })}
           </div>
           <ProgressBar now={Math.min(percent, 100)} variant={percent >= 100 ? 'success' : 'warning'} />
         </>}
