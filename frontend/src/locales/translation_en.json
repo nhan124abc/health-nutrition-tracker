@@ -655,6 +655,7 @@
     "registerNow": "Register now",
     "loginError": "Unable to log in. Please try again.",
     "accountLocked": "Your account has been locked and cannot be accessed.",
+    "accountNotFound": "This account does not exist.",
     "oauthLoginError": "Unable to log in with Google or Facebook. Please check your account and try again.",
     "missingToken": "Backend did not return an access token.",
     "registerTitle": "Create account",

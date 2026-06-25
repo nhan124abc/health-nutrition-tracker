@@ -6,7 +6,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { clearAuthTokens, getDefaultRouteForCurrentUser, saveAuthTokens } from '../../api/api';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import authConfig from '../../config/authConfig';
-import { isLockedAccountError, login } from './authService';
+import { isAccountNotFoundError, isLockedAccountError, login } from './authService';
 
 function Login() {
   const navigate = useNavigate();
@@ -15,6 +15,7 @@ function Login() {
   const { t } = useTranslation();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [errorKey, setErrorKey] = useState('');
   const [loading, setLoading] = useState(false);
   const oauthError = new URLSearchParams(location.search).get('oauthError');
   const lockedAccountNotice = location.state?.accountLocked || oauthError === 'account_locked'
@@ -42,9 +43,14 @@ function Login() {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
+  const clearLoginError = () => {
+    setError('');
+    setErrorKey('');
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError('');
+    clearLoginError();
     setLoading(true);
 
     try {
@@ -54,7 +60,7 @@ function Login() {
 
       if (user && (user.active === false || user.enabled === false || user.locked === true)) {
         clearAuthTokens();
-        setError(t('auth.accountLocked'));
+        setErrorKey('auth.accountLocked');
         return;
       }
 
@@ -66,11 +72,13 @@ function Login() {
 
       navigate(getSafeRedirectPath(response.data?.user?.role), { replace: true });
     } catch (err) {
-      setError(
-        isLockedAccountError(err)
-          ? t('auth.accountLocked')
-          : err.response?.data?.message || err.message || t('auth.loginError')
-      );
+      if (isAccountNotFoundError(err)) {
+        setErrorKey('auth.accountNotFound');
+      } else if (isLockedAccountError(err)) {
+        setErrorKey('auth.accountLocked');
+      } else {
+        setError(err.response?.data?.message || err.message || t('auth.loginError'));
+      }
     } finally {
       setLoading(false);
     }
@@ -93,9 +101,9 @@ function Login() {
                 <h1 className="h3 fw-bold mb-2">{t('auth.loginTitle')}</h1>
               </div>
 
-              {(error || oauthError || lockedAccountNotice) && (
+              {(error || errorKey || oauthError || lockedAccountNotice) && (
                 <Alert variant="danger">
-                  {error || lockedAccountNotice || t('auth.oauthLoginError')}
+                  {errorKey ? t(errorKey) : error || lockedAccountNotice || t('auth.oauthLoginError')}
                 </Alert>
               )}
 

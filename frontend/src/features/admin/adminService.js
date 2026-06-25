@@ -1,9 +1,10 @@
 import api from '../../api/api';
-import { getAccessToken, getCurrentUserRole } from '../../api/api';
+import { getAccessToken, getCurrentUser, getCurrentUserRole } from '../../api/api';
 import adminConfig from '../../config/adminConfig';
 
 function withAdminAuth() {
   const token = getAccessToken();
+  const currentUser = getCurrentUser();
   const role = getCurrentUserRole();
   const headers = {};
 
@@ -13,6 +14,10 @@ function withAdminAuth() {
 
   if (role) {
     headers['X-User-Role'] = role;
+  }
+
+  if (currentUser?.id || currentUser?.userId) {
+    headers['X-User-Id'] = currentUser.id || currentUser.userId;
   }
 
   return { headers };

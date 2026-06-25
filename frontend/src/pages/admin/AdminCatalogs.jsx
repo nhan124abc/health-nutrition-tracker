@@ -439,7 +439,7 @@ function AdminCatalogs({ type = 'overview' }) {
                           </td>
                           <td>
                             <span className={`small fw-semibold text-${category.hidden ? 'secondary' : 'success'}`}>
-                              {t(category.hidden ? 'admin.catalogs.hidden' : 'admin.catalogs.visible')}
+                              {t(category.hidden ? 'admin.status.locked' : 'admin.status.active')}
                             </span>
                           </td>
                           <td className="text-end">
@@ -567,7 +567,7 @@ function AdminCatalogs({ type = 'overview' }) {
                       <Form.Check
                         type="switch"
                         id="catalog-hidden"
-                        label={t('admin.catalogs.hidden')}
+                        label={t('admin.status.locked')}
                         checked={form.hidden}
                         onChange={(event) => setForm((current) => ({ ...current, hidden: event.target.checked }))}
                       />
