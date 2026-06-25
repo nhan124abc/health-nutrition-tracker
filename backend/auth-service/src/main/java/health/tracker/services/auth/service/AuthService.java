@@ -72,11 +72,12 @@ public class AuthService {
         // 1. Kiểm tra brute-force trước
         rateLimitService.checkNotLocked(request.getEmail());
 
-        userRepository.findByEmail(request.getEmail())
-                .filter(user -> !user.isActive())
-                .ifPresent(user -> {
-                    throw new AppException(HttpStatus.FORBIDDEN, "User account is unavailable or inactive");
-                });
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (!user.isActive()) {
+            throw new AppException(HttpStatus.FORBIDDEN, "User account is unavailable or inactive");
+        }
 
         try {
             Authentication authentication = authenticationManager.authenticate(
@@ -135,13 +136,15 @@ public class AuthService {
 
     public void logout(String accessToken) {
         if (jwtUtil.validateToken(accessToken)) {
-            // Đưa access token vào blacklist Redis (TTL = expiration của token)
+            String email = jwtUtil.getEmailFromToken(accessToken);
+            redisTemplate.delete(REFRESH_PREFIX + email);
+
             redisTemplate.opsForValue().set(
                     BLACKLIST_PREFIX + accessToken,
                     "1",
                     Duration.ofMillis(jwtUtil.getExpirationMs())
             );
-            log.info("Token blacklisted on logout");
+            log.info("Token blacklisted and refresh token removed on logout");
         }
     }
 

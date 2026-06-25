@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,9 +19,11 @@ public class AdminUserService {
 
     private static final int DEFAULT_PAGE_SIZE = 20;
     private static final int MAX_PAGE_SIZE = 100;
+    private static final String REFRESH_PREFIX = "refresh:token:";
 
     private final UserRepository userRepository;
     private final UserCacheService userCacheService;
+    private final StringRedisTemplate redisTemplate;
 
     @Transactional(readOnly = true)
     public AdminUsersResponse getUsers(int page, int size, String search) {
@@ -54,7 +57,7 @@ public class AdminUserService {
     }
 
     @Transactional
-    public AdminUsersResponse.UserItem updateUser(Long userId, String fullName, String email, String role, Boolean active) {
+    public AdminUsersResponse.UserItem updateUser(Long userId, Long currentUserId, String fullName, String email, String role, Boolean active) {
         User user = findUser(userId);
 
         if (fullName != null) {
@@ -71,6 +74,7 @@ public class AdminUserService {
             user.setRole(parseRole(role));
         }
         if (active != null) {
+            preventLockLoggedInUser(user, active);
             user.setActive(active);
         }
 
@@ -80,8 +84,9 @@ public class AdminUserService {
     }
 
     @Transactional
-    public AdminUsersResponse.UserItem setUserActive(Long userId, boolean active) {
+    public AdminUsersResponse.UserItem setUserActive(Long userId, Long currentUserId, boolean active) {
         User user = findUser(userId);
+        preventLockLoggedInUser(user, active);
         user.setActive(active);
         User savedUser = userRepository.save(user);
         userCacheService.evict(savedUser.getEmail());
@@ -93,6 +98,12 @@ public class AdminUserService {
         User user = findUser(userId);
         userRepository.delete(user);
         userCacheService.evict(user.getEmail());
+    }
+
+    private void preventLockLoggedInUser(User user, boolean active) {
+        if (!active && Boolean.TRUE.equals(redisTemplate.hasKey(REFRESH_PREFIX + user.getEmail()))) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Cannot lock an account that is currently logged in");
+        }
     }
 
     private User findUser(Long userId) {
