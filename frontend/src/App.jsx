@@ -4,6 +4,7 @@ import PublicRoute from './components/PublicRoute';
 import AdminLayout from './layouts/AdminLayout';
 import MainLayout from './layouts/MainLayout';
 import Dashboard from './pages/Dashboard';
+import GuestGoalPage from './pages/GuestGoalPage';
 import HomePage from './pages/HomePage';
 import Login from './features/auth/Login';
 import Register from './features/auth/Register';
@@ -31,6 +32,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/guest-goals" element={<GuestGoalPage />} />
         <Route
           path="/login"
           element={
