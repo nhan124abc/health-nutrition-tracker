@@ -70,7 +70,7 @@ function HomePage() {
                 <h1>{t('app.name')}</h1>
                 <p className="premium-hero-copy">{t('home.hero.description')}</p>
                 <div className="premium-hero-actions">
-                  <Button as={Link} to="/register" variant="success" size="lg">
+                  <Button as={Link} to="/guest-goals" variant="success" size="lg">
                     {t('home.actions.start')}
                   </Button>
                 </div>
