@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { FaArrowLeft } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { getGuestGoalPlanSuggestions } from '../features/profile/profileService';
 import { goalOptions } from '../features/profile/profileUtils';
 
 const goalValueToApi = {
@@ -17,63 +18,33 @@ const goalValueToApi = {
 };
 
 const goalsWithTargetChange = new Set(['LOSE_WEIGHT', 'GAIN_WEIGHT', 'GAIN_MUSCLE', 'CUTTING']);
-const weightLossGoals = new Set(['LOSE_WEIGHT', 'CUTTING']);
-const weightGainGoals = new Set(['GAIN_WEIGHT', 'GAIN_MUSCLE']);
+const activityFactors = [
+  { value: 'sedentary', factor: 1.2, labelKey: 'profile.sedentary' },
+  { value: 'light', factor: 1.375, labelKey: 'profile.light' },
+  { value: 'moderate', factor: 1.55, labelKey: 'profile.moderate' },
+  { value: 'active', factor: 1.725, labelKey: 'profile.active' },
+  { value: 'very_active', factor: 1.9, labelKey: 'profile.veryActive' },
+];
 
 function needsTargetChange(goal) {
   return goalsWithTargetChange.has(goal);
 }
 
-function buildGuestGoalPlan({ form, showTargetChange }) {
-  const currentWeight = Number(form.currentWeightKg) || 0;
-  const tdee = Number(form.tdee) || 0;
-  const targetChangeKg = showTargetChange ? Number(form.targetChangeKg) || 0 : 0;
-  const requestedWeeks = Number(form.targetWeeks) || 0;
-  const effectiveChangeKg = showTargetChange ? Math.max(targetChangeKg, 0.1) : 0.1;
-  const safeWeeklyChangeKg = weightGainGoals.has(form.goal) ? 0.5 : 0.75;
-  const safeMinimumWeeks = showTargetChange
-    ? Math.max(1, Math.ceil(effectiveChangeKg / safeWeeklyChangeKg))
-    : Math.max(4, requestedWeeks || 4);
-  const baseWeeks = Math.max(requestedWeeks || safeMinimumWeeks, 1);
-  const targetWeightKg = weightLossGoals.has(form.goal)
-    ? currentWeight - effectiveChangeKg
-    : weightGainGoals.has(form.goal)
-      ? currentWeight + effectiveChangeKg
-      : currentWeight;
-  const totalEnergyChangeKcal = showTargetChange ? Math.round(effectiveChangeKg * 7700) : 0;
+const genderToApi = {
+  male: 'MALE',
+  female: 'FEMALE',
+};
 
-  const weekOptions = [
-    Math.max(safeMinimumWeeks, Math.round(baseWeeks * 0.8)),
-    Math.max(safeMinimumWeeks, baseWeeks),
-    Math.max(safeMinimumWeeks, Math.round(baseWeeks * 1.25)),
-  ];
+const activityToApi = {
+  sedentary: 'SEDENTARY',
+  light: 'LIGHTLY_ACTIVE',
+  moderate: 'MODERATELY_ACTIVE',
+  active: 'VERY_ACTIVE',
+  very_active: 'EXTRA_ACTIVE',
+};
 
-  const uniqueWeeks = [...new Set(weekOptions)].sort((first, second) => first - second);
-  const options = uniqueWeeks.map((weeks, index) => {
-    const weeklyWeightChangeKg = showTargetChange ? Number((effectiveChangeKg / weeks).toFixed(2)) : 0;
-    const dailyEnergyChangeAbs = showTargetChange ? Math.round(totalEnergyChangeKcal / weeks / 7) : 0;
-    const dailyEnergyChangeKcal = weightLossGoals.has(form.goal) ? -dailyEnergyChangeAbs : dailyEnergyChangeAbs;
-    const activityBoost = showTargetChange ? [220, 160, 120][index] || 120 : 150;
-    const dailyCalorieGoal = Math.max(1200, Math.round(tdee + dailyEnergyChangeKcal));
-
-    return {
-      type: ['FAST', 'BALANCED', 'STEADY'][index] || `OPTION_${index + 1}`,
-      weeks,
-      safe: weeklyWeightChangeKg <= safeWeeklyChangeKg || !showTargetChange,
-      dailyCalorieGoal,
-      dailyActivityGoalKcal: activityBoost,
-      dailyEnergyChangeKcal,
-      weeklyWeightChangeKg,
-    };
-  });
-
-  return {
-    currentWeightKg: currentWeight,
-    targetWeightKg: Number(targetWeightKg.toFixed(1)),
-    totalEnergyChangeKcal,
-    safeMinimumWeeks,
-    options,
-  };
+function extractGoalPlanFromApi(data) {
+  return data?.data || data?.plan || data;
 }
 
 function GuestGoalPage() {
@@ -81,8 +52,11 @@ function GuestGoalPage() {
   const { i18n, t } = useTranslation();
   const [form, setForm] = useState({
     goal: 'LOSE_WEIGHT',
+    gender: 'male',
+    age: 30,
     currentWeightKg: 65,
-    tdee: 2200,
+    heightCm: 170,
+    activityLevel: 'light',
     targetChangeKg: 5,
     targetWeeks: '',
   });
@@ -92,24 +66,49 @@ function GuestGoalPage() {
   const showTargetChange = needsTargetChange(form.goal);
   const numberFormatter = new Intl.NumberFormat(i18n.language);
 
-  const loadSuggestions = (event) => {
+  const loadSuggestions = async (event) => {
     event?.preventDefault();
     setError('');
     setPlan(null);
     setLoading(true);
 
     const currentWeight = Number(form.currentWeightKg);
-    const tdee = Number(form.tdee);
+    const heightCm = Number(form.heightCm);
+    const age = Number(form.age);
     const targetChangeKg = Number(form.targetChangeKg);
 
-    if (!currentWeight || currentWeight <= 0 || !tdee || tdee <= 0 || (showTargetChange && (!targetChangeKg || targetChangeKg <= 0))) {
+    if (
+      !currentWeight
+      || currentWeight <= 0
+      || !heightCm
+      || heightCm <= 0
+      || !age
+      || age <= 0
+      || (showTargetChange && (!targetChangeKg || targetChangeKg <= 0))
+    ) {
       setError(t('goalPlannerPage.errors.calculate'));
       setLoading(false);
       return;
     }
 
-    setPlan(buildGuestGoalPlan({ form, showTargetChange }));
-    setLoading(false);
+    try {
+      const payload = {
+        goal: form.goal,
+        gender: genderToApi[form.gender] || 'MALE',
+        age,
+        weightKg: currentWeight,
+        heightCm,
+        activityLevel: activityToApi[form.activityLevel] || 'SEDENTARY',
+        targetChangeKg: showTargetChange ? targetChangeKg : 0.1,
+        ...(form.targetWeeks ? { targetWeeks: Number(form.targetWeeks) } : {}),
+      };
+      const response = await getGuestGoalPlanSuggestions(payload);
+      setPlan(extractGoalPlanFromApi(response.data));
+    } catch (err) {
+      setError(err.response?.data?.message || t('goalPlannerPage.errors.calculate'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const choosePlan = (option) => {
@@ -118,6 +117,9 @@ function GuestGoalPage() {
       goal: form.goal,
       targetWeightKg: plan.targetWeightKg,
       targetChangeKg: showTargetChange ? Number(form.targetChangeKg) : 0.1,
+      bmr: plan.bmr,
+      tdee: plan.tdee,
+      activityFactor: plan.activityFactor,
       createdAt: new Date().toISOString(),
     }));
     navigate('/login');
@@ -136,6 +138,11 @@ function GuestGoalPage() {
       energy: numberFormatter.format(option.dailyEnergyChangeKcal),
     });
   };
+
+  const ageLabel = i18n.language?.startsWith('vi') ? 'Tuổi' : 'Age';
+  const heightLabel = i18n.language?.startsWith('vi') ? 'Chiều cao cm' : 'Height cm';
+  const bmrLabel = i18n.language?.startsWith('vi') ? 'BMR ước tính' : 'Estimated BMR';
+  const tdeeLabel = i18n.language?.startsWith('vi') ? 'TDEE dùng để gợi ý' : 'TDEE used for suggestions';
 
   return (
     <div className="guest-goal-page">
@@ -176,7 +183,6 @@ function GuestGoalPage() {
                   <h2 className="h5 fw-bold mb-3">{t('goalPlannerPage.form.title')}</h2>
                   <div className="small text-secondary mb-3">
                     {t('goalPlannerPage.form.currentWeight')}: <strong>{form.currentWeightKg || '-'} {t('goalPlannerPage.units.kg')}</strong>
-                    {' · '}TDEE: <strong>{form.tdee || '-'} {t('goalPlannerPage.units.kcal')}</strong>
                   </div>
                   <Form onSubmit={loadSuggestions}>
                     <Form.Group className="mb-3">
@@ -187,13 +193,40 @@ function GuestGoalPage() {
                         ))}
                       </Form.Select>
                     </Form.Group>
+                    <Row className="g-3">
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>{t('profile.gender')}</Form.Label>
+                          <Form.Select value={form.gender} onChange={(event) => setForm({ ...form, gender: event.target.value })}>
+                            <option value="male">{t('profile.male')}</option>
+                            <option value="female">{t('profile.female')}</option>
+                          </Form.Select>
+                        </Form.Group>
+                      </Col>
+                      <Col md={6}>
+                        <Form.Group className="mb-3">
+                          <Form.Label>{ageLabel}</Form.Label>
+                          <Form.Control type="number" min="1" max="120" step="1" value={form.age} onChange={(event) => setForm({ ...form, age: event.target.value })} required />
+                        </Form.Group>
+                      </Col>
+                    </Row>
                     <Form.Group className="mb-3">
                       <Form.Label>{t('goalPlannerPage.form.currentWeight')}</Form.Label>
                       <Form.Control type="number" min="1" step="0.1" value={form.currentWeightKg} onChange={(event) => setForm({ ...form, currentWeightKg: event.target.value })} required />
                     </Form.Group>
                     <Form.Group className="mb-3">
-                      <Form.Label>TDEE</Form.Label>
-                      <Form.Control type="number" min="1" step="1" value={form.tdee} onChange={(event) => setForm({ ...form, tdee: event.target.value })} required />
+                      <Form.Label>{heightLabel}</Form.Label>
+                      <Form.Control type="number" min="1" step="0.1" value={form.heightCm} onChange={(event) => setForm({ ...form, heightCm: event.target.value })} required />
+                    </Form.Group>
+                    <Form.Group className="mb-3">
+                      <Form.Label>{t('profile.activityLevel')}</Form.Label>
+                      <Form.Select value={form.activityLevel} onChange={(event) => setForm({ ...form, activityLevel: event.target.value })}>
+                        {activityFactors.map((activity) => (
+                          <option value={activity.value} key={activity.value}>
+                            {t(activity.labelKey)} ({activity.factor})
+                          </option>
+                        ))}
+                      </Form.Select>
                     </Form.Group>
                     {showTargetChange && (
                       <Form.Group className="mb-3">
@@ -226,6 +259,20 @@ function GuestGoalPage() {
                     <strong>
                       {plan.currentWeightKg} {t('goalPlannerPage.units.kg')} → {plan.targetWeightKg} {t('goalPlannerPage.units.kg')}
                     </strong>
+                    <div className="guest-goal-calculation mt-2">
+                      <div>
+                        <span>{bmrLabel}</span>
+                        <strong>{numberFormatter.format(plan.bmr)} {t('goalPlannerPage.units.kcal')}</strong>
+                      </div>
+                      <div>
+                        <span>{t('profile.activityLevel')}</span>
+                        <strong>{plan.activityFactor}</strong>
+                      </div>
+                      <div>
+                        <span>{tdeeLabel}</span>
+                        <strong>{numberFormatter.format(plan.tdee)} {t('goalPlannerPage.units.kcal')}</strong>
+                      </div>
+                    </div>
                     <div className="text-secondary small">
                       {t('goalPlannerPage.summary', {
                         energy: numberFormatter.format(Number(plan.totalEnergyChangeKcal) || 0),

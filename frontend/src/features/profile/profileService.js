@@ -34,6 +34,10 @@ export function getGoalPlanSuggestions(payload) {
   return api.post(profileConfig.endpoints.goalSuggestions, payload);
 }
 
+export function getGuestGoalPlanSuggestions(payload) {
+  return api.post(profileConfig.endpoints.guestGoalSuggestions, payload);
+}
+
 export function applyGoalPlan(payload) {
   return api.post(profileConfig.endpoints.applyGoal, payload);
 }
