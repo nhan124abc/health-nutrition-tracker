@@ -1522,6 +1522,34 @@ body::-webkit-scrollbar,
   border-radius: 0.85rem;
 }
 
+.guest-goal-calculation {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 0.75rem;
+}
+
+.guest-goal-calculation div {
+  background: var(--health-surface);
+  border: 1px solid #edf0f2;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+}
+
+.guest-goal-calculation span {
+  color: #66736d;
+  display: block;
+  font-size: 0.86rem;
+}
+
+.guest-goal-calculation strong {
+  color: #26312d;
+  display: block;
+  font-size: 1rem;
+  margin-top: 0.2rem;
+  overflow-wrap: anywhere;
+}
+
 .guest-goal-option-card .card-body {
   display: flex;
   flex-direction: column;
