@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Col, Form, InputGroup, Modal, ProgressBar, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { FaBookOpen, FaCalendarAlt, FaCheck, FaDumbbell, FaFireAlt, FaRobot, FaSearch, FaUtensils } from 'react-icons/fa';
+import { FaBookOpen, FaCheck, FaDumbbell, FaFireAlt, FaRobot, FaSearch, FaUtensils } from 'react-icons/fa';
 import { getAiPlanSuggestions } from '../features/ai/aiService';
-import { createMeal, getMealsByDate, deleteMealById } from '../features/meals/mealService';
+import { createMeal, createMealPlan, getMealsByDate, deleteMealById } from '../features/meals/mealService';
 import { extractMealsFromApi, getMealTotals, getMealsTotals, normalizeMealFromApi } from '../features/meals/mealUtils';
 import { getProfile } from '../features/profile/profileService';
 import { extractProfileFromApi, mapProfileFromApi } from '../features/profile/profileUtils';
-import { getActivitiesByDate, createActivityLog, deleteActivityById, getActivityTypes } from '../features/activities/activityService';
+import { getActivitiesByDate, createActivityLog, createWorkoutPlan, deleteActivityById, getActivityTypes } from '../features/activities/activityService';
 import { extractActivityTypesFromApi, normalizeActivityType } from '../features/activities/activityUtils';
 import { getFoods, getRecipeSuggestions } from '../features/nutrition/nutritionService';
 import { extractFoodsFromApi, normalizeFoodFromApi } from '../features/nutrition/nutritionUtils';
@@ -47,7 +47,14 @@ const maxSelectedFoods = 6;
 const maxSelectedActivities = 4;
 const foodPageSize = 10;
 const activityPageSize = 10;
-
+const mealTypeToApi = {
+  breakfast: 'BREAKFAST',
+  lunch: 'LUNCH',
+  dinner: 'DINNER',
+  afternoon_snack: 'AFTERNOON_SNACK',
+  morning_snack: 'MORNING_SNACK',
+  evening_snack: 'EVENING_SNACK',
+};
 function getTotalPagesFromApi(data) {
   return Number(data?.totalPages || data?.data?.totalPages || 1) || 1;
 }
@@ -84,6 +91,11 @@ function getActivityDurationMinutes(activity) {
 
   const amountMatch = String(activity?.amount || '').match(/\d+/);
   return amountMatch ? Number(amountMatch[0]) : 30;
+}
+
+function getCurrentTime() {
+  const now = new Date();
+  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 }
 
 function Planner() {
@@ -156,12 +168,15 @@ function Planner() {
   const normalizedFoodSearchTerm = foodSearchTerm.trim();
   const foodResultCount = foodSearchResults.length;
   const normalizedRecipeSearchTerm = recipeSearchTerm.trim();
-  const canSearchRecipes = normalizedRecipeSearchTerm.length >= 2 || selectedFoodIds.length > 0;
+  const canSearchRecipes = isRecipeMode || normalizedRecipeSearchTerm.length >= 2 || selectedFoodIds.length > 0;
   const normalizedActivitySearchTerm = activitySearchTerm.trim();
   const selectedActivityOptions = useMemo(() => activityOptions.filter((activity) => {
     const name = activity.nameVi || activity.name;
     return selectedActivityNames.includes(name);
   }), [activityOptions, selectedActivityNames]);
+  const selectedActivityTypeIds = useMemo(() => selectedActivityOptions
+    .map((activity) => activity.id)
+    .filter(Boolean), [selectedActivityOptions]);
   const filteredActivityOptions = useMemo(() => {
     if (!normalizedActivitySearchTerm) {
       return activityOptions;
@@ -352,7 +367,10 @@ function Planner() {
     setSelectedOption(null);
   };
 
-  const findActivityTypeByName = (activityName) => activityOptions.find((type) => {
+  const findActivityTypeByName = (activityName, activityTypeId = null) => activityOptions.find((type) => {
+    if (activityTypeId && String(type.id) === String(activityTypeId)) {
+      return true;
+    }
     const displayName = type.nameVi || type.name;
     return displayName === activityName || type.name === activityName || type.nameVi === activityName;
   });
@@ -509,7 +527,10 @@ function Planner() {
         excludedFoodNames: [...new Set([...existingNames, ...(suggestedNames[effectiveMealType] || [])])],
         selectedFoodIds: isExerciseMode ? [] : selectedFoodIds,
         selectedFoodNames: isExerciseMode ? [] : selectedFoodNames,
+        selectedActivityTypeIds: isExerciseMode ? selectedActivityTypeIds : [],
         selectedActivityNames: isExerciseMode ? selectedActivityNames : [],
+        dailyActivityGoalKcal: dailyActivityGoal,
+        activityCaloriesBurned: Math.round(activityCaloriesToday),
         cookingMethod: null,
         suggestionOffset: suggestionOffsets[effectiveMealType] || 0,
         locale: i18n.language,
@@ -646,7 +667,7 @@ function Planner() {
   };
 
   const handleLogActivity = async (activity, idx) => {
-    const matchedActivityType = findActivityTypeByName(activity.name);
+    const matchedActivityType = findActivityTypeByName(activity.name, activity.activityTypeId);
     const predictedCalories = calculateActivityPreviewCalories(activity, matchedActivityType, profile?.weight);
     const projectedActivityCalories = activityCaloriesToday + predictedCalories;
 
@@ -668,7 +689,7 @@ function Planner() {
     await logActivity(activity, idx, matchedActivityType);
   };
 
-  const logActivity = async (activity, idx, matchedActivityType = findActivityTypeByName(activity.name)) => {
+  const logActivity = async (activity, idx, matchedActivityType = findActivityTypeByName(activity.name, activity.activityTypeId)) => {
     setSaving(true);
     setLoggingActivity(idx);
     setError('');
@@ -680,7 +701,7 @@ function Planner() {
       activityName: activity.name,
       durationMinutes: getActivityDurationMinutes(activity),
       userWeightKg: Number(profile?.weight) || 70,
-      loggedAt: `${todayDate}T12:00:00`,
+      loggedAt: `${todayDate}T${getCurrentTime()}:00`,
       notes: t('plannerPage.savedNotes.activity'),
       category: matchedActivityType?.category?.toUpperCase() || 'CARDIO',
     };
@@ -695,6 +716,99 @@ function Planner() {
     } finally {
       setSaving(false);
       setLoggingActivity(null);
+    }
+  };
+
+  const saveMealSuggestionAsPlan = async (overrideOptions = null, overrideMessage = null) => {
+    const options = overrideOptions || suggestion?.options || [];
+    if (!options.length) {
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+    setSuccess('');
+    try {
+      const entries = options.flatMap((option) => {
+        if (Array.isArray(option.ingredients) && option.ingredients.length > 0) {
+          return option.ingredients.map((ingredient) => ({
+            planDate,
+            mealType: mealTypeToApi[selectedMeal] || selectedMeal.toUpperCase(),
+            foodItemId: ingredient.foodItemId ?? null,
+            recipeId: option.recipeId || null,
+            foodName: ingredient.name || option.name,
+            servingSizeG: Number(ingredient.servingSizeG) || Number(option.servingSizeG) || 100,
+            quantity: Number(ingredient.quantity) || 1,
+            calories: Number(ingredient.calories) || 0,
+            notes: option.name,
+          }));
+        }
+
+        return [{
+          planDate,
+          mealType: mealTypeToApi[selectedMeal] || selectedMeal.toUpperCase(),
+          foodItemId: null,
+          recipeId: option.recipeId || null,
+          foodName: option.name,
+          servingSizeG: Number(option.servingSizeG) || 100,
+          quantity: 1,
+          calories: Number(option.calories) || 0,
+          notes: option.description || option.cookingMethod || '',
+        }];
+      });
+
+      await createMealPlan({
+        name: `${selectedMealLabel} - ${planDate}`,
+        description: overrideMessage || suggestion?.message || 'Saved from AI planner.',
+        startDate: planDate,
+        endDate: planDate,
+        active: true,
+        entries,
+      });
+      setSuccess('Da luu goi y thanh ke hoach an uong.');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Khong luu duoc ke hoach an uong.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveActivitySuggestionAsPlan = async () => {
+    const options = isExerciseMode ? suggestion?.options : suggestion?.activities;
+    if (!options?.length) {
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+    setSuccess('');
+    try {
+      const dayOfWeek = new Date(`${planDate}T00:00:00`).getDay();
+      const normalizedDay = dayOfWeek === 0 ? 7 : dayOfWeek;
+      await createWorkoutPlan({
+        name: `Ke hoach van dong - ${planDate}`,
+        description: suggestion.message || 'Saved from AI planner.',
+        goal: activeGoal === 'LOSE_WEIGHT' || activeGoal === 'CUTTING'
+          ? 'WEIGHT_LOSS'
+          : activeGoal === 'GAIN_MUSCLE'
+            ? 'MUSCLE_GAIN'
+            : 'GENERAL_FITNESS',
+        durationWeeks: 1,
+        active: true,
+        exercises: options.map((activity, index) => ({
+          dayOfWeek: normalizedDay,
+          activityTypeId: activity.activityTypeId || findActivityTypeByName(activity.name)?.id || null,
+          exerciseName: activity.name,
+          durationMinutes: getActivityDurationMinutes(activity),
+          sortOrder: index,
+          notes: 'Saved from AI planner.',
+        })),
+      });
+      setSuccess('Da luu goi y thanh ke hoach tap luyen.');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Khong luu duoc ke hoach tap luyen.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -771,7 +885,6 @@ function Planner() {
         <Card className="border-0 shadow-sm planner-control-card"><Card.Body>
           <section className="planner-control-section">
             <div className="planner-section-heading">
-              <span><FaCalendarAlt /></span>
               <div>
                 <h2>{isExerciseMode ? t('plannerPage.sections.activityPlan') : isRecipeMode ? t('plannerPage.sections.recipePlan') : t('plannerPage.sections.mealPlan')}</h2>
                 <p>{isExerciseMode ? t('plannerPage.sections.activityPlanDescription') : isRecipeMode ? t('plannerPage.sections.recipePlanDescription') : t('plannerPage.sections.mealPlanDescription')}</p>
@@ -1262,7 +1375,7 @@ function Planner() {
                 const logged = isOptionLogged(option.name) || selectedOption === index;
                 const isExercise = isExerciseMode;
                 const cookingMethod = getOptionCookingMethod(option);
-                const matchedActivityType = isExercise ? findActivityTypeByName(option.name) : null;
+                const matchedActivityType = isExercise ? findActivityTypeByName(option.name, option.activityTypeId) : null;
                 const loggedActivity = isExercise ? findLoggedActivityByName(option.name) : null;
                 const activityPreviewCalories = loggedActivity
                   ? Math.round(Number(loggedActivity.caloriesBurned) || 0)
@@ -1386,7 +1499,6 @@ function Planner() {
                   {t('plannerPage.activitySuggestionsTitle')}
                 </h3>
                 <p className="text-secondary small mb-4">{t('plannerPage.activitySuggestionsDescription')}</p>
-
                 {/* Hoạt động đã ghi nhận */}
                 {activities.length > 0 && (
                   <Card className="border-0 shadow-sm mb-4 bg-primary bg-opacity-10 border border-primary border-opacity-25">
@@ -1429,7 +1541,7 @@ function Planner() {
                     {suggestion.activities.map((activity, idx) => {
                       const loggedActivity = findLoggedActivityByName(activity.name);
                       const actLogged = Boolean(loggedActivity);
-                      const matchedActivityType = findActivityTypeByName(activity.name);
+                      const matchedActivityType = findActivityTypeByName(activity.name, activity.activityTypeId);
                       const activityPreviewCalories = loggedActivity
                         ? Math.round(Number(loggedActivity.caloriesBurned) || 0)
                         : calculateActivityPreviewCalories(activity, matchedActivityType, profile?.weight);

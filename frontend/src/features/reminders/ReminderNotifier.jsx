@@ -2,11 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Modal } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentUser } from '../../api/api';
+import { getCurrentUser, hasUsableAccessToken } from '../../api/api';
 import { getActivitiesByDate } from '../activities/activityService';
 import { extractActivitiesFromApi, getTodayDate, normalizeActivityFromApi } from '../activities/activityUtils';
 import { getMealsByDate } from '../meals/mealService';
 import { extractMealsFromApi, normalizeMealFromApi } from '../meals/mealUtils';
+import { getBodyMetrics, getProfile } from '../profile/profileService';
+import { extractMetricRows, extractProfileFromApi, mapProfileFromApi } from '../profile/profileUtils';
 import {
   getActivityCompletionId,
   getMealCompletionId,
@@ -18,6 +20,7 @@ const settingsStorageKey = 'userSettings';
 const lastSeenStorageKey = 'reminders:lastSeenAt';
 const sentStorageKey = 'reminders:sent';
 const popupStorageKey = 'reminders:popup';
+const pendingEmailStorageKey = 'reminders:pendingEmails';
 
 const mealReminderSlots = [
   { id: 'breakfast', labelKey: 'reminderNotifier.slots.breakfast', path: '/meals', time: '08:00', type: 'breakfast', kind: 'meal' },
@@ -54,6 +57,75 @@ function isWebActiveNow() {
   return typeof document !== 'undefined' && !document.hidden && document.hasFocus();
 }
 
+function isBrowserOnline() {
+  return typeof navigator === 'undefined' || navigator.onLine !== false;
+}
+
+function readLastSeenDate() {
+  const lastSeenAt = Number(localStorage.getItem(lastSeenStorageKey));
+  return Number.isFinite(lastSeenAt) && lastSeenAt > 0 ? new Date(lastSeenAt) : null;
+}
+
+function hasActiveGoal(profile) {
+  return Boolean(
+    profile?.healthGoal
+    || Number(profile?.dailyCalorieGoal) > 0
+    || Number(profile?.dailyActivityGoalKcal) > 0
+  );
+}
+
+function queueReminderEmail(key, payload) {
+  const ownerKey = getOwnerKey();
+  const map = readJson(pendingEmailStorageKey, {});
+  const ownerValues = Array.isArray(map[ownerKey]) ? map[ownerKey] : [];
+
+  if (ownerValues.some((item) => item.key === key)) {
+    return;
+  }
+
+  localStorage.setItem(pendingEmailStorageKey, JSON.stringify({
+    ...map,
+    [ownerKey]: [...ownerValues, { key, payload }],
+  }));
+}
+
+async function sendOrQueueReminderEmail(key, payload) {
+  if (!isBrowserOnline()) {
+    queueReminderEmail(key, payload);
+    return;
+  }
+
+  await sendReminderEmail(payload);
+}
+
+async function flushQueuedReminderEmails() {
+  if (!isBrowserOnline() || !getCurrentUser() || !hasUsableAccessToken()) {
+    return;
+  }
+
+  const ownerKey = getOwnerKey();
+  const map = readJson(pendingEmailStorageKey, {});
+  const ownerValues = Array.isArray(map[ownerKey]) ? map[ownerKey] : [];
+
+  if (ownerValues.length === 0) {
+    return;
+  }
+
+  const remaining = [];
+  for (const item of ownerValues) {
+    try {
+      await sendReminderEmail(item.payload);
+    } catch {
+      remaining.push(item);
+    }
+  }
+
+  localStorage.setItem(pendingEmailStorageKey, JSON.stringify({
+    ...map,
+    [ownerKey]: remaining,
+  }));
+}
+
 function markOnce(key, storageKey) {
   const ownerKey = getOwnerKey();
   const map = readJson(storageKey, {});
@@ -81,7 +153,7 @@ function readSettings() {
 function getMealSlotReminderState(meals, completedIds, slot) {
   const slotMeals = meals.filter((meal) => meal.type === slot.type);
   if (slotMeals.length === 0) {
-    return { status: 'missing', identity: 'none' };
+    return { status: 'none', identity: 'none' };
   }
 
   const completionIds = slotMeals.map(getMealCompletionId).filter(Boolean);
@@ -93,7 +165,7 @@ function getMealSlotReminderState(meals, completedIds, slot) {
 
 function getActivitySlotReminderState(activities, completedIds) {
   if (activities.length === 0) {
-    return { status: 'missing', identity: 'none' };
+    return { status: 'none', identity: 'none' };
   }
 
   const completionIds = activities.map(getActivityCompletionId).filter(Boolean);
@@ -122,7 +194,7 @@ function ReminderNotifier() {
   }, []);
 
   const checkReminders = useCallback(async () => {
-    if (checkingRef.current || !getCurrentUser()) {
+    if (checkingRef.current || !getCurrentUser() || !hasUsableAccessToken()) {
       return;
     }
 
@@ -132,6 +204,7 @@ function ReminderNotifier() {
       const settings = readSettings();
       const today = getTodayDate();
       const now = new Date();
+      const lastSeenDate = readLastSeenDate();
       const completedMealIds = readCompletionIds('meals');
       const completedActivityIds = readCompletionIds('activities');
       const enabledSlots = [
@@ -143,13 +216,35 @@ function ReminderNotifier() {
         return;
       }
 
-      const [mealResponse, activityResponse] = await Promise.all([
+      const profileResponse = await getProfile();
+      const profile = mapProfileFromApi(extractProfileFromApi(profileResponse.data));
+
+      if (!hasActiveGoal(profile)) {
+        return;
+      }
+
+      await flushQueuedReminderEmails();
+
+      const [mealResponse, activityResponse, metricResponse] = await Promise.all([
         settings.mealReminder ? getMealsByDate(today) : Promise.resolve({ data: [] }),
         settings.activityReminder ? getActivitiesByDate(today) : Promise.resolve({ data: [] }),
+        settings.bodyMetricsReminder ? getBodyMetrics({ page: 0, size: 1 }) : Promise.resolve({ data: [] }),
       ]);
 
       const meals = extractMealsFromApi(mealResponse.data).map(normalizeMealFromApi);
       const activities = extractActivitiesFromApi(activityResponse.data).map(normalizeActivityFromApi);
+
+      if (settings.bodyMetricsReminder) {
+        const metrics = extractMetricRows(metricResponse.data);
+        const latestDate = metrics[0]?.date || metrics[0]?.recordedAt;
+        const latestTime = latestDate ? new Date(`${String(latestDate).slice(0, 10)}T00:00:00`).getTime() : 0;
+        const overdue = !latestTime || (now.getTime() - latestTime) >= 7 * 24 * 60 * 60 * 1000;
+        const bodyMetricKey = `${today}:body-metrics`;
+        if (overdue && markOnce(bodyMetricKey, popupStorageKey) && isWebActiveNow()) {
+          setActiveReminder({ kind: 'bodyMetric', path: '/body-metrics', message: 'Đã 7 ngày kể từ lần cập nhật gần nhất. Hãy cập nhật cân nặng và chỉ số cơ thể để theo dõi mục tiêu chính xác hơn.' });
+          return;
+        }
+      }
 
       for (const slot of enabledSlots) {
         const slotDate = getSlotDate(today, slot.time);
@@ -163,13 +258,14 @@ function ReminderNotifier() {
           : getActivitySlotReminderState(activities, completedActivityIds);
         const key = `${today}:${slot.id}:${status}:${identity}`;
 
-        if (status === 'complete') {
+        if (status === 'complete' || status === 'none') {
           continue;
         }
 
-        if (!isWebActiveNow()) {
+        const missedWhileAway = Boolean(lastSeenDate && lastSeenDate < slotDate);
+        if (missedWhileAway || !isWebActiveNow()) {
           if (markOnce(key, sentStorageKey)) {
-            await sendReminderEmail(buildReminderMessage(slot, status, t));
+            await sendOrQueueReminderEmail(key, buildReminderMessage(slot, status, t));
           }
           continue;
         }
@@ -197,13 +293,34 @@ function ReminderNotifier() {
         checkReminders();
       }
     };
+    const handleOnline = () => {
+      flushQueuedReminderEmails().catch((error) => {
+        console.error('[ReminderNotifier] Could not flush queued reminder emails:', error);
+      });
+      checkReminders();
+    };
+    const handleSettingsChanged = (event) => {
+      const settings = event.detail || readSettings();
+      setActiveReminder((current) => {
+        if (!current) return null;
+        if (current.kind === 'meal' && !settings.mealReminder) return null;
+        if (current.kind === 'activity' && !settings.activityReminder) return null;
+        if (current.kind === 'bodyMetric' && !settings.bodyMetricsReminder) return null;
+        return current;
+      });
+      checkReminders();
+    };
 
     window.addEventListener('focus', handleFocus);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('settings:notificationsChanged', handleSettingsChanged);
     document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
       window.clearInterval(intervalId);
       window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('settings:notificationsChanged', handleSettingsChanged);
       document.removeEventListener('visibilitychange', handleVisibility);
       updateLastSeen();
     };
@@ -214,6 +331,7 @@ function ReminderNotifier() {
       return '';
     }
 
+    if (activeReminder.message) return activeReminder.message;
     const label = t(activeReminder.labelKey);
     return t(`reminderNotifier.popup.${activeReminder.kind}.${activeReminder.status}`, {
       label,

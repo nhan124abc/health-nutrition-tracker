@@ -4,6 +4,7 @@
     "loading": "Loading..."
   },
   "nav": {
+    "plans": "My Plans",
     "dashboard": "Dashboard",
     "nutrition": "Nutrition",
     "diary": "Nutrition Diary",

@@ -5,6 +5,9 @@ const mealConfig = {
     detail: (id) => `/meals/${id}`,
     update: (id) => `/meals/${id}`,
     deleteById: (id) => `/meals/${id}`,
+    mealPlans: '/meals/plans',
+    mealPlanDetail: (id) => `/meals/plans/${id}`,
+    mealPlanActive: (id) => `/meals/plans/${id}/active`,
   },
 };
 

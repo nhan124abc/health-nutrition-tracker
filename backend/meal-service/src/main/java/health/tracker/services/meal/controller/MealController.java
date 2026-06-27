@@ -2,7 +2,10 @@ package health.tracker.services.meal.controller;
 
 import health.tracker.services.meal.dto.MealRequest;
 import health.tracker.services.meal.dto.MealResponse;
+import health.tracker.services.meal.dto.MealPlanRequest;
+import health.tracker.services.meal.dto.MealPlanResponse;
 import health.tracker.services.meal.repository.MealRepository;
+import health.tracker.services.meal.service.MealPlanService;
 import health.tracker.services.meal.service.MealService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +38,7 @@ import java.util.Map;
 public class MealController {
 
     private final MealService    mealService;
+    private final MealPlanService mealPlanService;
     private final MealRepository mealRepository;
 
     /**
@@ -49,6 +53,50 @@ public class MealController {
 
         LocalDate targetDate = date != null ? date : LocalDate.now();
         return ResponseEntity.ok(mealService.getDailyMeals(userId, targetDate));
+    }
+
+    @GetMapping("/plans")
+    public ResponseEntity<List<MealPlanResponse>> mealPlans(
+            @RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(mealPlanService.list(userId));
+    }
+
+    @GetMapping("/plans/{id}")
+    public ResponseEntity<MealPlanResponse> mealPlan(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(mealPlanService.get(userId, id));
+    }
+
+    @PostMapping("/plans")
+    public ResponseEntity<MealPlanResponse> createMealPlan(
+            @RequestHeader("X-User-Id") Long userId,
+            @Valid @RequestBody MealPlanRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(mealPlanService.create(userId, request));
+    }
+
+    @PutMapping("/plans/{id}")
+    public ResponseEntity<MealPlanResponse> updateMealPlan(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id,
+            @Valid @RequestBody MealPlanRequest request) {
+        return ResponseEntity.ok(mealPlanService.update(userId, id, request));
+    }
+
+    @PatchMapping("/plans/{id}/active")
+    public ResponseEntity<MealPlanResponse> setMealPlanActive(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "true") boolean active) {
+        return ResponseEntity.ok(mealPlanService.setActive(userId, id, active));
+    }
+
+    @DeleteMapping("/plans/{id}")
+    public ResponseEntity<Void> deleteMealPlan(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id) {
+        mealPlanService.delete(userId, id);
+        return ResponseEntity.noContent().build();
     }
 
     /**

@@ -2039,6 +2039,62 @@ body::-webkit-scrollbar,
   border-radius: 0.85rem;
 }
 
+.plan-checklist {
+  overflow: hidden;
+  border: 1px solid #dfe7e3;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.plan-checklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 12px;
+}
+
+.plan-progress-value {
+  min-width: 52px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #e7f3ee;
+  color: #1f765b;
+  text-align: center;
+}
+
+.plan-progress {
+  height: 6px;
+  margin: 0 20px 10px;
+  background: #edf1ef;
+}
+
+.plan-checklist-items {
+  padding: 0 20px 8px;
+}
+
+.plan-checklist-item {
+  padding: 14px 0;
+  font-size: 0.95rem;
+  transition: background-color 160ms ease, opacity 160ms ease;
+}
+
+.plan-checklist-item.is-completed {
+  opacity: 0.65;
+  background: #f6faf8;
+}
+
+.plan-checklist-item.is-completed .fw-semibold {
+  text-decoration: line-through;
+}
+
+.goal-journey-card { border-left: 4px solid #2f936f !important; }
+.goal-journey-stat { height: 100%; padding: 14px 16px; border: 1px solid #e1e8e4; border-radius: 8px; background: #f8fbf9; }
+.goal-journey-stat span, .goal-journey-stat strong { display: block; }
+.goal-journey-stat span { margin-bottom: 6px; color: #6b7771; font-size: 0.85rem; }
+.goal-journey-stat strong { color: #202824; font-size: 1.05rem; }
+.goal-journey-progress { height: 8px; background: #e8eeeb; }
+
 .meal-summary-card {
   cursor: pointer;
   transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;

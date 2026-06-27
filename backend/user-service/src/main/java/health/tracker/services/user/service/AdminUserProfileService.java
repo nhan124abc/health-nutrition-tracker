@@ -168,9 +168,10 @@ public class AdminUserProfileService {
         }
 
         String normalized = avatarUrl.trim().replace("\\", "/");
-        if (!normalized.startsWith("/img/") || normalized.contains("..")
-                || !normalized.toLowerCase().matches("^/img/.+\\.(jpg|jpeg|png)$")) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Avatar URL must point to a JPG or PNG inside /img/");
+        if ((!normalized.startsWith("/img/") && !normalized.startsWith("/api/v1/auth/avatars/"))
+                || normalized.contains("..")
+                || !normalized.toLowerCase().matches("^/(img|api/v1/auth/avatars)/.+\\.(jpg|jpeg|png)$")) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Avatar URL must point to a JPG or PNG avatar");
         }
         return normalized;
     }

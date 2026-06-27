@@ -97,7 +97,7 @@ public class PlannerRuleEngine {
         MealOption m2 = calculateMealOption(opt2[0], mealBudget, proteinRatio, carbsRatio, fatRatio, density2, opt2[1]);
 
         // 4. Exercise recommendations (2 options)
-        List<ActivityInfo> activities = getActivities(goal, weight, dayOfWeek + offset, activityCatalog);
+        List<ActivityInfo> activities = getActivities(goal, weight, dayOfWeek + offset, activityCatalog, context);
 
         // 5. Construct JSON response
         StringBuilder sb = new StringBuilder();
@@ -139,6 +139,7 @@ public class PlannerRuleEngine {
     }
 
     private static class ActivityInfo {
+        Integer activityTypeId;
         String name;
         int durationMinutes;
         int caloriesBurned;
@@ -149,6 +150,11 @@ public class PlannerRuleEngine {
         }
 
         ActivityInfo(String name, int durationMinutes, int caloriesBurned, double met) {
+            this(null, name, durationMinutes, caloriesBurned, met);
+        }
+
+        ActivityInfo(Integer activityTypeId, String name, int durationMinutes, int caloriesBurned, double met) {
+            this.activityTypeId = activityTypeId;
             this.name = name;
             this.durationMinutes = durationMinutes;
             this.caloriesBurned = caloriesBurned;
@@ -253,15 +259,37 @@ public class PlannerRuleEngine {
     private static List<ActivityInfo> getExerciseOptions(PlannerSuggestRequest context, String goal, double weight, int index,
                                                          List<ActivityCandidate> activityCatalog) {
         List<ActivityInfo> pool = new ArrayList<>();
+        List<Integer> selectedActivityTypeIds = context.getSelectedActivityTypeIds() == null
+                ? List.of()
+                : context.getSelectedActivityTypeIds().stream()
+                        .filter(id -> id != null && id > 0)
+                        .distinct()
+                        .toList();
+        for (Integer id : selectedActivityTypeIds) {
+            findCatalogActivityById(id, activityCatalog)
+                    .map(candidate -> buildActivityInfo(candidate, estimateDurationMinutes(displayActivityName(candidate)), weight))
+                    .ifPresent(pool::add);
+        }
         if (context.getSelectedActivityNames() != null && !context.getSelectedActivityNames().isEmpty()) {
             List<String> selectedNames = context.getSelectedActivityNames().stream()
                     .filter(name -> name != null && !name.isBlank())
                     .distinct()
                     .toList();
             for (String name : selectedNames) {
+                boolean alreadySelectedById = pool.stream()
+                        .anyMatch(activity -> normalizeText(activity.name).equals(normalizeText(name)));
+                if (alreadySelectedById) {
+                    continue;
+                }
                 int duration = estimateDurationMinutes(name);
                 pool.add(buildActivityInfo(name.trim(), duration, weight, activityCatalog));
             }
+        }
+
+        if (!pool.isEmpty()) {
+            return pickActivityOptions(pool.stream()
+                    .map(activity -> adjustActivityToTarget(activity, context, weight))
+                    .toList(), index);
         }
 
         if (isFatLossGoal(goal)) {
@@ -292,8 +320,13 @@ public class PlannerRuleEngine {
 
         pool = pool.stream()
                 .map(activity -> resolveActivityInfo(activity, weight, activityCatalog))
+                .map(activity -> adjustActivityToTarget(activity, context, weight))
                 .toList();
 
+        return pickActivityOptions(pool, index);
+    }
+
+    private static List<ActivityInfo> pickActivityOptions(List<ActivityInfo> pool, int index) {
         List<ActivityInfo> result = new ArrayList<>();
         int size = pool.size();
         if (size > 0) {
@@ -330,6 +363,28 @@ public class PlannerRuleEngine {
         return 4.5;
     }
 
+    private static java.util.Optional<ActivityCandidate> findCatalogActivityById(Integer id, List<ActivityCandidate> activityCatalog) {
+        if (id == null || activityCatalog == null || activityCatalog.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        return activityCatalog.stream()
+                .filter(candidate -> candidate.id() == id)
+                .findFirst();
+    }
+
+    private static String displayActivityName(ActivityCandidate candidate) {
+        if (candidate.nameVi() != null && !candidate.nameVi().isBlank()) {
+            return candidate.nameVi();
+        }
+        return candidate.name();
+    }
+
+    private static ActivityInfo buildActivityInfo(ActivityCandidate candidate, int durationMinutes, double weight) {
+        String name = displayActivityName(candidate);
+        double met = candidate.metValue().doubleValue();
+        return new ActivityInfo(candidate.id(), name, durationMinutes, calculateCaloriesBurned(met, weight, durationMinutes), met);
+    }
+
     private static ActivityInfo buildActivityInfo(String name, int durationMinutes, double weight,
                                                   List<ActivityCandidate> activityCatalog) {
         return resolveActivityInfo(new ActivityInfo(name, durationMinutes, 0), weight, activityCatalog);
@@ -343,10 +398,39 @@ public class PlannerRuleEngine {
         }
 
         return new ActivityInfo(
+                activity.activityTypeId,
                 activity.name,
                 activity.durationMinutes,
                 calculateCaloriesBurned(met, weight, activity.durationMinutes),
                 met
+        );
+    }
+
+    private static ActivityInfo adjustActivityToTarget(ActivityInfo activity, PlannerSuggestRequest context, double weight) {
+        int dailyGoal = context.getDailyActivityGoalKcal() == null ? 0 : context.getDailyActivityGoalKcal();
+        if (dailyGoal <= 0 || activity.met <= 0) {
+            return activity;
+        }
+
+        int burned = context.getActivityCaloriesBurned() == null ? 0 : Math.max(0, context.getActivityCaloriesBurned());
+        int remaining = dailyGoal - burned;
+        if (remaining <= 0) {
+            return activity;
+        }
+
+        int target = Math.max(60, remaining);
+        if (activity.caloriesBurned <= target * 1.15 && activity.caloriesBurned >= target * 0.55) {
+            return activity;
+        }
+
+        int adjustedDuration = (int) Math.round((target * 60.0) / (activity.met * weight));
+        adjustedDuration = Math.max(10, Math.min(75, adjustedDuration));
+        return new ActivityInfo(
+                activity.activityTypeId,
+                activity.name,
+                adjustedDuration,
+                calculateCaloriesBurned(activity.met, weight, adjustedDuration),
+                activity.met
         );
     }
 
@@ -380,7 +464,8 @@ public class PlannerRuleEngine {
     }
 
     private static List<ActivityInfo> getActivities(String goal, double weight, int index,
-                                                    List<ActivityCandidate> activityCatalog) {
+                                                    List<ActivityCandidate> activityCatalog,
+                                                    PlannerSuggestRequest context) {
         List<ActivityInfo> list = new ArrayList<>();
         int key = Math.abs(index) % 7;
         if (isFatLossGoal(goal)) {
@@ -457,6 +542,7 @@ public class PlannerRuleEngine {
         }
         return list.stream()
                 .map(activity -> resolveActivityInfo(activity, weight, activityCatalog))
+                .map(activity -> adjustActivityToTarget(activity, context, weight))
                 .toList();
     }
 

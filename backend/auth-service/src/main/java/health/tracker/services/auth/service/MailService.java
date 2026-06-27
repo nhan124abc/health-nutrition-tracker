@@ -56,8 +56,8 @@ public class MailService {
             mailSender.send(message);
             log.info("Reminder email accepted by SMTP provider for: {}", email);
         } catch (MailException ex) {
-            log.error("Failed to send reminder email to {}: {}", email, ex.getMessage(), ex);
-            throw ex;
+            // Reminder delivery is best-effort and must not break the web notification flow.
+            log.warn("Reminder email was not delivered to {}: {}", email, ex.getMessage());
         }
     }
 }
