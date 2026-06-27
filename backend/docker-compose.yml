@@ -71,6 +71,7 @@ volumes:
   mysql_data:
   redis_data:
   kafka_data:
+  avatar_data:
   # Không dùng named volume cho logs —
   # thay bằng bind mount vào ./logs/<service>/ để xem trực tiếp trên host
 
@@ -275,7 +276,7 @@ services:
       USER_SERVICE_URL: http://user-service:${USER_SERVICE_PORT:-8082}
       MEAL_SERVICE_URL: http://meal-service:${MEAL_SERVICE_PORT:-8084}
       ACTIVITY_SERVICE_URL: http://activity-service:${ACTIVITY_SERVICE_PORT:-8085}
-      APP_AVATAR_UPLOAD_DIR: /app/frontend-public-img
+      APP_AVATAR_UPLOAD_DIR: /app/uploads/avatars
       MAIL_ENABLED: ${MAIL_ENABLED:-false}
       MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
       MAIL_PORT: ${MAIL_PORT:-587}
@@ -287,7 +288,7 @@ services:
       - "${AUTH_SERVICE_PORT:-8081}"
     volumes:
       - ./logs/auth-service:/app/logs
-      - ../frontend/public/img:/app/frontend-public-img
+      - avatar_data:/app/uploads/avatars
     depends_on:
       mysql:
         condition: service_healthy
@@ -525,8 +526,6 @@ services:
       TZ: Asia/Ho_Chi_Minh
     ports:
       - "${FRONTEND_PORT:-3000}:80"
-    volumes:
-      - ../frontend/public/img:/usr/share/nginx/html/img
     depends_on:
       api-gateway:
         condition: service_healthy
