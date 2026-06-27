@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import GoalFireworks from '../../components/GoalFireworks';
 import DailyMealSummary from './components/DailyMealSummary';
 import MealCard from './components/MealCard';
@@ -23,7 +24,8 @@ import {
 
 function FoodDiary() {
   const { t } = useTranslation();
-  const [selectedDate, setSelectedDate] = useState(getTodayDate);
+  const [searchParams] = useSearchParams();
+  const [selectedDate, setSelectedDate] = useState(() => searchParams.get('date') || getTodayDate());
   const [meals, setMeals] = useState([]);
   const [loadingMeals, setLoadingMeals] = useState(false);
   const [loadingMealDetail, setLoadingMealDetail] = useState(false);

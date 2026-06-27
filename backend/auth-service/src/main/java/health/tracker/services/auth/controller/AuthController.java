@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.CacheControl;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +28,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RestController
@@ -182,11 +184,33 @@ public class AuthController {
                         "User account is unavailable or inactive"));
 
         String fileName = saveAvatarFile(user.getId(), file);
-        user.setAvatarUrl("/img/" + fileName);
+        user.setAvatarUrl("/api/v1/auth/avatars/" + fileName);
 
         User savedUser = userRepository.save(user);
         userCacheService.evict(savedUser.getEmail());
         return ResponseEntity.ok(toAccountResponse(savedUser));
+    }
+
+    @GetMapping("/avatars/{fileName:.+}")
+    public ResponseEntity<byte[]> getAvatar(@PathVariable String fileName) {
+        String safeFileName = Paths.get(fileName).getFileName().toString();
+        if (!safeFileName.equals(fileName) || !safeFileName.toLowerCase(Locale.ROOT).matches(".+\\.(jpg|jpeg|png)")) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Invalid avatar file name");
+        }
+        Path directory = resolveAvatarUploadDirectory();
+        Path file = directory.resolve(safeFileName).normalize();
+        if (!file.startsWith(directory) || !Files.isRegularFile(file)) {
+            throw new AppException(HttpStatus.NOT_FOUND, "Avatar image not found");
+        }
+        try {
+            MediaType mediaType = safeFileName.toLowerCase(Locale.ROOT).endsWith(".png") ? MediaType.IMAGE_PNG : MediaType.IMAGE_JPEG;
+            return ResponseEntity.ok()
+                    .contentType(mediaType)
+                    .cacheControl(CacheControl.maxAge(30, TimeUnit.DAYS).cachePublic())
+                    .body(Files.readAllBytes(file));
+        } catch (IOException error) {
+            throw new AppException(HttpStatus.INTERNAL_SERVER_ERROR, "Unable to read avatar image");
+        }
     }
 
     @GetMapping("/admin/users")
@@ -280,8 +304,8 @@ public class AuthController {
         }
 
         String normalized = avatarUrl.trim().replace("\\", "/");
-        if (!normalized.startsWith("/img/") || normalized.contains("..")) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Avatar URL must point to /img/ inside public assets");
+        if ((!normalized.startsWith("/img/") && !normalized.startsWith("/api/v1/auth/avatars/")) || normalized.contains("..")) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Avatar URL is invalid");
         }
         if (!normalized.toLowerCase().matches("^/img/.+\\.(jpg|jpeg|png)$")) {
             throw new AppException(HttpStatus.BAD_REQUEST, "Avatar URL must be a .jpg, .jpeg, or .png file");
@@ -346,19 +370,7 @@ public class AuthController {
             return Paths.get(avatarUploadDir).toAbsolutePath().normalize();
         }
 
-        Path[] candidates = {
-                Paths.get("frontend", "public", "img"),
-                Paths.get("..", "frontend", "public", "img"),
-                Paths.get("..", "..", "frontend", "public", "img")
-        };
-
-        for (Path candidate : candidates) {
-            Path absoluteCandidate = candidate.toAbsolutePath().normalize();
-            if (Files.isDirectory(absoluteCandidate)) {
-                return absoluteCandidate;
-            }
-        }
-
-        return candidates[0].toAbsolutePath().normalize();
+        return Paths.get(System.getProperty("user.home"), ".health-nutrition", "avatars")
+                .toAbsolutePath().normalize();
     }
 }

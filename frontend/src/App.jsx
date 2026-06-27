@@ -20,6 +20,7 @@ import BodyMetrics from './features/profile/BodyMetrics';
 import GoalPlanner from './features/profile/GoalPlanner';
 import Reports from './pages/Reports';
 import Planner from './pages/Planner';
+import Plans from './pages/Plans';
 import Settings from './pages/Settings';
 import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminCatalogs from './pages/admin/AdminCatalogs';
@@ -85,6 +86,7 @@ function App() {
           <Route path="/body-metrics" element={<BodyMetrics />} />
           <Route path="/goals" element={<GoalPlanner />} />
           <Route path="/planner" element={<Planner />} />
+          <Route path="/plans" element={<Plans />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
         <Route

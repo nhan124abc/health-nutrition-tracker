@@ -161,10 +161,10 @@ function AdminProfile() {
 
       if (avatarFile) {
         const avatarResponse = await uploadAuthenticatedUserAvatar(avatarFile);
-        savedAvatarUrl = avatarResponse.data?.avatarUrl || '';
+        savedAvatarUrl = avatarResponse.data?.avatarUrl || avatarResponse.data?.data?.avatarUrl || '';
       } else if (avatarMarkedForRemoval) {
         const avatarResponse = await updateAuthenticatedUserAvatar('');
-        savedAvatarUrl = avatarResponse.data?.avatarUrl || '';
+        savedAvatarUrl = avatarResponse.data?.avatarUrl || avatarResponse.data?.data?.avatarUrl || '';
       }
 
       const response = await updateAccountProfile({ fullName: (draftUser.fullName || draftUser.name || '').trim() });

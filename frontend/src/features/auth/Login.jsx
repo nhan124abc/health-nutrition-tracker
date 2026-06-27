@@ -113,6 +113,7 @@ function Login() {
                   <Form.Control
                     type="email"
                     name="email"
+                    autoComplete="email"
                     value={form.email}
                     onChange={handleChange}
                     required
@@ -124,6 +125,7 @@ function Login() {
                   <Form.Control
                     type="password"
                     name="password"
+                    autoComplete="current-password"
                     value={form.password}
                     onChange={handleChange}
                     required

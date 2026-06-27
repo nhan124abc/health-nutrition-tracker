@@ -277,6 +277,15 @@ public class AiChatService {
 
         ChatClient.Builder builder = chatClientBuilderProvider.getIfAvailable();
         if (builder == null) {
+            try {
+                return generateCatalogFoodPlan(context, budget, calorieBuffer);
+            } catch (Exception exception) {
+                log.warn("Nutrition catalog fallback failed while AI model is unavailable: {}", exception.getMessage());
+            }
+            if (hasSelectedFoods(context)) {
+                throw new AppException(HttpStatus.BAD_REQUEST,
+                        "Không tìm thấy gợi ý phù hợp với thực phẩm đã chọn. Hãy chọn ít nguyên liệu hơn hoặc thử công thức đã lưu.");
+            }
             log.warn("AI model is unavailable; using planner fallback");
             return generateFallbackPlan(context);
         }
@@ -301,9 +310,146 @@ public class AiChatService {
                     model, userId, budget);
             return normalized;
         } catch (Exception exception) {
+            try {
+                return generateCatalogFoodPlan(context, budget, calorieBuffer);
+            } catch (Exception fallbackException) {
+                log.warn("Nutrition catalog fallback failed after AI planner failure: {}", fallbackException.getMessage());
+            }
+            if (hasSelectedFoods(context)) {
+                throw new AppException(HttpStatus.BAD_REQUEST,
+                        "Không tìm thấy gợi ý phù hợp với thực phẩm đã chọn. Hãy chọn ít nguyên liệu hơn hoặc thử công thức đã lưu.");
+            }
             log.warn("AI planner failed; using rule fallback: {}", exception.getMessage());
             return generateFallbackPlan(context);
         }
+    }
+
+    private String generateCatalogFoodPlan(PlannerSuggestRequest context, int budget, int calorieBuffer) throws Exception {
+        List<NutritionCatalogClient.FoodCandidate> foods = getPlannerFoodCatalog(context);
+        if (foods.size() < 2) {
+            throw new IllegalStateException("Nutrition database has too few foods");
+        }
+
+        Map<Long, NutritionCatalogClient.FoodCandidate> foodById = new java.util.LinkedHashMap<>();
+        foods.forEach(food -> foodById.putIfAbsent(food.id(), food));
+        List<Long> requiredFoodIds = selectedFoodIdsInCatalog(context, foods);
+        if (requiredFoodIds.size() > 4) {
+            throw new IllegalStateException("Too many required foods for one suggestion");
+        }
+        if (!normalizedLongList(context.getSelectedFoodIds()).isEmpty()
+                && requiredFoodIds.size() < normalizedLongList(context.getSelectedFoodIds()).size()) {
+            throw new IllegalStateException("Some selected foods are missing from nutrition catalog");
+        }
+
+        List<NutritionCatalogClient.FoodCandidate> requiredFoods = requiredFoodIds.stream()
+                .map(foodById::get)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        List<NutritionCatalogClient.FoodCandidate> optionalFoods = foods.stream()
+                .filter(food -> !requiredFoodIds.contains(food.id()))
+                .filter(food -> !isExcluded(food.name(), context))
+                .toList();
+
+        ObjectNode result = objectMapper.createObjectNode();
+        result.put("message", "Gợi ý được tạo từ dữ liệu thực phẩm có sẵn trong hệ thống.");
+        result.put("mealBudget", budget);
+        result.put("calorieBuffer", calorieBuffer);
+        result.put("source", "FOOD_DB");
+        ArrayNode options = result.putArray("options");
+
+        int offset = context.getSuggestionOffset() == null ? 0 : Math.max(0, context.getSuggestionOffset());
+        for (int optionIndex = 0; optionIndex < 2; optionIndex++) {
+            List<NutritionCatalogClient.FoodCandidate> selected = new java.util.ArrayList<>(requiredFoods);
+            int targetCount = Math.max(2, Math.min(4, requiredFoods.size() + 2));
+            int cursor = offset + optionIndex * 2;
+            while (selected.size() < targetCount && !optionalFoods.isEmpty()) {
+                NutritionCatalogClient.FoodCandidate candidate = optionalFoods.get(Math.abs(cursor) % optionalFoods.size());
+                if (selected.stream().noneMatch(food -> food.id() == candidate.id())) {
+                    selected.add(candidate);
+                }
+                cursor++;
+                if (cursor > offset + optionalFoods.size() + 8) {
+                    break;
+                }
+            }
+
+            if (selected.size() < 2) {
+                throw new IllegalStateException("Not enough catalog foods to build meal suggestion");
+            }
+
+            addCatalogMealOption(options, selected, budget, context, optionIndex);
+        }
+
+        return objectMapper.writeValueAsString(result);
+    }
+
+    private void addCatalogMealOption(ArrayNode options,
+                                      List<NutritionCatalogClient.FoodCandidate> foods,
+                                      int budget,
+                                      PlannerSuggestRequest context,
+                                      int optionIndex) {
+        BigDecimal baseCalories = foods.stream()
+                .map(NutritionCatalogClient.FoodCandidate::calories)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal scale = BigDecimal.valueOf(budget).divide(baseCalories, 4, RoundingMode.HALF_UP)
+                .min(BigDecimal.valueOf(2.5))
+                .max(BigDecimal.valueOf(0.5));
+
+        ObjectNode option = options.addObject();
+        String firstName = foods.get(0).name();
+        String secondName = foods.get(1).name();
+        option.put("name", "Gợi ý " + firstName + " với " + secondName + (optionIndex == 0 ? "" : " cân bằng"));
+        option.put("description", "Kết hợp các thực phẩm đã có trong hệ thống, điều chỉnh khẩu phần theo ngân sách calo.");
+        option.put("cookingMethod", blankToDefault(context.getCookingMethod(),
+                "Chế biến đơn giản, hạn chế dầu mỡ và nêm vừa ăn."));
+        option.put("amount", "1 phần");
+
+        BigDecimal totalServing = BigDecimal.ZERO;
+        BigDecimal totalCalories = BigDecimal.ZERO;
+        BigDecimal totalProtein = BigDecimal.ZERO;
+        BigDecimal totalCarbs = BigDecimal.ZERO;
+        BigDecimal totalFat = BigDecimal.ZERO;
+        BigDecimal totalFiber = BigDecimal.ZERO;
+        BigDecimal totalSodium = BigDecimal.ZERO;
+        ArrayNode ingredients = option.putArray("ingredients");
+
+        for (NutritionCatalogClient.FoodCandidate food : foods) {
+            BigDecimal servingSize = food.servingSizeG().multiply(scale).setScale(0, RoundingMode.HALF_UP);
+            BigDecimal calories = food.calories().multiply(scale).setScale(0, RoundingMode.HALF_UP);
+            BigDecimal protein = scaled(food.proteinG(), scale);
+            BigDecimal carbs = scaled(food.carbsG(), scale);
+            BigDecimal fat = scaled(food.fatG(), scale);
+            BigDecimal fiber = scaled(food.fiberG(), scale);
+            BigDecimal sodium = scaled(food.sodiumMg(), scale);
+
+            ObjectNode ingredient = ingredients.addObject();
+            ingredient.put("foodItemId", food.id());
+            ingredient.put("name", food.name());
+            ingredient.put("servingSizeG", servingSize);
+            ingredient.put("quantity", 1);
+            ingredient.put("calories", calories);
+            ingredient.put("proteinG", protein);
+            ingredient.put("carbsG", carbs);
+            ingredient.put("fatG", fat);
+            ingredient.put("fiberG", fiber);
+            ingredient.put("sodiumMg", sodium);
+
+            totalServing = totalServing.add(servingSize);
+            totalCalories = totalCalories.add(calories);
+            totalProtein = totalProtein.add(protein);
+            totalCarbs = totalCarbs.add(carbs);
+            totalFat = totalFat.add(fat);
+            totalFiber = totalFiber.add(fiber);
+            totalSodium = totalSodium.add(sodium);
+        }
+
+        option.put("servingSizeG", totalServing);
+        option.put("calories", totalCalories);
+        option.put("proteinG", totalProtein);
+        option.put("carbsG", totalCarbs);
+        option.put("fatG", totalFat);
+        option.put("fiberG", totalFiber);
+        option.put("sodiumMg", totalSodium);
     }
 
     private String generateFallbackPlan(PlannerSuggestRequest context) {
@@ -331,6 +477,11 @@ public class AiChatService {
 
     private int calculateCalorieBuffer(int budget) {
         return Math.max(50, (int) Math.round(budget * 0.12));
+    }
+
+    private boolean hasSelectedFoods(PlannerSuggestRequest context) {
+        return !normalizedLongList(context.getSelectedFoodIds()).isEmpty()
+                || !normalizedList(context.getSelectedFoodNames()).isEmpty();
     }
 
     private String buildPlannerPrompt(PlannerSuggestRequest context, int budget, int calorieBuffer,

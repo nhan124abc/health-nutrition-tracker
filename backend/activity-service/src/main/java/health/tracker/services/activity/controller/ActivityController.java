@@ -3,12 +3,15 @@ package health.tracker.services.activity.controller;
 import health.tracker.services.activity.dto.ActivityLogRequest;
 import health.tracker.services.activity.dto.ActivityLogResponse;
 import health.tracker.services.activity.dto.ActivityTypeRequest;
+import health.tracker.services.activity.dto.WorkoutPlanRequest;
+import health.tracker.services.activity.dto.WorkoutPlanResponse;
 import health.tracker.services.activity.entity.ActivityType;
 import health.tracker.services.activity.exception.AppException;
 import health.tracker.services.activity.repository.ActivityLogRepository;
 import health.tracker.services.activity.repository.ActivityTypeRepository;
 import health.tracker.services.activity.service.ActivityService;
 import health.tracker.services.activity.service.ActivityTypeService;
+import health.tracker.services.activity.service.WorkoutPlanService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +46,7 @@ public class ActivityController {
 
     private final ActivityService        activityService;
     private final ActivityTypeService    activityTypeService;
+    private final WorkoutPlanService     workoutPlanService;
     private final ActivityTypeRepository typeRepository;
     private final ActivityLogRepository  logRepository;
 
@@ -100,6 +104,50 @@ public class ActivityController {
 
         activityService.delete(id, userId);
         return ResponseEntity.ok(Map.of("message", "Activity log deleted successfully"));
+    }
+
+    @GetMapping("/workout-plans")
+    public ResponseEntity<List<WorkoutPlanResponse>> workoutPlans(
+            @RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(workoutPlanService.list(userId));
+    }
+
+    @GetMapping("/workout-plans/{id}")
+    public ResponseEntity<WorkoutPlanResponse> workoutPlan(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(workoutPlanService.get(userId, id));
+    }
+
+    @PostMapping("/workout-plans")
+    public ResponseEntity<WorkoutPlanResponse> createWorkoutPlan(
+            @RequestHeader("X-User-Id") Long userId,
+            @Valid @RequestBody WorkoutPlanRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(workoutPlanService.create(userId, request));
+    }
+
+    @PutMapping("/workout-plans/{id}")
+    public ResponseEntity<WorkoutPlanResponse> updateWorkoutPlan(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id,
+            @Valid @RequestBody WorkoutPlanRequest request) {
+        return ResponseEntity.ok(workoutPlanService.update(userId, id, request));
+    }
+
+    @PatchMapping("/workout-plans/{id}/active")
+    public ResponseEntity<WorkoutPlanResponse> setWorkoutPlanActive(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "true") boolean active) {
+        return ResponseEntity.ok(workoutPlanService.setActive(userId, id, active));
+    }
+
+    @DeleteMapping("/workout-plans/{id}")
+    public ResponseEntity<Void> deleteWorkoutPlan(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id) {
+        workoutPlanService.delete(userId, id);
+        return ResponseEntity.noContent().build();
     }
 
     /**

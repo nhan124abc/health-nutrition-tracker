@@ -36,6 +36,28 @@ export function deleteActivityById(id) {
   return api.delete(activityConfig.endpoints.deleteById(id));
 }
 
+export function getWorkoutPlans() {
+  return api.get(activityConfig.endpoints.workoutPlans);
+}
+
+export function createWorkoutPlan(payload) {
+  return api.post(activityConfig.endpoints.workoutPlans, payload);
+}
+
+export function updateWorkoutPlan(id, payload) {
+  return api.put(activityConfig.endpoints.workoutPlanDetail(id), payload);
+}
+
+export function updateWorkoutPlanActive(id, active) {
+  return api.patch(activityConfig.endpoints.workoutPlanActive(id), null, {
+    params: { active },
+  });
+}
+
+export function deleteWorkoutPlan(id) {
+  return api.delete(activityConfig.endpoints.workoutPlanDetail(id));
+}
+
 export function getActivityTypes() {
   return api.get(activityConfig.endpoints.listTypes);
 }

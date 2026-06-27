@@ -16,10 +16,13 @@ public class PlannerSuggestRequest {
     private String gender;
     private String mealType;
     private Integer caloriesConsumed;
+    private Integer dailyActivityGoalKcal;
+    private Integer activityCaloriesBurned;
     private Integer suggestionOffset;
     private List<String> excludedFoodNames;
     private List<Long> selectedFoodIds;
     private List<String> selectedFoodNames;
+    private List<Integer> selectedActivityTypeIds;
     private List<String> selectedActivityNames;
     private String cookingMethod;
 }

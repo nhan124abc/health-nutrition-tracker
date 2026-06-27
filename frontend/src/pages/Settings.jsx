@@ -30,6 +30,7 @@ function Settings() {
 
   useEffect(() => {
     localStorage.setItem(settingsStorageKey, JSON.stringify(settings));
+    window.dispatchEvent(new CustomEvent('settings:notificationsChanged', { detail: settings }));
   }, [settings]);
 
   const updateNotification = (event) => {

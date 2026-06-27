@@ -17,6 +17,7 @@ import {
   FaUtensils,
   FaWeight,
   FaBullseye,
+  FaCalendarAlt,
 } from 'react-icons/fa';
 import { getCurrentUser, logout } from '../api/api';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -53,6 +54,7 @@ const menuItems = [
   { to: '/dashboard', labelKey: 'nav.dashboard', icon: FaHome },
   { to: '/goals', labelKey: 'nav.goals', icon: FaBullseye },
   { to: '/planner', labelKey: 'nav.planner', icon: FaRobot },
+  { to: '/plans', labelKey: 'nav.plans', icon: FaCalendarAlt },
   { to: '/meals', labelKey: 'nav.diary', icon: FaUtensils },
   { to: '/water', labelKey: 'nav.water', icon: FaTint },
   { to: '/activity', labelKey: 'nav.activity', icon: FaDumbbell },

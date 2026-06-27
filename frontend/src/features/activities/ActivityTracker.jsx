@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import GoalFireworks from '../../components/GoalFireworks';
 import ActivityLogTable from './components/ActivityLogTable';
 import ActivitySummaryCard from './components/ActivitySummaryCard';
@@ -24,7 +25,8 @@ import {
 
 function ActivityTracker() {
   const { t } = useTranslation();
-  const [selectedDate, setSelectedDate] = useState(getTodayDate);
+  const [searchParams] = useSearchParams();
+  const [selectedDate, setSelectedDate] = useState(() => searchParams.get('date') || getTodayDate());
   const [logs, setLogs] = useState([]);
   const [activityTypes, setActivityTypes] = useState([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
