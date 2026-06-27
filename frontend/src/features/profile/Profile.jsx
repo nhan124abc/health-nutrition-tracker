@@ -234,19 +234,27 @@ function Profile() {
         ...editProfile,
         avatarUrl: savedAvatarUrl,
       };
+      const profilePayload = mapProfileToApi(profileToSave);
+      if (avatarMarkedForRemoval) {
+        // Empty string is an explicit delete; null means "leave unchanged" to user-service.
+        profilePayload.avatarUrl = '';
+      }
       const [response, accountResponse] = await Promise.all([
-        updateProfile(mapProfileToApi(profileToSave)),
+        updateProfile(profilePayload),
         updateAccountProfile({ fullName: profileToSave.username.trim() }),
       ]);
       const responseProfile = mapProfileFromApi(extractProfileFromApi(response.data));
       const updatedAccount = updateStoredAccount({ ...accountResponse.data, avatarUrl: savedAvatarUrl });
-      const updatedProfile = mergeProfileAvatar(
+      const mergedProfile = mergeProfileAvatar(
         {
           ...responseProfile,
           avatarUrl: savedAvatarUrl,
         },
         updatedAccount
       );
+      const updatedProfile = avatarMarkedForRemoval
+        ? { ...mergedProfile, avatarUrl: '' }
+        : mergedProfile;
 
       setProfile(updatedProfile);
       setEditProfile(updatedProfile);
