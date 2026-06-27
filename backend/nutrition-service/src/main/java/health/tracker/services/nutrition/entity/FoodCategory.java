@@ -1,5 +1,6 @@
 package health.tracker.services.nutrition.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -40,6 +41,7 @@ public class FoodCategory {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
+    @JsonIgnore
     @Builder.Default
     private List<FoodItem> foodItems = new ArrayList<>();
 

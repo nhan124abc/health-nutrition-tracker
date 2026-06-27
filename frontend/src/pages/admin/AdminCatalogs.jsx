@@ -23,7 +23,6 @@ import {
 } from '../../features/nutrition/nutritionService';
 import {
   cleanText,
-  deriveCategoriesFromFoods,
   extractCategoriesFromApi,
   extractFoodsFromApi,
   normalizeCategory,
@@ -91,13 +90,6 @@ function mapDerivedFoodCategory(category, foods) {
     ...category,
     count: foods.filter((food) => String(food.categoryId || food.category) === String(category.id)).length,
   };
-}
-
-async function loadFoodCategoriesFromFoods() {
-  const response = await getFoods({ page: 0, size: 500 });
-  const foods = extractFoodsFromApi(response.data).map(normalizeFoodFromApi);
-
-  return deriveCategoriesFromFoods(foods).map((category) => mapDerivedFoodCategory(category, foods));
 }
 
 function mapActivityType(type = {}) {
@@ -168,12 +160,9 @@ function AdminCatalogs({ type = 'overview' }) {
             .map((category) => mapDerivedFoodCategory(category, foods))
             .filter((category) => category.id && category.name)
             .sort((left, right) => left.name.localeCompare(right.name));
-          const categoriesFromDb = foodCategories.length
-            ? foodCategories
-            : await loadFoodCategoriesFromFoods();
 
           if (isActive) {
-            setCategories(categoriesFromDb);
+            setCategories(foodCategories);
           }
         } else if (isActivityCategories) {
           const response = await getAdminActivityTypes().catch(() => getActivityTypes());
@@ -370,6 +359,22 @@ function AdminCatalogs({ type = 'overview' }) {
 
         return [...withoutCurrent, mappedItem].sort((left, right) => left.name.localeCompare(right.name));
       });
+
+      if (isFoodCategories) {
+        const [categoryResponse, foodsResponse] = await Promise.all([
+          getAdminFoodCategories(),
+          getFoods({ page: 0, size: 1000 }).catch(() => null),
+        ]);
+        const foods = foodsResponse
+          ? extractFoodsFromApi(foodsResponse.data).map(normalizeFoodFromApi)
+          : [];
+        const persistedCategories = extractCategoriesFromApi(categoryResponse.data)
+          .map(mapFoodCategory)
+          .map((category) => mapDerivedFoodCategory(category, foods))
+          .filter((category) => category.id && (category.nameRaw || category.nameVi))
+          .sort((left, right) => left.name.localeCompare(right.name));
+        setCategories(persistedCategories);
+      }
       resetForm();
     } catch (requestError) {
       setActionError(getActionError(requestError));

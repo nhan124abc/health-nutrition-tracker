@@ -69,6 +69,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
             "/api/v1/auth/email/verification",
             "/api/v1/auth/oauth2",
             "/api/v1/auth/avatars/",
+            "/api/v1/nutrition/categories",
             "/actuator",
             // Swagger UI & OpenAPI docs (aggregated at gateway)
             "/swagger-ui",
