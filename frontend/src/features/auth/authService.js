@@ -41,7 +41,9 @@ export function uploadAuthenticatedUserAvatar(file) {
   const formData = new FormData();
   formData.append('file', file);
 
-  return api.post(authConfig.endpoints.avatarUpload, formData);
+  return api.post(authConfig.endpoints.avatarUpload, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
 }
 
 function getAuthErrorMessage(error) {
