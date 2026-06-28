@@ -128,7 +128,6 @@ function BodyMetrics() {
     bmi: metric.bmi ?? '',
     bmr: metric.bmr ?? '',
     waist: metric.waistCm ?? metric.waist ?? '',
-    neck: metric.neckCm ?? metric.neck ?? '',
     hip: metric.hipCm ?? metric.hip ?? '',
     chest: metric.chestCm ?? metric.chest ?? '',
   });
@@ -194,9 +193,6 @@ function BodyMetrics() {
   const calculateMetrics = () => {
     const weight = Number(form.weight);
     const height = Number(form.height);
-    const waist = Number(form.waist);
-    const neck = Number(form.neck);
-    const hip = Number(form.hip);
     const gender = profile?.gender;
     const birthDate = profile?.birthDate ? new Date(profile.birthDate) : null;
     const age = birthDate && !Number.isNaN(birthDate.getTime())
@@ -211,24 +207,15 @@ function BodyMetrics() {
     const bmi = weight / ((height / 100) ** 2);
     const genderOffset = gender === 'male' ? 5 : -161;
     const bmr = 9.99 * weight + 6.25 * height - 4.92 * age + genderOffset;
-    let bodyFat = '';
-    const heightIn = height / 2.54;
-    const waistIn = waist / 2.54;
-    const neckIn = neck / 2.54;
-    if (gender === 'male' && waist > neck && neck > 0) {
-      bodyFat = 86.010 * Math.log10(waistIn - neckIn) - 70.041 * Math.log10(heightIn) + 36.76;
-    } else if (gender === 'female' && waist + hip > neck && neck > 0 && hip > 0) {
-      bodyFat = 163.205 * Math.log10(waistIn + hip / 2.54 - neckIn)
-        - 97.684 * Math.log10(heightIn) - 78.387;
-    }
+    const sex = gender === 'male' ? 1 : 0;
+    const bodyFat = 1.20 * bmi + 0.23 * age - 10.8 * sex - 5.4;
 
     setForm((current) => ({
       ...current,
       bmi: bmi.toFixed(1),
       bmr: Math.round(bmr),
-      bodyFat: bodyFat === '' ? '' : Math.max(0, bodyFat).toFixed(1),
+      bodyFat: Math.max(0, bodyFat).toFixed(1),
     }));
-    if (bodyFat === '') setError(t('bodyMetricsPage.calculateMissingMeasurements'));
   };
 
   const updateMetric = async (event) => {

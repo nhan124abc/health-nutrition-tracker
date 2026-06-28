@@ -26,9 +26,6 @@ public class BodyMetricRequest {
     @DecimalMin(value = "1.0")  @DecimalMax(value = "200.0")
     private BigDecimal waistCm;
 
-    @DecimalMin(value = "1.0") @DecimalMax(value = "100.0")
-    private BigDecimal neckCm;
-
     @DecimalMin(value = "1.0")  @DecimalMax(value = "200.0")
     private BigDecimal hipCm;
 

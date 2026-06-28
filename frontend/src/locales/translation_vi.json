@@ -1026,7 +1026,6 @@
     "historyTitle": "Lịch sử chỉ số",
     "calculateMetrics": "Tính toán",
     "calculateMissingProfile": "Hãy hoàn thiện ngày sinh, giới tính, chiều cao và cân nặng trong hồ sơ.",
-    "calculateMissingMeasurements": "BMI và BMR đã được tính. Để tính Body fat, hãy nhập vòng eo, vòng cổ và thêm vòng mông nếu là nữ.",
     "results": {
       "title": "Chỉ số ước tính",
       "bodyFat": "Body fat",
@@ -1040,7 +1039,6 @@
       "bodyFat": "Body fat %",
       "muscleMass": "Muscle mass kg",
       "waist": "Vòng eo cm",
-      "neck": "Vòng cổ cm",
       "hip": "Vòng mông cm",
       "chest": "Vòng ngực cm"
     },
