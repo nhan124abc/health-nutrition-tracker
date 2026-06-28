@@ -12,6 +12,7 @@ import { getActivitiesByDate, createActivityLog, createWorkoutPlan, deleteActivi
 import { extractActivityTypesFromApi, normalizeActivityType } from '../features/activities/activityUtils';
 import { getFoods, getRecipeSuggestions } from '../features/nutrition/nutritionService';
 import { extractFoodsFromApi, normalizeFoodFromApi } from '../features/nutrition/nutritionUtils';
+import { getLocalizedName } from '../utils/localizedName';
 
 const goalToApi = {
   lose_weight: 'LOSE_WEIGHT',
@@ -32,7 +33,8 @@ function mapFoodOption(food) {
 
   return {
     id: normalizedFood.id,
-    name: normalizedFood.nameVi || normalizedFood.name,
+    name: normalizedFood.name,
+    nameVi: normalizedFood.nameVi,
   };
 }
 
@@ -171,10 +173,9 @@ function Planner() {
   const normalizedRecipeSearchTerm = recipeSearchTerm.trim();
   const canSearchRecipes = isRecipeMode || normalizedRecipeSearchTerm.length >= 2 || selectedFoodIds.length > 0;
   const normalizedActivitySearchTerm = activitySearchTerm.trim();
-  const selectedActivityOptions = useMemo(() => activityOptions.filter((activity) => {
-    const name = activity.nameVi || activity.name;
-    return selectedActivityNames.includes(name);
-  }), [activityOptions, selectedActivityNames]);
+  const selectedActivityOptions = useMemo(() => activityOptions.filter((activity) => (
+    selectedActivityNames.includes(activity.name)
+  )), [activityOptions, selectedActivityNames]);
   const selectedActivityTypeIds = useMemo(() => selectedActivityOptions
     .map((activity) => activity.id)
     .filter(Boolean), [selectedActivityOptions]);
@@ -901,14 +902,19 @@ function Planner() {
             </div>
             <ProgressBar now={Math.min(progress, 100)} variant={progress > 100 ? 'danger' : 'success'} className="mb-3" />
             <Form.Group>
-              <Form.Select
-                value={isExerciseMode ? 'exercise' : selectedMeal}
-                disabled={isExerciseMode}
-                onChange={(e) => { setSelectedMeal(e.target.value); setSuggestion(null); setSelectedOption(null); }}
-              >
-                {(isExerciseMode ? [['exercise', 'plannerPage.mealTypes.exercise']] : mealTypes.filter(([value]) => value !== 'exercise'))
-                  .map(([value, labelKey]) => <option value={value} key={value}>{t(labelKey)}</option>)}
-              </Form.Select>
+              {isExerciseMode ? (
+                <div className="form-control bg-body-secondary" aria-label={t('plannerPage.mealTypes.exercise')}>
+                  {t('plannerPage.mealTypes.exercise')}
+                </div>
+              ) : (
+                <Form.Select
+                  value={selectedMeal}
+                  onChange={(e) => { setSelectedMeal(e.target.value); setSuggestion(null); setSelectedOption(null); }}
+                >
+                  {mealTypes.filter(([value]) => value !== 'exercise')
+                    .map(([value, labelKey]) => <option value={value} key={value}>{t(labelKey)}</option>)}
+                </Form.Select>
+              )}
             </Form.Group>
           </section>
           {!isExerciseMode && (
@@ -956,7 +962,7 @@ function Planner() {
                       onClick={() => toggleFoodName(food.name)}
                     >
                       <FaUtensils />
-                      <span>{food.name}</span>
+                      <span>{getLocalizedName(food, i18n.language)}</span>
                       <FaCheck />
                     </button>
                   ))}
@@ -982,7 +988,7 @@ function Planner() {
                       onClick={() => toggleFoodName(food.name)}
                     >
                       <FaUtensils />
-                      <span>{food.name}</span>
+                      <span>{getLocalizedName(food, i18n.language)}</span>
                       {selected && <FaCheck />}
                     </button>
                   );
@@ -1072,7 +1078,8 @@ function Planner() {
               {selectedActivityOptions.length > 0 && (
                 <div className="planner-food-picker planner-food-picker-selected mb-2">
                   {selectedActivityOptions.map((activity) => {
-                    const name = activity.nameVi || activity.name;
+                    const name = activity.name;
+                    const displayName = getLocalizedName(activity, i18n.language);
                     return (
                       <button
                         type="button"
@@ -1081,7 +1088,7 @@ function Planner() {
                         onClick={() => toggleActivityName(name)}
                       >
                         <FaDumbbell />
-                        <span>{name}</span>
+                        <span>{displayName}</span>
                         <FaCheck />
                       </button>
                     );
@@ -1093,7 +1100,8 @@ function Planner() {
                   <div className="planner-food-empty">{t('plannerPage.noActivityResults')}</div>
                 )}
                 {activitySearchResults.map((activity) => {
-                  const name = activity.nameVi || activity.name;
+                  const name = activity.name;
+                  const displayName = getLocalizedName(activity, i18n.language);
                   const selected = selectedActivityNames.includes(name);
                   return (
                     <button
@@ -1103,7 +1111,7 @@ function Planner() {
                       onClick={() => toggleActivityName(name)}
                     >
                       <FaDumbbell />
-                      <span>{name}</span>
+                      <span>{displayName}</span>
                       {selected && <FaCheck />}
                     </button>
                   );

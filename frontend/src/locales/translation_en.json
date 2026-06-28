@@ -1414,7 +1414,6 @@
     "historyTitle": "Metric history",
     "calculateMetrics": "Calculate",
     "calculateMissingProfile": "Complete your date of birth, gender, height and weight in your profile.",
-    "calculateMissingMeasurements": "BMI and BMR were calculated. To calculate body fat, enter waist and neck measurements, plus hips for women.",
     "results": {
       "title": "Calculated metrics",
       "bodyFat": "Body fat",
@@ -1428,7 +1427,6 @@
       "bodyFat": "Body fat %",
       "muscleMass": "Muscle mass kg",
       "waist": "Waist cm",
-      "neck": "Neck cm",
       "hip": "Buttocks cm",
       "chest": "Chest cm"
     },

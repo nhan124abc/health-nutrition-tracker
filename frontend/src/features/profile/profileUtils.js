@@ -60,7 +60,6 @@ export const emptyBodyMetric = {
   bmr: '',
   muscleMass: '',
   waist: '',
-  neck: '',
   hip: '',
   chest: '',
   notes: '',
@@ -71,7 +70,6 @@ export const bodyMetricFields = [
   ['weight', 'bodyMetricsPage.fields.weight', 'number'],
   ['height', 'bodyMetricsPage.fields.height', 'number'],
   ['waist', 'bodyMetricsPage.fields.waist', 'number'],
-  ['neck', 'bodyMetricsPage.fields.neck', 'number'],
   ['hip', 'bodyMetricsPage.fields.hip', 'number'],
   ['chest', 'bodyMetricsPage.fields.chest', 'number'],
 ];
@@ -184,7 +182,6 @@ export function mapBodyMetricToApi(metric) {
     bmr: normalizeNumber(metric.bmr),
     muscleMassKg: normalizeNumber(metric.muscleMass),
     waistCm: normalizeNumber(metric.waist),
-    neckCm: normalizeNumber(metric.neck),
     hipCm: normalizeNumber(metric.hip),
     chestCm: normalizeNumber(metric.chest),
     notes: metric.notes || '',
@@ -209,7 +206,6 @@ export function buildBodyMetricFormFromProfile(profile = {}, metrics = []) {
     bmi: latestMetric.bmi ?? '',
     bmr: latestMetric.bmr ?? '',
     waist: latestMetric.waistCm ?? latestMetric.waist ?? '',
-    neck: latestMetric.neckCm ?? latestMetric.neck ?? '',
     hip: latestMetric.hipCm ?? latestMetric.hip ?? '',
     chest: latestMetric.chestCm ?? latestMetric.chest ?? '',
   };

@@ -23,7 +23,6 @@ public class BodyMetricResponse {
     private BigDecimal muscleMassKg;
     private BigDecimal bmi;
     private BigDecimal waistCm;
-    private BigDecimal neckCm;
     private BigDecimal hipCm;
     private BigDecimal chestCm;
     private String notes;
