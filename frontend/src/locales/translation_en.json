@@ -1387,6 +1387,8 @@
       "kcalPerDay": "kcal/day"
     },
     "errors": {
+      "title": "Notice",
+      "guestCalculate": "Unable to create a plan right now. Check your information and try again.",
       "loadProfile": "Unable to load your profile.",
       "calculate": "Unable to calculate a plan. Please complete your profile first.",
       "apply": "Unable to apply this plan."
@@ -1411,6 +1413,8 @@
     "chartTitle": "Progress chart",
     "historyTitle": "Metric history",
     "calculateMetrics": "Calculate",
+    "calculateMissingProfile": "Complete your date of birth, gender, height and weight in your profile.",
+    "calculateMissingMeasurements": "BMI and BMR were calculated. To calculate body fat, enter waist and neck measurements, plus hips for women.",
     "results": {
       "title": "Calculated metrics",
       "bodyFat": "Body fat",
@@ -1424,6 +1428,7 @@
       "bodyFat": "Body fat %",
       "muscleMass": "Muscle mass kg",
       "waist": "Waist cm",
+      "neck": "Neck cm",
       "hip": "Buttocks cm",
       "chest": "Chest cm"
     },

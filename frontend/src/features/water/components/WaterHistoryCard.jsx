@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ErrorModal from '../../../components/ErrorModal';
 import { Button, Card, Form, Modal, Table } from 'react-bootstrap';
 import { FaHistory } from 'react-icons/fa';
 import CrudActions from '../../../components/CrudActions';
@@ -126,7 +127,7 @@ function WaterHistoryCard({
               disabled={saving}
               autoFocus
             />
-            {editError && <div className="text-danger small mt-2">{editError}</div>}
+            <ErrorModal error={editError} onClose={() => setEditError('')} />
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>

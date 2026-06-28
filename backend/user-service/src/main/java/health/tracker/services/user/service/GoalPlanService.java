@@ -2,6 +2,7 @@ package health.tracker.services.user.service;
 
 import health.tracker.services.user.dto.GoalPlanRequest;
 import health.tracker.services.user.dto.GoalPlanResponse;
+import health.tracker.services.user.dto.GuestGoalPlanRequest;
 import health.tracker.services.user.entity.UserProfile;
 import health.tracker.services.user.exception.AppException;
 import health.tracker.services.user.repository.UserProfileRepository;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -31,6 +33,25 @@ public class GoalPlanService {
     public GoalPlanResponse suggest(Long userId, GoalPlanRequest request) {
         UserProfile profile = profileRepository.findByUserId(userId)
                 .orElseThrow(() -> new AppException(HttpStatus.BAD_REQUEST, "Please complete your health profile first"));
+        return buildSuggestion(profile, request);
+    }
+
+    public GoalPlanResponse suggestGuest(GuestGoalPlanRequest request) {
+        UserProfile profile = UserProfile.builder()
+                .gender(request.getGender())
+                .dateOfBirth(LocalDate.now().minusYears(request.getAge()))
+                .weightKg(request.getWeightKg())
+                .heightCm(request.getHeightCm())
+                .activityLevel(request.getActivityLevel())
+                .build();
+        GoalPlanRequest planRequest = new GoalPlanRequest();
+        planRequest.setGoal(request.getGoal());
+        planRequest.setTargetChangeKg(request.getTargetChangeKg());
+        planRequest.setTargetWeeks(request.getTargetWeeks());
+        return buildSuggestion(profile, planRequest);
+    }
+
+    private GoalPlanResponse buildSuggestion(UserProfile profile, GoalPlanRequest request) {
         NutritionGoalCalculator.NutritionTargets targets = calculator.calculate(profile);
         if (profile.getWeightKg() == null || targets.tdee() == null) {
             throw new AppException(HttpStatus.BAD_REQUEST, "Weight, height, date of birth and gender are required");
@@ -62,6 +83,7 @@ public class GoalPlanService {
         return GoalPlanResponse.builder()
                 .goal(request.getGoal()).currentWeightKg(profile.getWeightKg()).targetWeightKg(targetWeight)
                 .targetChangeKg(change).bmr(targets.bmr()).tdee(targets.tdee())
+                .activityFactor(targets.activityFactor())
                 .safeMinimumWeeks(safeWeeks).totalEnergyChangeKcal(change.multiply(KCAL_PER_KG))
                 .options(options).build();
     }

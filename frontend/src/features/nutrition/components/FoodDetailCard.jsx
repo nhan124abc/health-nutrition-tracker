@@ -1,6 +1,7 @@
 import { Card } from 'react-bootstrap';
+import { getLocalizedName } from '../../../utils/localizedName';
 
-function FoodDetailCard({ food, t }) {
+function FoodDetailCard({ food, language, t }) {
   if (!food) {
     return (
       <Card className="border-0 shadow-sm sticky-panel">
@@ -22,9 +23,9 @@ function FoodDetailCard({ food, t }) {
   return (
     <Card className="border-0 shadow-sm sticky-panel">
       <Card.Body>
-        <h2 className="h4 fw-bold mb-1">{food.nameVi || food.name}</h2>
+        <h2 className="h4 fw-bold mb-1">{getLocalizedName(food, language)}</h2>
         <p className="text-secondary">
-          {food.name} - {food.servingDescription || food.servingSize}
+          {food.servingDescription || food.servingSize}
         </p>
         <div className="nutrition-detail-grid">
           {details.map(([label, value]) => (

@@ -298,6 +298,7 @@ function WaterTracker() {
         <Col lg={5}>
           <WaterSummaryCard
             error={waterError}
+            onCloseError={() => setWaterError('')}
             goalInput={waterGoalInput}
             notice={waterNotice}
             onAddWater={addWaterLog}

@@ -999,6 +999,8 @@
       "kcalPerDay": "kcal/ngày"
     },
     "errors": {
+      "title": "Thông báo",
+      "guestCalculate": "Kh\u00f4ng th\u1ec3 t\u1ea1o k\u1ebf ho\u1ea1ch l\u00fac n\u00e0y. Vui l\u00f2ng ki\u1ec3m tra d\u1eef li\u1ec7u v\u00e0 th\u1eed l\u1ea1i.",
       "loadProfile": "Không thể tải hồ sơ.",
       "calculate": "Không thể tính kế hoạch. Hãy hoàn thiện hồ sơ trước.",
       "apply": "Không thể áp dụng kế hoạch."
@@ -1023,6 +1025,8 @@
     "chartTitle": "Biểu đồ tiến trình",
     "historyTitle": "Lịch sử chỉ số",
     "calculateMetrics": "Tính toán",
+    "calculateMissingProfile": "Hãy hoàn thiện ngày sinh, giới tính, chiều cao và cân nặng trong hồ sơ.",
+    "calculateMissingMeasurements": "BMI và BMR đã được tính. Để tính Body fat, hãy nhập vòng eo, vòng cổ và thêm vòng mông nếu là nữ.",
     "results": {
       "title": "Chỉ số ước tính",
       "bodyFat": "Body fat",
@@ -1036,6 +1040,7 @@
       "bodyFat": "Body fat %",
       "muscleMass": "Muscle mass kg",
       "waist": "Vòng eo cm",
+      "neck": "Vòng cổ cm",
       "hip": "Vòng mông cm",
       "chest": "Vòng ngực cm"
     },

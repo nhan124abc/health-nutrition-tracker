@@ -1,8 +1,9 @@
 import { Button, Card, Table } from 'react-bootstrap';
 import { FaCheck } from 'react-icons/fa';
 import { getActivityCompletionId } from '../../../utils/completionStorage';
+import { getLocalizedName } from '../../../utils/localizedName';
 
-function ActivityLogTable({ completedIds = [], loading, logs, onToggleComplete, t }) {
+function ActivityLogTable({ activityTypes = [], completedIds = [], language, loading, logs, onToggleComplete, t }) {
   return (
     <Card className="border-0 shadow-sm">
       <Card.Body>
@@ -25,11 +26,15 @@ function ActivityLogTable({ completedIds = [], loading, logs, onToggleComplete, 
             <tbody>
               {logs.map((log) => {
                 const completed = completedIds.includes(getActivityCompletionId(log));
+                const activityType = activityTypes.find((type) => String(type.id) === String(log.typeId));
+                const activityName = activityType
+                  ? getLocalizedName(activityType, language)
+                  : log.customName;
 
                 return (
                 <tr className={completed ? 'is-completed' : ''} key={log.id}>
                   <td>
-                    <strong>{log.customName}</strong>
+                    <strong>{activityName}</strong>
                     <div className="text-secondary small">
                       {t(`activityPage.categories.${log.category}`)} - {log.notes || t('common.noNotes')}
                     </div>

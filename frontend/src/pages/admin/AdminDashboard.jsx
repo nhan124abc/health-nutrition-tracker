@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Card, Col, ProgressBar, Row, Spinner, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import ErrorModal from '../../components/ErrorModal';
 import { FaChartLine, FaDumbbell, FaUsers, FaUtensils } from 'react-icons/fa';
 import { getAdminDashboardOverview } from '../../features/admin/adminService';
 
@@ -114,7 +115,7 @@ function AdminDashboard() {
           {t('dashboardPage.loading')}
         </Alert>
       )}
-      {loadError && <Alert variant="danger">{loadError}</Alert>}
+      <ErrorModal error={loadError} onClose={() => setLoadError('')} />
 
       <Row className="g-3 mb-4 admin-overview-stats">
         {overviewStats.map((stat) => {

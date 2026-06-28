@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Card, Col, Form, Modal, Nav, Row } from 'react-bootstrap';
+import { Button, Card, Col, Form, Modal, Nav, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import ErrorModal from '../../components/ErrorModal';
 import { FaEdit, FaIdCard, FaTimes, FaUserCircle } from 'react-icons/fa';
 import { getCurrentUser } from '../../api/api';
 import authConfig from '../../config/authConfig';
@@ -301,7 +302,6 @@ function AdminProfile() {
                     accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                     onChange={handleAvatarChange}
                   />
-                  {avatarError && <Alert variant="danger" className="py-2 mb-0">{avatarError}</Alert>}
                   {avatarPendingChange && (
                     <div className="profile-avatar-status profile-avatar-status-pending">Ảnh mới chưa lưu</div>
                   )}
@@ -328,11 +328,10 @@ function AdminProfile() {
                     <Form.Control value={draftUser.role || ''} disabled readOnly />
                   </Form.Group>
                 </Col>
-                {profileError && (
-                  <Col xs={12}>
-                    <Alert variant="danger" className="mb-0">{profileError}</Alert>
-                  </Col>
-                )}
+                <ErrorModal
+                  error={avatarError || profileError}
+                  onClose={() => { setAvatarError(''); setProfileError(''); }}
+                />
                 <Col xs={12} className="d-flex justify-content-end">
                   <Button variant="success" type="submit" disabled={savingProfile}>
                     {savingProfile ? 'Đang lưu...' : 'Lưu hồ sơ'}

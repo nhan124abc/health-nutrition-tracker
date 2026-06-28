@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card, Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import ErrorModal from '../../components/ErrorModal';
 import { useSearchParams } from 'react-router-dom';
 import GoalFireworks from '../../components/GoalFireworks';
 import DailyMealSummary from './components/DailyMealSummary';
@@ -124,7 +125,7 @@ function FoodDiary() {
 
       <Row className="g-4">
         <Col lg={8}>
-          {mealError && <div className="alert alert-danger">{mealError}</div>}
+          <ErrorModal error={mealError} onClose={() => setMealError('')} />
           {loadingMeals && <div className="alert alert-light border">{t('foodDiaryPage.loadingMeals')}</div>}
           <div className="meal-card-stack">
             {!loadingMeals && dayMeals.length === 0 && (

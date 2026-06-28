@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, Container, Form, InputGroup, Modal, Nav, Navbar, Offcanvas, Overlay, Popover } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import ErrorModal from '../components/ErrorModal';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   FaBars,
@@ -524,7 +525,7 @@ function MainLayout() {
               </div>
             )}
           </div>
-          {aiError && <div className="text-danger small mt-2">{aiError}</div>}
+          <ErrorModal error={aiError} onClose={() => setAiError('')} />
           <Form className="ai-chat-form mt-3" onSubmit={handleAiSubmit}>
             <InputGroup>
               <Form.Control

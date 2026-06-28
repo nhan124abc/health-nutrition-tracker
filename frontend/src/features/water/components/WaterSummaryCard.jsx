@@ -1,6 +1,7 @@
 import { Button, Card, Form, ProgressBar } from 'react-bootstrap';
 import { FaBell, FaPlus, FaTint } from 'react-icons/fa';
 import { quickWaterAmounts } from '../waterUtils';
+import ErrorModal from '../../../components/ErrorModal';
 
 function WaterSummaryCard({
   error,
@@ -8,6 +9,7 @@ function WaterSummaryCard({
   notice,
   onAddWater,
   onGoalInputChange,
+  onCloseError,
   onSaveGoal,
   onWaterAmountChange,
   progress,
@@ -35,7 +37,7 @@ function WaterSummaryCard({
 
         <ProgressBar now={progress} className="mb-3" />
 
-        {error && <div className="alert alert-warning py-2">{error}</div>}
+        <ErrorModal error={error} onClose={onCloseError} />
         {notice && <div className="alert alert-success py-2">{notice}</div>}
         {reminderMessage && (
           <div className="alert alert-info py-2 d-flex align-items-center gap-2">

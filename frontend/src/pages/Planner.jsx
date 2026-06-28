@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Col, Form, InputGroup, Modal, ProgressBar, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import ErrorModal from '../components/ErrorModal';
 import { FaBookOpen, FaCheck, FaDumbbell, FaFireAlt, FaRobot, FaSearch, FaUtensils } from 'react-icons/fa';
 import { getAiPlanSuggestions } from '../features/ai/aiService';
 import { createMeal, createMealPlan, getMealsByDate, deleteMealById } from '../features/meals/mealService';
@@ -840,7 +841,7 @@ function Planner() {
         <h1>{t('plannerPage.title')}</h1>
       </div>
     </div>
-    {error && <Alert variant="danger">{error}</Alert>}
+    <ErrorModal error={error} onClose={() => setError('')} />
     {success && <Alert variant="success">{success}</Alert>}
     <div className="planner-mode-switch mb-4">
       <button

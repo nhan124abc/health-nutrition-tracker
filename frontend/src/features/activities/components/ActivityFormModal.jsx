@@ -1,5 +1,7 @@
 import { Button, Col, Form, Modal, Row } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import { activityFields } from '../activityUtils';
+import { getLocalizedName } from '../../../utils/localizedName';
 
 function ActivityFormModal({
   activityTypes,
@@ -13,6 +15,7 @@ function ActivityFormModal({
   show,
   t,
 }) {
+  const { i18n } = useTranslation();
   return (
     <Modal show={show} onHide={onClose} size="lg" centered>
       <Modal.Header closeButton>
@@ -28,7 +31,7 @@ function ActivityFormModal({
               <Form.Select name="typeId" value={form.typeId} onChange={onChange} disabled={saving}>
                 <option value="">{t('activityPage.selectType')}</option>
                 {activityTypes.map((type) => (
-                  <option value={type.id} key={type.id}>{type.nameVi || type.name}</option>
+                  <option value={type.id} key={type.id}>{getLocalizedName(type, i18n.language)}</option>
                 ))}
               </Form.Select>
             </Form.Group>

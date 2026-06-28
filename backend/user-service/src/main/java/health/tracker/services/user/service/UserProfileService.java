@@ -165,6 +165,7 @@ public class UserProfileService {
                 .bodyFatPercentage(request.getBodyFatPercentage())
                 .muscleMassKg(request.getMuscleMassKg())
                 .waistCm(request.getWaistCm())
+                .neckCm(request.getNeckCm())
                 .hipCm(request.getHipCm())
                 .chestCm(request.getChestCm())
                 .notes(request.getNotes())
@@ -178,6 +179,10 @@ public class UserProfileService {
                     BigDecimal bmi = request.getWeightKg()
                             .divide(heightM.multiply(heightM), 1, RoundingMode.HALF_UP);
                     metric.setBmi(bmi);
+                    BigDecimal estimatedBodyFat = calculateBodyFat(profile, request);
+                    if (estimatedBodyFat != null) {
+                        metric.setBodyFatPercentage(estimatedBodyFat);
+                    }
                 }
                 // Cập nhật cân nặng hiện tại trong profile
                 profile.setWeightKg(request.getWeightKg());
@@ -270,9 +275,32 @@ public class UserProfileService {
                 .id(m.getId()).userId(m.getUserId()).recordedAt(m.getRecordedAt())
                 .weightKg(m.getWeightKg()).bodyFatPercentage(m.getBodyFatPercentage())
                 .muscleMassKg(m.getMuscleMassKg()).bmi(m.getBmi())
-                .waistCm(m.getWaistCm()).hipCm(m.getHipCm()).chestCm(m.getChestCm())
+                .waistCm(m.getWaistCm()).neckCm(m.getNeckCm())
+                .hipCm(m.getHipCm()).chestCm(m.getChestCm())
                 .notes(m.getNotes()).createdAt(m.getCreatedAt())
                 .build();
+    }
+
+    private BigDecimal calculateBodyFat(UserProfile profile, BodyMetricRequest request) {
+        if (request.getWaistCm() == null || request.getNeckCm() == null || profile.getHeightCm() == null) {
+            return null;
+        }
+        double heightIn = profile.getHeightCm().doubleValue() / 2.54;
+        double neckIn = request.getNeckCm().doubleValue() / 2.54;
+        double waistIn = request.getWaistCm().doubleValue() / 2.54;
+        double bodyFat;
+        if (profile.getGender() == UserProfile.Gender.MALE && waistIn > neckIn) {
+            bodyFat = 86.010 * Math.log10(waistIn - neckIn)
+                    - 70.041 * Math.log10(heightIn) + 36.76;
+        } else if (profile.getGender() == UserProfile.Gender.FEMALE && request.getHipCm() != null) {
+            double hipIn = request.getHipCm().doubleValue() / 2.54;
+            if (waistIn + hipIn <= neckIn) return null;
+            bodyFat = 163.205 * Math.log10(waistIn + hipIn - neckIn)
+                    - 97.684 * Math.log10(heightIn) - 78.387;
+        } else {
+            return null;
+        }
+        return BigDecimal.valueOf(Math.max(0, bodyFat)).setScale(1, RoundingMode.HALF_UP);
     }
 
     private void applyNutritionTargets(UserProfile profile, Integer manualCalorieGoal) {

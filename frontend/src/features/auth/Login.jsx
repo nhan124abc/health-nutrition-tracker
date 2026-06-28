@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
+import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaFacebookF, FaGoogle } from 'react-icons/fa';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { clearAuthTokens, getDefaultRouteForCurrentUser, saveAuthTokens } from '../../api/api';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
+import ErrorModal from '../../components/ErrorModal';
 import authConfig from '../../config/authConfig';
 import { isAccountNotFoundError, isLockedAccountError, login } from './authService';
 
@@ -101,11 +102,14 @@ function Login() {
                 <h1 className="h3 fw-bold mb-2">{t('auth.loginTitle')}</h1>
               </div>
 
-              {(error || errorKey || oauthError || lockedAccountNotice) && (
-                <Alert variant="danger">
-                  {errorKey ? t(errorKey) : error || lockedAccountNotice || t('auth.oauthLoginError')}
-                </Alert>
-              )}
+              <ErrorModal
+                error={errorKey ? t(errorKey) : error || lockedAccountNotice || (oauthError ? t('auth.oauthLoginError') : '')}
+                onClose={() => {
+                  setError('');
+                  setErrorKey('');
+                  navigate(location.pathname, { replace: true, state: null });
+                }}
+              />
 
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="email">

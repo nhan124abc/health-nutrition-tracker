@@ -139,6 +139,7 @@ function shouldSkipTokenRefresh(url = '') {
     authConfig.endpoints.resetPassword,
     authConfig.endpoints.sendEmailVerification,
     authConfig.endpoints.confirmEmailVerification,
+    '/goal-plans/suggestions',
   ];
 
   return authPaths.some((path) => url.includes(path));

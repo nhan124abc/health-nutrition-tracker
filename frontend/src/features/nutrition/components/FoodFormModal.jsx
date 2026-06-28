@@ -1,7 +1,10 @@
 import { Button, Col, Form, Modal, Row } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import { basicFoodFields } from '../nutritionUtils';
+import { getLocalizedName } from '../../../utils/localizedName';
 
 function FoodFormModal({ categories, editingFoodId, food, onChange, onClose, onSave, saving, show, t }) {
+  const { i18n } = useTranslation();
   return (
     <Modal show={show} onHide={onClose} size="lg" centered>
       <Modal.Header closeButton>
@@ -32,7 +35,7 @@ function FoodFormModal({ categories, editingFoodId, food, onChange, onClose, onS
                 <option value="">{t('nutritionPage.selectCategory')}</option>
                 {categories.map((category) => (
                   <option value={category.id} key={category.id}>
-                    {category.nameVi || category.name}
+                    {getLocalizedName(category, i18n.language)}
                   </option>
                 ))}
               </Form.Select>
