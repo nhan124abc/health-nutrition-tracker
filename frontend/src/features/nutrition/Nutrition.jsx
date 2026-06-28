@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Col, Row, Spinner } from 'react-bootstrap';
+import { Col, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import ErrorModal from '../../components/ErrorModal';
 import FoodCatalogCard from './components/FoodCatalogCard';
 import FoodDetailCard from './components/FoodDetailCard';
 import {
@@ -19,7 +20,7 @@ import {
 } from './nutritionUtils';
 
 function Nutrition() {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [foods, setFoods] = useState([]);
   const [categories, setCategories] = useState([]);
   const [query, setQuery] = useState('');
@@ -110,7 +111,7 @@ function Nutrition() {
         </div>
       </div>
 
-      {error && <Alert variant="danger">{error}</Alert>}
+      <ErrorModal error={error} onClose={() => setError('')} />
 
       {loading ? (
         <div className="py-5 text-center text-secondary">
@@ -129,13 +130,14 @@ function Nutrition() {
               onSelectFood={selectFood}
               query={query}
               t={t}
+              language={i18n.language}
             />
           </Col>
 
           <Col lg={4}>
             {loadingDetail
               ? <div className="alert alert-light border">{t('nutritionPage.loadingDetail')}</div>
-              : <FoodDetailCard food={selectedFood} t={t} />}
+              : <FoodDetailCard food={selectedFood} language={i18n.language} t={t} />}
           </Col>
         </Row>
       )}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import ErrorModal from '../../components/ErrorModal';
 import { Link, useNavigate } from 'react-router-dom';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import {
@@ -102,7 +103,7 @@ function ForgotPassword() {
               </div>
 
               {messageKey && <Alert variant="success">{t(messageKey)}</Alert>}
-              {error && <Alert variant="danger">{error}</Alert>}
+              <ErrorModal error={error} onClose={() => setError('')} />
 
               {step === 'request' ? (
                 <Form onSubmit={requestOtp}>

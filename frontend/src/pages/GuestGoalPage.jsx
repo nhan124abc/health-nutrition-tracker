@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { FaArrowLeft } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import ErrorModal from '../components/ErrorModal';
 import { getGuestGoalPlanSuggestions } from '../features/profile/profileService';
 import { goalOptions } from '../features/profile/profileUtils';
 
@@ -86,7 +87,7 @@ function GuestGoalPage() {
       || age <= 0
       || (showTargetChange && (!targetChangeKg || targetChangeKg <= 0))
     ) {
-      setError(t('goalPlannerPage.errors.calculate'));
+      setError(t('goalPlannerPage.errors.guestCalculate'));
       setLoading(false);
       return;
     }
@@ -105,7 +106,7 @@ function GuestGoalPage() {
       const response = await getGuestGoalPlanSuggestions(payload);
       setPlan(extractGoalPlanFromApi(response.data));
     } catch (err) {
-      setError(err.response?.data?.message || t('goalPlannerPage.errors.calculate'));
+      setError(err.response?.data?.message || t('goalPlannerPage.errors.guestCalculate'));
     } finally {
       setLoading(false);
     }
@@ -175,7 +176,7 @@ function GuestGoalPage() {
             </div>
           </div>
 
-          {error && <Alert variant="danger">{error}</Alert>}
+          <ErrorModal error={error} onClose={() => setError('')} />
           <Row className="g-4">
             <Col lg={4}>
               <Card className="border-0 shadow-sm">

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Button, Card, Modal, Spinner } from 'react-bootstrap';
+import { Button, Card, Modal, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import ErrorModal from '../../components/ErrorModal';
 import { useLocation } from 'react-router-dom';
 import { FaPrint } from 'react-icons/fa';
 import { getCurrentUser } from '../../api/api';
@@ -307,7 +308,8 @@ function Profile() {
         </Button>
       </div>
 
-      {error && <Alert variant="danger">{error}</Alert>}
+      <ErrorModal error={error} onClose={() => setError('')} />
+      <ErrorModal error={avatarError} onClose={() => setAvatarError('')} />
 
       <ProfileTabs activeTab={activeTab} onSelect={setActiveTab} t={t} />
 

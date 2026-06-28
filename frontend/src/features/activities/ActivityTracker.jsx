@@ -3,6 +3,7 @@ import { Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import GoalFireworks from '../../components/GoalFireworks';
+import ErrorModal from '../../components/ErrorModal';
 import ActivityLogTable from './components/ActivityLogTable';
 import ActivitySummaryCard from './components/ActivitySummaryCard';
 import {
@@ -24,7 +25,7 @@ import {
 } from '../../utils/completionStorage';
 
 function ActivityTracker() {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [selectedDate, setSelectedDate] = useState(() => searchParams.get('date') || getTodayDate());
   const [logs, setLogs] = useState([]);
@@ -136,6 +137,7 @@ function ActivityTracker() {
   return (
     <>
       <GoalFireworks visible={showFireworks} />
+      <ErrorModal error={activityError} onClose={() => setActivityError('')} />
       <div className="page-heading">
         <div>
           <h1>{t('activityPage.title')}</h1>
@@ -147,10 +149,11 @@ function ActivityTracker() {
 
       <Row className="g-4">
         <Col lg={8}>
-          {activityError && <div className="alert alert-danger">{activityError}</div>}
           {loadingLogs && <div className="alert alert-light border">{t('activityPage.loading')}</div>}
           <ActivityLogTable
+            activityTypes={activityTypes}
             completedIds={completedActivityIds}
+            language={i18n.language}
             loading={loadingLogs}
             logs={logs}
             onToggleComplete={toggleActivityCompleted}
@@ -162,6 +165,7 @@ function ActivityTracker() {
           <ActivitySummaryCard
             activityGoal={activityGoal}
             activityTypes={activityTypes}
+            language={i18n.language}
             logCount={logs.length}
             summary={summary}
             t={t}

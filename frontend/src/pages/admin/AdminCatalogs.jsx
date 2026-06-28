@@ -28,6 +28,8 @@ import {
   normalizeCategory,
   normalizeFoodFromApi,
 } from '../../features/nutrition/nutritionUtils';
+import { getLocalizedName } from '../../utils/localizedName';
+import ErrorModal from '../../components/ErrorModal';
 
 const catalogItems = [
   {
@@ -72,7 +74,7 @@ function getCategoryItemCount(category) {
 
 function mapFoodCategory(category = {}) {
   const normalizedCategory = normalizeCategory(category);
-  const name = normalizedCategory.nameVi || normalizedCategory.name;
+  const name = normalizedCategory.name || normalizedCategory.nameVi;
 
   return {
     id: normalizedCategory.id ?? cleanText(name).toLowerCase(),
@@ -94,7 +96,7 @@ function mapDerivedFoodCategory(category, foods) {
 
 function mapActivityType(type = {}) {
   const normalizedType = normalizeActivityType(type);
-  const name = normalizedType.nameVi || normalizedType.name;
+  const name = normalizedType.name || normalizedType.nameVi;
 
   return {
     id: normalizedType.id,
@@ -119,7 +121,7 @@ function isLinkedFoodCategoryError(error) {
 }
 
 function AdminCatalogs({ type = 'overview' }) {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(type !== 'overview');
   const [error, setError] = useState('');
@@ -400,8 +402,7 @@ function AdminCatalogs({ type = 'overview' }) {
             {t('admin.catalogs.loading')}
           </Alert>
         )}
-        {error && <Alert variant="danger">{error}</Alert>}
-        {actionError && <Alert variant="danger">{actionError}</Alert>}
+        <ErrorModal error={error || actionError} onClose={() => { setError(''); setActionError(''); }} />
 
         {!loading && !error && (
           <>
@@ -467,7 +468,7 @@ function AdminCatalogs({ type = 'overview' }) {
                       return (
                         <tr key={category.id}>
                           <td className="fw-semibold">
-                            {category.name}
+                            {getLocalizedName({ name: category.nameRaw, nameVi: category.nameVi }, i18n.language)}
                             {isActivityCategories && (
                               <div className="small text-secondary">
                                 {category.category} · MET {category.metValue}

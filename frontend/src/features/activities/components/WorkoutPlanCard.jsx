@@ -3,6 +3,7 @@ import { Card, Form, ListGroup, ProgressBar, Spinner } from 'react-bootstrap';
 import { getActivitiesByDate } from '../activityService';
 import { extractActivitiesFromApi, normalizeActivityFromApi } from '../activityUtils';
 import { getActivityCompletionId, readCompletionIds, toggleCompletionId } from '../../../utils/completionStorage';
+import ErrorModal from '../../../components/ErrorModal';
 
 function WorkoutPlanCard({ selectedDate }) {
   const [activities, setActivities] = useState([]);
@@ -26,7 +27,7 @@ function WorkoutPlanCard({ selectedDate }) {
 
   return <Card className="border-0 shadow-sm planner-side-card"><Card.Body>
     <div className="mb-3"><h2 className="h5 fw-bold mb-1">Vận động ngày {selectedDate}</h2><p className="text-secondary mb-0">Dữ liệu được đồng bộ trực tiếp từ Nhật ký vận động.</p></div>
-    {error && <div className="alert alert-danger py-2 small">{error}</div>}
+    <ErrorModal error={error} onClose={() => setError('')} />
     {loading && <div className="text-center py-4"><Spinner animation="border" size="sm" /></div>}
     {!loading && activities.length === 0 && <div className="text-secondary border rounded p-3">Ngày này chưa có hoạt động nào trong Nhật ký.</div>}
     {!loading && activities.length > 0 && <section className="plan-checklist">

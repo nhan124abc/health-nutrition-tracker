@@ -1,5 +1,6 @@
 import { Card, Col, Form, InputGroup, Row, Table } from 'react-bootstrap';
 import { FaSearch } from 'react-icons/fa';
+import { getLocalizedName } from '../../../utils/localizedName';
 
 function FoodCatalogCard({
   category,
@@ -10,6 +11,7 @@ function FoodCatalogCard({
   onSelectFood,
   query,
   t,
+  language,
 }) {
   return (
     <Card className="border-0 shadow-sm">
@@ -25,7 +27,7 @@ function FoodCatalogCard({
             <Form.Select value={category} onChange={(event) => onCategoryChange(event.target.value)}>
               <option value="all">{t('nutritionPage.allCategories')}</option>
               {categories.map((item) => (
-                <option value={item.id} key={item.id}>{item.nameVi || item.name}</option>
+                <option value={item.id} key={item.id}>{getLocalizedName(item, language)}</option>
               ))}
             </Form.Select>
           </Col>
@@ -45,10 +47,10 @@ function FoodCatalogCard({
               {foods.map((food) => (
                 <tr key={food.id} onClick={() => onSelectFood(food)} className="clickable-row">
                   <td>
-                    <strong>{food.nameVi || food.name}</strong>
-                    <div className="text-secondary small">{food.name} - {food.brand}</div>
+                    <strong>{getLocalizedName(food, language)}</strong>
+                    {food.brand && <div className="text-secondary small">{food.brand}</div>}
                   </td>
-                  <td>{food.category}</td>
+                  <td>{getLocalizedName({ name: food.categoryName, nameVi: food.categoryNameVi }, language)}</td>
                   <td className="text-end">{food.calories}</td>
                   <td className="text-end">{food.protein}/{food.carbs}/{food.fat}g</td>
                 </tr>

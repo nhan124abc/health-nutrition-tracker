@@ -1,6 +1,7 @@
 import { Card, ProgressBar } from 'react-bootstrap';
+import { getLocalizedName } from '../../../utils/localizedName';
 
-function ActivitySummaryCard({ activityGoal = 0, activityTypes, logCount, summary, t }) {
+function ActivitySummaryCard({ activityGoal = 0, activityTypes, language, logCount, summary, t }) {
   const percent = activityGoal > 0 ? Math.round((summary.calories / activityGoal) * 100) : 0;
   return (
     <Card className="border-0 shadow-sm sticky-panel">
@@ -24,7 +25,7 @@ function ActivitySummaryCard({ activityGoal = 0, activityTypes, logCount, summar
         <div className="d-grid gap-2">
           {activityTypes.map((type) => (
             <div className="type-pill" key={type.id}>
-              <span>{type.nameVi || type.name}</span>
+              <span>{getLocalizedName(type, language)}</span>
               <span className="text-secondary small">{t(`activityPage.categories.${type.category}`)}</span>
             </div>
           ))}

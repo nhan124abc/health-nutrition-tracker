@@ -66,6 +66,10 @@ spring:
           uri: ${USER_SERVICE_URI:http://localhost:8082}
           predicates:
             - Path=/api/v1/users/**
+        - id: guest-goal-plan
+          uri: ${USER_SERVICE_URI:http://localhost:8082}
+          predicates:
+            - Path=/api/v1/goal-plans/**
 
         - id: nutrition-service
           uri: ${NUTRITION_SERVICE_URI:http://localhost:8083}

@@ -1,5 +1,6 @@
 package health.tracker.services.activity.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -60,6 +61,7 @@ public class ActivityType {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "activityType", fetch = FetchType.LAZY)
+    @JsonIgnore
     @Builder.Default
     private List<ActivityLog> logs = new ArrayList<>();
 

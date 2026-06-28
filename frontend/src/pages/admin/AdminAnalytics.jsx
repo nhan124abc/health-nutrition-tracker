@@ -12,6 +12,7 @@ import { Bar, Line } from 'react-chartjs-2';
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Card, Col, ProgressBar, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import ErrorModal from '../../components/ErrorModal';
 import { FaChartLine, FaDatabase, FaUserCheck, FaUsers } from 'react-icons/fa';
 import { getAdminSystemAnalytics } from '../../features/admin/adminService';
 
@@ -143,7 +144,7 @@ function AdminAnalytics() {
           {t('admin.analytics.loading')}
         </Alert>
       )}
-      {loadError && <Alert variant="danger">{loadError}</Alert>}
+      <ErrorModal error={loadError} onClose={() => setLoadError('')} />
 
       <Row className="g-4 mb-4">
         {analyticsStats.map((stat) => {

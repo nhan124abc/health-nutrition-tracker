@@ -33,6 +33,8 @@ import {
   updateFood,
 } from '../../features/nutrition/nutritionService';
 import { cleanText } from '../../features/nutrition/nutritionUtils';
+import { getLocalizedName } from '../../utils/localizedName';
+import ErrorModal from '../../components/ErrorModal';
 import { getCurrentUser } from '../../api/api';
 
 const pageConfigs = {
@@ -158,7 +160,7 @@ function getActiveStatus(item = {}) {
     : item.active ?? item.isActive ?? item.enabled ?? !item.locked;
 }
 
-function mapFoodRow(food) {
+function mapFoodRow(food, language) {
   const serving = cleanText(food.servingDescription)
     || (food.servingSizeG != null ? `${food.servingSizeG}g` : '-');
   const calories = food.calories != null ? `${food.calories} kcal` : '-';
@@ -170,7 +172,7 @@ function mapFoodRow(food) {
   return {
     id: food.id,
     cells: [
-      cleanText(food.nameVi) || cleanText(food.name) || '-',
+      getLocalizedName({ name: cleanText(food.name), nameVi: cleanText(food.nameVi) }, language) || '-',
       serving,
       calories,
       macro,
@@ -196,7 +198,7 @@ function formatEnum(value) {
     .join(' ');
 }
 
-function mapActivityTypeRow(activityType) {
+function mapActivityTypeRow(activityType, language) {
   const metValue = Number(activityType.metValue);
   const hasMet = Number.isFinite(metValue) && metValue > 0;
   const active = getActiveStatus(activityType);
@@ -204,7 +206,7 @@ function mapActivityTypeRow(activityType) {
   return {
     id: activityType.id,
     cells: [
-      cleanText(activityType.nameVi) || cleanText(activityType.name) || '-',
+      getLocalizedName({ name: cleanText(activityType.name), nameVi: cleanText(activityType.nameVi) }, language) || '-',
       formatEnum(activityType.category),
       hasMet ? metValue.toFixed(1) : '-',
       active ? 'admin.status.active' : 'admin.status.locked',
@@ -324,7 +326,7 @@ function AdminManagementPage({ type }) {
   const [noticeKey, setNoticeKey] = useState('');
   const [loading, setLoading] = useState(['users', 'foods', 'exercises'].includes(type));
   const [loadError, setLoadError] = useState('');
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const config = pageConfigs[type] || pageConfigs.users;
   const Icon = config.icon;
   const pageKey = `admin.pages.${type}`;
@@ -392,7 +394,7 @@ function AdminManagementPage({ type }) {
           if (!isActive) {
             return;
           }
-          setFoodRows(foods.map(mapFoodRow));
+          setFoodRows(foods.map((food) => mapFoodRow(food, i18n.language)));
           setFoodSummary({ total });
           setFoodCategories(Array.isArray(categories) ? categories : []);
         } else {
@@ -403,7 +405,9 @@ function AdminManagementPage({ type }) {
             return;
           }
           setActivityRows(
-            Array.isArray(activityTypes) ? activityTypes.map(mapActivityTypeRow) : []
+            Array.isArray(activityTypes)
+              ? activityTypes.map((activityType) => mapActivityTypeRow(activityType, i18n.language))
+              : []
           );
         }
       } catch (error) {
@@ -424,7 +428,7 @@ function AdminManagementPage({ type }) {
     return () => {
       isActive = false;
     };
-  }, [pageKey, t, type]);
+  }, [i18n.language, pageKey, t, type]);
 
   const filteredRows = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
@@ -671,7 +675,7 @@ function AdminManagementPage({ type }) {
           ? await updateFood(editingCatalogRow.id, payload)
           : await createFood(payload);
         const savedFood = response.data?.data ?? response.data;
-        const mappedRow = mapFoodRow(savedFood);
+        const mappedRow = mapFoodRow(savedFood, i18n.language);
 
         setFoodRows((currentRows) => editingCatalogRow
           ? currentRows.map((row) => (row.id === editingCatalogRow.id ? mappedRow : row))
@@ -692,7 +696,7 @@ function AdminManagementPage({ type }) {
           ? await updateActivityType(editingCatalogRow.id, payload)
           : await createActivityType(payload);
         const savedActivity = response.data?.data ?? response.data;
-        const mappedRow = mapActivityTypeRow(savedActivity);
+        const mappedRow = mapActivityTypeRow(savedActivity, i18n.language);
 
         setActivityRows((currentRows) => editingCatalogRow
           ? currentRows.map((row) => (row.id === editingCatalogRow.id ? mappedRow : row))
@@ -739,7 +743,7 @@ function AdminManagementPage({ type }) {
     try {
       const response = await updateActivityTypeVisibility(row.id, row.active);
       const savedActivity = response.data?.data ?? response.data;
-      const mappedRow = mapActivityTypeRow(savedActivity);
+      const mappedRow = mapActivityTypeRow(savedActivity, i18n.language);
       setActivityRows((currentRows) => currentRows.map((currentRow) => (
         currentRow.id === row.id ? mappedRow : currentRow
       )));
@@ -817,8 +821,7 @@ function AdminManagementPage({ type }) {
           {t(`${pageKey}.loading`)}
         </Alert>
       )}
-      {loadError && <Alert variant="danger">{loadError}</Alert>}
-      {actionError && <Alert variant="danger">{actionError}</Alert>}
+      <ErrorModal error={loadError || actionError} onClose={() => { setLoadError(''); setActionError(''); }} />
 
       <Card className="admin-card border-0 shadow-sm">
         <Card.Body>
@@ -1067,7 +1070,7 @@ function AdminManagementPage({ type }) {
                     <option value="">Chưa chọn</option>
                     {foodCategories.map((category) => (
                       <option key={category.id} value={category.id}>
-                        {cleanText(category.nameVi) || cleanText(category.name)}
+                        {getLocalizedName({ name: cleanText(category.name), nameVi: cleanText(category.nameVi) }, i18n.language)}
                       </option>
                     ))}
                   </Form.Select>

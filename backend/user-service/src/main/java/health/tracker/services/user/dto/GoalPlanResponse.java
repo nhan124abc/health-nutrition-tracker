@@ -15,6 +15,7 @@ public class GoalPlanResponse {
     private BigDecimal targetChangeKg;
     private Integer bmr;
     private Integer tdee;
+    private BigDecimal activityFactor;
     private Integer safeMinimumWeeks;
     private BigDecimal totalEnergyChangeKcal;
     private List<Option> options;

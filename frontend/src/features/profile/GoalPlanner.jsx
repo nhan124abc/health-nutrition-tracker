@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert, Button, Card, Col, Form, ProgressBar, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import ErrorModal from '../../components/ErrorModal';
 import { useNavigate } from 'react-router-dom';
 import { applyGoalPlan, getGoalPlanSuggestions, getProfile } from './profileService';
 import { extractProfileFromApi, goalOptions, mapProfileFromApi } from './profileUtils';
@@ -103,7 +104,7 @@ function GoalPlanner() {
           <h1>{t('goalPlannerPage.title')}</h1>
         </div>
       </div>
-      {error && <Alert variant="danger">{error}</Alert>}
+      <ErrorModal error={error} onClose={() => setError('')} />
       <Row className="g-4">
         <Col lg={4}>
           <Card className="border-0 shadow-sm"><Card.Body>

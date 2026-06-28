@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
+import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+import ErrorModal from '../../components/ErrorModal';
 import { Link, useNavigate } from 'react-router-dom';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
 import { register } from './authService';
@@ -63,7 +64,7 @@ function Register() {
                 <h1 className="h3 fw-bold mb-2">{t('auth.registerTitle')}</h1>
               </div>
 
-              {error && <Alert variant="danger">{error}</Alert>}
+              <ErrorModal error={error} onClose={() => setError('')} />
 
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="fullName">

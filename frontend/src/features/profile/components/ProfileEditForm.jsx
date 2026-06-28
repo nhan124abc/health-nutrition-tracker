@@ -80,7 +80,6 @@ function ProfileEditForm({
                     onChange={onAvatarChange}
                     disabled={saving}
                   />
-                  {avatarError && <div className="text-danger small">{avatarError}</div>}
                 </div>
               </div>
             </Col>

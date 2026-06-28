@@ -1,5 +1,7 @@
 import { Button, Col, Form, Modal, Row, Table } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 import { mealTypes } from '../mealUtils';
+import { getLocalizedName } from '../../../utils/localizedName';
 
 function MealFormModal({
   editingMealId,
@@ -17,6 +19,7 @@ function MealFormModal({
   show,
   t,
 }) {
+  const { i18n } = useTranslation();
   return (
     <Modal show={show} onHide={onClose} size="lg" centered>
       <Modal.Header closeButton>
@@ -66,7 +69,7 @@ function MealFormModal({
                 </option>
                 {foods.map((food) => (
                   <option value={food.id} key={food.id}>
-                    {food.nameVi || food.name}
+                    {getLocalizedName(food, i18n.language)}
                     {food.brand ? ` - ${food.brand}` : ''}
                   </option>
                 ))}
@@ -130,7 +133,7 @@ function MealFormModal({
                   {form.items.map((item, index) => (
                     <tr key={`${item.foodId}-${index}`}>
                       <td>
-                        <strong>{item.nameVi || item.name}</strong>
+                        <strong>{getLocalizedName(item, i18n.language)}</strong>
                         {item.brand && <div className="small text-secondary">{item.brand}</div>}
                       </td>
                       <td>{item.serving}</td>
