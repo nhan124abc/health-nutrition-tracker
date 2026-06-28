@@ -1,5 +1,5 @@
 import { Button, Card, Col, Form, Row } from 'react-bootstrap';
-import { bodyMetricFields } from '../profileUtils';
+import { bodyMetricFields, bodyMetricResultFields } from '../profileUtils';
 
 function BodyMetricFormCard({ form, onChange, onSubmit, saving, t }) {
   return (
@@ -24,9 +24,41 @@ function BodyMetricFormCard({ form, onChange, onSubmit, saving, t }) {
               </Col>
             ))}
             <Col xs={12}>
-              <Button type="submit" variant="success" disabled={saving}>
-                {saving ? t('bodyMetricsPage.saving') : t('bodyMetricsPage.saveMetric')}
-              </Button>
+              <div className="body-metric-result-panel">
+                <div className="body-metric-result-header">
+                  <span>{t('bodyMetricsPage.results.title')}</span>
+                </div>
+                <Row className="g-2">
+                  {bodyMetricResultFields.map(([name, labelKey, type, unit]) => (
+                    <Col sm={4} key={name}>
+                      <Form.Group className="body-metric-result-tile">
+                        <Form.Label>{t(labelKey)}</Form.Label>
+                        <Form.Control
+                          type={type}
+                          name={name}
+                          value={form[name]}
+                          onChange={onChange}
+                          disabled={saving}
+                          min="0"
+                          step="0.1"
+                          placeholder="--"
+                        />
+                        <Form.Text>{unit}</Form.Text>
+                      </Form.Group>
+                    </Col>
+                  ))}
+                </Row>
+              </div>
+            </Col>
+            <Col xs={12}>
+              <div className="d-flex flex-wrap gap-2">
+                <Button type="button" variant="outline-success" disabled={saving}>
+                  {t('bodyMetricsPage.calculateMetrics')}
+                </Button>
+                <Button type="submit" variant="success" disabled={saving}>
+                  {saving ? t('bodyMetricsPage.saving') : t('bodyMetricsPage.saveMetric')}
+                </Button>
+              </div>
             </Col>
           </Row>
         </Form>

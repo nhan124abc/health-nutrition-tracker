@@ -54,7 +54,10 @@ export const requiredProfileFields = [
 export const emptyBodyMetric = {
   date: '',
   weight: '',
+  height: '',
   bodyFat: '',
+  bmi: '',
+  bmr: '',
   muscleMass: '',
   waist: '',
   hip: '',
@@ -65,9 +68,16 @@ export const emptyBodyMetric = {
 export const bodyMetricFields = [
   ['date', 'bodyMetricsPage.fields.date', 'date'],
   ['weight', 'bodyMetricsPage.fields.weight', 'number'],
+  ['height', 'bodyMetricsPage.fields.height', 'number'],
   ['waist', 'bodyMetricsPage.fields.waist', 'number'],
   ['hip', 'bodyMetricsPage.fields.hip', 'number'],
   ['chest', 'bodyMetricsPage.fields.chest', 'number'],
+];
+
+export const bodyMetricResultFields = [
+  ['bodyFat', 'bodyMetricsPage.results.bodyFat', 'number', '%'],
+  ['bmi', 'bodyMetricsPage.results.bmi', 'number', 'kg/m2'],
+  ['bmr', 'bodyMetricsPage.results.bmr', 'number', 'kcal'],
 ];
 
 const activityFromApi = {
@@ -166,7 +176,10 @@ export function mapBodyMetricToApi(metric) {
   return {
     recordedAt: metric.date,
     weightKg: normalizeNumber(metric.weight),
+    heightCm: normalizeNumber(metric.height),
     bodyFatPercentage: normalizeNumber(metric.bodyFat),
+    bmi: normalizeNumber(metric.bmi),
+    bmr: normalizeNumber(metric.bmr),
     muscleMassKg: normalizeNumber(metric.muscleMass),
     waistCm: normalizeNumber(metric.waist),
     hipCm: normalizeNumber(metric.hip),
@@ -188,6 +201,10 @@ export function buildBodyMetricFormFromProfile(profile = {}, metrics = []) {
     ...emptyBodyMetric,
     date: getTodayDate(),
     weight: profile.weight || latestMetric.weightKg || latestMetric.weight || '',
+    height: profile.height || latestMetric.heightCm || latestMetric.height || '',
+    bodyFat: latestMetric.bodyFatPercentage ?? latestMetric.bodyFat ?? '',
+    bmi: latestMetric.bmi ?? '',
+    bmr: latestMetric.bmr ?? '',
     waist: latestMetric.waistCm ?? latestMetric.waist ?? '',
     hip: latestMetric.hipCm ?? latestMetric.hip ?? '',
     chest: latestMetric.chestCm ?? latestMetric.chest ?? '',

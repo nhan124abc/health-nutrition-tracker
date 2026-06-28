@@ -791,6 +791,58 @@ body::-webkit-scrollbar,
   margin-bottom: 0.4rem;
 }
 
+.body-metric-result-panel {
+  background: #f7fbf9;
+  border: 1px solid rgba(47, 143, 107, 0.16);
+  border-radius: 0.5rem;
+  padding: 0.9rem;
+}
+
+.body-metric-result-header {
+  color: var(--health-primary-dark);
+  font-size: 0.82rem;
+  font-weight: 800;
+  margin-bottom: 0.7rem;
+}
+
+.body-metric-result-tile {
+  background: #fff;
+  border: 1px solid #e5eee9;
+  border-radius: 0.5rem;
+  display: grid;
+  gap: 0.25rem;
+  min-height: 6.25rem;
+  padding: 0.8rem;
+}
+
+.body-metric-result-tile span,
+.body-metric-result-tile label,
+.body-metric-result-tile small {
+  color: #667c74;
+}
+
+.body-metric-result-tile span,
+.body-metric-result-tile label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 0;
+}
+
+.body-metric-result-tile .form-control {
+  border-color: #dce8e2;
+  color: var(--health-ink);
+  font-size: 1.1rem;
+  font-weight: 800;
+  min-height: 2.4rem;
+}
+
+.body-metric-result-tile strong {
+  color: var(--health-ink);
+  font-size: 1.55rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
 .goal-row {
   display: grid;
   gap: 0.5rem;

@@ -1022,9 +1022,17 @@
     "confirmDeleteMetric": "Bạn có chắc muốn xóa chỉ số cơ thể này?",
     "chartTitle": "Biểu đồ tiến trình",
     "historyTitle": "Lịch sử chỉ số",
+    "calculateMetrics": "Tính toán",
+    "results": {
+      "title": "Chỉ số ước tính",
+      "bodyFat": "Body fat",
+      "bmi": "BMI",
+      "bmr": "BMR"
+    },
     "fields": {
       "date": "Ngày ghi nhận",
       "weight": "Cân nặng kg",
+      "height": "Chiều cao cm",
       "bodyFat": "Body fat %",
       "muscleMass": "Muscle mass kg",
       "waist": "Vòng eo cm",
@@ -1032,6 +1040,9 @@
       "chest": "Vòng ngực cm"
     },
     "table": {
+      "bodyFat": "Body fat",
+      "bmi": "BMI",
+      "bmr": "BMR",
       "measurements": "Eo/Mông/Ngực"
     }
   },

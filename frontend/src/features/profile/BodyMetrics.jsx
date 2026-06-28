@@ -15,6 +15,7 @@ import {
 import {
   buildBodyMetricFormFromProfile,
   bodyMetricFields,
+  bodyMetricResultFields,
   emptyBodyMetric,
   extractBodyMetricFromApi,
   extractMetricRows,
@@ -121,6 +122,10 @@ function BodyMetrics() {
     ...emptyBodyMetric,
     date: String(metric.recordedAt || metric.date || getTodayDate()).slice(0, 10),
     weight: metric.weightKg ?? metric.weight ?? '',
+    height: metric.heightCm ?? metric.height ?? profile?.height ?? '',
+    bodyFat: metric.bodyFatPercentage ?? metric.bodyFat ?? '',
+    bmi: metric.bmi ?? '',
+    bmr: metric.bmr ?? '',
     waist: metric.waistCm ?? metric.waist ?? '',
     hip: metric.hipCm ?? metric.hip ?? '',
     chest: metric.chestCm ?? metric.chest ?? '',
@@ -302,6 +307,33 @@ function BodyMetrics() {
                   </Form.Group>
                 </Col>
               ))}
+              <Col xs={12}>
+                <div className="body-metric-result-panel">
+                  <div className="body-metric-result-header">
+                    <span>{t('bodyMetricsPage.results.title')}</span>
+                  </div>
+                  <Row className="g-2">
+                    {bodyMetricResultFields.map(([name, labelKey, type, unit]) => (
+                      <Col sm={4} key={name}>
+                        <Form.Group className="body-metric-result-tile">
+                          <Form.Label>{t(labelKey)}</Form.Label>
+                          <Form.Control
+                            type={type}
+                            name={name}
+                            value={editForm[name]}
+                            onChange={handleEditChange}
+                            disabled={updating}
+                            min="0"
+                            step="0.1"
+                            placeholder="--"
+                          />
+                          <Form.Text>{unit}</Form.Text>
+                        </Form.Group>
+                      </Col>
+                    ))}
+                  </Row>
+                </div>
+              </Col>
             </Row>
           </Modal.Body>
           <Modal.Footer>
