@@ -1410,9 +1410,17 @@
     "confirmDeleteMetric": "Delete this body metric?",
     "chartTitle": "Progress chart",
     "historyTitle": "Metric history",
+    "calculateMetrics": "Calculate",
+    "results": {
+      "title": "Calculated metrics",
+      "bodyFat": "Body fat",
+      "bmi": "BMI",
+      "bmr": "BMR"
+    },
     "fields": {
       "date": "Record date",
       "weight": "Weight kg",
+      "height": "Height cm",
       "bodyFat": "Body fat %",
       "muscleMass": "Muscle mass kg",
       "waist": "Waist cm",
@@ -1421,6 +1429,8 @@
     },
     "table": {
       "bodyFat": "Body fat",
+      "bmi": "BMI",
+      "bmr": "BMR",
       "muscle": "Muscle",
       "measurements": "Waist/Buttocks/Chest"
     }
