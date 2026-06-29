@@ -78,8 +78,8 @@ function Plans() {
                     {t('plansPage.trackingEyebrow')}
                   </div>
                 </div>
-                <Button variant="outline-success" onClick={() => navigate('/goals')} title={t('plansPage.adjustGoal')}>
-                  {t('plansPage.adjustGoal')}
+                <Button variant="outline-success" onClick={() => navigate('/goals')} title={t('plansPage.updateGoal')}>
+                  {t('plansPage.updateGoal')}
                 </Button>
               </div>
 

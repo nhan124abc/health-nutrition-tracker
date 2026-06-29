@@ -110,6 +110,24 @@ public class FoodItemController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/foods/{id}/hide")
+    public ResponseEntity<FoodItemResponse> hideFood(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Long id) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(foodItemService.hide(id));
+    }
+
+    @PatchMapping("/foods/{id}/restore")
+    public ResponseEntity<FoodItemResponse> restoreFood(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable Long id) {
+
+        requireAdmin(role);
+        return ResponseEntity.ok(foodItemService.restore(id));
+    }
+
     /**
      * GET /api/v1/nutrition/categories
      * Lấy danh sách tất cả danh mục thực phẩm.
@@ -185,7 +203,8 @@ public class FoodItemController {
     }
 
     private void requireAdmin(String role) {
-        if (!"ADMIN".equalsIgnoreCase(role)) {
+        String normalizedRole = role == null ? "" : role.replaceFirst("(?i)^ROLE_", "");
+        if (!"ADMIN".equalsIgnoreCase(normalizedRole)) {
             throw new AppException(HttpStatus.FORBIDDEN, "Admin role is required");
         }
     }

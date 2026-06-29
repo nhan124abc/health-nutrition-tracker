@@ -146,11 +146,12 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         String username = claims.getSubject();
         String userId   = claims.get("userId", String.class);
         String role     = claims.get("role",   String.class);
+        String normalizedRole = normalizeRole(role);
 
         log.debug("Authenticated request – user: {}, role: {}, path: {}", username, role, path);
 
         // Role-based access: ADMIN-only paths
-        if (isAdminPath(path) && !"ADMIN".equalsIgnoreCase(role)) {
+        if (isAdminPath(path) && !isAdminRole(role)) {
             log.warn("Forbidden – user: {} (role: {}) tried to access admin path: {}", username, role, path);
             return onForbidden(exchange, "Access denied: insufficient permissions");
         }
@@ -159,7 +160,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                 .headers(this::removeTrustedHeaders)
                 .header("X-User-Id",         userId   != null ? userId   : "")
                 .header("X-User-Name",       username != null ? username : "")
-                .header("X-User-Role",       role     != null ? role     : "")
+                .header("X-User-Role",       normalizedRole)
                 .header("X-Internal-Secret", internalSecret)   // ← service sẽ validate header này
                 .build();
 
@@ -181,6 +182,14 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private boolean isAdminPath(String path) {
         return ADMIN_PATHS.stream().anyMatch(path::startsWith);
+    }
+
+    private boolean isAdminRole(String role) {
+        return "ADMIN".equalsIgnoreCase(normalizeRole(role));
+    }
+
+    private String normalizeRole(String role) {
+        return role == null ? "" : role.replaceFirst("(?i)^ROLE_", "");
     }
 
     private boolean isOptionalAuthPath(String path) {

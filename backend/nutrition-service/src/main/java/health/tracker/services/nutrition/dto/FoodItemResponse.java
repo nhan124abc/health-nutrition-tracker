@@ -41,6 +41,7 @@ public class FoodItemResponse {
 
     private String imageUrl;
     private boolean verified;
+    private boolean isPublic;
 
     private LocalDateTime createdAt;
 

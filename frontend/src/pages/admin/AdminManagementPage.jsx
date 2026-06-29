@@ -26,11 +26,12 @@ import {
   updateActivityTypeVisibility,
 } from '../../features/activities/activityService';
 import {
-  createFood,
-  deleteFood,
+  createAdminFood,
+  deleteAdminFood,
   getAdminFoodCategories,
-  getFoods,
-  updateFood,
+  getAdminFoods,
+  updateAdminFood,
+  updateAdminFoodVisibility,
 } from '../../features/nutrition/nutritionService';
 import { cleanText } from '../../features/nutrition/nutritionUtils';
 import { getLocalizedName } from '../../utils/localizedName';
@@ -123,7 +124,7 @@ async function loadAllAdminUsers() {
 }
 
 async function loadAllFoods() {
-  const firstResponse = await getFoods({ page: 0, size: 100 });
+  const firstResponse = await getAdminFoods({ page: 0, size: 100 });
   const firstPage = extractPage(firstResponse.data);
 
   if (firstPage.totalPages <= 1) {
@@ -136,7 +137,7 @@ async function loadAllFoods() {
   const remainingResponses = await Promise.all(
     Array.from(
       { length: firstPage.totalPages - 1 },
-      (_, index) => getFoods({ page: index + 1, size: 100 })
+      (_, index) => getAdminFoods({ page: index + 1, size: 100 })
     )
   );
 
@@ -155,14 +156,28 @@ function hasCompleteMacro(food) {
 }
 
 function getActiveStatus(item = {}) {
+  if (item.isPublic != null || item.public != null) {
+    return item.isPublic ?? item.public;
+  }
+
   return item.hidden != null
     ? !item.hidden
     : item.active ?? item.isActive ?? item.enabled ?? !item.locked;
 }
 
+function formatServingAmount(food = {}) {
+  const description = cleanText(food.servingDescription);
+  const amountMatch = description.match(/^(\d+(?:[.,]\d+)?)\s*(g|gram|grams|kg|ml|l)\b/i);
+
+  if (amountMatch) {
+    return `${amountMatch[1]}${amountMatch[2].toLowerCase()}`;
+  }
+
+  return food.servingSizeG != null ? `${food.servingSizeG}g` : '-';
+}
+
 function mapFoodRow(food, language) {
-  const serving = cleanText(food.servingDescription)
-    || (food.servingSizeG != null ? `${food.servingSizeG}g` : '-');
+  const serving = formatServingAmount(food);
   const calories = food.calories != null ? `${food.calories} kcal` : '-';
   const macro = hasCompleteMacro(food)
     ? `${food.proteinG}P / ${food.carbsG}C / ${food.fatG}F`
@@ -276,7 +291,7 @@ const emptyFoodForm = {
   barcode: '',
   categoryId: '',
   servingSizeG: '100',
-  servingDescription: '100g',
+  servingDescription: '',
   calories: '0',
   proteinG: '0',
   carbsG: '0',
@@ -506,7 +521,7 @@ function AdminManagementPage({ type }) {
         barcode: '',
         categoryId: raw.category?.id ?? raw.categoryId ?? '',
         servingSizeG: raw.servingSizeG ?? '100',
-        servingDescription: raw.servingDescription || `${raw.servingSizeG ?? 100}g`,
+        servingDescription: '',
         calories: raw.calories ?? '0',
         proteinG: raw.proteinG ?? '0',
         carbsG: raw.carbsG ?? '0',
@@ -661,7 +676,7 @@ function AdminManagementPage({ type }) {
           barcode: catalogForm.barcode.trim() || null,
           categoryId: toNumberOrNull(catalogForm.categoryId),
           servingSizeG: toNumberOrNull(catalogForm.servingSizeG),
-          servingDescription: catalogForm.servingDescription.trim() || `${catalogForm.servingSizeG}g`,
+          servingDescription: `${catalogForm.servingSizeG}g`,
           calories: toNumberOrNull(catalogForm.calories),
           proteinG: toNumberOrNull(catalogForm.proteinG),
           carbsG: toNumberOrNull(catalogForm.carbsG),
@@ -672,8 +687,8 @@ function AdminManagementPage({ type }) {
           imageUrl: catalogForm.imageUrl.trim() || null,
         };
         const response = editingCatalogRow
-          ? await updateFood(editingCatalogRow.id, payload)
-          : await createFood(payload);
+          ? await updateAdminFood(editingCatalogRow.id, payload)
+          : await createAdminFood(payload);
         const savedFood = response.data?.data ?? response.data;
         const mappedRow = mapFoodRow(savedFood, i18n.language);
 
@@ -719,7 +734,7 @@ function AdminManagementPage({ type }) {
 
     try {
       if (type === 'foods') {
-        await deleteFood(row.id);
+        await deleteAdminFood(row.id);
         setFoodRows((currentRows) => currentRows.filter((currentRow) => currentRow.id !== row.id));
         setFoodSummary((summary) => ({ ...summary, total: Math.max(0, (summary.total ?? foodRows.length) - 1) }));
         showSuccess('admin.catalogData.foodDeleteSuccess');
@@ -735,19 +750,30 @@ function AdminManagementPage({ type }) {
     }
   };
 
-  const toggleActivityStatus = async (row) => {
+  const toggleCatalogStatus = async (row) => {
     const actionKey = getRowActionKey('status', row);
     setActionError('');
     setPendingAction(actionKey);
 
     try {
-      const response = await updateActivityTypeVisibility(row.id, row.active);
-      const savedActivity = response.data?.data ?? response.data;
-      const mappedRow = mapActivityTypeRow(savedActivity, i18n.language);
-      setActivityRows((currentRows) => currentRows.map((currentRow) => (
-        currentRow.id === row.id ? mappedRow : currentRow
-      )));
-      showSuccess(row.active ? 'admin.catalogData.activityHideSuccess' : 'admin.catalogData.activityShowSuccess');
+      if (type === 'foods') {
+        const response = await updateAdminFoodVisibility(row.id, row.active);
+        const savedFoodResponse = response.data?.data ?? response.data ?? {};
+        const savedFood = { ...row.raw, ...savedFoodResponse, hidden: row.active };
+        const mappedRow = mapFoodRow(savedFood, i18n.language);
+        setFoodRows((currentRows) => currentRows.map((currentRow) => (
+          currentRow.id === row.id ? mappedRow : currentRow
+        )));
+        showSuccess(row.active ? 'admin.catalogData.foodHideSuccess' : 'admin.catalogData.foodShowSuccess');
+      } else {
+        const response = await updateActivityTypeVisibility(row.id, row.active);
+        const savedActivity = response.data?.data ?? response.data;
+        const mappedRow = mapActivityTypeRow(savedActivity, i18n.language);
+        setActivityRows((currentRows) => currentRows.map((currentRow) => (
+          currentRow.id === row.id ? mappedRow : currentRow
+        )));
+        showSuccess(row.active ? 'admin.catalogData.activityHideSuccess' : 'admin.catalogData.activityShowSuccess');
+      }
     } catch (error) {
       setActionError(error.response?.data?.message || t('admin.catalogData.statusError'));
     } finally {
@@ -773,7 +799,7 @@ function AdminManagementPage({ type }) {
       } else if (action.type === 'delete') {
         await removeCatalog(action.row);
       } else if (action.type === 'catalog-status') {
-        await toggleActivityStatus(action.row);
+        await toggleCatalogStatus(action.row);
       }
     } finally {
       setConfirmingAction(false);
@@ -875,8 +901,8 @@ function AdminManagementPage({ type }) {
                   const visibilityActionLabel = isUserRow
                     ? t(row.active ? 'admin.actions.hideAccount' : 'admin.actions.showAccount')
                     : type === 'exercises'
-                      ? (row.active ? 'Ẩn hoạt động' : 'Hiện hoạt động')
-                      : t('admin.actions.view');
+                      ? t(row.active ? 'admin.actions.hideActivity' : 'admin.actions.showActivity')
+                      : t(row.active ? 'admin.actions.hideFood' : 'admin.actions.showFood');
 
                   return (
                     <tr key={rowKey}>
@@ -909,12 +935,8 @@ function AdminManagementPage({ type }) {
                             size="sm"
                             aria-label={visibilityActionLabel}
                             title={visibilityActionLabel}
-                            disabled={type === 'foods' || pendingAction === statusActionKey}
+                            disabled={pendingAction === statusActionKey}
                             onClick={() => {
-                              if (type === 'foods') {
-                                return;
-                              }
-
                               if (!isUserRow) {
                                 setConfirmAction({ type: 'catalog-status', row });
                                 return;
@@ -1079,9 +1101,8 @@ function AdminManagementPage({ type }) {
                   <Form.Label>Khẩu phần (g)</Form.Label>
                   <Form.Control required type="number" min="0.1" step="0.1" value={catalogForm.servingSizeG} onChange={(event) => setCatalogForm((form) => ({ ...form, servingSizeG: event.target.value }))} />
                 </Col>
-                <Col md={6}>
+                <Col md={6} className="d-none">
                   <Form.Label>Mô tả khẩu phần</Form.Label>
-                  <Form.Control value={catalogForm.servingDescription} onChange={(event) => setCatalogForm((form) => ({ ...form, servingDescription: event.target.value }))} />
                 </Col>
                 <Col md={4}>
                   <Form.Label>Calories</Form.Label>
@@ -1166,6 +1187,19 @@ function AdminManagementPage({ type }) {
             confirmAction.row?.active
               ? t('admin.users.confirmLock')
               : t('admin.users.confirmUnlock')
+          )}
+          {confirmAction?.type === 'catalog-status' && (
+            type === 'foods'
+              ? t(
+                confirmAction.row?.active
+                  ? 'admin.catalogData.confirmHideFood'
+                  : 'admin.catalogData.confirmShowFood'
+              )
+              : t(
+                confirmAction.row?.active
+                  ? 'admin.catalogData.confirmHideActivity'
+                  : 'admin.catalogData.confirmShowActivity'
+              )
           )}
         </Modal.Body>
         <Modal.Footer>

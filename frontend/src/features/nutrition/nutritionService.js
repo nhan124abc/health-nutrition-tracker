@@ -1,9 +1,10 @@
 import api from '../../api/api';
-import { getAccessToken, getCurrentUserRole } from '../../api/api';
+import { getAccessToken, getCurrentUser, getCurrentUserRole } from '../../api/api';
 import nutritionConfig from '../../config/nutritionConfig';
 
 function withAdminAuth() {
   const token = getAccessToken();
+  const currentUser = getCurrentUser();
   const role = getCurrentUserRole();
   const headers = {};
 
@@ -13,6 +14,10 @@ function withAdminAuth() {
 
   if (role) {
     headers['X-User-Role'] = role;
+  }
+
+  if (currentUser?.id || currentUser?.userId) {
+    headers['X-User-Id'] = currentUser.id || currentUser.userId;
   }
 
   return { headers };
@@ -30,12 +35,44 @@ export function createFood(payload) {
   return api.post(nutritionConfig.endpoints.foods, payload);
 }
 
+export function getAdminFoods(params = {}) {
+  return api.get(nutritionConfig.endpoints.foods, { ...withAdminAuth(), params });
+}
+
+export function createAdminFood(payload) {
+  return api.post(nutritionConfig.endpoints.foods, payload, withAdminAuth());
+}
+
 export function updateFood(id, payload) {
+  return api.put(nutritionConfig.endpoints.foodDetail(id), payload, withAdminAuth());
+}
+
+export function updateAdminFood(id, payload) {
   return api.put(nutritionConfig.endpoints.foodDetail(id), payload, withAdminAuth());
 }
 
 export function deleteFood(id) {
   return api.delete(nutritionConfig.endpoints.foodDetail(id), withAdminAuth());
+}
+
+export function deleteAdminFood(id) {
+  return api.delete(nutritionConfig.endpoints.foodDetail(id), withAdminAuth());
+}
+
+export function updateFoodVisibility(id, hidden) {
+  const endpoint = hidden
+    ? nutritionConfig.endpoints.foodHide(id)
+    : nutritionConfig.endpoints.foodRestore(id);
+
+  return api.patch(endpoint, {}, withAdminAuth());
+}
+
+export function updateAdminFoodVisibility(id, hidden) {
+  const endpoint = hidden
+    ? nutritionConfig.endpoints.foodHide(id)
+    : nutritionConfig.endpoints.foodRestore(id);
+
+  return api.patch(endpoint, {}, withAdminAuth());
 }
 
 export function getFoodCategories() {

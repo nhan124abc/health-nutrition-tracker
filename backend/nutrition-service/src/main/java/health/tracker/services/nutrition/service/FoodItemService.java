@@ -149,6 +149,22 @@ public class FoodItemService {
         foodItemRepository.delete(food);
     }
 
+    @Transactional
+    public FoodItemResponse hide(Long id) {
+        FoodItem food = foodItemRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Food item not found: " + id));
+        food.setPublic(false);
+        return toResponse(foodItemRepository.save(food));
+    }
+
+    @Transactional
+    public FoodItemResponse restore(Long id) {
+        FoodItem food = foodItemRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Food item not found: " + id));
+        food.setPublic(true);
+        return toResponse(foodItemRepository.save(food));
+    }
+
     private FoodItemResponse toResponse(FoodItem f) {
         FoodItemResponse.CategoryInfo catInfo = null;
         if (f.getCategory() != null) {
@@ -169,6 +185,7 @@ public class FoodItemService {
                 .saturatedFatG(f.getSaturatedFatG()).potassiumMg(f.getPotassiumMg())
                 .vitaminCMg(f.getVitaminCMg()).calciumMg(f.getCalciumMg()).ironMg(f.getIronMg())
                 .imageUrl(f.getImageUrl()).verified(f.isVerified())
+                .isPublic(f.isPublic())
                 .createdAt(f.getCreatedAt())
                 .build();
     }
