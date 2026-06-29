@@ -6,6 +6,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -35,4 +36,7 @@ public class ActivityCategoryLabel {
     @Column(name = "hidden", nullable = false)
     @Builder.Default
     private boolean hidden = false;
+
+    @Transient
+    private long activityTypeCount;
 }

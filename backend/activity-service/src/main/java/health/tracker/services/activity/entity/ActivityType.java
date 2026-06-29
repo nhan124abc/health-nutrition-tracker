@@ -35,10 +35,6 @@ public class ActivityType {
     @Builder.Default
     private Category category = Category.OTHER;
 
-    /**
-     * Metabolic Equivalent of Task - dùng để tính calo đốt:
-     * calories = MET × weight_kg × duration_hours
-     */
     @Column(name = "met_value", nullable = false, precision = 4, scale = 1)
     @Builder.Default
     private BigDecimal metValue = BigDecimal.valueOf(3.0);
@@ -70,15 +66,14 @@ public class ActivityType {
         createdAt = LocalDateTime.now();
     }
 
-    // ─── Enum ─────────────────────────────────────────────────────────────────
-
     public enum Category {
-        CARDIO,       // Tim mạch
-        STRENGTH,     // Sức mạnh
-        FLEXIBILITY,  // Linh hoạt
-        SPORTS,       // Thể thao
-        DAILY,        // Hoạt động thường ngày
+        CARDIO,
+        STRENGTH,
+        WALKING,
+        FLEXIBILITY,
+        SPORTS,
+        OUTDOOR,
+        DAILY,
         OTHER
     }
 }
-

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, ProgressBar, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaArrowLeft } from 'react-icons/fa';
@@ -7,6 +7,7 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 import ErrorModal from '../components/ErrorModal';
 import { getGuestGoalPlanSuggestions } from '../features/profile/profileService';
 import { goalOptions } from '../features/profile/profileUtils';
+import { GUEST_GOAL_PLAN_KEY, readGuestProfile, saveGuestProfile } from '../utils/guestProfileSession';
 
 const goalValueToApi = {
   lose_weight: 'LOSE_WEIGHT',
@@ -51,21 +52,37 @@ function extractGoalPlanFromApi(data) {
 function GuestGoalPage() {
   const navigate = useNavigate();
   const { i18n, t } = useTranslation();
-  const [form, setForm] = useState({
-    goal: 'LOSE_WEIGHT',
-    gender: 'male',
-    age: 30,
-    currentWeightKg: 65,
-    heightCm: 170,
-    activityLevel: 'light',
-    targetChangeKg: 5,
-    targetWeeks: '',
+  const [form, setForm] = useState(() => {
+    const saved = readGuestProfile();
+    return {
+      goal: saved?.goal || 'LOSE_WEIGHT',
+      gender: saved?.gender === 'FEMALE' ? 'female' : saved?.gender === 'MALE' ? 'male' : '',
+      age: saved?.age || '',
+      currentWeightKg: saved?.weightKg || '',
+      heightCm: saved?.heightCm || '',
+      activityLevel: Object.entries(activityToApi).find(([, value]) => value === saved?.activityLevel)?.[0] || '',
+      targetChangeKg: saved?.targetChangeKg || '',
+      targetWeeks: saved?.targetWeeks || '',
+    };
   });
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const showTargetChange = needsTargetChange(form.goal);
   const numberFormatter = new Intl.NumberFormat(i18n.language);
+
+  useEffect(() => {
+    saveGuestProfile({
+      goal: form.goal,
+      gender: genderToApi[form.gender] || '',
+      age: form.age,
+      weightKg: form.currentWeightKg,
+      heightCm: form.heightCm,
+      activityLevel: activityToApi[form.activityLevel] || '',
+      targetChangeKg: form.targetChangeKg,
+      targetWeeks: form.targetWeeks,
+    });
+  }, [form]);
 
   const loadSuggestions = async (event) => {
     event?.preventDefault();
@@ -113,7 +130,7 @@ function GuestGoalPage() {
   };
 
   const choosePlan = (option) => {
-    localStorage.setItem('guestGoalPlan', JSON.stringify({
+    sessionStorage.setItem(GUEST_GOAL_PLAN_KEY, JSON.stringify({
       ...option,
       goal: form.goal,
       targetWeightKg: plan.targetWeightKg,
@@ -198,7 +215,8 @@ function GuestGoalPage() {
                       <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>{t('profile.gender')}</Form.Label>
-                          <Form.Select value={form.gender} onChange={(event) => setForm({ ...form, gender: event.target.value })}>
+                          <Form.Select value={form.gender} onChange={(event) => setForm({ ...form, gender: event.target.value })} required>
+                            <option value="" disabled>{t('common.select')}</option>
                             <option value="male">{t('profile.male')}</option>
                             <option value="female">{t('profile.female')}</option>
                           </Form.Select>
@@ -221,7 +239,8 @@ function GuestGoalPage() {
                     </Form.Group>
                     <Form.Group className="mb-3">
                       <Form.Label>{t('profile.activityLevel')}</Form.Label>
-                      <Form.Select value={form.activityLevel} onChange={(event) => setForm({ ...form, activityLevel: event.target.value })}>
+                      <Form.Select value={form.activityLevel} onChange={(event) => setForm({ ...form, activityLevel: event.target.value })} required>
+                        <option value="" disabled>{t('common.select')}</option>
                         {activityFactors.map((activity) => (
                           <option value={activity.value} key={activity.value}>
                             {t(activity.labelKey)} ({activity.factor})

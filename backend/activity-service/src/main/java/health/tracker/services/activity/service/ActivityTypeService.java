@@ -27,9 +27,16 @@ public class ActivityTypeService {
 
     @Transactional(readOnly = true)
     public List<ActivityType> getVisibleTypes(ActivityType.Category category) {
-        return category != null
+        if (category != null && isCategoryHidden(category)) {
+            return List.of();
+        }
+
+        List<ActivityType> types = category != null
                 ? typeRepository.findByCategoryAndHiddenFalseOrderByNameAsc(category)
                 : typeRepository.findByHiddenFalseOrderByCategoryAscNameAsc();
+        return types.stream()
+                .filter(type -> !isCategoryHidden(type.getCategory()))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -224,5 +231,11 @@ public class ActivityTypeService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private boolean isCategoryHidden(ActivityType.Category category) {
+        return categoryLabelRepository.findById(category)
+                .map(label -> label.isHidden())
+                .orElse(false);
     }
 }

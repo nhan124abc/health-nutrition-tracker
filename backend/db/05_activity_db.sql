@@ -16,8 +16,10 @@ CREATE TABLE IF NOT EXISTS activity_types (
     category    ENUM(
                     'CARDIO',       -- Tim mạch: chạy bộ, bơi lội, đạp xe
                     'STRENGTH',     -- Sức mạnh: nâng tạ, gym
+                    'WALKING',      -- Đi bộ
                     'FLEXIBILITY',  -- Linh hoạt: yoga, giãn cơ
                     'SPORTS',       -- Thể thao: bóng đá, cầu lông
+                    'OUTDOOR',      -- Hoạt động ngoài trời
                     'DAILY',        -- Hoạt động thường ngày: đi bộ, leo cầu thang
                     'OTHER'         -- Khác
                 ) NOT NULL DEFAULT 'OTHER',
@@ -33,6 +35,29 @@ CREATE TABLE IF NOT EXISTS activity_types (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Danh mục các loại hoạt động thể chất';
 
+CREATE TABLE IF NOT EXISTS activity_category_labels (
+    category VARCHAR(20)  NOT NULL,
+    name     VARCHAR(100) NOT NULL,
+    name_vi  VARCHAR(100) NULL,
+    hidden   TINYINT(1)   NOT NULL DEFAULT 0,
+
+    PRIMARY KEY (category)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  COMMENT='Tên hiển thị và trạng thái ẩn/hiện của nhóm hoạt động';
+
+INSERT INTO activity_category_labels (category, name, name_vi, hidden) VALUES
+('CARDIO',      'Cardio',             'Cardio',                 0),
+('STRENGTH',    'Strength Training',  'Tập sức mạnh',           0),
+('WALKING',     'Walking',            'Đi bộ',                  0),
+('SPORTS',      'Sports',             'Thể thao',               0),
+('FLEXIBILITY', 'Yoga & Stretching',  'Yoga & giãn cơ',         0),
+('OUTDOOR',     'Outdoor Activities', 'Hoạt động ngoài trời',   0),
+('DAILY',       'Daily Activities',   'Hoạt động hằng ngày',    0)
+ON DUPLICATE KEY UPDATE
+    name = VALUES(name),
+    name_vi = VALUES(name_vi),
+    hidden = VALUES(hidden);
+
 -- Dữ liệu mẫu loại hoạt động (MET values từ Compendium of Physical Activities)
 INSERT INTO activity_types (name, name_vi, category, met_value, icon) VALUES
 -- Cardio
@@ -41,7 +66,7 @@ INSERT INTO activity_types (name, name_vi, category, met_value, icon) VALUES
 ('Cycling (moderate)',      'Đạp xe (vừa phải)',        'CARDIO',   8.0,  '🚴'),
 ('Swimming (freestyle)',    'Bơi lội (tự do)',          'CARDIO',   10.0, '🏊'),
 ('Jump Rope',               'Nhảy dây',                 'CARDIO',   12.3, '⏭️'),
-('Walking (5 km/h)',        'Đi bộ (5 km/h)',           'DAILY',    3.5,  '🚶'),
+('Walking (5 km/h)',        'Đi bộ (5 km/h)',           'WALKING',  3.5,  '🚶'),
 ('Stair Climbing',          'Leo cầu thang',            'DAILY',    8.0,  '🪜'),
 -- Sức mạnh
 ('Weight Training',         'Tập tạ',                   'STRENGTH', 5.0,  '🏋️'),

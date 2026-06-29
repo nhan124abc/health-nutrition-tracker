@@ -69,3 +69,7 @@ export function updateFoodCategoryVisibility(id, hidden) {
 export function getRecipeSuggestions(params = {}) {
   return api.get(nutritionConfig.endpoints.recipeSuggestions, { params });
 }
+
+export function createRecipe(payload) {
+  return api.post(nutritionConfig.endpoints.recipes, payload);
+}

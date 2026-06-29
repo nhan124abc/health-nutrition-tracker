@@ -10,7 +10,7 @@ import { getProfile } from '../features/profile/profileService';
 import { extractProfileFromApi, mapProfileFromApi } from '../features/profile/profileUtils';
 import { getActivitiesByDate, createActivityLog, createWorkoutPlan, deleteActivityById, getActivityTypes } from '../features/activities/activityService';
 import { extractActivityTypesFromApi, normalizeActivityType } from '../features/activities/activityUtils';
-import { getFoods, getRecipeSuggestions } from '../features/nutrition/nutritionService';
+import { createRecipe, getFoods, getRecipeSuggestions } from '../features/nutrition/nutritionService';
 import { extractFoodsFromApi, normalizeFoodFromApi } from '../features/nutrition/nutritionUtils';
 import { getLocalizedName } from '../utils/localizedName';
 
@@ -35,6 +35,11 @@ function mapFoodOption(food) {
     id: normalizedFood.id,
     name: normalizedFood.name,
     nameVi: normalizedFood.nameVi,
+    servingSizeG: Number(normalizedFood.servingSizeG) || 100,
+    calories: Number(normalizedFood.calories) || 0,
+    proteinG: Number(normalizedFood.proteinG) || 0,
+    carbsG: Number(normalizedFood.carbsG) || 0,
+    fatG: Number(normalizedFood.fatG) || 0,
   };
 }
 
@@ -574,58 +579,53 @@ function Planner() {
         throw new Error(t('plannerPage.errors.overBudget'));
       }
 
-      // AI đã trả tổng dinh dưỡng cho toàn bộ phần ăn. Gửi thẳng sang Meal API,
-      // không quy đổi thêm theo servingSizeG để tránh nhân calories hai lần.
-      const mealItems = option.recipeId
-        ? [{
-          itemType: 'RECIPE',
-          foodItemId: null,
-          recipeId: option.recipeId,
-          foodName: option.name,
-          servingSizeG: Number(option.servingSizeG) || 100,
-          quantity: 1,
-          calories: Number(option.calories) || 0,
-          proteinG: Number(option.proteinG) || 0,
-          carbsG: Number(option.carbsG) || 0,
-          fatG: Number(option.fatG) || 0,
-          fiberG: Number(option.fiberG) || 0,
-          sodiumMg: Number(option.sodiumMg) || 0,
-        }]
-        : Array.isArray(option.ingredients) && option.ingredients.length > 0
-        ? option.ingredients.map((ingredient) => ({
-          itemType: 'FOOD',
-          foodItemId: ingredient.foodItemId ?? null,
-          recipeId: null,
-          foodName: ingredient.name,
-          servingSizeG: Number(ingredient.servingSizeG) || 100,
-          quantity: Number(ingredient.quantity) || 1,
-          calories: Number(ingredient.calories) || 0,
-          proteinG: Number(ingredient.proteinG) || 0,
-          carbsG: Number(ingredient.carbsG) || 0,
-          fatG: Number(ingredient.fatG) || 0,
-          fiberG: Number(ingredient.fiberG) || 0,
-          sodiumMg: Number(ingredient.sodiumMg) || 0,
-        }))
-        : [{
-          itemType: 'FOOD',
-          foodItemId: null,
-          recipeId: null,
-          foodName: option.name,
-          servingSizeG: Number(option.servingSizeG) || 100,
-          quantity: 1,
-          calories: optionCalories,
-          proteinG: Number(option.proteinG) || 0,
-          carbsG: Number(option.carbsG) || 0,
-          fatG: Number(option.fatG) || 0,
-          fiberG: Number(option.fiberG) || 0,
-          sodiumMg: Number(option.sodiumMg) || 0,
-        }];
+      // Persist AI dishes as recipes backed by existing food items before logging the meal.
+      let recipeOption = option;
+      if (!option.recipeId) {
+        const aiIngredients = Array.isArray(option.ingredients)
+          ? option.ingredients.filter((ingredient) => ingredient.foodItemId)
+          : [];
+        const recipeIngredients = aiIngredients.length > 0
+          ? aiIngredients.map((ingredient) => ({
+            foodItemId: ingredient.foodItemId,
+            quantityG: Number(ingredient.servingSizeG || ingredient.quantityG) || 100,
+          }))
+          : selectedFoodOptions.map((food) => ({
+            foodItemId: food.id,
+            quantityG: Number(food.servingSizeG) || 100,
+          }));
+        if (recipeIngredients.length === 0) {
+          throw new Error('Hãy chọn ít nhất một thực phẩm có sẵn trước khi lưu món AI thành công thức.');
+        }
+        const recipeResponse = await createRecipe({
+          name: option.name,
+          description: getOptionCookingMethod(option) || option.description || '',
+          servings: 1,
+          ingredients: recipeIngredients,
+        });
+        recipeOption = normalizeRecipeOption(recipeResponse.data);
+      }
+
+      const mealItems = [{
+        itemType: 'RECIPE',
+        foodItemId: null,
+        recipeId: recipeOption.recipeId,
+        foodName: recipeOption.name,
+        servingSizeG: Number(recipeOption.servingSizeG) || 100,
+        quantity: 1,
+        calories: Number(recipeOption.calories) || 0,
+        proteinG: Number(recipeOption.proteinG) || 0,
+        carbsG: Number(recipeOption.carbsG) || 0,
+        fatG: Number(recipeOption.fatG) || 0,
+        fiberG: Number(recipeOption.fiberG) || 0,
+        sodiumMg: Number(recipeOption.sodiumMg) || 0,
+      }];
 
       const payload = {
         mealType: selectedMeal.toUpperCase(),
         mealDate: planDate,
         mealTime: null,
-        notes: `${t('plannerPage.savedNotes.meal')}: ${option.name}`,
+        notes: `${t('plannerPage.savedNotes.meal')}: ${recipeOption.name}`,
         items: mealItems,
       };
       const replacedMealIds = loggedMealsForSlot.map((meal) => meal.id).filter(Boolean);
@@ -638,9 +638,7 @@ function Planner() {
         normalizeMealFromApi(response.data),
       ]);
       setSelectedOption(index);
-      if (option.recipeId) {
-        setSelectedRecipeId(option.recipeId);
-      }
+      setSelectedRecipeId(recipeOption.recipeId);
       setSuccess(t(replacedMealIds.length > 0 ? 'plannerPage.success.mealReplaced' : 'plannerPage.success.mealAdded', { name: option.name }));
     } catch (err) {
       setError(err.response?.data?.message || err.message || t('plannerPage.errors.addMeal'));
@@ -731,33 +729,47 @@ function Planner() {
     setError('');
     setSuccess('');
     try {
-      const entries = options.flatMap((option) => {
-        if (Array.isArray(option.ingredients) && option.ingredients.length > 0) {
-          return option.ingredients.map((ingredient) => ({
-            planDate,
-            mealType: mealTypeToApi[selectedMeal] || selectedMeal.toUpperCase(),
-            foodItemId: ingredient.foodItemId ?? null,
-            recipeId: option.recipeId || null,
-            foodName: ingredient.name || option.name,
-            servingSizeG: Number(ingredient.servingSizeG) || Number(option.servingSizeG) || 100,
-            quantity: Number(ingredient.quantity) || 1,
-            calories: Number(ingredient.calories) || 0,
-            notes: option.name,
-          }));
+      const recipeOptions = [];
+      for (const option of options) {
+        if (option.recipeId) {
+          recipeOptions.push(option);
+          continue;
         }
+        const aiIngredients = Array.isArray(option.ingredients)
+          ? option.ingredients.filter((ingredient) => ingredient.foodItemId)
+          : [];
+        const recipeIngredients = aiIngredients.length > 0
+          ? aiIngredients.map((ingredient) => ({
+            foodItemId: ingredient.foodItemId,
+            quantityG: Number(ingredient.servingSizeG || ingredient.quantityG) || 100,
+          }))
+          : selectedFoodOptions.map((food) => ({
+            foodItemId: food.id,
+            quantityG: Number(food.servingSizeG) || 100,
+          }));
+        if (recipeIngredients.length === 0) {
+          throw new Error('Hãy chọn ít nhất một thực phẩm có sẵn trước khi lưu kế hoạch AI.');
+        }
+        const recipeResponse = await createRecipe({
+          name: option.name,
+          description: getOptionCookingMethod(option) || option.description || '',
+          servings: 1,
+          ingredients: recipeIngredients,
+        });
+        recipeOptions.push(normalizeRecipeOption(recipeResponse.data));
+      }
 
-        return [{
+      const entries = recipeOptions.map((option) => ({
           planDate,
           mealType: mealTypeToApi[selectedMeal] || selectedMeal.toUpperCase(),
           foodItemId: null,
-          recipeId: option.recipeId || null,
+          recipeId: option.recipeId,
           foodName: option.name,
           servingSizeG: Number(option.servingSizeG) || 100,
           quantity: 1,
           calories: Number(option.calories) || 0,
           notes: option.description || option.cookingMethod || '',
-        }];
-      });
+      }));
 
       await createMealPlan({
         name: `${selectedMealLabel} - ${planDate}`,

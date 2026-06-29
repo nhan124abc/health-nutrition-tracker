@@ -1125,7 +1125,7 @@ function AdminManagementPage({ type }) {
                 <Col md={4}>
                   <Form.Label>Nhóm</Form.Label>
                   <Form.Select value={catalogForm.category} onChange={(event) => setCatalogForm((form) => ({ ...form, category: event.target.value }))}>
-                    {['CARDIO', 'STRENGTH', 'FLEXIBILITY', 'SPORTS', 'DAILY', 'OTHER'].map((category) => (
+                    {['CARDIO', 'STRENGTH', 'WALKING', 'SPORTS', 'FLEXIBILITY', 'OUTDOOR', 'DAILY'].map((category) => (
                       <option key={category} value={category}>{formatEnum(category)}</option>
                     ))}
                   </Form.Select>

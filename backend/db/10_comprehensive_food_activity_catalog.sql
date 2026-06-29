@@ -180,13 +180,26 @@ DROP TEMPORARY TABLE seed_food_catalog;
 
 USE activity_db;
 
+INSERT INTO activity_category_labels (category, name, name_vi, hidden) VALUES
+('CARDIO',      'Cardio',             'Cardio',                 0),
+('STRENGTH',    'Strength Training',  'Tập sức mạnh',           0),
+('WALKING',     'Walking',            'Đi bộ',                  0),
+('SPORTS',      'Sports',             'Thể thao',               0),
+('FLEXIBILITY', 'Yoga & Stretching',  'Yoga & giãn cơ',         0),
+('OUTDOOR',     'Outdoor Activities', 'Hoạt động ngoài trời',   0),
+('DAILY',       'Daily Activities',   'Hoạt động hằng ngày',    0)
+ON DUPLICATE KEY UPDATE
+    name = VALUES(name),
+    name_vi = VALUES(name_vi),
+    hidden = VALUES(hidden);
+
 INSERT INTO activity_types
     (name, name_vi, category, met_value, icon, description, is_system, hidden)
 VALUES
-('Walking (3.2 km/h)', 'Đi bộ chậm (3,2 km/h)', 'DAILY', 2.8, 'walking', 'Đi bộ trên mặt phẳng với tốc độ chậm.', 1, 0),
-('Walking (4.8 km/h)', 'Đi bộ vừa (4,8 km/h)', 'DAILY', 3.5, 'walking', 'Đi bộ trên mặt phẳng với tốc độ vừa.', 1, 0),
-('Walking (5.6 km/h)', 'Đi bộ nhanh (5,6 km/h)', 'CARDIO', 4.3, 'walking', 'Đi bộ nhanh trên mặt phẳng.', 1, 0),
-('Walking Uphill (moderate)', 'Đi bộ lên dốc vừa', 'CARDIO', 5.3, 'hiking', 'Đi bộ lên dốc ở cường độ vừa.', 1, 0),
+('Walking (3.2 km/h)', 'Đi bộ chậm (3,2 km/h)', 'WALKING', 2.8, 'walking', 'Đi bộ trên mặt phẳng với tốc độ chậm.', 1, 0),
+('Walking (4.8 km/h)', 'Đi bộ vừa (4,8 km/h)', 'WALKING', 3.5, 'walking', 'Đi bộ trên mặt phẳng với tốc độ vừa.', 1, 0),
+('Walking (5.6 km/h)', 'Đi bộ nhanh (5,6 km/h)', 'WALKING', 4.3, 'walking', 'Đi bộ nhanh trên mặt phẳng.', 1, 0),
+('Walking Uphill (moderate)', 'Đi bộ lên dốc vừa', 'OUTDOOR', 5.3, 'hiking', 'Đi bộ lên dốc ở cường độ vừa.', 1, 0),
 ('Running (8 km/h)', 'Chạy bộ (8 km/h)', 'CARDIO', 8.3, 'running', 'Chạy đều khoảng 8 km/h.', 1, 0),
 ('Running (10 km/h)', 'Chạy bộ (10 km/h)', 'CARDIO', 9.8, 'running', 'Chạy đều khoảng 10 km/h.', 1, 0),
 ('Running (12 km/h)', 'Chạy bộ (12 km/h)', 'CARDIO', 11.5, 'running', 'Chạy nhanh khoảng 12 km/h.', 1, 0),
@@ -216,7 +229,7 @@ VALUES
 ('Volleyball (recreational)', 'Bóng chuyền phong trào', 'SPORTS', 3.0, 'volleyball', 'Chơi bóng chuyền phong trào, không thi đấu cường độ cao.', 1, 0),
 ('Stair Climbing (general)', 'Leo cầu thang', 'DAILY', 6.8, 'stairs', 'Đi lên cầu thang liên tục ở nhịp thông thường.', 1, 0),
 ('House Cleaning (moderate)', 'Dọn nhà cường độ vừa', 'DAILY', 3.3, 'home', 'Quét, lau nhà và dọn dẹp liên tục.', 1, 0),
-('Gardening (general)', 'Làm vườn', 'DAILY', 4.0, 'gardening', 'Trồng cây, làm cỏ và công việc vườn thông thường.', 1, 0),
+('Gardening (general)', 'Làm vườn', 'OUTDOOR', 4.0, 'gardening', 'Trồng cây, làm cỏ và công việc vườn thông thường.', 1, 0),
 ('Dancing (general)', 'Nhảy múa thông thường', 'CARDIO', 5.0, 'dance', 'Nhảy liên tục ở cường độ vừa.', 1, 0)
 ON DUPLICATE KEY UPDATE
     name_vi = VALUES(name_vi),

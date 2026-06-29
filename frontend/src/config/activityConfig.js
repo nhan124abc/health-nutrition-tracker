@@ -16,6 +16,7 @@ const activityConfig = {
     adminTypeDetail: (id) => `/activities/admin/types/${id}`,
     adminTypeHide: (id) => `/activities/admin/types/${id}/hide`,
     adminTypeRestore: (id) => `/activities/admin/types/${id}/restore`,
+    categories: '/activities/categories',
     summary: '/activities/summary',
   },
 };

@@ -1,18 +1,20 @@
 package health.tracker.services.activity.controller;
 
-import health.tracker.services.activity.dto.ActivityCategoryRequest;
-import health.tracker.services.activity.dto.ActivityCategoryResponse;
 import health.tracker.services.activity.dto.ActivityLogRequest;
 import health.tracker.services.activity.dto.ActivityLogResponse;
 import health.tracker.services.activity.dto.ActivityTypeRequest;
+import health.tracker.services.activity.dto.ActivityCategoryLabelRequest;
+import health.tracker.services.activity.dto.ActivityCategoryLabelCreateRequest;
 import health.tracker.services.activity.dto.WorkoutPlanRequest;
 import health.tracker.services.activity.dto.WorkoutPlanResponse;
 import health.tracker.services.activity.entity.ActivityType;
+import health.tracker.services.activity.entity.ActivityCategoryLabel;
 import health.tracker.services.activity.exception.AppException;
 import health.tracker.services.activity.repository.ActivityLogRepository;
 import health.tracker.services.activity.repository.ActivityTypeRepository;
 import health.tracker.services.activity.service.ActivityService;
 import health.tracker.services.activity.service.ActivityTypeService;
+import health.tracker.services.activity.service.ActivityCategoryLabelService;
 import health.tracker.services.activity.service.WorkoutPlanService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,6 +50,7 @@ public class ActivityController {
 
     private final ActivityService        activityService;
     private final ActivityTypeService    activityTypeService;
+    private final ActivityCategoryLabelService categoryLabelService;
     private final WorkoutPlanService     workoutPlanService;
     private final ActivityTypeRepository typeRepository;
     private final ActivityLogRepository  logRepository;
@@ -163,6 +166,60 @@ public class ActivityController {
         return ResponseEntity.ok(activityTypeService.getVisibleTypes(category));
     }
 
+    @GetMapping("/categories")
+    public ResponseEntity<List<ActivityCategoryLabel>> categories() {
+        return ResponseEntity.ok(categoryLabelService.list(false));
+    }
+
+    @GetMapping("/admin/categories")
+    public ResponseEntity<List<ActivityCategoryLabel>> adminCategories(
+            @RequestHeader("X-User-Role") String role) {
+        requireAdmin(role);
+        return ResponseEntity.ok(categoryLabelService.list(true));
+    }
+
+    @PostMapping("/admin/categories")
+    public ResponseEntity<ActivityCategoryLabel> createCategory(
+            @RequestHeader("X-User-Role") String role,
+            @Valid @RequestBody ActivityCategoryLabelCreateRequest request) {
+        requireAdmin(role);
+        return ResponseEntity.status(HttpStatus.CREATED).body(categoryLabelService.create(request));
+    }
+
+    @PutMapping("/admin/categories/{category}")
+    public ResponseEntity<ActivityCategoryLabel> updateCategory(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable ActivityType.Category category,
+            @Valid @RequestBody ActivityCategoryLabelRequest request) {
+        requireAdmin(role);
+        return ResponseEntity.ok(categoryLabelService.update(category, request));
+    }
+
+    @PatchMapping("/admin/categories/{category}/hide")
+    public ResponseEntity<ActivityCategoryLabel> hideCategory(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable ActivityType.Category category) {
+        requireAdmin(role);
+        return ResponseEntity.ok(categoryLabelService.setHidden(category, true));
+    }
+
+    @PatchMapping("/admin/categories/{category}/restore")
+    public ResponseEntity<ActivityCategoryLabel> restoreCategory(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable ActivityType.Category category) {
+        requireAdmin(role);
+        return ResponseEntity.ok(categoryLabelService.setHidden(category, false));
+    }
+
+    @DeleteMapping("/admin/categories/{category}")
+    public ResponseEntity<Void> deleteCategory(
+            @RequestHeader("X-User-Role") String role,
+            @PathVariable ActivityType.Category category) {
+        requireAdmin(role);
+        categoryLabelService.delete(category);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/admin/types")
     public ResponseEntity<List<ActivityType>> adminTypes(
             @RequestHeader("X-User-Role") String role,
@@ -180,52 +237,6 @@ public class ActivityController {
 
         requireAdmin(role);
         return ResponseEntity.ok(activityTypeService.getById(id));
-    }
-
-    @GetMapping("/admin/categories")
-    public ResponseEntity<List<ActivityCategoryResponse>> adminCategories(
-            @RequestHeader("X-User-Role") String role) {
-
-        requireAdmin(role);
-        return ResponseEntity.ok(activityTypeService.getAdminCategories());
-    }
-
-    @PutMapping("/admin/categories/{category}")
-    public ResponseEntity<ActivityCategoryResponse> updateCategory(
-            @RequestHeader("X-User-Role") String role,
-            @PathVariable ActivityType.Category category,
-            @Valid @RequestBody ActivityCategoryRequest request) {
-
-        requireAdmin(role);
-        return ResponseEntity.ok(activityTypeService.updateCategory(category, request));
-    }
-
-    @PatchMapping("/admin/categories/{category}/hide")
-    public ResponseEntity<ActivityCategoryResponse> hideCategory(
-            @RequestHeader("X-User-Role") String role,
-            @PathVariable ActivityType.Category category) {
-
-        requireAdmin(role);
-        return ResponseEntity.ok(activityTypeService.hideCategory(category));
-    }
-
-    @PatchMapping("/admin/categories/{category}/restore")
-    public ResponseEntity<ActivityCategoryResponse> restoreCategory(
-            @RequestHeader("X-User-Role") String role,
-            @PathVariable ActivityType.Category category) {
-
-        requireAdmin(role);
-        return ResponseEntity.ok(activityTypeService.restoreCategory(category));
-    }
-
-    @DeleteMapping("/admin/categories/{category}")
-    public ResponseEntity<Void> deleteCategory(
-            @RequestHeader("X-User-Role") String role,
-            @PathVariable ActivityType.Category category) {
-
-        requireAdmin(role);
-        activityTypeService.deleteCategory(category);
-        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/admin/types")

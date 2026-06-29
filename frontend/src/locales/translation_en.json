@@ -756,6 +756,7 @@
     "resendOtp": "Resend OTP"
   },
   "common": {
+    "select": "Select...",
     "protein": "Protein",
     "carbs": "Carbs",
     "fat": "Fat",
