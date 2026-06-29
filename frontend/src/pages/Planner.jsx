@@ -2,7 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Col, Form, InputGroup, Modal, ProgressBar, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import ErrorModal from '../components/ErrorModal';
-import { FaBookOpen, FaCheck, FaDumbbell, FaFireAlt, FaRobot, FaSearch, FaUtensils } from 'react-icons/fa';
+import {
+  FaBookOpen,
+  FaCheck,
+  FaChevronLeft,
+  FaChevronRight,
+  FaDumbbell,
+  FaFireAlt,
+  FaRobot,
+  FaSearch,
+  FaUtensils,
+} from 'react-icons/fa';
 import { getAiPlanSuggestions } from '../features/ai/aiService';
 import { createMeal, createMealPlan, getMealsByDate, deleteMealById } from '../features/meals/mealService';
 import { extractMealsFromApi, getMealTotals, getMealsTotals, normalizeMealFromApi } from '../features/meals/mealUtils';
@@ -112,7 +122,7 @@ function Planner() {
   const [meals, setMeals] = useState([]);
   const [activities, setActivities] = useState([]);
   const [plannerMode, setPlannerMode] = useState('meal');
-  const [selectedMeal, setSelectedMeal] = useState('lunch');
+  const [selectedMeal, setSelectedMeal] = useState('breakfast');
   const planDate = today();
   const [foodOptions, setFoodOptions] = useState([]);
   const [foodSearchTerm, setFoodSearchTerm] = useState('');
@@ -900,8 +910,7 @@ function Planner() {
           <section className="planner-control-section">
             <div className="planner-section-heading">
               <div>
-                <h2>{isExerciseMode ? t('plannerPage.sections.activityPlan') : isRecipeMode ? t('plannerPage.sections.recipePlan') : t('plannerPage.sections.mealPlan')}</h2>
-                <p>{isExerciseMode ? t('plannerPage.sections.activityPlanDescription') : isRecipeMode ? t('plannerPage.sections.recipePlanDescription') : t('plannerPage.sections.mealPlanDescription')}</p>
+                <h2>{isExerciseMode ? t('plannerPage.sections.activityPlan') : isRecipeMode ? t('plannerPage.sections.recipePlan') : t('plannerPage.sections.mealPlan')}</h2> 
               </div>
             </div>
             <div className="planner-budget-tile">
@@ -935,7 +944,6 @@ function Planner() {
                 <span><FaUtensils /></span>
                 <div>
                   <h2>{isRecipeMode ? t('plannerPage.sections.recipeFilter') : t('plannerPage.sections.food')}</h2>
-                  <p>{t(isRecipeMode ? 'plannerPage.sections.recipeFilterDescription' : 'plannerPage.sections.foodDescription', { max: maxSelectedFoods })}</p>
                 </div>
               </div>
               <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
@@ -1010,10 +1018,12 @@ function Planner() {
                 <Button
                   variant="outline-secondary"
                   size="sm"
+                  aria-label={t('plannerPage.previousPage')}
+                  title={t('plannerPage.previousPage')}
                   disabled={foodSearchLoading || foodPage <= 0}
                   onClick={() => setFoodPage((current) => Math.max(0, current - 1))}
                 >
-                  {t('plannerPage.previousPage')}
+                  <FaChevronLeft />
                 </Button>
                 <span>
                   {t('plannerPage.foodPageInfo', {
@@ -1025,10 +1035,12 @@ function Planner() {
                 <Button
                   variant="outline-secondary"
                   size="sm"
+                  aria-label={t('plannerPage.nextPage')}
+                  title={t('plannerPage.nextPage')}
                   disabled={foodSearchLoading || foodPage + 1 >= foodTotalPages}
                   onClick={() => setFoodPage((current) => Math.min(foodTotalPages - 1, current + 1))}
                 >
-                  {t('plannerPage.nextPage')}
+                  <FaChevronRight />
                 </Button>
               </div>
               <Form.Text muted>{t('plannerPage.selectedFoodsHint', { count: selectedFoodCount, max: maxSelectedFoods })}</Form.Text>
@@ -1058,7 +1070,6 @@ function Planner() {
                 <span><FaDumbbell /></span>
                 <div>
                   <h2>{t('plannerPage.sections.activity')}</h2>
-                  <p>{t('plannerPage.sections.activityDescription')}</p>
                 </div>
               </div>
               <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
@@ -1133,10 +1144,12 @@ function Planner() {
                 <Button
                   variant="outline-secondary"
                   size="sm"
+                  aria-label={t('plannerPage.previousPage')}
+                  title={t('plannerPage.previousPage')}
                   disabled={activityPage <= 0}
                   onClick={() => setActivityPage((current) => Math.max(0, current - 1))}
                 >
-                  {t('plannerPage.previousPage')}
+                  <FaChevronLeft />
                 </Button>
                 <span>
                   {t('plannerPage.activityPageInfo', {
@@ -1148,10 +1161,12 @@ function Planner() {
                 <Button
                   variant="outline-secondary"
                   size="sm"
+                  aria-label={t('plannerPage.nextPage')}
+                  title={t('plannerPage.nextPage')}
                   disabled={activityPage + 1 >= activityTotalPages}
                   onClick={() => setActivityPage((current) => Math.min(activityTotalPages - 1, current + 1))}
                 >
-                  {t('plannerPage.nextPage')}
+                  <FaChevronRight />
                 </Button>
               </div>
               <Form.Text muted>{t('plannerPage.selectedActivitiesHint', { count: selectedActivityCount, max: maxSelectedActivities })}</Form.Text>
@@ -1268,7 +1283,6 @@ function Planner() {
             <div className="d-flex align-items-start justify-content-between gap-3 mb-3">
               <div>
                 <h2 className="h4 fw-bold mb-1">{t('plannerPage.recipeLibraryTitle')}</h2>
-                <p className="text-secondary mb-0">{t('plannerPage.recipeLibraryDescription')}</p>
               </div>
               <span className="small fw-semibold text-success mt-1">{recipes.length}</span>
             </div>

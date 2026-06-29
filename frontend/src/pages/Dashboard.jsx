@@ -416,7 +416,7 @@ function Dashboard() {
                 <div className="dashboard-goal-eyebrow">{t('dashboardPage.goalBanner.eyebrow')}</div>
                 <h2>{healthGoalLabel}</h2>
               </div>
-              <Button as={Link} to="/profile" variant="light">
+              <Button as={Link} to="/goals" variant="light">
                 {t('dashboardPage.goalBanner.update')}
               </Button>
             </div>
