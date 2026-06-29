@@ -66,6 +66,26 @@ export function getAdminActivityTypes(params = {}) {
   return api.get(activityConfig.endpoints.adminTypes, { ...withAdminAuth(), params });
 }
 
+export function getAdminActivityCategories() {
+  return api.get(activityConfig.endpoints.adminCategories, withAdminAuth());
+}
+
+export function updateActivityCategory(category, payload) {
+  return api.put(activityConfig.endpoints.adminCategoryDetail(category), payload, withAdminAuth());
+}
+
+export function deleteActivityCategory(category) {
+  return api.delete(activityConfig.endpoints.adminCategoryDetail(category), withAdminAuth());
+}
+
+export function updateActivityCategoryVisibility(category, hidden) {
+  const endpoint = hidden
+    ? activityConfig.endpoints.adminCategoryHide(category)
+    : activityConfig.endpoints.adminCategoryRestore(category);
+
+  return api.patch(endpoint, {}, withAdminAuth());
+}
+
 export function createActivityType(payload) {
   return api.post(activityConfig.endpoints.adminTypes, payload, withAdminAuth());
 }

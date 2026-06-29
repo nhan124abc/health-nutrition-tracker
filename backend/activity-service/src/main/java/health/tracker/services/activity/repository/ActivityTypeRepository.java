@@ -17,6 +17,8 @@ public interface ActivityTypeRepository extends JpaRepository<ActivityType, Inte
 
     List<ActivityType> findByCategoryAndHiddenFalseOrderByNameAsc(ActivityType.Category category);
 
+    long countByCategory(ActivityType.Category category);
+
     boolean existsByNameIgnoreCase(String name);
 
     ActivityType findById(Long id);

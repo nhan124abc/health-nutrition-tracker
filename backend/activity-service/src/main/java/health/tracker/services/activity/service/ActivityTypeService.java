@@ -1,8 +1,12 @@
 package health.tracker.services.activity.service;
 
+import health.tracker.services.activity.dto.ActivityCategoryRequest;
+import health.tracker.services.activity.dto.ActivityCategoryResponse;
 import health.tracker.services.activity.dto.ActivityTypeRequest;
+import health.tracker.services.activity.entity.ActivityCategoryLabel;
 import health.tracker.services.activity.entity.ActivityType;
 import health.tracker.services.activity.exception.AppException;
+import health.tracker.services.activity.repository.ActivityCategoryLabelRepository;
 import health.tracker.services.activity.repository.ActivityLogRepository;
 import health.tracker.services.activity.repository.ActivityTypeRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +23,7 @@ public class ActivityTypeService {
 
     private final ActivityTypeRepository typeRepository;
     private final ActivityLogRepository logRepository;
+    private final ActivityCategoryLabelRepository categoryLabelRepository;
 
     @Transactional(readOnly = true)
     public List<ActivityType> getVisibleTypes(ActivityType.Category category) {
@@ -34,6 +39,66 @@ public class ActivityTypeService {
                 .filter(type -> hidden == null || type.isHidden() == hidden)
                 .sorted(Comparator.comparing(ActivityType::getCategory).thenComparing(ActivityType::getName))
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ActivityCategoryResponse> getAdminCategories() {
+        return List.of(ActivityType.Category.values()).stream()
+                .filter(category -> typeRepository.countByCategory(category) > 0
+                        || categoryLabelRepository.existsById(category))
+                .map(this::toCategoryResponse)
+                .sorted(Comparator.comparing(response -> response.getCategory().name()))
+                .toList();
+    }
+
+    @Transactional
+    public ActivityCategoryResponse updateCategory(ActivityType.Category category, ActivityCategoryRequest request) {
+        ActivityCategoryLabel label = categoryLabelRepository.findById(category)
+                .orElseGet(() -> ActivityCategoryLabel.builder()
+                        .category(category)
+                        .hidden(false)
+                        .build());
+
+        label.setName(request.getName().trim());
+        label.setNameVi(trimToNull(request.getNameVi()));
+        categoryLabelRepository.save(label);
+
+        return toCategoryResponse(category);
+    }
+
+    @Transactional
+    public ActivityCategoryResponse hideCategory(ActivityType.Category category) {
+        validateEmptyCategory(category, "hide");
+        ActivityCategoryLabel label = categoryLabelRepository.findById(category)
+                .orElseGet(() -> ActivityCategoryLabel.builder()
+                        .category(category)
+                        .name(defaultCategoryName(category))
+                        .hidden(false)
+                        .build());
+        label.setHidden(true);
+        categoryLabelRepository.save(label);
+
+        return toCategoryResponse(category);
+    }
+
+    @Transactional
+    public ActivityCategoryResponse restoreCategory(ActivityType.Category category) {
+        ActivityCategoryLabel label = categoryLabelRepository.findById(category)
+                .orElseGet(() -> ActivityCategoryLabel.builder()
+                        .category(category)
+                        .name(defaultCategoryName(category))
+                        .hidden(false)
+                        .build());
+        label.setHidden(false);
+        categoryLabelRepository.save(label);
+
+        return toCategoryResponse(category);
+    }
+
+    @Transactional
+    public void deleteCategory(ActivityType.Category category) {
+        validateEmptyCategory(category, "delete");
+        categoryLabelRepository.deleteById(category);
     }
 
     @Transactional(readOnly = true)
@@ -126,6 +191,31 @@ public class ActivityTypeService {
             throw new AppException(HttpStatus.CONFLICT,
                     "Cannot hide activity type because " + linkedActivityCount + " activity log(s) are linked");
         }
+    }
+
+    private ActivityCategoryResponse toCategoryResponse(ActivityType.Category category) {
+        ActivityCategoryLabel label = categoryLabelRepository.findById(category).orElse(null);
+
+        return ActivityCategoryResponse.builder()
+                .category(category)
+                .name(label != null && label.getName() != null ? label.getName() : defaultCategoryName(category))
+                .nameVi(label != null ? label.getNameVi() : null)
+                .hidden(label != null && label.isHidden())
+                .count(typeRepository.countByCategory(category))
+                .build();
+    }
+
+    private void validateEmptyCategory(ActivityType.Category category, String action) {
+        long itemCount = typeRepository.countByCategory(category);
+        if (itemCount > 0) {
+            throw new AppException(HttpStatus.CONFLICT,
+                    "Cannot " + action + " activity category because " + itemCount + " activity type(s) exist");
+        }
+    }
+
+    private String defaultCategoryName(ActivityType.Category category) {
+        String lower = category.name().toLowerCase().replace('_', ' ');
+        return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
     }
 
     private String trimToNull(String value) {
