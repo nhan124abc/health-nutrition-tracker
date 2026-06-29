@@ -516,7 +516,7 @@
       },
       "exercises": {
         "title": "Exercise and calorie burn management",
-        "action": "Add exercise",
+        "action": "Add activity",
         "loading": "Loading the activity catalog from the database...",
         "loadError": "Unable to load the activity catalog from the database.",
         "stats": {
@@ -651,6 +651,8 @@
       "loading": "Loading categories...",
       "loadError": "Unable to load categories.",
       "categoryList": "Category list",
+      "searchPlaceholder": "Search categories...",
+      "searchLabel": "Search categories",
       "categoryName": "Category name",
       "itemCount": "Items",
       "addCategory": "Add category",
@@ -669,6 +671,8 @@
       "linkedActivityCategoryBlocked": "This activity category cannot be deleted or hidden while activity types still exist in it."
     },
     "catalogData": {
+      "editFoodTitle": "Edit food",
+      "editActivityTitle": "Edit activity",
       "foodCreateSuccess": "Food has been added.",
       "foodUpdateSuccess": "Food has been updated.",
       "foodDeleteSuccess": "Food has been deleted.",

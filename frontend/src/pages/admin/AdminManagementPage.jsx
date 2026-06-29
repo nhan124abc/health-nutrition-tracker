@@ -831,7 +831,7 @@ function AdminManagementPage({ type }) {
             </div>
             {type !== 'users' && (
               <Button variant="success" onClick={openCreateCatalog}>
-                {type === 'foods' ? 'Thêm thực phẩm' : 'Thêm hoạt động'}
+                {t(`${pageKey}.action`)}
               </Button>
             )}
             <Form className="admin-table-search">
@@ -1049,8 +1049,8 @@ function AdminManagementPage({ type }) {
           <Modal.Header closeButton>
             <Modal.Title>
               {editingCatalogRow
-                ? (type === 'foods' ? 'Sửa thực phẩm' : 'Sửa hoạt động')
-                : (type === 'foods' ? 'Thêm thực phẩm' : 'Thêm hoạt động')}
+                ? t(type === 'foods' ? 'admin.catalogData.editFoodTitle' : 'admin.catalogData.editActivityTitle')
+                : t(`${pageKey}.action`)}
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>

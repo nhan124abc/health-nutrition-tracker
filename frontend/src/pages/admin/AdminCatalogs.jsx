@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Col, Form, Modal, Row, Spinner, Table } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Form, InputGroup, Modal, Row, Spinner, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { FaArrowLeft, FaDumbbell, FaEdit, FaEye, FaEyeSlash, FaPlus, FaTrash, FaUtensils } from 'react-icons/fa';
+import { FaArrowLeft, FaDumbbell, FaEdit, FaEye, FaEyeSlash, FaPlus, FaSearch, FaTrash, FaUtensils } from 'react-icons/fa';
 import {
   deleteActivityCategory,
   getAdminActivityCategories,
@@ -189,6 +189,7 @@ function AdminCatalogs({ type = 'overview' }) {
   const [saving, setSaving] = useState(false);
   const [noticeKey, setNoticeKey] = useState('');
   const [deleteCandidate, setDeleteCandidate] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const isFoodCategories = type === 'food';
   const isActivityCategories = type === 'activity';
 
@@ -260,6 +261,33 @@ function AdminCatalogs({ type = 'overview' }) {
     () => categories.reduce((sum, category) => sum + category.count, 0),
     [categories]
   );
+
+  const filteredCategories = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    if (!normalizedSearch) {
+      return categories;
+    }
+
+    return categories.filter((category) => {
+      const displayName = isActivityCategories
+        ? t(`activityPage.categories.${category.categoryKey}`, category.name)
+        : getLocalizedName({ name: category.nameRaw, nameVi: category.nameVi }, i18n.language);
+
+      return [
+        displayName,
+        category.name,
+        category.nameRaw,
+        category.nameVi,
+        category.category,
+        category.id,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+        .includes(normalizedSearch);
+    });
+  }, [categories, i18n.language, isActivityCategories, searchTerm, t]);
 
   const getActionError = (requestError) => {
     const message = requestError.response?.data?.message || '';
@@ -534,12 +562,24 @@ function AdminCatalogs({ type = 'overview' }) {
                 <div>
                   <h3 className="h5 fw-bold mb-1">{t('admin.catalogs.categoryList')}</h3>
                 </div>
+                <Form className="admin-table-search">
+                  <InputGroup>
+                    <InputGroup.Text>
+                      <FaSearch />
+                    </InputGroup.Text>
+                    <Form.Control
+                      value={searchTerm}
+                      onChange={(event) => setSearchTerm(event.target.value)}
+                      placeholder={t('admin.catalogs.searchPlaceholder')}
+                      aria-label={t('admin.catalogs.searchLabel')}
+                    />
+                  </InputGroup>
+                </Form>
                 <Button
                   variant="success"
                   onClick={openCreateModal}
                   title={t('admin.catalogs.addCategory')}
                 >
-                  <FaPlus className="me-2" />
                   {t('admin.catalogs.addCategory')}
                 </Button>
               </div>
@@ -554,7 +594,7 @@ function AdminCatalogs({ type = 'overview' }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {categories.map((category) => {
+                    {filteredCategories.map((category) => {
                       const visibilityActionKey = `visibility:${category.id}`;
                       const deleteActionKey = `delete:${category.id}`;
 
@@ -611,7 +651,7 @@ function AdminCatalogs({ type = 'overview' }) {
                         </tr>
                       );
                     })}
-                    {categories.length === 0 && (
+                    {filteredCategories.length === 0 && (
                       <tr>
                         <td colSpan={4} className="text-center text-secondary py-4">
                           {t('admin.table.empty')}
