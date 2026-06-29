@@ -665,7 +665,8 @@
       "deleteConfirmTitle": "Delete category",
       "deleteFoodCategoryConfirm": "Are you sure you want to delete the food category \"{{name}}\"?",
       "deleteActivityCategoryConfirm": "Are you sure you want to delete the activity category \"{{name}}\"?",
-      "linkedFoodCategoryBlocked": "This category cannot be deleted or locked while foods still exist in it."
+      "linkedFoodCategoryBlocked": "This category cannot be deleted or locked while foods still exist in it.",
+      "linkedActivityCategoryBlocked": "This activity category cannot be deleted or hidden while activity types still exist in it."
     },
     "catalogData": {
       "foodCreateSuccess": "Food has been added.",

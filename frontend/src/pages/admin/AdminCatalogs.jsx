@@ -4,12 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { FaArrowLeft, FaDumbbell, FaEdit, FaEye, FaEyeSlash, FaPlus, FaTrash, FaUtensils } from 'react-icons/fa';
 import {
-  createActivityType,
-  deleteActivityType,
+  deleteActivityCategory,
+  getAdminActivityCategories,
   getAdminActivityTypes,
   getActivityTypes,
-  updateActivityType,
-  updateActivityTypeVisibility,
+  updateActivityCategory,
+  updateActivityCategoryVisibility,
 } from '../../features/activities/activityService';
 import { extractActivityTypesFromApi, normalizeActivityType } from '../../features/activities/activityUtils';
 import {
@@ -53,13 +53,17 @@ const emptyFoodCategoryForm = {
 const emptyActivityTypeForm = {
   name: '',
   nameVi: '',
-  category: 'OTHER',
+  category: '',
   metValue: 3,
   hidden: false,
   system: true,
 };
 
 const activityCategoryOptions = ['CARDIO', 'STRENGTH', 'FLEXIBILITY', 'SPORTS', 'DAILY', 'OTHER'];
+
+function getDefaultActivityCategoryName(category) {
+  return category.charAt(0) + category.slice(1).toLowerCase();
+}
 
 function getCategoryItemCount(category) {
   return Number(
@@ -109,6 +113,58 @@ function mapActivityType(type = {}) {
     system: type.system ?? true,
     count: 1,
     raw: type,
+  };
+}
+
+function mapActivityCategories(activityTypes = []) {
+  const groups = activityTypes.reduce((result, type) => {
+    const categoryKey = String(type.category || 'OTHER').toLowerCase();
+    const existing = result[categoryKey] || {
+      id: categoryKey,
+      name: categoryKey,
+      nameRaw: categoryKey,
+      nameVi: '',
+      categoryKey,
+      count: 0,
+      hiddenCount: 0,
+      hidden: false,
+      typeIds: [],
+      raw: { category: categoryKey },
+    };
+    const nextCount = existing.count + 1;
+    const nextHiddenCount = existing.hiddenCount + (type.hidden ? 1 : 0);
+    const nextTypeIds = type.id ? [...existing.typeIds, type.id] : existing.typeIds;
+
+    return {
+      ...result,
+      [categoryKey]: {
+        ...existing,
+        count: nextCount,
+        hiddenCount: nextHiddenCount,
+        hidden: nextCount === nextHiddenCount,
+        typeIds: nextTypeIds,
+      },
+    };
+  }, {});
+
+  return Object.values(groups);
+}
+
+function mapActivityCategory(category = {}) {
+  const categoryValue = String(category.category || category.id || category.name || 'OTHER').toUpperCase();
+  const categoryKey = categoryValue.toLowerCase();
+  const fallbackName = category.name || categoryKey;
+
+  return {
+    id: categoryValue,
+    name: fallbackName,
+    nameRaw: category.name || fallbackName,
+    nameVi: category.nameVi || '',
+    category: categoryValue,
+    categoryKey,
+    count: Number(category.count || 0),
+    hidden: Boolean(category.hidden),
+    raw: category,
   };
 }
 
@@ -167,11 +223,16 @@ function AdminCatalogs({ type = 'overview' }) {
             setCategories(foodCategories);
           }
         } else if (isActivityCategories) {
-          const response = await getAdminActivityTypes().catch(() => getActivityTypes());
-          const activityTypes = extractActivityTypesFromApi(response.data).map(mapActivityType);
+          const categoryResponse = await getAdminActivityCategories().catch(() => null);
+          const activityCategories = categoryResponse
+            ? (categoryResponse.data?.data || categoryResponse.data || []).map(mapActivityCategory)
+            : mapActivityCategories(
+              extractActivityTypesFromApi((await getAdminActivityTypes().catch(() => getActivityTypes())).data)
+                .map(mapActivityType)
+            );
 
           if (isActive) {
-            setCategories(activityTypes.sort((left, right) => left.name.localeCompare(right.name)));
+            setCategories(activityCategories.sort((left, right) => left.name.localeCompare(right.name)));
           }
         }
       } catch (loadError) {
@@ -214,6 +275,10 @@ function AdminCatalogs({ type = 'overview' }) {
     setNoticeKey('admin.catalogs.linkedFoodCategoryBlocked');
   };
 
+  const showLinkedActivityNotice = () => {
+    setNoticeKey('admin.catalogs.linkedActivityCategoryBlocked');
+  };
+
   const resetForm = () => {
     setEditingItem(null);
     setShowFormModal(false);
@@ -223,7 +288,12 @@ function AdminCatalogs({ type = 'overview' }) {
   const openCreateModal = () => {
     setActionError('');
     setEditingItem(null);
-    setForm(isActivityCategories ? emptyActivityTypeForm : emptyFoodCategoryForm);
+    setForm(isActivityCategories
+      ? {
+        ...emptyActivityTypeForm,
+        name: getDefaultActivityCategoryName(emptyActivityTypeForm.category),
+      }
+      : emptyFoodCategoryForm);
     setShowFormModal(true);
   };
 
@@ -233,12 +303,12 @@ function AdminCatalogs({ type = 'overview' }) {
     setShowFormModal(true);
     setForm(isActivityCategories
       ? {
-        name: item.nameRaw || item.name || '',
+        name: item.nameRaw || item.name || t(`activityPage.categories.${item.categoryKey}`, item.name || ''),
         nameVi: item.nameVi || '',
-        category: item.category || 'OTHER',
-        metValue: item.metValue || 3,
+        category: item.category || String(item.id || 'OTHER').toUpperCase(),
+        metValue: 3,
         hidden: item.hidden,
-        system: item.system,
+        system: true,
       }
       : {
         name: item.nameRaw || item.name || '',
@@ -264,11 +334,24 @@ function AdminCatalogs({ type = 'overview' }) {
     setPendingAction(actionKey);
 
     try {
-      const response = isActivityCategories
-        ? await updateActivityTypeVisibility(item.id, nextHidden)
-        : await updateFoodCategoryVisibility(item.id, nextHidden);
-      const data = response.data?.data ?? response.data ?? { hidden: nextHidden };
-      updateCategoryRow(item.id, { ...data, hidden: nextHidden });
+      if (isActivityCategories) {
+        if (item.count > 0) {
+          showLinkedActivityNotice();
+          return;
+        }
+
+        const response = await updateActivityCategoryVisibility(item.category || item.id, nextHidden);
+        const data = mapActivityCategory(response.data?.data ?? response.data);
+        setCategories((current) => current.map((category) => (
+          String(category.id) === String(item.id)
+            ? data
+            : category
+        )));
+      } else {
+        const response = await updateFoodCategoryVisibility(item.id, nextHidden);
+        const data = response.data?.data ?? response.data ?? { hidden: nextHidden };
+        updateCategoryRow(item.id, { ...data, hidden: nextHidden });
+      }
     } catch (requestError) {
       if (isFoodCategories && nextHidden && isLinkedFoodCategoryError(requestError)) {
         showLinkedFoodNotice();
@@ -304,7 +387,13 @@ function AdminCatalogs({ type = 'overview' }) {
 
     try {
       if (isActivityCategories) {
-        await deleteActivityType(item.id);
+        if (item.count > 0) {
+          showLinkedActivityNotice();
+          setDeleteCandidate(null);
+          return;
+        }
+
+        await deleteActivityCategory(item.category || item.id);
       } else {
         await deleteFoodCategory(item.id);
       }
@@ -328,31 +417,35 @@ function AdminCatalogs({ type = 'overview' }) {
     setSaving(true);
 
     try {
-      const payload = isActivityCategories
-        ? {
+      if (isActivityCategories) {
+        const targetCategory = editingItem?.category || form.category;
+
+        const response = await updateActivityCategory(targetCategory, {
           name: form.name.trim(),
           nameVi: form.nameVi.trim() || null,
-          category: form.category,
-          metValue: Number(form.metValue),
-          hidden: form.hidden,
-          system: form.system,
-        }
-        : {
-          name: form.name.trim(),
-          nameVi: form.nameVi.trim() || null,
-          hidden: form.hidden,
-        };
+        });
+        const mappedItem = mapActivityCategory(response.data?.data ?? response.data);
+
+        setCategories((current) => {
+          const withoutCurrent = current.filter((item) => String(item.id) !== String(mappedItem.id));
+
+          return [...withoutCurrent, mappedItem].sort((left, right) => left.name.localeCompare(right.name));
+        });
+        resetForm();
+        return;
+      }
+
+      const payload = {
+        name: form.name.trim(),
+        nameVi: form.nameVi.trim() || null,
+        hidden: form.hidden,
+      };
 
       const response = editingItem
-        ? isActivityCategories
-          ? await updateActivityType(editingItem.id, payload)
-          : await updateFoodCategory(editingItem.id, payload)
-        : isActivityCategories
-          ? await createActivityType(payload)
-          : await createFoodCategory(payload);
+        ? await updateFoodCategory(editingItem.id, payload)
+        : await createFoodCategory(payload);
       const data = response.data?.data ?? response.data ?? payload;
-      const mapper = isActivityCategories ? mapActivityType : mapFoodCategory;
-      const mappedItem = mapper(data);
+      const mappedItem = mapFoodCategory(data);
 
       setCategories((current) => {
         const withoutCurrent = editingItem
@@ -468,12 +561,9 @@ function AdminCatalogs({ type = 'overview' }) {
                       return (
                         <tr key={category.id}>
                           <td className="fw-semibold">
-                            {getLocalizedName({ name: category.nameRaw, nameVi: category.nameVi }, i18n.language)}
-                            {isActivityCategories && (
-                              <div className="small text-secondary">
-                                {category.category} · MET {category.metValue}
-                              </div>
-                            )}
+                            {isActivityCategories
+                              ? t(`activityPage.categories.${category.categoryKey}`, category.name)
+                              : getLocalizedName({ name: category.nameRaw, nameVi: category.nameVi }, i18n.language)}
                           </td>
                           <td>{category.count}</td>
                           <td>
@@ -558,51 +648,32 @@ function AdminCatalogs({ type = 'overview' }) {
                         onChange={(event) => setForm((current) => ({ ...current, nameVi: event.target.value }))}
                       />
                     </Col>
-                    {isActivityCategories && (
-                      <>
-                        <Col md={6}>
-                          <Form.Label>{t('admin.table.category')}</Form.Label>
-                          <Form.Select
-                            value={form.category}
-                            onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
-                            required
-                          >
-                            {activityCategoryOptions.map((option) => (
-                              <option value={option} key={option}>{option}</option>
-                            ))}
-                          </Form.Select>
-                        </Col>
-                        <Col md={6}>
-                          <Form.Label>{t('admin.table.met')}</Form.Label>
-                          <Form.Control
-                            type="number"
-                            min="0.1"
-                            max="50"
-                            step="0.1"
-                            value={form.metValue}
-                            onChange={(event) => setForm((current) => ({ ...current, metValue: event.target.value }))}
-                            required
-                          />
-                        </Col>
-                      </>
+                    {isActivityCategories && !editingItem && (
+                      <Col md={12}>
+                        <Form.Label>{t('admin.table.category')}</Form.Label>
+                        <Form.Select
+                          value={form.category}
+                          onChange={(event) => setForm((current) => ({
+                            ...current,
+                            category: event.target.value,
+                            name: current.name || getDefaultActivityCategoryName(event.target.value),
+                          }))}
+                          required
+                        >
+                          {activityCategoryOptions.map((option) => (
+                            <option value={option} key={option}>{option}</option>
+                          ))}
+                        </Form.Select>
+                      </Col>
                     )}
-                    <Col md={12}>
-                      <Form.Check
-                        type="switch"
-                        id="catalog-hidden"
-                        label={t('admin.status.locked')}
-                        checked={form.hidden}
-                        onChange={(event) => setForm((current) => ({ ...current, hidden: event.target.checked }))}
-                      />
-                    </Col>
-                    {isActivityCategories && (
+                    {isFoodCategories && (
                       <Col md={12}>
                         <Form.Check
                           type="switch"
-                          id="catalog-system"
-                          label={t('admin.catalogs.systemItem')}
-                          checked={form.system}
-                          onChange={(event) => setForm((current) => ({ ...current, system: event.target.checked }))}
+                          id="catalog-hidden"
+                          label={t('admin.status.locked')}
+                          checked={form.hidden}
+                          onChange={(event) => setForm((current) => ({ ...current, hidden: event.target.checked }))}
                         />
                       </Col>
                     )}

@@ -1421,7 +1421,8 @@
       "deleteConfirmTitle": "Xóa danh mục",
       "deleteFoodCategoryConfirm": "Bạn có chắc muốn xóa danh mục thực phẩm \"{{name}}\"?",
       "deleteActivityCategoryConfirm": "Bạn có chắc muốn xóa danh mục hoạt động \"{{name}}\"?",
-      "linkedFoodCategoryBlocked": "Không thể xóa hoặc tạm khóa danh mục khi đã có thực phẩm tồn tại."
+      "linkedFoodCategoryBlocked": "Không thể xóa hoặc tạm khóa danh mục khi đã có thực phẩm tồn tại.",
+      "linkedActivityCategoryBlocked": "Không thể xóa hoặc ẩn danh mục hoạt động khi danh mục vẫn còn hoạt động."
     },
     "catalogData": {
       "foodCreateSuccess": "Đã thêm thực phẩm.",
