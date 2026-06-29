@@ -4,14 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { FaArrowLeft, FaDumbbell, FaEdit, FaEye, FaEyeSlash, FaPlus, FaTrash, FaUtensils } from 'react-icons/fa';
 import {
-  createActivityType,
-  deleteActivityType,
-  getAdminActivityTypes,
-  getActivityTypes,
-  updateActivityType,
-  updateActivityTypeVisibility,
+  createActivityCategory,
+  deleteActivityCategory,
+  getAdminActivityCategories,
+  getActivityCategories,
+  updateActivityCategory,
+  updateActivityCategoryVisibility,
 } from '../../features/activities/activityService';
-import { extractActivityTypesFromApi, normalizeActivityType } from '../../features/activities/activityUtils';
 import {
   createFoodCategory,
   deleteFoodCategory,
@@ -50,16 +49,14 @@ const emptyFoodCategoryForm = {
   hidden: false,
 };
 
-const emptyActivityTypeForm = {
+const emptyActivityCategoryForm = {
   name: '',
   nameVi: '',
   category: 'OTHER',
-  metValue: 3,
   hidden: false,
-  system: true,
 };
 
-const activityCategoryOptions = ['CARDIO', 'STRENGTH', 'FLEXIBILITY', 'SPORTS', 'DAILY', 'OTHER'];
+const activityCategoryOptions = ['CARDIO', 'STRENGTH', 'WALKING', 'SPORTS', 'FLEXIBILITY', 'OUTDOOR', 'DAILY'];
 
 function getCategoryItemCount(category) {
   return Number(
@@ -94,21 +91,18 @@ function mapDerivedFoodCategory(category, foods) {
   };
 }
 
-function mapActivityType(type = {}) {
-  const normalizedType = normalizeActivityType(type);
-  const name = normalizedType.name || normalizedType.nameVi;
+function mapActivityCategory(category = {}) {
+  const name = cleanText(category.name) || cleanText(category.nameVi) || category.category;
 
   return {
-    id: normalizedType.id,
+    id: category.category,
     name: name || '-',
-    nameRaw: normalizedType.name || '',
-    nameVi: normalizedType.nameVi || '',
-    category: String(type.category || normalizedType.category || 'OTHER').toUpperCase(),
-    metValue: Number(type.metValue ?? normalizedType.met ?? 3),
-    hidden: Boolean(type.hidden),
-    system: type.system ?? true,
-    count: 1,
-    raw: type,
+    nameRaw: cleanText(category.name),
+    nameVi: cleanText(category.nameVi),
+    category: String(category.category || 'OTHER').toUpperCase(),
+    hidden: Boolean(category.hidden),
+    count: Number(category.activityTypeCount) || 0,
+    raw: category,
   };
 }
 
@@ -118,6 +112,11 @@ function isLinkedFoodCategoryError(error) {
     || message.includes('food(s)')
     || message.includes('thực phẩm')
     || message.includes('thuc pham');
+}
+
+function isLinkedActivityCategoryError(error) {
+  const message = String(error.response?.data?.message || error.message || '').toLowerCase();
+  return message.includes('activity type') || message.includes('linked');
 }
 
 function AdminCatalogs({ type = 'overview' }) {
@@ -167,11 +166,13 @@ function AdminCatalogs({ type = 'overview' }) {
             setCategories(foodCategories);
           }
         } else if (isActivityCategories) {
-          const response = await getAdminActivityTypes().catch(() => getActivityTypes());
-          const activityTypes = extractActivityTypesFromApi(response.data).map(mapActivityType);
+          const response = await getAdminActivityCategories().catch(() => getActivityCategories());
+          const activityCategories = response.data?.data ?? response.data ?? [];
 
           if (isActive) {
-            setCategories(activityTypes.sort((left, right) => left.name.localeCompare(right.name)));
+            setCategories((Array.isArray(activityCategories) ? activityCategories : [])
+              .map(mapActivityCategory)
+              .sort((left, right) => left.name.localeCompare(right.name)));
           }
         }
       } catch (loadError) {
@@ -217,13 +218,20 @@ function AdminCatalogs({ type = 'overview' }) {
   const resetForm = () => {
     setEditingItem(null);
     setShowFormModal(false);
-    setForm(isActivityCategories ? emptyActivityTypeForm : emptyFoodCategoryForm);
+    setForm(isActivityCategories ? emptyActivityCategoryForm : emptyFoodCategoryForm);
   };
 
   const openCreateModal = () => {
     setActionError('');
     setEditingItem(null);
-    setForm(isActivityCategories ? emptyActivityTypeForm : emptyFoodCategoryForm);
+    if (isActivityCategories) {
+      const firstAvailableCategory = activityCategoryOptions.find(
+        (option) => !categories.some((item) => item.category === option)
+      );
+      setForm({ ...emptyActivityCategoryForm, category: firstAvailableCategory || 'OTHER' });
+    } else {
+      setForm(emptyFoodCategoryForm);
+    }
     setShowFormModal(true);
   };
 
@@ -236,9 +244,7 @@ function AdminCatalogs({ type = 'overview' }) {
         name: item.nameRaw || item.name || '',
         nameVi: item.nameVi || '',
         category: item.category || 'OTHER',
-        metValue: item.metValue || 3,
         hidden: item.hidden,
-        system: item.system,
       }
       : {
         name: item.nameRaw || item.name || '',
@@ -248,7 +254,7 @@ function AdminCatalogs({ type = 'overview' }) {
   };
 
   const updateCategoryRow = (id, data) => {
-    const mapper = isActivityCategories ? mapActivityType : mapFoodCategory;
+    const mapper = isActivityCategories ? mapActivityCategory : mapFoodCategory;
     setCategories((current) =>
       current
         .map((item) => (String(item.id) === String(id) ? mapper({ ...item.raw, ...data }) : item))
@@ -265,7 +271,7 @@ function AdminCatalogs({ type = 'overview' }) {
 
     try {
       const response = isActivityCategories
-        ? await updateActivityTypeVisibility(item.id, nextHidden)
+        ? await updateActivityCategoryVisibility(item.category, nextHidden)
         : await updateFoodCategoryVisibility(item.id, nextHidden);
       const data = response.data?.data ?? response.data ?? { hidden: nextHidden };
       updateCategoryRow(item.id, { ...data, hidden: nextHidden });
@@ -304,7 +310,7 @@ function AdminCatalogs({ type = 'overview' }) {
 
     try {
       if (isActivityCategories) {
-        await deleteActivityType(item.id);
+        await deleteActivityCategory(item.category);
       } else {
         await deleteFoodCategory(item.id);
       }
@@ -313,6 +319,9 @@ function AdminCatalogs({ type = 'overview' }) {
     } catch (requestError) {
       if (isFoodCategories && isLinkedFoodCategoryError(requestError)) {
         showLinkedFoodNotice();
+        setDeleteCandidate(null);
+      } else if (isActivityCategories && isLinkedActivityCategoryError(requestError)) {
+        setNoticeKey('admin.catalogs.linkedActivityCategoryBlocked');
         setDeleteCandidate(null);
       } else {
         setActionError(getActionError(requestError));
@@ -332,10 +341,8 @@ function AdminCatalogs({ type = 'overview' }) {
         ? {
           name: form.name.trim(),
           nameVi: form.nameVi.trim() || null,
-          category: form.category,
-          metValue: Number(form.metValue),
+          ...(!editingItem ? { category: form.category } : {}),
           hidden: form.hidden,
-          system: form.system,
         }
         : {
           name: form.name.trim(),
@@ -343,15 +350,15 @@ function AdminCatalogs({ type = 'overview' }) {
           hidden: form.hidden,
         };
 
-      const response = editingItem
-        ? isActivityCategories
-          ? await updateActivityType(editingItem.id, payload)
-          : await updateFoodCategory(editingItem.id, payload)
-        : isActivityCategories
-          ? await createActivityType(payload)
+      const response = isActivityCategories
+        ? editingItem
+          ? await updateActivityCategory(editingItem.category, payload)
+          : await createActivityCategory(payload)
+        : editingItem
+          ? await updateFoodCategory(editingItem.id, payload)
           : await createFoodCategory(payload);
       const data = response.data?.data ?? response.data ?? payload;
-      const mapper = isActivityCategories ? mapActivityType : mapFoodCategory;
+      const mapper = isActivityCategories ? mapActivityCategory : mapFoodCategory;
       const mappedItem = mapper(data);
 
       setCategories((current) => {
@@ -441,14 +448,16 @@ function AdminCatalogs({ type = 'overview' }) {
                 <div>
                   <h3 className="h5 fw-bold mb-1">{t('admin.catalogs.categoryList')}</h3>
                 </div>
-                <Button
-                  variant="success"
-                  onClick={openCreateModal}
-                  title={t('admin.catalogs.addCategory')}
-                >
-                  <FaPlus className="me-2" />
-                  {t('admin.catalogs.addCategory')}
-                </Button>
+                {isFoodCategories && (
+                  <Button
+                    variant="success"
+                    onClick={openCreateModal}
+                    title={t('admin.catalogs.addCategory')}
+                  >
+                    <FaPlus className="me-2" />
+                    {t('admin.catalogs.addCategory')}
+                  </Button>
+                )}
               </div>
               <div className="table-responsive">
                 <Table hover className="align-middle mb-0 admin-table">
@@ -471,7 +480,7 @@ function AdminCatalogs({ type = 'overview' }) {
                             {getLocalizedName({ name: category.nameRaw, nameVi: category.nameVi }, i18n.language)}
                             {isActivityCategories && (
                               <div className="small text-secondary">
-                                {category.category} · MET {category.metValue}
+                                {category.category}
                               </div>
                             )}
                           </td>
@@ -495,27 +504,31 @@ function AdminCatalogs({ type = 'overview' }) {
                                   ? <Spinner animation="border" size="sm" />
                                   : category.hidden ? <FaEye /> : <FaEyeSlash />}
                               </Button>
-                              <Button
-                                variant="outline-success"
-                                size="sm"
-                                aria-label={t('admin.actions.edit')}
-                                title={t('admin.actions.edit')}
-                                onClick={() => openEditModal(category)}
-                              >
-                                <FaEdit />
-                              </Button>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                aria-label={t('admin.actions.delete')}
-                                title={t('admin.actions.delete')}
-                                disabled={pendingAction === deleteActionKey}
-                                onClick={() => requestDeleteItem(category)}
-                              >
-                                {pendingAction === deleteActionKey
-                                  ? <Spinner animation="border" size="sm" />
-                                  : <FaTrash />}
-                              </Button>
+                              {isFoodCategories && (
+                                <Button
+                                  variant="outline-success"
+                                  size="sm"
+                                  aria-label={t('admin.actions.edit')}
+                                  title={t('admin.actions.edit')}
+                                  onClick={() => openEditModal(category)}
+                                >
+                                  <FaEdit />
+                                </Button>
+                              )}
+                              {isFoodCategories && (
+                                <Button
+                                  variant="outline-danger"
+                                  size="sm"
+                                  aria-label={t('admin.actions.delete')}
+                                  title={t('admin.actions.delete')}
+                                  disabled={pendingAction === deleteActionKey}
+                                  onClick={() => requestDeleteItem(category)}
+                                >
+                                  {pendingAction === deleteActionKey
+                                    ? <Spinner animation="border" size="sm" />
+                                    : <FaTrash />}
+                                </Button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -559,32 +572,22 @@ function AdminCatalogs({ type = 'overview' }) {
                       />
                     </Col>
                     {isActivityCategories && (
-                      <>
-                        <Col md={6}>
-                          <Form.Label>{t('admin.table.category')}</Form.Label>
+                      <Col md={12}>
+                        <Form.Label>{t('admin.table.category')}</Form.Label>
+                        {editingItem ? (
+                          <Form.Control value={form.category} readOnly disabled />
+                        ) : (
                           <Form.Select
                             value={form.category}
                             onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
                             required
                           >
-                            {activityCategoryOptions.map((option) => (
-                              <option value={option} key={option}>{option}</option>
-                            ))}
+                            {activityCategoryOptions
+                              .filter((option) => !categories.some((item) => item.category === option))
+                              .map((option) => <option key={option} value={option}>{option}</option>)}
                           </Form.Select>
-                        </Col>
-                        <Col md={6}>
-                          <Form.Label>{t('admin.table.met')}</Form.Label>
-                          <Form.Control
-                            type="number"
-                            min="0.1"
-                            max="50"
-                            step="0.1"
-                            value={form.metValue}
-                            onChange={(event) => setForm((current) => ({ ...current, metValue: event.target.value }))}
-                            required
-                          />
-                        </Col>
-                      </>
+                        )}
+                      </Col>
                     )}
                     <Col md={12}>
                       <Form.Check
@@ -595,17 +598,6 @@ function AdminCatalogs({ type = 'overview' }) {
                         onChange={(event) => setForm((current) => ({ ...current, hidden: event.target.checked }))}
                       />
                     </Col>
-                    {isActivityCategories && (
-                      <Col md={12}>
-                        <Form.Check
-                          type="switch"
-                          id="catalog-system"
-                          label={t('admin.catalogs.systemItem')}
-                          checked={form.system}
-                          onChange={(event) => setForm((current) => ({ ...current, system: event.target.checked }))}
-                        />
-                      </Col>
-                    )}
                   </Row>
                 </Modal.Body>
                 <Modal.Footer>

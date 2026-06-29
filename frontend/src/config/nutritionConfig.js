@@ -8,6 +8,7 @@ const nutritionConfig = {
     adminCategoryHide: (id) => `/nutrition/admin/categories/${id}/hide`,
     adminCategoryRestore: (id) => `/nutrition/admin/categories/${id}/restore`,
     recipeSuggestions: '/nutrition/recipes/suggestions',
+    recipes: '/nutrition/recipes',
   },
 };
 

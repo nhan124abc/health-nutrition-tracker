@@ -8,6 +8,7 @@ import LanguageSwitcher from '../../components/LanguageSwitcher';
 import ErrorModal from '../../components/ErrorModal';
 import authConfig from '../../config/authConfig';
 import { isAccountNotFoundError, isLockedAccountError, login } from './authService';
+import { fillMissingProfileFromGuestSession } from '../../utils/guestProfileSession';
 
 function Login() {
   const navigate = useNavigate();
@@ -69,6 +70,13 @@ function Login() {
 
       if (!response.data?.accessToken && !response.data?.token) {
         throw new Error(t('auth.missingToken'));
+      }
+
+      const role = response.data?.user?.role?.toUpperCase().replace(/^ROLE_/, '');
+      if (role !== 'ADMIN') {
+        await fillMissingProfileFromGuestSession().catch((profileError) => {
+          console.error('[Login] Could not import guest profile data:', profileError);
+        });
       }
 
       navigate(getSafeRedirectPath(response.data?.user?.role), { replace: true });

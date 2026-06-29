@@ -5,6 +5,7 @@ import health.tracker.services.activity.entity.ActivityType;
 import health.tracker.services.activity.exception.AppException;
 import health.tracker.services.activity.repository.ActivityLogRepository;
 import health.tracker.services.activity.repository.ActivityTypeRepository;
+import health.tracker.services.activity.repository.ActivityCategoryLabelRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,12 +20,20 @@ public class ActivityTypeService {
 
     private final ActivityTypeRepository typeRepository;
     private final ActivityLogRepository logRepository;
+    private final ActivityCategoryLabelRepository categoryLabelRepository;
 
     @Transactional(readOnly = true)
     public List<ActivityType> getVisibleTypes(ActivityType.Category category) {
-        return category != null
+        if (category != null && isCategoryHidden(category)) {
+            return List.of();
+        }
+
+        List<ActivityType> types = category != null
                 ? typeRepository.findByCategoryAndHiddenFalseOrderByNameAsc(category)
                 : typeRepository.findByHiddenFalseOrderByCategoryAscNameAsc();
+        return types.stream()
+                .filter(type -> !isCategoryHidden(type.getCategory()))
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -134,5 +143,11 @@ public class ActivityTypeService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private boolean isCategoryHidden(ActivityType.Category category) {
+        return categoryLabelRepository.findById(category)
+                .map(label -> label.isHidden())
+                .orElse(false);
     }
 }

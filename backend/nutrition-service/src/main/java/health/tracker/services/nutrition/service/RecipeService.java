@@ -1,12 +1,17 @@
 package health.tracker.services.nutrition.service;
 
+import health.tracker.services.nutrition.dto.RecipeCreateRequest;
 import health.tracker.services.nutrition.dto.RecipeSuggestionResponse;
+import health.tracker.services.nutrition.entity.FoodItem;
 import health.tracker.services.nutrition.entity.Recipe;
 import health.tracker.services.nutrition.entity.RecipeIngredient;
 import health.tracker.services.nutrition.repository.RecipeRepository;
+import health.tracker.services.nutrition.repository.FoodItemRepository;
+import health.tracker.services.nutrition.exception.AppException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -21,6 +26,56 @@ import java.util.Map;
 public class RecipeService {
 
     private final RecipeRepository recipeRepository;
+    private final FoodItemRepository foodItemRepository;
+
+    @Transactional
+    public RecipeSuggestionResponse create(Long userId, RecipeCreateRequest request) {
+        Recipe recipe = Recipe.builder()
+                .userId(userId)
+                .name(request.getName().trim())
+                .description(request.getDescription())
+                .servings(Math.max(1, request.getServings()))
+                .isPublic(false)
+                .build();
+
+        BigDecimal calories = BigDecimal.ZERO;
+        BigDecimal protein = BigDecimal.ZERO;
+        BigDecimal carbs = BigDecimal.ZERO;
+        BigDecimal fat = BigDecimal.ZERO;
+
+        for (RecipeCreateRequest.Ingredient input : request.getIngredients()) {
+            FoodItem food = foodItemRepository.findById(input.getFoodItemId())
+                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                            "Food item not found: " + input.getFoodItemId()));
+            BigDecimal baseServing = food.getServingSizeG();
+            BigDecimal ratio = input.getQuantityG().divide(baseServing, 6, RoundingMode.HALF_UP);
+            BigDecimal ingredientCalories = value(food.getCalories()).multiply(ratio);
+            BigDecimal ingredientProtein = value(food.getProteinG()).multiply(ratio);
+            BigDecimal ingredientCarbs = value(food.getCarbsG()).multiply(ratio);
+            BigDecimal ingredientFat = value(food.getFatG()).multiply(ratio);
+
+            recipe.getIngredients().add(RecipeIngredient.builder()
+                    .recipe(recipe)
+                    .foodItem(food)
+                    .foodName(food.getNameVi() == null || food.getNameVi().isBlank() ? food.getName() : food.getNameVi())
+                    .quantityG(input.getQuantityG())
+                    .calories(ingredientCalories)
+                    .proteinG(ingredientProtein)
+                    .carbsG(ingredientCarbs)
+                    .fatG(ingredientFat)
+                    .build());
+            calories = calories.add(ingredientCalories);
+            protein = protein.add(ingredientProtein);
+            carbs = carbs.add(ingredientCarbs);
+            fat = fat.add(ingredientFat);
+        }
+
+        recipe.setTotalCalories(calories);
+        recipe.setTotalProteinG(protein);
+        recipe.setTotalCarbsG(carbs);
+        recipe.setTotalFatG(fat);
+        return toSuggestion(recipeRepository.save(recipe));
+    }
 
     @Transactional(readOnly = true)
     public List<RecipeSuggestionResponse> suggest(BigDecimal maxCalories, String keyword, List<Long> foodIds,

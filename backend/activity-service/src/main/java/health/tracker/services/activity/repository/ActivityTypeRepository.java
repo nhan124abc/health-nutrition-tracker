@@ -19,6 +19,8 @@ public interface ActivityTypeRepository extends JpaRepository<ActivityType, Inte
 
     boolean existsByNameIgnoreCase(String name);
 
+    long countByCategory(ActivityType.Category category);
+
     ActivityType findById(Long id);
 }
 
