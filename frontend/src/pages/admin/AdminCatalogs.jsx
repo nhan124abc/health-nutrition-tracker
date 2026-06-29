@@ -1,14 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Col, Form, Modal, Row, Spinner, Table } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Form, InputGroup, Modal, Row, Spinner, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { FaArrowLeft, FaDumbbell, FaEdit, FaEye, FaEyeSlash, FaPlus, FaTrash, FaUtensils } from 'react-icons/fa';
+import { FaArrowLeft, FaDumbbell, FaEdit, FaEye, FaEyeSlash, FaPlus, FaSearch, FaTrash, FaUtensils } from 'react-icons/fa';
 import {
-  createActivityCategory,
-  deleteActivityCategory,
   getAdminActivityCategories,
   getActivityCategories,
-  updateActivityCategory,
   updateActivityCategoryVisibility,
 } from '../../features/activities/activityService';
 import {
@@ -49,15 +46,6 @@ const emptyFoodCategoryForm = {
   hidden: false,
 };
 
-const emptyActivityCategoryForm = {
-  name: '',
-  nameVi: '',
-  category: 'OTHER',
-  hidden: false,
-};
-
-const activityCategoryOptions = ['CARDIO', 'STRENGTH', 'WALKING', 'SPORTS', 'FLEXIBILITY', 'OUTDOOR', 'DAILY'];
-
 function getCategoryItemCount(category) {
   return Number(
     category.count
@@ -92,16 +80,18 @@ function mapDerivedFoodCategory(category, foods) {
 }
 
 function mapActivityCategory(category = {}) {
-  const name = cleanText(category.name) || cleanText(category.nameVi) || category.category;
+  const categoryValue = String(category.category || category.id || category.name || 'OTHER').toUpperCase();
+  const name = cleanText(category.name) || cleanText(category.nameVi) || categoryValue;
 
   return {
-    id: category.category,
-    name: name || '-',
+    id: categoryValue,
+    name,
     nameRaw: cleanText(category.name),
     nameVi: cleanText(category.nameVi),
-    category: String(category.category || 'OTHER').toUpperCase(),
+    category: categoryValue,
+    categoryKey: categoryValue.toLowerCase(),
     hidden: Boolean(category.hidden),
-    count: Number(category.activityTypeCount) || 0,
+    count: Number(category.activityTypeCount ?? category.count ?? 0) || 0,
     raw: category,
   };
 }
@@ -110,13 +100,8 @@ function isLinkedFoodCategoryError(error) {
   const message = String(error.response?.data?.message || error.message || '').toLowerCase();
   return message.includes('food item')
     || message.includes('food(s)')
-    || message.includes('thực phẩm')
-    || message.includes('thuc pham');
-}
-
-function isLinkedActivityCategoryError(error) {
-  const message = String(error.response?.data?.message || error.message || '').toLowerCase();
-  return message.includes('activity type') || message.includes('linked');
+    || message.includes('thuc pham')
+    || message.includes('thực phẩm');
 }
 
 function AdminCatalogs({ type = 'overview' }) {
@@ -132,6 +117,7 @@ function AdminCatalogs({ type = 'overview' }) {
   const [saving, setSaving] = useState(false);
   const [noticeKey, setNoticeKey] = useState('');
   const [deleteCandidate, setDeleteCandidate] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const isFoodCategories = type === 'food';
   const isActivityCategories = type === 'activity';
 
@@ -201,6 +187,27 @@ function AdminCatalogs({ type = 'overview' }) {
     [categories]
   );
 
+  const filteredCategories = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    if (!normalizedSearch) {
+      return categories;
+    }
+
+    return categories.filter((category) => [
+      getLocalizedName({ name: category.nameRaw, nameVi: category.nameVi }, i18n.language),
+      category.name,
+      category.nameRaw,
+      category.nameVi,
+      category.category,
+      category.id,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .includes(normalizedSearch));
+  }, [categories, i18n.language, searchTerm]);
+
   const getActionError = (requestError) => {
     const message = requestError.response?.data?.message || '';
 
@@ -218,20 +225,13 @@ function AdminCatalogs({ type = 'overview' }) {
   const resetForm = () => {
     setEditingItem(null);
     setShowFormModal(false);
-    setForm(isActivityCategories ? emptyActivityCategoryForm : emptyFoodCategoryForm);
+    setForm(emptyFoodCategoryForm);
   };
 
   const openCreateModal = () => {
     setActionError('');
     setEditingItem(null);
-    if (isActivityCategories) {
-      const firstAvailableCategory = activityCategoryOptions.find(
-        (option) => !categories.some((item) => item.category === option)
-      );
-      setForm({ ...emptyActivityCategoryForm, category: firstAvailableCategory || 'OTHER' });
-    } else {
-      setForm(emptyFoodCategoryForm);
-    }
+    setForm(emptyFoodCategoryForm);
     setShowFormModal(true);
   };
 
@@ -239,25 +239,17 @@ function AdminCatalogs({ type = 'overview' }) {
     setActionError('');
     setEditingItem(item);
     setShowFormModal(true);
-    setForm(isActivityCategories
-      ? {
-        name: item.nameRaw || item.name || '',
-        nameVi: item.nameVi || '',
-        category: item.category || 'OTHER',
-        hidden: item.hidden,
-      }
-      : {
-        name: item.nameRaw || item.name || '',
-        nameVi: item.nameVi || '',
-        hidden: item.hidden,
-      });
+    setForm({
+      name: item.nameRaw || item.name || '',
+      nameVi: item.nameVi || '',
+      hidden: item.hidden,
+    });
   };
 
   const updateCategoryRow = (id, data) => {
-    const mapper = isActivityCategories ? mapActivityCategory : mapFoodCategory;
     setCategories((current) =>
       current
-        .map((item) => (String(item.id) === String(id) ? mapper({ ...item.raw, ...data }) : item))
+        .map((item) => (String(item.id) === String(id) ? mapFoodCategory({ ...item.raw, ...data }) : item))
         .sort((left, right) => left.name.localeCompare(right.name))
     );
   };
@@ -270,11 +262,19 @@ function AdminCatalogs({ type = 'overview' }) {
     setPendingAction(actionKey);
 
     try {
-      const response = isActivityCategories
-        ? await updateActivityCategoryVisibility(item.category, nextHidden)
-        : await updateFoodCategoryVisibility(item.id, nextHidden);
-      const data = response.data?.data ?? response.data ?? { hidden: nextHidden };
-      updateCategoryRow(item.id, { ...data, hidden: nextHidden });
+      if (isActivityCategories) {
+        const response = await updateActivityCategoryVisibility(item.category, nextHidden);
+        const data = response.data?.data ?? response.data ?? { ...item.raw, hidden: nextHidden };
+        setCategories((current) => current
+          .map((category) => (String(category.id) === String(item.id)
+            ? mapActivityCategory({ ...category.raw, ...data, hidden: nextHidden })
+            : category))
+          .sort((left, right) => left.name.localeCompare(right.name)));
+      } else {
+        const response = await updateFoodCategoryVisibility(item.id, nextHidden);
+        const data = response.data?.data ?? response.data ?? { hidden: nextHidden };
+        updateCategoryRow(item.id, { ...data, hidden: nextHidden });
+      }
     } catch (requestError) {
       if (isFoodCategories && nextHidden && isLinkedFoodCategoryError(requestError)) {
         showLinkedFoodNotice();
@@ -309,19 +309,12 @@ function AdminCatalogs({ type = 'overview' }) {
     setPendingAction(actionKey);
 
     try {
-      if (isActivityCategories) {
-        await deleteActivityCategory(item.category);
-      } else {
-        await deleteFoodCategory(item.id);
-      }
+      await deleteFoodCategory(item.id);
       setCategories((current) => current.filter((category) => String(category.id) !== String(item.id)));
       setDeleteCandidate(null);
     } catch (requestError) {
-      if (isFoodCategories && isLinkedFoodCategoryError(requestError)) {
+      if (isLinkedFoodCategoryError(requestError)) {
         showLinkedFoodNotice();
-        setDeleteCandidate(null);
-      } else if (isActivityCategories && isLinkedActivityCategoryError(requestError)) {
-        setNoticeKey('admin.catalogs.linkedActivityCategoryBlocked');
         setDeleteCandidate(null);
       } else {
         setActionError(getActionError(requestError));
@@ -337,29 +330,17 @@ function AdminCatalogs({ type = 'overview' }) {
     setSaving(true);
 
     try {
-      const payload = isActivityCategories
-        ? {
-          name: form.name.trim(),
-          nameVi: form.nameVi.trim() || null,
-          ...(!editingItem ? { category: form.category } : {}),
-          hidden: form.hidden,
-        }
-        : {
-          name: form.name.trim(),
-          nameVi: form.nameVi.trim() || null,
-          hidden: form.hidden,
-        };
+      const payload = {
+        name: form.name.trim(),
+        nameVi: form.nameVi.trim() || null,
+        hidden: form.hidden,
+      };
 
-      const response = isActivityCategories
-        ? editingItem
-          ? await updateActivityCategory(editingItem.category, payload)
-          : await createActivityCategory(payload)
-        : editingItem
-          ? await updateFoodCategory(editingItem.id, payload)
-          : await createFoodCategory(payload);
+      const response = editingItem
+        ? await updateFoodCategory(editingItem.id, payload)
+        : await createFoodCategory(payload);
       const data = response.data?.data ?? response.data ?? payload;
-      const mapper = isActivityCategories ? mapActivityCategory : mapFoodCategory;
-      const mappedItem = mapper(data);
+      const mappedItem = mapFoodCategory(data);
 
       setCategories((current) => {
         const withoutCurrent = editingItem
@@ -369,21 +350,19 @@ function AdminCatalogs({ type = 'overview' }) {
         return [...withoutCurrent, mappedItem].sort((left, right) => left.name.localeCompare(right.name));
       });
 
-      if (isFoodCategories) {
-        const [categoryResponse, foodsResponse] = await Promise.all([
-          getAdminFoodCategories(),
-          getFoods({ page: 0, size: 1000 }).catch(() => null),
-        ]);
-        const foods = foodsResponse
-          ? extractFoodsFromApi(foodsResponse.data).map(normalizeFoodFromApi)
-          : [];
-        const persistedCategories = extractCategoriesFromApi(categoryResponse.data)
-          .map(mapFoodCategory)
-          .map((category) => mapDerivedFoodCategory(category, foods))
-          .filter((category) => category.id && (category.nameRaw || category.nameVi))
-          .sort((left, right) => left.name.localeCompare(right.name));
-        setCategories(persistedCategories);
-      }
+      const [categoryResponse, foodsResponse] = await Promise.all([
+        getAdminFoodCategories(),
+        getFoods({ page: 0, size: 1000 }).catch(() => null),
+      ]);
+      const foods = foodsResponse
+        ? extractFoodsFromApi(foodsResponse.data).map(normalizeFoodFromApi)
+        : [];
+      const persistedCategories = extractCategoriesFromApi(categoryResponse.data)
+        .map(mapFoodCategory)
+        .map((category) => mapDerivedFoodCategory(category, foods))
+        .filter((category) => category.id && (category.nameRaw || category.nameVi))
+        .sort((left, right) => left.name.localeCompare(right.name));
+      setCategories(persistedCategories);
       resetForm();
     } catch (requestError) {
       setActionError(getActionError(requestError));
@@ -444,106 +423,119 @@ function AdminCatalogs({ type = 'overview' }) {
 
             <Card className="admin-card border-0 shadow-sm">
               <Card.Body>
-              <div className="admin-table-toolbar">
-                <div>
-                  <h3 className="h5 fw-bold mb-1">{t('admin.catalogs.categoryList')}</h3>
+                <div className="admin-table-toolbar">
+                  <div>
+                    <h3 className="h5 fw-bold mb-1">{t('admin.catalogs.categoryList')}</h3>
+                  </div>
+                  <Form className="admin-table-search">
+                    <InputGroup>
+                      <InputGroup.Text>
+                        <FaSearch />
+                      </InputGroup.Text>
+                      <Form.Control
+                        value={searchTerm}
+                        onChange={(event) => setSearchTerm(event.target.value)}
+                        placeholder={t('admin.catalogs.searchPlaceholder')}
+                        aria-label={t('admin.catalogs.searchLabel')}
+                      />
+                    </InputGroup>
+                  </Form>
+                  {isFoodCategories && (
+                    <Button
+                      variant="success"
+                      onClick={openCreateModal}
+                      title={t('admin.catalogs.addCategory')}
+                    >
+                      <FaPlus className="me-2" />
+                      {t('admin.catalogs.addCategory')}
+                    </Button>
+                  )}
                 </div>
-                {isFoodCategories && (
-                  <Button
-                    variant="success"
-                    onClick={openCreateModal}
-                    title={t('admin.catalogs.addCategory')}
-                  >
-                    <FaPlus className="me-2" />
-                    {t('admin.catalogs.addCategory')}
-                  </Button>
-                )}
-              </div>
-              <div className="table-responsive">
-                <Table hover className="align-middle mb-0 admin-table">
-                  <thead>
-                    <tr>
-                      <th>{t('admin.catalogs.categoryName')}</th>
-                      <th>{t('admin.catalogs.itemCount')}</th>
-                      <th>{t('admin.table.status')}</th>
-                      <th className="text-end">{t('admin.table.actions')}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories.map((category) => {
-                      const visibilityActionKey = `visibility:${category.id}`;
-                      const deleteActionKey = `delete:${category.id}`;
+                <div className="table-responsive">
+                  <Table hover className="align-middle mb-0 admin-table">
+                    <thead>
+                      <tr>
+                        <th>{t('admin.catalogs.categoryName')}</th>
+                        <th>{t('admin.catalogs.itemCount')}</th>
+                        <th>{t('admin.table.status')}</th>
+                        <th className="text-end">{t('admin.table.actions')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredCategories.map((category) => {
+                        const visibilityActionKey = `visibility:${category.id}`;
+                        const deleteActionKey = `delete:${category.id}`;
 
-                      return (
-                        <tr key={category.id}>
-                          <td className="fw-semibold">
-                            {getLocalizedName({ name: category.nameRaw, nameVi: category.nameVi }, i18n.language)}
-                            {isActivityCategories && (
-                              <div className="small text-secondary">
-                                {category.category}
-                              </div>
-                            )}
-                          </td>
-                          <td>{category.count}</td>
-                          <td>
-                            <span className={`small fw-semibold text-${category.hidden ? 'secondary' : 'success'}`}>
-                              {t(category.hidden ? 'admin.status.locked' : 'admin.status.active')}
-                            </span>
-                          </td>
-                          <td className="text-end">
-                            <div className="admin-row-actions">
-                              <Button
-                                variant={category.hidden ? 'outline-primary' : 'outline-secondary'}
-                                size="sm"
-                                aria-label={t('admin.catalogs.toggleHidden')}
-                                title={t('admin.catalogs.toggleHidden')}
-                                disabled={pendingAction === visibilityActionKey}
-                                onClick={() => toggleVisibility(category)}
-                              >
-                                {pendingAction === visibilityActionKey
-                                  ? <Spinner animation="border" size="sm" />
-                                  : category.hidden ? <FaEye /> : <FaEyeSlash />}
-                              </Button>
-                              {isFoodCategories && (
-                                <Button
-                                  variant="outline-success"
-                                  size="sm"
-                                  aria-label={t('admin.actions.edit')}
-                                  title={t('admin.actions.edit')}
-                                  onClick={() => openEditModal(category)}
-                                >
-                                  <FaEdit />
-                                </Button>
+                        return (
+                          <tr key={category.id}>
+                            <td className="fw-semibold">
+                              {getLocalizedName({ name: category.nameRaw, nameVi: category.nameVi }, i18n.language)}
+                              {isActivityCategories && (
+                                <div className="small text-secondary">
+                                  {category.category}
+                                </div>
                               )}
-                              {isFoodCategories && (
+                            </td>
+                            <td>{category.count}</td>
+                            <td>
+                              <span className={`small fw-semibold text-${category.hidden ? 'secondary' : 'success'}`}>
+                                {t(category.hidden ? 'admin.status.locked' : 'admin.status.active')}
+                              </span>
+                            </td>
+                            <td className="text-end">
+                              <div className="admin-row-actions">
                                 <Button
-                                  variant="outline-danger"
+                                  variant={category.hidden ? 'outline-primary' : 'outline-secondary'}
                                   size="sm"
-                                  aria-label={t('admin.actions.delete')}
-                                  title={t('admin.actions.delete')}
-                                  disabled={pendingAction === deleteActionKey}
-                                  onClick={() => requestDeleteItem(category)}
+                                  aria-label={t('admin.catalogs.toggleHidden')}
+                                  title={t('admin.catalogs.toggleHidden')}
+                                  disabled={pendingAction === visibilityActionKey}
+                                  onClick={() => toggleVisibility(category)}
                                 >
-                                  {pendingAction === deleteActionKey
+                                  {pendingAction === visibilityActionKey
                                     ? <Spinner animation="border" size="sm" />
-                                    : <FaTrash />}
+                                    : category.hidden ? <FaEye /> : <FaEyeSlash />}
                                 </Button>
-                              )}
-                            </div>
+                                {isFoodCategories && (
+                                  <Button
+                                    variant="outline-success"
+                                    size="sm"
+                                    aria-label={t('admin.actions.edit')}
+                                    title={t('admin.actions.edit')}
+                                    onClick={() => openEditModal(category)}
+                                  >
+                                    <FaEdit />
+                                  </Button>
+                                )}
+                                {isFoodCategories && (
+                                  <Button
+                                    variant="outline-danger"
+                                    size="sm"
+                                    aria-label={t('admin.actions.delete')}
+                                    title={t('admin.actions.delete')}
+                                    disabled={pendingAction === deleteActionKey}
+                                    onClick={() => requestDeleteItem(category)}
+                                  >
+                                    {pendingAction === deleteActionKey
+                                      ? <Spinner animation="border" size="sm" />
+                                      : <FaTrash />}
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {filteredCategories.length === 0 && (
+                        <tr>
+                          <td colSpan={4} className="text-center text-secondary py-4">
+                            {t('admin.table.empty')}
                           </td>
                         </tr>
-                      );
-                    })}
-                    {categories.length === 0 && (
-                      <tr>
-                        <td colSpan={4} className="text-center text-secondary py-4">
-                          {t('admin.table.empty')}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </Table>
-              </div>
+                      )}
+                    </tbody>
+                  </Table>
+                </div>
               </Card.Body>
             </Card>
 
@@ -571,24 +563,6 @@ function AdminCatalogs({ type = 'overview' }) {
                         onChange={(event) => setForm((current) => ({ ...current, nameVi: event.target.value }))}
                       />
                     </Col>
-                    {isActivityCategories && (
-                      <Col md={12}>
-                        <Form.Label>{t('admin.table.category')}</Form.Label>
-                        {editingItem ? (
-                          <Form.Control value={form.category} readOnly disabled />
-                        ) : (
-                          <Form.Select
-                            value={form.category}
-                            onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))}
-                            required
-                          >
-                            {activityCategoryOptions
-                              .filter((option) => !categories.some((item) => item.category === option))
-                              .map((option) => <option key={option} value={option}>{option}</option>)}
-                          </Form.Select>
-                        )}
-                      </Col>
-                    )}
                     <Col md={12}>
                       <Form.Check
                         type="switch"
@@ -638,7 +612,7 @@ function AdminCatalogs({ type = 'overview' }) {
                 <Modal.Title>{t('admin.catalogs.deleteConfirmTitle')}</Modal.Title>
               </Modal.Header>
               <Modal.Body>
-                {t(isFoodCategories ? 'admin.catalogs.deleteFoodCategoryConfirm' : 'admin.catalogs.deleteActivityCategoryConfirm', {
+                {t('admin.catalogs.deleteFoodCategoryConfirm', {
                   name: deleteCandidate?.name || '',
                 })}
               </Modal.Body>

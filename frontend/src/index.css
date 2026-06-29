@@ -2874,7 +2874,13 @@ tr.is-completed {
 }
 
 .admin-table-search {
+  margin-right: auto;
   min-width: 280px;
+  order: 1;
+}
+
+.admin-table-toolbar > .btn {
+  order: 2;
 }
 
 .admin-table th {
@@ -3001,6 +3007,7 @@ tr.is-completed {
   }
 
   .admin-table-search {
+    margin-right: 0;
     min-width: 0;
     width: 100%;
   }

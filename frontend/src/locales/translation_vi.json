@@ -1262,7 +1262,7 @@
       },
       "foods": {
         "title": "Quản lý thực phẩm, món ăn, calo/macro",
-        "action": "Thêm món ăn",
+        "action": "Thêm thực phẩm",
         "loading": "Đang tải danh mục thực phẩm từ cơ sở dữ liệu...",
         "loadError": "Không thể tải danh mục thực phẩm từ cơ sở dữ liệu.",
         "stats": {
@@ -1273,7 +1273,7 @@
       },
       "exercises": {
         "title": "Quản lý bài tập và calo tiêu hao",
-        "action": "Thêm bài tập",
+        "action": "Thêm hoạt động",
         "loading": "Đang tải danh mục hoạt động từ cơ sở dữ liệu...",
         "loadError": "Không thể tải danh mục hoạt động từ cơ sở dữ liệu.",
         "stats": {
@@ -1408,6 +1408,8 @@
       "loading": "Đang tải danh mục...",
       "loadError": "Không thể tải danh mục.",
       "categoryList": "Danh sách danh mục",
+      "searchPlaceholder": "Tìm kiếm danh mục...",
+      "searchLabel": "Tìm kiếm danh mục",
       "categoryName": "Tên danh mục",
       "itemCount": "Số mục",
       "addCategory": "Thêm danh mục",
@@ -1422,9 +1424,12 @@
       "deleteConfirmTitle": "Xóa danh mục",
       "deleteFoodCategoryConfirm": "Bạn có chắc muốn xóa danh mục thực phẩm \"{{name}}\"?",
       "deleteActivityCategoryConfirm": "Bạn có chắc muốn xóa danh mục hoạt động \"{{name}}\"?",
-      "linkedFoodCategoryBlocked": "Không thể xóa hoặc tạm khóa danh mục khi đã có thực phẩm tồn tại."
+      "linkedFoodCategoryBlocked": "Không thể xóa hoặc tạm khóa danh mục khi đã có thực phẩm tồn tại.",
+      "linkedActivityCategoryBlocked": "Không thể xóa hoặc ẩn danh mục hoạt động khi danh mục vẫn còn hoạt động."
     },
     "catalogData": {
+      "editFoodTitle": "Sửa thực phẩm",
+      "editActivityTitle": "Sửa hoạt động",
       "foodCreateSuccess": "Đã thêm thực phẩm.",
       "foodUpdateSuccess": "Đã cập nhật thực phẩm.",
       "foodDeleteSuccess": "Đã xóa thực phẩm.",
