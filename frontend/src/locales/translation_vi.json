@@ -864,15 +864,14 @@
     "aiGenerated": "AI tạo",
     "activityCategory": "Nhóm",
     "recipeLibraryTitle": "Công thức bữa ăn",
-    "recipeLibraryDescription": "Xem công thức có sẵn, nguyên liệu và hướng dẫn cách nấu trước khi thêm vào bữa ăn.",
     "oneServing": "1 phần",
     "servings": "{{count}} phần",
     "noCookingGuide": "Chưa có hướng dẫn nấu chi tiết cho công thức này.",
     "selectedFoods": "Danh sách thực phẩm",
-    "selectedFoodsHint": "Đã chọn {{count}}/{{max}} thực phẩm. AI sẽ ưu tiên các thực phẩm bạn chọn để tạo món ăn.",
+    "selectedFoodsHint": "Đã chọn {{count}}/{{max}} thực phẩm.",
     "clearFoods": "Xóa chọn",
     "selectedActivities": "Loại vận động muốn tập",
-    "selectedActivitiesHint": "Đã chọn {{count}}/{{max}} loại vận động. AI sẽ ưu tiên tạo phương án từ các loại bạn chọn.",
+    "selectedActivitiesHint": "Đã chọn {{count}}/{{max}} loại vận động.",
     "clearActivities": "Xóa chọn",
     "warnings": {
       "foodLimitTitle": "Chọn quá nhiều thực phẩm",
@@ -887,18 +886,15 @@
       "plan": "Kế hoạch",
       "planDescription": "Chọn ngày, bữa ăn và ngân sách calo.",
       "mealPlan": "Kế hoạch ăn uống",
-      "mealPlanDescription": "Lập gợi ý món ăn từ dữ liệu bữa ăn và calo.",
       "recipePlan": "Công thức bữa ăn",
       "recipePlanDescription": "Chọn ngày, bữa ăn và lọc công thức có sẵn.",
       "food": "Món ăn",
-      "foodDescription": "Chọn tối đa {{max}} thực phẩm. AI có thể dùng công thức có sẵn nếu phù hợp hoặc tạo công thức bữa ăn.",
       "recipes": "Công thức",
       "recipeFilter": "Lọc công thức",
       "recipeFilterDescription": "Chọn tối đa {{max}} thực phẩm để tìm công thức có nguyên liệu phù hợp.",
       "activity": "Hoạt động",
       "activityPlan": "Kế hoạch vận động",
-      "activityPlanDescription": "Lập gợi ý bài tập từ dữ liệu hoạt động.",
-      "activityDescription": "Tạo gợi ý vận động từ dữ liệu hoạt động."
+      "activityPlanDescription": "Lập gợi ý bài tập từ dữ liệu hoạt động."
     },
     "defaultCookingMethod": "Sơ chế nguyên liệu, nấu chín các phần cần làm nóng, sau đó kết hợp và nêm nhẹ: {{ingredients}}.",
     "activitySuggestionsTitle": "Gợi ý hoạt động vận động cho ngày này",
@@ -1441,6 +1437,33 @@
       "saveError": "Không thể lưu dữ liệu.",
       "deleteError": "Không thể xóa dữ liệu.",
       "statusError": "Không thể cập nhật trạng thái."
+    }
+  },
+  "plansPage": {
+    "title": "Kế hoạch của tôi",
+    "trackingEyebrow": "MỤC TIÊU ĐANG THEO DÕI",
+    "adjustGoal": "Điều chỉnh mục tiêu",
+    "timeProgress": "Tiến độ thời gian",
+    "unknown": "Chưa xác định",
+    "weeks": "{{count}} tuần",
+    "planDate": "Ngày theo dõi",
+    "progressDetail": "Bắt đầu: {{startDate}} · Đã qua {{elapsedDays}}/{{durationDays}} ngày",
+    "empty": {
+      "title": "Bạn chưa thiết lập mục tiêu",
+      "description": "Hãy đặt mục tiêu trước khi theo dõi kế hoạch.",
+      "action": "Thiết lập mục tiêu",
+      "actionTitle": "Thiết lập mục tiêu sức khỏe"
+    },
+    "stats": {
+      "dailyCalories": "Calo mỗi ngày",
+      "dailyActivity": "Vận động mỗi ngày",
+      "duration": "Thời gian"
+    },
+    "tabs": {
+      "meals": "Kế hoạch ăn uống",
+      "mealsTitle": "Xem kế hoạch ăn uống",
+      "activities": "Kế hoạch tập luyện",
+      "activitiesTitle": "Xem kế hoạch tập luyện"
     }
   }
 }

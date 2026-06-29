@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { FaFacebookF, FaGoogle } from 'react-icons/fa';
+import { FaArrowLeft, FaFacebookF, FaGoogle } from 'react-icons/fa';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { clearAuthTokens, getDefaultRouteForCurrentUser, saveAuthTokens } from '../../api/api';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
@@ -102,7 +102,10 @@ function Login() {
         <Col xs={12} md={8} lg={5} xl={4}>
           <Card className="auth-card border-0 shadow-sm">
             <Card.Body className="p-4 p-md-5">
-              <div className="d-flex justify-content-end mb-3">
+              <div className="d-flex justify-content-between align-items-center gap-3 mb-3">
+                <Link to="/" className="admin-back-link mb-0" aria-label={t('auth.backToHome')} title={t('auth.backToHome')}>
+                  <FaArrowLeft />
+                </Link>
                 <LanguageSwitcher />
               </div>
               <div className="mb-4">

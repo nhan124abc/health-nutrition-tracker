@@ -1256,15 +1256,14 @@
     "aiGenerated": "AI generated",
     "activityCategory": "Category",
     "recipeLibraryTitle": "Meal recipes",
-    "recipeLibraryDescription": "Review saved recipes, ingredients, and cooking instructions before adding one to your meal.",
     "oneServing": "1 serving",
     "servings": "{{count}} servings",
     "noCookingGuide": "No detailed cooking guide is available for this recipe yet.",
     "selectedFoods": "Food list",
-    "selectedFoodsHint": "Selected {{count}}/{{max}} foods. AI will prioritize your selected foods when creating meal options.",
+    "selectedFoodsHint": "Selected {{count}}/{{max}} foods.",
     "clearFoods": "Clear",
     "selectedActivities": "Activity types to use",
-    "selectedActivitiesHint": "Selected {{count}}/{{max}} activity types. AI will prioritize suggestions from your choices.",
+    "selectedActivitiesHint": "Selected {{count}}/{{max}} activity types.",
     "clearActivities": "Clear",
     "warnings": {
       "foodLimitTitle": "Too many foods selected",
@@ -1279,18 +1278,15 @@
       "plan": "Plan",
       "planDescription": "Choose date, meal slot, and calorie target.",
       "mealPlan": "Meal plan",
-      "mealPlanDescription": "Plan food suggestions from meal and calorie data.",
       "recipePlan": "Meal recipes",
       "recipePlanDescription": "Choose a date, meal slot, and saved recipe filters.",
       "food": "Food",
-      "foodDescription": "Select up to {{max}} foods. AI can use a matching saved recipe or generate a meal recipe.",
       "recipes": "Recipes",
       "recipeFilter": "Recipe filters",
       "recipeFilterDescription": "Select up to {{max}} foods to find recipes with matching ingredients.",
       "activity": "Activity",
       "activityPlan": "Activity plan",
-      "activityPlanDescription": "Plan workout suggestions from activity data.",
-      "activityDescription": "Generate workout options from activity data."
+      "activityPlanDescription": "Plan workout suggestions from activity data."
     },
     "defaultCookingMethod": "Prepare the ingredients, cook the items that need heat, then combine and season lightly: {{ingredients}}.",
     "activitySuggestionsTitle": "Activity suggestions for this date",
@@ -1442,6 +1438,34 @@
       "bmr": "BMR",
       "muscle": "Muscle",
       "measurements": "Waist/Buttocks/Chest"
+    }
+  },
+  "plansPage": {
+    "title": "My plans",
+    "trackingEyebrow": "CURRENT GOAL",
+    "adjustGoal": "Adjust goal",
+    "timeProgress": "Time progress",
+    "unknown": "Not set",
+    "weeks_one": "{{count}} week",
+    "weeks_other": "{{count}} weeks",
+    "planDate": "Tracking date",
+    "progressDetail": "Start: {{startDate}} · {{elapsedDays}}/{{durationDays}} days elapsed",
+    "empty": {
+      "title": "You have not set a goal",
+      "description": "Set a goal before tracking your plan.",
+      "action": "Set goal",
+      "actionTitle": "Set a health goal"
+    },
+    "stats": {
+      "dailyCalories": "Daily calories",
+      "dailyActivity": "Daily activity",
+      "duration": "Duration"
+    },
+    "tabs": {
+      "meals": "Meal plan",
+      "mealsTitle": "View meal plan",
+      "activities": "Workout plan",
+      "activitiesTitle": "View workout plan"
     }
   }
 }

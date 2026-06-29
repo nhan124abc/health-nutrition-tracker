@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import ErrorModal from '../../components/ErrorModal';
 import { Link, useNavigate } from 'react-router-dom';
 import LanguageSwitcher from '../../components/LanguageSwitcher';
+import { FaArrowLeft } from 'react-icons/fa';
 import { register } from './authService';
 
 function Register() {
@@ -56,7 +57,10 @@ function Register() {
         <Col xs={12} md={8} lg={5} xl={4}>
           <Card className="auth-card border-0 shadow-sm">
             <Card.Body className="p-4 p-md-5">
-              <div className="d-flex justify-content-end mb-3">
+              <div className="d-flex justify-content-between align-items-center gap-3 mb-3">
+                <Link to="/" className="admin-back-link mb-0" aria-label={t('auth.backToHome')} title={t('auth.backToHome')}>
+                  <FaArrowLeft />
+                </Link>
                 <LanguageSwitcher />
               </div>
               <div className="mb-4">
