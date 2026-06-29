@@ -2,6 +2,8 @@ const nutritionConfig = {
   endpoints: {
     foods: '/nutrition/foods',
     foodDetail: (id) => `/nutrition/foods/${id}`,
+    foodHide: (id) => `/nutrition/foods/${id}/hide`,
+    foodRestore: (id) => `/nutrition/foods/${id}/restore`,
     categories: '/nutrition/categories',
     adminCategories: '/nutrition/admin/categories',
     adminCategoryDetail: (id) => `/nutrition/admin/categories/${id}`,

@@ -117,6 +117,8 @@ function AdminCatalogs({ type = 'overview' }) {
   const [saving, setSaving] = useState(false);
   const [noticeKey, setNoticeKey] = useState('');
   const [deleteCandidate, setDeleteCandidate] = useState(null);
+  const [visibilityCandidate, setVisibilityCandidate] = useState(null);
+  const [successKey, setSuccessKey] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const isFoodCategories = type === 'food';
   const isActivityCategories = type === 'activity';
@@ -222,6 +224,10 @@ function AdminCatalogs({ type = 'overview' }) {
     setNoticeKey('admin.catalogs.linkedFoodCategoryBlocked');
   };
 
+  const showLinkedActivityNotice = () => {
+    setNoticeKey('admin.catalogs.linkedActivityCategoryBlocked');
+  };
+
   const resetForm = () => {
     setEditingItem(null);
     setShowFormModal(false);
@@ -263,6 +269,11 @@ function AdminCatalogs({ type = 'overview' }) {
 
     try {
       if (isActivityCategories) {
+        if (nextHidden && item.count > 0) {
+          showLinkedActivityNotice();
+          return;
+        }
+
         const response = await updateActivityCategoryVisibility(item.category, nextHidden);
         const data = response.data?.data ?? response.data ?? { ...item.raw, hidden: nextHidden };
         setCategories((current) => current
@@ -274,6 +285,7 @@ function AdminCatalogs({ type = 'overview' }) {
         const response = await updateFoodCategoryVisibility(item.id, nextHidden);
         const data = response.data?.data ?? response.data ?? { hidden: nextHidden };
         updateCategoryRow(item.id, { ...data, hidden: nextHidden });
+        setSuccessKey(nextHidden ? 'admin.catalogs.foodCategoryHideSuccess' : 'admin.catalogs.foodCategoryShowSuccess');
       }
     } catch (requestError) {
       if (isFoodCategories && nextHidden && isLinkedFoodCategoryError(requestError)) {
@@ -289,6 +301,37 @@ function AdminCatalogs({ type = 'overview' }) {
   const requestDeleteItem = (item) => {
     setActionError('');
     setDeleteCandidate(item);
+  };
+
+  const requestVisibilityChange = (item) => {
+    setActionError('');
+
+    if (isFoodCategories) {
+      setVisibilityCandidate(item);
+      return;
+    }
+
+    if (isActivityCategories && !item.hidden && item.count > 0) {
+      showLinkedActivityNotice();
+      return;
+    }
+
+    setVisibilityCandidate(item);
+  };
+
+  const closeVisibilityPopup = () => {
+    if (!pendingAction.startsWith('visibility:')) {
+      setVisibilityCandidate(null);
+    }
+  };
+
+  const confirmVisibilityChange = async () => {
+    if (!visibilityCandidate) {
+      return;
+    }
+
+    await toggleVisibility(visibilityCandidate);
+    setVisibilityCandidate(null);
   };
 
   const closeDeletePopup = () => {
@@ -312,6 +355,7 @@ function AdminCatalogs({ type = 'overview' }) {
       await deleteFoodCategory(item.id);
       setCategories((current) => current.filter((category) => String(category.id) !== String(item.id)));
       setDeleteCandidate(null);
+      setSuccessKey('admin.catalogs.foodCategoryDeleteSuccess');
     } catch (requestError) {
       if (isLinkedFoodCategoryError(requestError)) {
         showLinkedFoodNotice();
@@ -339,6 +383,9 @@ function AdminCatalogs({ type = 'overview' }) {
       const response = editingItem
         ? await updateFoodCategory(editingItem.id, payload)
         : await createFoodCategory(payload);
+      const successMessageKey = editingItem
+        ? 'admin.catalogs.foodCategoryUpdateSuccess'
+        : 'admin.catalogs.foodCategoryCreateSuccess';
       const data = response.data?.data ?? response.data ?? payload;
       const mappedItem = mapFoodCategory(data);
 
@@ -364,6 +411,7 @@ function AdminCatalogs({ type = 'overview' }) {
         .sort((left, right) => left.name.localeCompare(right.name));
       setCategories(persistedCategories);
       resetForm();
+      setSuccessKey(successMessageKey);
     } catch (requestError) {
       setActionError(getActionError(requestError));
     } finally {
@@ -490,7 +538,7 @@ function AdminCatalogs({ type = 'overview' }) {
                                   aria-label={t('admin.catalogs.toggleHidden')}
                                   title={t('admin.catalogs.toggleHidden')}
                                   disabled={pendingAction === visibilityActionKey}
-                                  onClick={() => toggleVisibility(category)}
+                                  onClick={() => requestVisibilityChange(category)}
                                 >
                                   {pendingAction === visibilityActionKey
                                     ? <Spinner animation="border" size="sm" />
@@ -603,6 +651,57 @@ function AdminCatalogs({ type = 'overview' }) {
               <Modal.Footer>
                 <Button variant="success" onClick={() => setNoticeKey('')}>
                   {t('common.close')}
+                </Button>
+              </Modal.Footer>
+            </Modal>
+
+            <Modal show={Boolean(successKey)} onHide={() => setSuccessKey('')} centered>
+              <Modal.Header closeButton>
+                <Modal.Title>{t('admin.catalogs.successTitle')}</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>{successKey ? t(successKey) : ''}</Modal.Body>
+              <Modal.Footer>
+                <Button variant="success" onClick={() => setSuccessKey('')}>
+                  {t('common.close')}
+                </Button>
+              </Modal.Footer>
+            </Modal>
+
+            <Modal show={Boolean(visibilityCandidate)} onHide={closeVisibilityPopup} centered>
+              <Modal.Header closeButton={!pendingAction.startsWith('visibility:')}>
+                <Modal.Title>{t('admin.catalogs.visibilityConfirmTitle')}</Modal.Title>
+              </Modal.Header>
+              <Modal.Body>
+                {visibilityCandidate?.hidden
+                  ? t(
+                    isActivityCategories
+                      ? 'admin.catalogs.showActivityCategoryConfirm'
+                      : 'admin.catalogs.showFoodCategoryConfirm',
+                    { name: visibilityCandidate?.name || '' }
+                  )
+                  : t(
+                    isActivityCategories
+                      ? 'admin.catalogs.hideActivityCategoryConfirm'
+                      : 'admin.catalogs.hideFoodCategoryConfirm',
+                    { name: visibilityCandidate?.name || '' }
+                  )}
+              </Modal.Body>
+              <Modal.Footer>
+                <Button
+                  type="button"
+                  variant="outline-secondary"
+                  onClick={closeVisibilityPopup}
+                  disabled={pendingAction.startsWith('visibility:')}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="success"
+                  onClick={confirmVisibilityChange}
+                  disabled={pendingAction.startsWith('visibility:')}
+                >
+                  {pendingAction.startsWith('visibility:') ? <Spinner animation="border" size="sm" /> : t('admin.users.confirmAction')}
                 </Button>
               </Modal.Footer>
             </Modal>

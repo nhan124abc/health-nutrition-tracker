@@ -51,17 +51,24 @@ function decodeJwtPayload(token) {
 }
 
 export function getCurrentUser() {
+  const tokenPayload = decodeJwtPayload(getAccessToken());
+
   try {
     const storedUser = localStorage.getItem(USER_KEY);
 
     if (storedUser) {
-      return JSON.parse(storedUser);
+      const parsedUser = JSON.parse(storedUser);
+
+      return {
+        ...parsedUser,
+        id: parsedUser.id ?? parsedUser.userId ?? tokenPayload?.userId,
+        email: parsedUser.email ?? tokenPayload?.sub,
+        role: parsedUser.role ?? tokenPayload?.role,
+      };
     }
   } catch {
     localStorage.removeItem(USER_KEY);
   }
-
-  const tokenPayload = decodeJwtPayload(getAccessToken());
 
   if (!tokenPayload) {
     return null;
