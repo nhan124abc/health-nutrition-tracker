@@ -60,10 +60,6 @@ function HealthInsights() {
     }
   };
 
-  const totalCount = insights.length;
-  const unreadCount = insights.filter((insight) => !insight.read).length;
-  const readCount = totalCount - unreadCount;
-
   return (
     <>
       <div className="page-heading">
@@ -75,33 +71,6 @@ function HealthInsights() {
       </div>
 
       {loadError && <div className="alert alert-warning">{loadError}</div>}
-
-      <Row className="g-3 mb-4">
-        <Col md={4}>
-          <Card className="border-0 shadow-sm health-insight-summary-card">
-            <Card.Body>
-              <div className="text-secondary small fw-semibold mb-1">{t('healthInsightsPage.summary.total')}</div>
-              <div className="metric-value">{totalCount}</div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={4}>
-          <Card className="border-0 shadow-sm health-insight-summary-card">
-            <Card.Body>
-              <div className="text-secondary small fw-semibold mb-1">{t('healthInsightsPage.summary.unread')}</div>
-              <div className="metric-value">{unreadCount}</div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={4}>
-          <Card className="border-0 shadow-sm health-insight-summary-card">
-            <Card.Body>
-              <div className="text-secondary small fw-semibold mb-1">{t('healthInsightsPage.summary.read')}</div>
-              <div className="metric-value">{readCount}</div>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
 
       {loading ? (
         <div className="alert alert-light border">{t('healthInsightsPage.loading')}</div>
