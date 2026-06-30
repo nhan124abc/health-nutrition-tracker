@@ -2496,13 +2496,40 @@ tr.is-completed {
   display: flex;
   font-size: 0.82rem;
   gap: 0.6rem;
-  justify-content: space-between;
+  justify-content: center;
   margin-top: 0.65rem;
+  text-align: center;
 }
 
 .planner-food-pagination span {
   min-width: 0;
   text-align: center;
+}
+
+.pagination-arrow-btn.btn {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--health-primary-dark);
+  display: inline-flex;
+  height: 2rem;
+  justify-content: center;
+  padding: 0;
+  text-decoration: none;
+  width: 2rem;
+}
+
+.pagination-arrow-btn.btn:hover,
+.pagination-arrow-btn.btn:focus {
+  background: transparent;
+  color: var(--health-primary);
+  text-decoration: none;
+}
+
+.pagination-arrow-btn.btn:disabled {
+  background: transparent;
+  color: #adb5bd;
+  opacity: 1;
 }
 
 .planner-clear-foods {

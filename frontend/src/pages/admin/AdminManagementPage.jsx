@@ -6,6 +6,8 @@ import {
   FaEdit,
   FaEye,
   FaEyeSlash,
+  FaArrowLeft,
+  FaArrowRight,
   FaSearch,
   FaTrash,
   FaUsers,
@@ -37,6 +39,8 @@ import { cleanText } from '../../features/nutrition/nutritionUtils';
 import { getLocalizedName } from '../../utils/localizedName';
 import ErrorModal from '../../components/ErrorModal';
 import { getCurrentUser } from '../../api/api';
+
+const ADMIN_PAGE_SIZE = 16;
 
 const pageConfigs = {
   users: {
@@ -339,6 +343,7 @@ function AdminManagementPage({ type }) {
   const [confirmingAction, setConfirmingAction] = useState(false);
   const [successKey, setSuccessKey] = useState('');
   const [noticeKey, setNoticeKey] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(['users', 'foods', 'exercises'].includes(type));
   const [loadError, setLoadError] = useState('');
   const { i18n, t } = useTranslation();
@@ -464,6 +469,20 @@ function AdminManagementPage({ type }) {
         .includes(normalizedSearch)
     );
   }, [rows, searchTerm, t]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / ADMIN_PAGE_SIZE));
+  const pageStartIndex = (currentPage - 1) * ADMIN_PAGE_SIZE;
+  const paginatedRows = filteredRows.slice(pageStartIndex, pageStartIndex + ADMIN_PAGE_SIZE);
+  const paginationFrom = filteredRows.length === 0 ? 0 : pageStartIndex + 1;
+  const paginationTo = Math.min(filteredRows.length, pageStartIndex + ADMIN_PAGE_SIZE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, type]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   const displayCell = (cell) => (
     isTranslationKey(cell) ? t(cell) : cell
@@ -893,7 +912,7 @@ function AdminManagementPage({ type }) {
                     </td>
                   </tr>
                 )}
-                {filteredRows.map((row) => {
+                {paginatedRows.map((row) => {
                   const rowKey = row.id || row.cells.join('-');
                   const isUserRow = type === 'users';
                   const statusActionKey = getRowActionKey('status', row);
@@ -982,6 +1001,35 @@ function AdminManagementPage({ type }) {
                 })}
               </tbody>
             </Table>
+          </div>
+          <div className="d-flex flex-column align-items-center justify-content-center gap-2 mt-3">
+            <div className="d-flex align-items-center justify-content-center gap-2">
+              <Button
+                variant="link"
+                size="sm"
+                className="pagination-arrow-btn"
+                aria-label={t('admin.table.previousPage')}
+                title={t('admin.table.previousPage')}
+                disabled={currentPage <= 1}
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              >
+                <FaArrowLeft />
+              </Button>
+              <span className="small text-secondary">
+                {currentPage}/{totalPages}
+              </span>
+              <Button
+                variant="link"
+                size="sm"
+                className="pagination-arrow-btn"
+                aria-label={t('admin.table.nextPage')}
+                title={t('admin.table.nextPage')}
+                disabled={currentPage >= totalPages}
+                onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+              >
+                <FaArrowRight />
+              </Button>
+            </div>
           </div>
         </Card.Body>
       </Card>

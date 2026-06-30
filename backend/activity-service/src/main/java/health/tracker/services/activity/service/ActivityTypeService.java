@@ -7,7 +7,6 @@ import health.tracker.services.activity.entity.ActivityCategoryLabel;
 import health.tracker.services.activity.entity.ActivityType;
 import health.tracker.services.activity.exception.AppException;
 import health.tracker.services.activity.repository.ActivityCategoryLabelRepository;
-import health.tracker.services.activity.repository.ActivityLogRepository;
 import health.tracker.services.activity.repository.ActivityTypeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,7 +21,6 @@ import java.util.List;
 public class ActivityTypeService {
 
     private final ActivityTypeRepository typeRepository;
-    private final ActivityLogRepository logRepository;
     private final ActivityCategoryLabelRepository categoryLabelRepository;
 
     @Transactional(readOnly = true)
@@ -130,7 +128,6 @@ public class ActivityTypeService {
                 .system(request.getSystem() == null || request.getSystem())
                 .hidden(request.getHidden() != null && request.getHidden())
                 .build();
-        validateCanBeHidden(type);
         return typeRepository.save(type);
     }
 
@@ -153,7 +150,6 @@ public class ActivityTypeService {
         }
         if (request.getHidden() != null) {
             type.setHidden(request.getHidden());
-            validateCanBeHidden(type);
         }
         return typeRepository.save(type);
     }
@@ -161,19 +157,14 @@ public class ActivityTypeService {
     @Transactional
     public void delete(Integer id) {
         ActivityType type = findById(id);
-        long linkedActivityCount = logRepository.countByActivityTypeId(id);
-        if (linkedActivityCount > 0) {
-            throw new AppException(HttpStatus.CONFLICT,
-                    "Cannot delete activity type because " + linkedActivityCount + " activity log(s) are linked");
-        }
-        typeRepository.delete(type);
+        type.setHidden(true);
+        typeRepository.save(type);
     }
 
     @Transactional
     public ActivityType hide(Integer id) {
         ActivityType type = findById(id);
         type.setHidden(true);
-        validateCanBeHidden(type);
         return typeRepository.save(type);
     }
 
@@ -187,17 +178,6 @@ public class ActivityTypeService {
     private ActivityType findById(Integer id) {
         return typeRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Activity type not found: " + id));
-    }
-
-    private void validateCanBeHidden(ActivityType type) {
-        if (!type.isHidden() || type.getId() == null) {
-            return;
-        }
-        long linkedActivityCount = logRepository.countByActivityTypeId(type.getId());
-        if (linkedActivityCount > 0) {
-            throw new AppException(HttpStatus.CONFLICT,
-                    "Cannot hide activity type because " + linkedActivityCount + " activity log(s) are linked");
-        }
     }
 
     private ActivityCategoryResponse toCategoryResponse(ActivityType.Category category) {
