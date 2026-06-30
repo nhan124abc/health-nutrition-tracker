@@ -473,8 +473,6 @@ function AdminManagementPage({ type }) {
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / ADMIN_PAGE_SIZE));
   const pageStartIndex = (currentPage - 1) * ADMIN_PAGE_SIZE;
   const paginatedRows = filteredRows.slice(pageStartIndex, pageStartIndex + ADMIN_PAGE_SIZE);
-  const paginationFrom = filteredRows.length === 0 ? 0 : pageStartIndex + 1;
-  const paginationTo = Math.min(filteredRows.length, pageStartIndex + ADMIN_PAGE_SIZE);
 
   useEffect(() => {
     setCurrentPage(1);
