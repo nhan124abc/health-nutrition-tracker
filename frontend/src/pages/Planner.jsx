@@ -1451,7 +1451,7 @@ function Planner() {
                   aria-label={t('plannerPage.previousPage')}
                   onClick={() => setRecipePage((current) => Math.max(0, current - 1))}
                 >
-                  <FaChevronLeft />
+                  <FaArrowLeft />
                 </Button>
                 <span>{t('plannerPage.recipePageInfo', { page: recipePage + 1, total: recipeTotalPages })}</span>
                 <Button
@@ -1461,7 +1461,7 @@ function Planner() {
                   aria-label={t('plannerPage.nextPage')}
                   onClick={() => setRecipePage((current) => Math.min(recipeTotalPages - 1, current + 1))}
                 >
-                  <FaChevronRight />
+                  <FaArrowRight />
                 </Button>
               </div>
             )}
