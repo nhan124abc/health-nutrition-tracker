@@ -11,7 +11,7 @@
     "activity": "Vận động",
     "water": "Theo dõi nước uống",
     "goals": "Mục tiêu",
-    "planner": "Gợi ý & Lập kế hoạch AI",
+    "planner": "Gợi ý & Lập kế hoạch",
     "reports": "Báo cáo",
     "statistics": "Báo cáo & thống kê",
     "bodyMetrics": "Chỉ số cơ thể",
@@ -193,6 +193,7 @@
     "mealBudget": "Ngân sách cho bữa này: {{budget}} kcal",
     "chooseOption": "Chọn phương án này",
     "chooseActivity": "Chọn hoạt động này",
+    "activityOptionNumber": "Phương án {{number}}",
     "chosen": "Đã chọn",
     "cancelMeal": "Hủy chọn bữa này",
     "cancelActivity": "Hủy chọn hoạt động này",
@@ -850,6 +851,10 @@
     "removeActivity": "Hủy chọn hoạt động này",
     "deleteActivity": "Xóa hoạt động",
     "findingOptions": "Đang tìm phương án phù hợp nhất cho bạn...",
+    "selectionProgress": {
+      "title": "Đang lưu phương án của bạn",
+      "message": "Hệ thống đang cập nhật bữa ăn và kế hoạch. Vui lòng chờ trong giây lát..."
+    },
     "loadingRecipes": "Đang tải công thức...",
     "loadRecipes": "Tải công thức",
     "caloriesBurned": "Đốt {{calories}} kcal",
@@ -861,9 +866,14 @@
     "ingredientCount": "{{count}} nguyên liệu",
     "cookingMethod": "Cách chế biến",
     "savedRecipe": "Công thức có sẵn",
-    "aiGenerated": "AI tạo",
+    "aiGenerated": "Gợi ý mới",
     "activityCategory": "Nhóm",
     "recipeLibraryTitle": "Công thức bữa ăn",
+    "recipeLibraryDescription": "Ưu tiên công thức khớp nguyên liệu đã chọn, sau đó xếp theo lượng calo phù hợp với bữa ăn.",
+    "filteringForMeal": "Đang ưu tiên món phù hợp cho {{meal}}",
+    "recipeMatch": "Khớp {{matched}}/{{total}} nguyên liệu đã chọn",
+    "localizedRecipeName": "Công thức với {{ingredients}}",
+    "recipePageInfo": "Trang {{page}}/{{total}} · 4 công thức mỗi trang",
     "oneServing": "1 phần",
     "servings": "{{count}} phần",
     "noCookingGuide": "Chưa có hướng dẫn nấu chi tiết cho công thức này.",
@@ -888,8 +898,8 @@
       "mealPlan": "Kế hoạch ăn uống",
       "recipePlan": "Công thức bữa ăn",
       "recipePlanDescription": "Chọn ngày, bữa ăn và lọc công thức có sẵn.",
-      "food": "Món ăn",
-      "recipes": "Công thức",
+      "food": "Tạo bữa ăn",
+      "recipes": "Công thức có sẵn",
       "recipeFilter": "Lọc công thức",
       "recipeFilterDescription": "Chọn tối đa {{max}} thực phẩm để tìm công thức có nguyên liệu phù hợp.",
       "activity": "Hoạt động",
@@ -897,6 +907,8 @@
       "activityPlanDescription": "Lập gợi ý bài tập từ dữ liệu hoạt động."
     },
     "defaultCookingMethod": "Sơ chế nguyên liệu, nấu chín các phần cần làm nóng, sau đó kết hợp và nêm nhẹ: {{ingredients}}.",
+    "generatedDishName": "Món kết hợp {{ingredients}}",
+    "generatedCookingMethod": "1. Sơ chế và cân đúng khẩu phần: {{ingredients}}. 2. Nấu chín {{mainIngredient}} trước, sau đó thêm các nguyên liệu còn lại theo thứ tự nhanh chín hơn. 3. Nêm nhẹ, hạn chế dầu mỡ, trộn đều và dùng khi còn ấm để giữ vị ngon.",
     "activitySuggestionsTitle": "Gợi ý hoạt động vận động cho ngày này",
     "activitySuggestionsDescription": "Kết hợp tập luyện giúp bạn đạt mục tiêu nhanh hơn.",
     "logged": "Đã ghi nhận",
@@ -915,7 +927,7 @@
       "selectActivity": "Chọn loại hoạt động vận động rồi nhấn \"Tạo 2 phương án\".",
       "loggedMeal": "Bạn đã ghi nhận bữa {{meal}} trong ngày này. Hãy xóa bữa cũ nếu muốn chọn phương án khác.",
       "selectMeal": "Chọn loại bữa rồi nhấn \"Tạo 2 phương án\".",
-      "noRecipes": "Chưa có công thức phù hợp. Hãy chạy seed công thức hoặc bỏ bớt bộ lọc thực phẩm."
+      "noRecipes": "Chưa có công thức phù hợp. Hãy bỏ bớt nguyên liệu hoặc chuyển sang tab Tạo bữa ăn."
     },
     "suggestion": {
       "activityMessage": "Các hoạt động được đề xuất dựa trên mục tiêu và thể trạng của bạn.",
@@ -924,7 +936,7 @@
     },
     "savedNotes": {
       "meal": "Bữa ăn đề xuất theo lượng calo còn lại",
-      "activity": "Bài tập đề xuất từ AI Planner"
+      "activity": "Bài tập trong kế hoạch vận động"
     },
     "success": {
       "mealAdded": "Đã thêm \"{{name}}\". Phương án còn lại sẽ không được cộng thêm.",
@@ -939,6 +951,7 @@
       "loadRecipes": "Không thể tải công thức bữa ăn.",
       "overBudget": "Phương án vượt quá lượng calo còn lại. Vui lòng tạo lại gợi ý.",
       "addMeal": "Không thể thêm bữa ăn vào nhật ký.",
+      "selectFoodBeforeSave": "Hãy chọn ít nhất một thực phẩm có sẵn trước khi lưu món thành công thức.",
       "deleteMeal": "Không thể xóa bữa ăn.",
       "addActivity": "Không thể ghi nhận hoạt động.",
       "deleteActivity": "Không thể xóa hoạt động."
@@ -1468,6 +1481,7 @@
     "unknown": "Chưa xác định",
     "weeks": "{{count}} tuần",
     "planDate": "Ngày theo dõi",
+    "complete": "Hoàn thành",
     "progressDetail": "Bắt đầu: {{startDate}} · Đã qua {{elapsedDays}}/{{durationDays}} ngày",
     "empty": {
       "title": "Bạn chưa thiết lập mục tiêu",
@@ -1479,6 +1493,34 @@
       "dailyCalories": "Calo mỗi ngày",
       "dailyActivity": "Vận động mỗi ngày",
       "duration": "Thời gian"
+    },
+    "mealCard": {
+      "title": "Bữa ăn ngày {{date}}",
+      "description": "Dữ liệu được đồng bộ trực tiếp từ kế hoạch bữa ăn.",
+      "empty": "Ngày này chưa có bữa ăn nào trong kế hoạch.",
+      "progress": "Tiến độ bữa ăn",
+      "progressHint": "Hoàn thành các bữa đã chọn",
+      "noFood": "Chưa có món",
+      "completeTitle": "Đánh dấu bữa ăn đã hoàn thành",
+      "loadError": "Không tải được kế hoạch bữa ăn.",
+      "types": {
+        "breakfast": "Bữa sáng",
+        "morningSnack": "Bữa phụ sáng",
+        "lunch": "Bữa trưa",
+        "afternoonSnack": "Bữa phụ chiều",
+        "dinner": "Bữa tối",
+        "eveningSnack": "Bữa phụ tối"
+      }
+    },
+    "workoutCard": {
+      "title": "Vận động ngày {{date}}",
+      "description": "Dữ liệu được đồng bộ trực tiếp từ kế hoạch tập luyện.",
+      "empty": "Ngày này chưa có hoạt động nào trong kế hoạch.",
+      "progress": "Tiến độ vận động",
+      "progressHint": "Hoàn thành các hoạt động đã chọn",
+      "minutes": "{{count}} phút",
+      "completeTitle": "Đánh dấu hoạt động đã hoàn thành",
+      "loadError": "Không tải được kế hoạch vận động."
     },
     "tabs": {
       "meals": "Kế hoạch ăn uống",

@@ -25,6 +25,7 @@ public class RecipeSuggestionResponse {
     public static class Ingredient {
         private Long foodItemId;
         private String name;
+        private String nameVi;
         private BigDecimal quantityG;
         private BigDecimal calories;
         private BigDecimal proteinG;

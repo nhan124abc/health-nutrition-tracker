@@ -396,12 +396,10 @@ public class AiChatService {
                 .max(BigDecimal.valueOf(0.5));
 
         ObjectNode option = options.addObject();
-        String firstName = foods.get(0).name();
-        String secondName = foods.get(1).name();
-        option.put("name", "Gợi ý " + firstName + " với " + secondName + (optionIndex == 0 ? "" : " cân bằng"));
-        option.put("description", "Kết hợp các thực phẩm đã có trong hệ thống, điều chỉnh khẩu phần theo ngân sách calo.");
-        option.put("cookingMethod", blankToDefault(context.getCookingMethod(),
-                "Chế biến đơn giản, hạn chế dầu mỡ và nêm vừa ăn."));
+        String cookingMethod = buildCookingMethod(foods, context);
+        option.put("name", buildDishName(foods, optionIndex));
+        option.put("description", cookingMethod);
+        option.put("cookingMethod", cookingMethod);
         option.put("amount", "1 phần");
 
         BigDecimal totalServing = BigDecimal.ZERO;
@@ -749,25 +747,26 @@ public class AiChatService {
 
         Map<Long, NutritionCatalogClient.RecipeCandidate> recipes = new java.util.LinkedHashMap<>();
         String goal = normalizeGoal(context.getGoal());
+        String mealType = normalize(context.getMealType());
         if (!selectedFoodIds.isEmpty()) {
-            nutritionCatalogClient.getRecipes(maxCalories, null, selectedFoodIds, goal, 12)
+            nutritionCatalogClient.getRecipes(maxCalories, null, selectedFoodIds, goal, mealType, 12)
                     .forEach(recipe -> recipes.putIfAbsent(recipe.id(), recipe));
         }
 
         if (keywords.isEmpty()) {
             if (recipes.isEmpty()) {
-                return nutritionCatalogClient.getRecipes(maxCalories, null, null, goal, 12);
+                return nutritionCatalogClient.getRecipes(maxCalories, null, null, goal, mealType, 12);
             }
             return recipes.values().stream().toList();
         }
 
         for (String keyword : keywords) {
-            nutritionCatalogClient.getRecipes(maxCalories, keyword, null, goal, 12)
+            nutritionCatalogClient.getRecipes(maxCalories, keyword, null, goal, mealType, 12)
                     .forEach(recipe -> recipes.putIfAbsent(recipe.id(), recipe));
         }
 
         if (recipes.size() < 2) {
-            nutritionCatalogClient.getRecipes(maxCalories, null, null, goal, 12)
+            nutritionCatalogClient.getRecipes(maxCalories, null, null, goal, mealType, 12)
                     .forEach(recipe -> recipes.putIfAbsent(recipe.id(), recipe));
         }
         return recipes.values().stream().toList();
@@ -845,6 +844,61 @@ public class AiChatService {
                 .filter(value -> value > 0)
                 .distinct()
                 .toList();
+    }
+
+    private String buildDishName(List<NutritionCatalogClient.FoodCandidate> foods, int optionIndex) {
+        List<String> names = foods.stream()
+                .map(NutritionCatalogClient.FoodCandidate::name)
+                .map(this::cleanFoodName)
+                .filter(name -> !name.isBlank())
+                .limit(3)
+                .toList();
+        if (names.isEmpty()) {
+            return optionIndex == 0 ? "Bua an can bang" : "Bua an giau dinh duong";
+        }
+        if (names.size() == 1) {
+            return names.get(0);
+        }
+
+        String main = names.get(0);
+        String side = String.join(", ", names.subList(1, names.size()));
+        return optionIndex == 0
+                ? main + " ket hop " + side
+                : main + " va " + side + " can bang";
+    }
+
+    private String buildCookingMethod(List<NutritionCatalogClient.FoodCandidate> foods, PlannerSuggestRequest context) {
+        String preferred = normalize(context.getCookingMethod());
+        if (preferred != null) {
+            return preferred;
+        }
+
+        List<String> names = foods.stream()
+                .map(NutritionCatalogClient.FoodCandidate::name)
+                .map(this::cleanFoodName)
+                .filter(name -> !name.isBlank())
+                .limit(4)
+                .toList();
+        String ingredients = String.join(", ", names);
+        String main = names.isEmpty() ? "nguyen lieu chinh" : names.get(0);
+
+        return "1. So che va can dung khau phan: " + ingredients + ". "
+                + "2. Lam nong chao/noi, nau chin " + main + " truoc; them cac nguyen lieu con lai theo thu tu can nhieu nhiet den it nhiet. "
+                + "3. Nem nhe, han che dau/mo, tron deu va dung khi mon con am de giu vi ngon.";
+    }
+
+    private String cleanFoodName(String value) {
+        String normalized = normalize(value);
+        if (normalized == null) {
+            return "";
+        }
+        return normalized
+                .replace("(cooked)", "")
+                .replace("(raw)", "")
+                .replace(" cooked", "")
+                .replace(" raw", "")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 
     private String blankToDefault(String value, String fallback) {

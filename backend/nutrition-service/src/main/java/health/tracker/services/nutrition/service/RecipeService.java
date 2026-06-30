@@ -48,6 +48,9 @@ public class RecipeService {
                     .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
                             "Food item not found: " + input.getFoodItemId()));
             BigDecimal baseServing = food.getServingSizeG();
+            if (baseServing == null || baseServing.signum() <= 0) {
+                baseServing = BigDecimal.valueOf(100);
+            }
             BigDecimal ratio = input.getQuantityG().divide(baseServing, 6, RoundingMode.HALF_UP);
             BigDecimal ingredientCalories = value(food.getCalories()).multiply(ratio);
             BigDecimal ingredientProtein = value(food.getProteinG()).multiply(ratio);
@@ -79,7 +82,7 @@ public class RecipeService {
 
     @Transactional(readOnly = true)
     public List<RecipeSuggestionResponse> suggest(BigDecimal maxCalories, String keyword, List<Long> foodIds,
-                                                  String goal, int limit) {
+                                                  String goal, String mealType, int limit) {
         int safeLimit = Math.max(1, Math.min(limit, 20));
         int candidateLimit = Math.min(20, Math.max(safeLimit, safeLimit * 3));
         String normalizedKeyword = keyword == null || keyword.isBlank() ? null : keyword.trim();
@@ -100,11 +103,53 @@ public class RecipeService {
         }
 
         return recipes.values().stream()
-                .sorted(Comparator.comparingDouble((Recipe recipe) -> goalScore(recipe, goal)).reversed()
+                // Reusable recipes save the planner an extra create-recipe request.
+                // Rank recipes containing the most selected foods first, then apply
+                // the nutrition-goal score within the same match tier.
+                .sorted(Comparator.comparingInt((Recipe recipe) -> selectedFoodMatchCount(recipe, safeFoodIds)).reversed()
+                        .thenComparing(Comparator.comparingDouble((Recipe recipe) -> mealTypeScore(recipe, mealType)).reversed())
+                        .thenComparing(Comparator.comparingDouble((Recipe recipe) -> goalScore(recipe, goal)).reversed())
                         .thenComparing(Recipe::getId))
                 .limit(safeLimit)
                 .map(this::toSuggestion)
                 .toList();
+    }
+
+    private int selectedFoodMatchCount(Recipe recipe, List<Long> selectedFoodIds) {
+        if (selectedFoodIds.isEmpty()) {
+            return 0;
+        }
+        java.util.Set<Long> recipeFoodIds = recipe.getIngredients().stream()
+                .map(ingredient -> ingredient.getFoodItem() == null ? null : ingredient.getFoodItem().getId())
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+        return (int) selectedFoodIds.stream().filter(recipeFoodIds::contains).count();
+    }
+
+    private double mealTypeScore(Recipe recipe, String mealType) {
+        String normalizedType = mealType == null ? "" : mealType.trim().toUpperCase();
+        double targetCalories = switch (normalizedType) {
+            case "BREAKFAST" -> 400;
+            case "LUNCH" -> 600;
+            case "DINNER" -> 550;
+            case "MORNING_SNACK", "AFTERNOON_SNACK", "EVENING_SNACK", "SNACK" -> 250;
+            default -> 500;
+        };
+        double calories = value(recipe.getTotalCalories()).doubleValue();
+        double calorieFit = Math.max(0, 1.0 - Math.abs(calories - targetCalories) / targetCalories);
+        String searchable = (recipe.getName() + " " + (recipe.getDescription() == null ? "" : recipe.getDescription()) + " " +
+                recipe.getIngredients().stream()
+                        .map(item -> item.getFoodItem().getName() + " " + item.getFoodItem().getNameVi())
+                        .collect(java.util.stream.Collectors.joining(" "))).toLowerCase();
+        String[] preferredKeywords = switch (normalizedType) {
+            case "BREAKFAST" -> new String[]{"breakfast", "oat", "egg", "yogurt", "bread", "smoothie", "yến mạch", "trứng", "sữa chua", "bánh mì"};
+            case "LUNCH" -> new String[]{"rice", "noodle", "chicken", "beef", "quinoa", "cơm", "bún", "mì", "gà", "bò"};
+            case "DINNER" -> new String[]{"soup", "fish", "tofu", "salad", "vegetable", "canh", "cá", "đậu hũ", "rau"};
+            case "MORNING_SNACK", "AFTERNOON_SNACK", "EVENING_SNACK", "SNACK" -> new String[]{"snack", "fruit", "yogurt", "nuts", "trái cây", "sữa chua", "hạt"};
+            default -> new String[0];
+        };
+        long keywordMatches = java.util.Arrays.stream(preferredKeywords).filter(searchable::contains).count();
+        return calorieFit + Math.min(0.8, keywordMatches * 0.2);
     }
 
     private RecipeSuggestionResponse toSuggestion(Recipe recipe) {
@@ -127,7 +172,8 @@ public class RecipeService {
     private RecipeSuggestionResponse.Ingredient toIngredient(RecipeIngredient ingredient) {
         return RecipeSuggestionResponse.Ingredient.builder()
                 .foodItemId(ingredient.getFoodItem().getId())
-                .name(ingredient.getFoodName())
+                .name(ingredient.getFoodItem().getName())
+                .nameVi(ingredient.getFoodItem().getNameVi())
                 .quantityG(value(ingredient.getQuantityG()))
                 .calories(value(ingredient.getCalories()))
                 .proteinG(value(ingredient.getProteinG()))
