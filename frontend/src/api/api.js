@@ -13,6 +13,21 @@ const api = axios.create({
   },
 });
 
+function getPreferredLanguage() {
+  const storedLanguage = localStorage.getItem('i18nextLng');
+
+  if (storedLanguage) {
+    return storedLanguage.split('-')[0];
+  }
+
+  const documentLanguage = document.documentElement.lang;
+  if (documentLanguage) {
+    return documentLanguage.split('-')[0];
+  }
+
+  return navigator.language?.split('-')[0] || 'vi';
+}
+
 export function getAccessToken() {
   return localStorage.getItem(TOKEN_KEYS.access) || localStorage.getItem(TOKEN_KEYS.legacy);
 }
@@ -158,6 +173,8 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  config.headers['Accept-Language'] = getPreferredLanguage();
 
   return config;
 });

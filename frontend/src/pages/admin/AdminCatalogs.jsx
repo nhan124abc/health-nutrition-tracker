@@ -216,8 +216,6 @@ function AdminCatalogs({ type = 'overview' }) {
   const totalPages = Math.max(1, Math.ceil(filteredCategories.length / ADMIN_PAGE_SIZE));
   const pageStartIndex = (currentPage - 1) * ADMIN_PAGE_SIZE;
   const paginatedCategories = filteredCategories.slice(pageStartIndex, pageStartIndex + ADMIN_PAGE_SIZE);
-  const paginationFrom = filteredCategories.length === 0 ? 0 : pageStartIndex + 1;
-  const paginationTo = Math.min(filteredCategories.length, pageStartIndex + ADMIN_PAGE_SIZE);
 
   useEffect(() => {
     setCurrentPage(1);

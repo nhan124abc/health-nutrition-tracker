@@ -3,11 +3,13 @@ package health.tracker.services.analytics.controller;
 import health.tracker.services.analytics.dto.AdminOverviewResponse;
 import health.tracker.services.analytics.dto.AdminSystemAnalyticsResponse;
 import health.tracker.services.analytics.dto.DailySummaryResponse;
+import health.tracker.services.analytics.dto.HealthInsightResponse;
 import health.tracker.services.analytics.exception.AppException;
 import health.tracker.services.analytics.repository.DailySummaryRepository;
 import health.tracker.services.analytics.service.AdminOverviewService;
 import health.tracker.services.analytics.service.AdminSystemAnalyticsService;
 import health.tracker.services.analytics.service.AnalyticsService;
+import health.tracker.services.analytics.service.HealthInsightService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -39,6 +41,7 @@ public class AnalyticsController {
     private final AnalyticsService analyticsService;
     private final AdminOverviewService adminOverviewService;
     private final AdminSystemAnalyticsService adminSystemAnalyticsService;
+    private final HealthInsightService healthInsightService;
     private final DailySummaryRepository summaryRepository;
 
     @GetMapping("/admin/overview")
@@ -131,6 +134,22 @@ public class AnalyticsController {
                         "currentStreak", 0,
                         "streakLabel",   "Bắt đầu streak mới!"
                 )));
+    }
+
+    @GetMapping("/insights")
+    public ResponseEntity<List<HealthInsightResponse>> getInsights(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestParam(defaultValue = "false") boolean unreadOnly) {
+
+        return ResponseEntity.ok(healthInsightService.getInsights(userId, unreadOnly));
+    }
+
+    @PutMapping("/insights/{id}/read")
+    public ResponseEntity<HealthInsightResponse> markInsightRead(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id) {
+
+        return ResponseEntity.ok(healthInsightService.markRead(userId, id));
     }
 }
 

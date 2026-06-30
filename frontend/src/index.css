@@ -783,6 +783,100 @@ body::-webkit-scrollbar,
   background-color: #3b9fbd !important;
 }
 
+.health-insights-card {
+  border-left: 4px solid var(--health-primary);
+}
+
+.health-insight-item {
+  background: #f8fbf9;
+  border: 1px solid #e1ebe5;
+  border-radius: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1rem;
+}
+
+.health-insight-item h3 {
+  color: var(--health-ink);
+  font-size: 1rem;
+  font-weight: 850;
+  margin-bottom: 0.45rem;
+}
+
+.health-insight-item p {
+  color: #68727d;
+  font-size: 0.92rem;
+  margin-bottom: 0.75rem;
+}
+
+.health-insight-warning {
+  background: #fff8ed;
+  border-color: #f1d7ad;
+}
+
+.health-insight-achievement {
+  background: #f2fbf4;
+  border-color: #cdebd3;
+}
+
+.health-insight-read {
+  align-items: center;
+  color: var(--health-primary-dark);
+  display: inline-flex;
+  font-weight: 750;
+  gap: 0.35rem;
+  padding: 0;
+  text-decoration: none;
+}
+
+.health-insight-read:hover,
+.health-insight-read:focus {
+  color: var(--health-primary);
+  text-decoration: none;
+}
+
+.health-insight-card-read .card-body,
+.health-insight-read-state {
+  background: #f3f4f6;
+  border-color: #d7dde3;
+}
+
+.health-insight-read-state h3,
+.health-insight-read-state p,
+.health-insight-read-state small,
+.health-insight-read-tag,
+.health-insight-read-confirm {
+  color: #6c757d;
+}
+
+.health-insight-summary-card {
+  background: #fff;
+}
+
+.health-insight-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.health-insight-read-tag,
+.health-insight-read-confirm {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.health-insight-unread-dot {
+  background: var(--health-primary);
+  border-radius: 999px;
+  height: 0.6rem;
+  margin-top: 0.35rem;
+  width: 0.6rem;
+}
+
 .metric-value {
   color: var(--health-ink);
   font-size: 2rem;

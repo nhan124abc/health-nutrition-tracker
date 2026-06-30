@@ -19,6 +19,7 @@ import ActivityTracker from './features/activities/ActivityTracker';
 import BodyMetrics from './features/profile/BodyMetrics';
 import GoalPlanner from './features/profile/GoalPlanner';
 import Reports from './pages/Reports';
+import HealthInsights from './pages/HealthInsights';
 import Planner from './pages/Planner';
 import Plans from './pages/Plans';
 import Settings from './pages/Settings';
@@ -87,6 +88,7 @@ function App() {
           <Route path="/goals" element={<GoalPlanner />} />
           <Route path="/planner" element={<Planner />} />
           <Route path="/plans" element={<Plans />} />
+          <Route path="/health-insights" element={<HealthInsights />} />
           <Route path="/settings" element={<Settings />} />
         </Route>
         <Route
