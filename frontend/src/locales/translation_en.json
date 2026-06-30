@@ -190,11 +190,6 @@
     "marking": "Saving...",
     "markReadError": "Unable to mark as read.",
     "updatedAt": "Updated {{date}}",
-    "summary": {
-      "total": "Total insights",
-      "unread": "Unread",
-      "read": "Read"
-    },
     "status": {
       "read": "Read",
       "unread": "Unread"

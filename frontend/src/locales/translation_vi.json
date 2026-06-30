@@ -158,11 +158,6 @@
     "marking": "Đang lưu...",
     "markReadError": "Không thể đánh dấu đã đọc.",
     "updatedAt": "Cập nhật {{date}}",
-    "summary": {
-      "total": "Tổng gợi ý",
-      "unread": "Chưa đọc",
-      "read": "Đã đọc"
-    },
     "status": {
       "read": "Đã đọc",
       "unread": "Chưa đọc"
