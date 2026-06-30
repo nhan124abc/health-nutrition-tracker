@@ -146,7 +146,8 @@ public class FoodItemService {
     public void delete(Long id) {
         FoodItem food = foodItemRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Food item not found: " + id));
-        foodItemRepository.delete(food);
+        food.setPublic(false);
+        foodItemRepository.save(food);
     }
 
     @Transactional

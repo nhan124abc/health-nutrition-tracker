@@ -1079,17 +1079,17 @@ function AdminManagementPage({ type }) {
             {type === 'foods' ? (
               <Row className="g-3">
                 <Col md={6}>
-                  <Form.Label>Tên thực phẩm</Form.Label>
+                  <Form.Label>{t('admin.catalogData.foodNameLabel')}</Form.Label>
                   <Form.Control required value={catalogForm.name} onChange={(event) => setCatalogForm((form) => ({ ...form, name: event.target.value }))} />
                 </Col>
                 <Col md={6}>
-                  <Form.Label>Tên tiếng Việt</Form.Label>
+                  <Form.Label>{t('admin.catalogData.nameViLabel')}</Form.Label>
                   <Form.Control value={catalogForm.nameVi} onChange={(event) => setCatalogForm((form) => ({ ...form, nameVi: event.target.value }))} />
                 </Col>
                 <Col md={6}>
-                  <Form.Label>Danh mục</Form.Label>
+                  <Form.Label>{t('admin.catalogData.categoryLabel')}</Form.Label>
                   <Form.Select value={catalogForm.categoryId} onChange={(event) => setCatalogForm((form) => ({ ...form, categoryId: event.target.value }))}>
-                    <option value="">Chưa chọn</option>
+                    <option value="">{t('admin.catalogData.noCategoryOption')}</option>
                     {foodCategories.map((category) => (
                       <option key={category.id} value={category.id}>
                         {getLocalizedName({ name: cleanText(category.name), nameVi: cleanText(category.nameVi) }, i18n.language)}
@@ -1098,53 +1098,53 @@ function AdminManagementPage({ type }) {
                   </Form.Select>
                 </Col>
                 <Col md={4}>
-                  <Form.Label>Khẩu phần (g)</Form.Label>
+                  <Form.Label>{t('admin.catalogData.servingSizeLabel')}</Form.Label>
                   <Form.Control required type="number" min="0.1" step="0.1" value={catalogForm.servingSizeG} onChange={(event) => setCatalogForm((form) => ({ ...form, servingSizeG: event.target.value }))} />
                 </Col>
                 <Col md={6} className="d-none">
-                  <Form.Label>Mô tả khẩu phần</Form.Label>
+                  <Form.Label>{t('admin.catalogData.servingDescriptionLabel')}</Form.Label>
                 </Col>
                 <Col md={4}>
-                  <Form.Label>Calories</Form.Label>
+                  <Form.Label>{t('admin.catalogData.caloriesLabel')}</Form.Label>
                   <Form.Control required type="number" min="0" step="0.1" value={catalogForm.calories} onChange={(event) => setCatalogForm((form) => ({ ...form, calories: event.target.value }))} />
                 </Col>
                 <Col md={4}>
-                  <Form.Label>Protein (g)</Form.Label>
+                  <Form.Label>{t('admin.catalogData.proteinLabel')}</Form.Label>
                   <Form.Control required type="number" min="0" step="0.1" value={catalogForm.proteinG} onChange={(event) => setCatalogForm((form) => ({ ...form, proteinG: event.target.value }))} />
                 </Col>
                 <Col md={4}>
-                  <Form.Label>Carbs (g)</Form.Label>
+                  <Form.Label>{t('admin.catalogData.carbsLabel')}</Form.Label>
                   <Form.Control required type="number" min="0" step="0.1" value={catalogForm.carbsG} onChange={(event) => setCatalogForm((form) => ({ ...form, carbsG: event.target.value }))} />
                 </Col>
                 <Col md={4}>
-                  <Form.Label>Fat (g)</Form.Label>
+                  <Form.Label>{t('admin.catalogData.fatLabel')}</Form.Label>
                   <Form.Control required type="number" min="0" step="0.1" value={catalogForm.fatG} onChange={(event) => setCatalogForm((form) => ({ ...form, fatG: event.target.value }))} />
                 </Col>
                 <Col md={4}>
-                  <Form.Label>Fiber (g)</Form.Label>
+                  <Form.Label>{t('admin.catalogData.fiberLabel')}</Form.Label>
                   <Form.Control type="number" min="0" step="0.1" value={catalogForm.fiberG} onChange={(event) => setCatalogForm((form) => ({ ...form, fiberG: event.target.value }))} />
                 </Col>
                 <Col md={4}>
-                  <Form.Label>Sugar (g)</Form.Label>
+                  <Form.Label>{t('admin.catalogData.sugarLabel')}</Form.Label>
                   <Form.Control type="number" min="0" step="0.1" value={catalogForm.sugarG} onChange={(event) => setCatalogForm((form) => ({ ...form, sugarG: event.target.value }))} />
                 </Col>
                 <Col md={4}>
-                  <Form.Label>Sodium (mg)</Form.Label>
+                  <Form.Label>{t('admin.catalogData.sodiumLabel')}</Form.Label>
                   <Form.Control type="number" min="0" step="0.1" value={catalogForm.sodiumMg} onChange={(event) => setCatalogForm((form) => ({ ...form, sodiumMg: event.target.value }))} />
                 </Col>
               </Row>
             ) : (
               <Row className="g-3">
                 <Col md={6}>
-                  <Form.Label>Tên hoạt động</Form.Label>
+                  <Form.Label>{t('admin.catalogData.activityNameLabel')}</Form.Label>
                   <Form.Control required value={catalogForm.name} onChange={(event) => setCatalogForm((form) => ({ ...form, name: event.target.value }))} />
                 </Col>
                 <Col md={6}>
-                  <Form.Label>Tên tiếng Việt</Form.Label>
+                  <Form.Label>{t('admin.catalogData.nameViLabel')}</Form.Label>
                   <Form.Control value={catalogForm.nameVi} onChange={(event) => setCatalogForm((form) => ({ ...form, nameVi: event.target.value }))} />
                 </Col>
                 <Col md={4}>
-                  <Form.Label>Nhóm</Form.Label>
+                  <Form.Label>{t('admin.catalogData.activityGroupLabel')}</Form.Label>
                   <Form.Select value={catalogForm.category} onChange={(event) => setCatalogForm((form) => ({ ...form, category: event.target.value }))}>
                     {['CARDIO', 'STRENGTH', 'WALKING', 'SPORTS', 'FLEXIBILITY', 'OUTDOOR', 'DAILY'].map((category) => (
                       <option key={category} value={category}>{formatEnum(category)}</option>
@@ -1152,13 +1152,13 @@ function AdminManagementPage({ type }) {
                   </Form.Select>
                 </Col>
                 <Col md={4}>
-                  <Form.Label>MET</Form.Label>
+                  <Form.Label>{t('admin.catalogData.metLabel')}</Form.Label>
                   <Form.Control required type="number" min="0.1" max="50" step="0.1" value={catalogForm.metValue} onChange={(event) => setCatalogForm((form) => ({ ...form, metValue: event.target.value }))} />
                 </Col>
                 <Col md={12}>
                   <Form.Check
                     type="switch"
-                    label="Ẩn hoạt động này"
+                    label={t('admin.catalogData.hideActivityToggle')}
                     checked={catalogForm.hidden}
                     onChange={(event) => setCatalogForm((form) => ({ ...form, hidden: event.target.checked }))}
                   />
@@ -1182,7 +1182,13 @@ function AdminManagementPage({ type }) {
           <Modal.Title>{t('admin.users.confirmTitle')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {confirmAction?.type === 'delete' && t('admin.users.confirmDelete')}
+          {confirmAction?.type === 'delete' && (
+            type === 'users'
+              ? t('admin.users.confirmDelete')
+              : t(type === 'foods'
+                ? 'admin.catalogData.confirmDeleteFood'
+                : 'admin.catalogData.confirmDeleteActivity')
+          )}
           {confirmAction?.type === 'status' && (
             confirmAction.row?.active
               ? t('admin.users.confirmLock')
