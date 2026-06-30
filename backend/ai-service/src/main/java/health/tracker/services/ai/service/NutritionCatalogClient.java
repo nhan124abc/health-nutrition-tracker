@@ -95,6 +95,11 @@ public class NutritionCatalogClient {
     }
 
     public List<RecipeCandidate> getRecipes(int maxCalories, String keyword, List<Long> foodIds, String goal, int limit) {
+        return getRecipes(maxCalories, keyword, foodIds, goal, null, limit);
+    }
+
+    public List<RecipeCandidate> getRecipes(int maxCalories, String keyword, List<Long> foodIds, String goal,
+                                            String mealType, int limit) {
         JsonNode items = restClient.get()
                 .uri(uri -> uri.path("/api/v1/nutrition/recipes/suggestions")
                         .queryParam("maxCalories", maxCalories)
@@ -107,6 +112,9 @@ public class NutritionCatalogClient {
                                         .map(String::valueOf)
                                         .collect(java.util.stream.Collectors.joining(","))))
                         .queryParamIfPresent("goal", java.util.Optional.ofNullable(goal)
+                                .map(String::trim)
+                                .filter(value -> !value.isBlank()))
+                        .queryParamIfPresent("mealType", java.util.Optional.ofNullable(mealType)
                                 .map(String::trim)
                                 .filter(value -> !value.isBlank()))
                         .queryParam("limit", Math.min(limit, 20))

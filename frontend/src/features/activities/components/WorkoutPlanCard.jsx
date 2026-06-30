@@ -1,44 +1,144 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, Form, ListGroup, ProgressBar, Spinner } from 'react-bootstrap';
-import { getActivitiesByDate } from '../activityService';
-import { extractActivitiesFromApi, normalizeActivityFromApi } from '../activityUtils';
+import { getWorkoutPlans } from '../activityService';
 import { getActivityCompletionId, readCompletionIds, toggleCompletionId } from '../../../utils/completionStorage';
 import ErrorModal from '../../../components/ErrorModal';
+import { useTranslation } from 'react-i18next';
+
+function extractPlans(data) {
+  return Array.isArray(data) ? data : data?.data || [];
+}
+
+function getPlannerDayOfWeek(date) {
+  const dayOfWeek = new Date(`${date}T00:00:00`).getDay();
+  return dayOfWeek === 0 ? 7 : dayOfWeek;
+}
+
+function getExercisesForDate(plans, selectedDate) {
+  const selectedDay = getPlannerDayOfWeek(selectedDate);
+
+  return plans
+    .filter((plan) => plan.active !== false)
+    .flatMap((plan) => (plan.exercises || []).map((exercise) => ({
+      ...exercise,
+      id: exercise.id || `${plan.id}-${exercise.dayOfWeek}-${exercise.exerciseName}`,
+      planName: plan.name,
+      date: selectedDate,
+      customName: exercise.exerciseName,
+      duration: exercise.durationMinutes,
+      calories: 0,
+    })))
+    .filter((exercise) => Number(exercise.dayOfWeek) === selectedDay);
+}
 
 function WorkoutPlanCard({ selectedDate }) {
+  const { t } = useTranslation();
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [completedIds, setCompletedIds] = useState(() => readCompletionIds('activities'));
 
+  const loadActivities = useCallback((showLoading = true) => {
+    let active = true;
+
+    if (showLoading) {
+      setLoading(true);
+    }
+    setError('');
+    getWorkoutPlans()
+      .then((response) => {
+        if (active) {
+          setActivities(getExercisesForDate(extractPlans(response.data), selectedDate));
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          setActivities([]);
+          setError(err.response?.data?.message || t('plansPage.workoutCard.loadError'));
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [selectedDate, t]);
+
+  useEffect(() => loadActivities(true), [loadActivities]);
+
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true); setError('');
-    getActivitiesByDate(selectedDate)
-      .then((response) => { if (!cancelled) setActivities(extractActivitiesFromApi(response.data).map(normalizeActivityFromApi)); })
-      .catch((err) => { if (!cancelled) { setActivities([]); setError(err.response?.data?.message || 'Không tải được hoạt động.'); } })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [selectedDate]);
+    const refreshOnFocus = () => loadActivities(false);
+    const refreshCompletions = (event) => {
+      if (!event.detail?.scope || event.detail.scope === 'activities') {
+        setCompletedIds(readCompletionIds('activities'));
+      }
+    };
+
+    window.addEventListener('focus', refreshOnFocus);
+    window.addEventListener('workout-plans:changed', refreshOnFocus);
+    window.addEventListener('completion:changed', refreshCompletions);
+
+    return () => {
+      window.removeEventListener('focus', refreshOnFocus);
+      window.removeEventListener('workout-plans:changed', refreshOnFocus);
+      window.removeEventListener('completion:changed', refreshCompletions);
+    };
+  }, [loadActivities]);
 
   const completedCount = activities.filter((item) => completedIds.includes(getActivityCompletionId(item))).length;
   const progress = activities.length ? Math.round((completedCount / activities.length) * 100) : 0;
   const toggle = (activity) => setCompletedIds(toggleCompletionId('activities', getActivityCompletionId(activity)));
 
-  return <Card className="border-0 shadow-sm planner-side-card"><Card.Body>
-    <div className="mb-3"><h2 className="h5 fw-bold mb-1">Vận động ngày {selectedDate}</h2><p className="text-secondary mb-0">Dữ liệu được đồng bộ trực tiếp từ Nhật ký vận động.</p></div>
-    <ErrorModal error={error} onClose={() => setError('')} />
-    {loading && <div className="text-center py-4"><Spinner animation="border" size="sm" /></div>}
-    {!loading && activities.length === 0 && <div className="text-secondary border rounded p-3">Ngày này chưa có hoạt động nào trong Nhật ký.</div>}
-    {!loading && activities.length > 0 && <section className="plan-checklist">
-      <div className="plan-checklist-header"><div><h3 className="h5 fw-bold mb-1">Tiến độ vận động</h3><div className="text-secondary small">Hoàn thành các hoạt động đã chọn</div></div><strong className="plan-progress-value">{completedCount}/{activities.length}</strong></div>
-      <ProgressBar now={progress} className="plan-progress" />
-      <ListGroup variant="flush" className="plan-checklist-items">{activities.map((activity) => {
-        const id = getActivityCompletionId(activity); const completed = completedIds.includes(id);
-        return <ListGroup.Item className={`plan-checklist-item ${completed ? 'is-completed' : ''}`} key={id}><div className="d-flex justify-content-between align-items-center gap-3"><div><div className="fw-semibold">{activity.customName}</div><div className="text-secondary">{activity.duration || 0} phút · {Math.round(activity.calories || 0)} kcal</div></div><Form.Check checked={completed} label="Hoàn thành" onChange={() => toggle(activity)} title="Đánh dấu hoạt động đã hoàn thành" /></div></ListGroup.Item>;
-      })}</ListGroup>
-    </section>}
-  </Card.Body></Card>;
+  return (
+    <Card className="border-0 shadow-sm planner-side-card">
+      <Card.Body>
+        <div className="mb-3">
+          <h2 className="h5 fw-bold mb-1">{t('plansPage.workoutCard.title', { date: selectedDate })}</h2>
+          <p className="text-secondary mb-0">{t('plansPage.workoutCard.description')}</p>
+        </div>
+        <ErrorModal error={error} onClose={() => setError('')} />
+        {loading && <div className="text-center py-4"><Spinner animation="border" size="sm" /></div>}
+        {!loading && activities.length === 0 && <div className="text-secondary border rounded p-3">{t('plansPage.workoutCard.empty')}</div>}
+        {!loading && activities.length > 0 && (
+          <section className="plan-checklist">
+            <div className="plan-checklist-header">
+              <div>
+                <h3 className="h5 fw-bold mb-1">{t('plansPage.workoutCard.progress')}</h3>
+                <div className="text-secondary small">{t('plansPage.workoutCard.progressHint')}</div>
+              </div>
+              <strong className="plan-progress-value">{completedCount}/{activities.length}</strong>
+            </div>
+            <ProgressBar now={progress} className="plan-progress" />
+            <ListGroup variant="flush" className="plan-checklist-items">
+              {activities.map((activity) => {
+                const id = getActivityCompletionId(activity);
+                const completed = completedIds.includes(id);
+                const details = activity.duration
+                  ? t('plansPage.workoutCard.minutes', { count: activity.duration })
+                  : activity.planName || '';
+
+                return (
+                  <ListGroup.Item className={`plan-checklist-item ${completed ? 'is-completed' : ''}`} key={id}>
+                    <div className="d-flex justify-content-between align-items-center gap-3">
+                      <div>
+                        <div className="fw-semibold">{activity.customName}</div>
+                        <div className="text-secondary">{details}</div>
+                      </div>
+                      <Form.Check checked={completed} label={t('plansPage.complete')} onChange={() => toggle(activity)} title={t('plansPage.workoutCard.completeTitle')} />
+                    </div>
+                  </ListGroup.Item>
+                );
+              })}
+            </ListGroup>
+          </section>
+        )}
+      </Card.Body>
+    </Card>
+  );
 }
 
 export default WorkoutPlanCard;

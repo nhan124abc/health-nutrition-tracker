@@ -11,7 +11,7 @@
     "activity": "Activity",
     "water": "Water Tracker",
     "goals": "Goals",
-    "planner": "AI Planner",
+    "planner": "Suggestions & Planner",
     "reports": "Reports",
     "statistics": "Reports & Statistics",
     "bodyMetrics": "Body metrics",
@@ -225,6 +225,7 @@
     "mealBudget": "Budget for this meal: {{budget}} kcal",
     "chooseOption": "Choose this option",
     "chooseActivity": "Choose this activity",
+    "activityOptionNumber": "Option {{number}}",
     "chosen": "Chosen",
     "cancelMeal": "Cancel this meal",
     "cancelActivity": "Cancel this activity",
@@ -1284,6 +1285,10 @@
     "removeActivity": "Remove this activity",
     "deleteActivity": "Delete activity",
     "findingOptions": "Finding the most suitable options for you...",
+    "selectionProgress": {
+      "title": "Saving your selection",
+      "message": "We are updating your meal and plan. Please wait a moment..."
+    },
     "loadingRecipes": "Loading recipes...",
     "loadRecipes": "Load recipes",
     "caloriesBurned": "Burn {{calories}} kcal",
@@ -1295,9 +1300,14 @@
     "ingredientCount": "{{count}} ingredients",
     "cookingMethod": "Cooking method",
     "savedRecipe": "Saved recipe",
-    "aiGenerated": "AI generated",
+    "aiGenerated": "New suggestion",
     "activityCategory": "Category",
     "recipeLibraryTitle": "Meal recipes",
+    "recipeLibraryDescription": "Recipes matching your selected ingredients are shown first, followed by those closest to the meal calorie target.",
+    "filteringForMeal": "Prioritizing recipes suitable for {{meal}}",
+    "recipeMatch": "Matches {{matched}}/{{total}} selected ingredients",
+    "localizedRecipeName": "Recipe with {{ingredients}}",
+    "recipePageInfo": "Page {{page}}/{{total}} · 4 recipes per page",
     "oneServing": "1 serving",
     "servings": "{{count}} servings",
     "noCookingGuide": "No detailed cooking guide is available for this recipe yet.",
@@ -1322,8 +1332,8 @@
       "mealPlan": "Meal plan",
       "recipePlan": "Meal recipes",
       "recipePlanDescription": "Choose a date, meal slot, and saved recipe filters.",
-      "food": "Food",
-      "recipes": "Recipes",
+      "food": "Create a meal",
+      "recipes": "Saved recipes",
       "recipeFilter": "Recipe filters",
       "recipeFilterDescription": "Select up to {{max}} foods to find recipes with matching ingredients.",
       "activity": "Activity",
@@ -1331,6 +1341,8 @@
       "activityPlanDescription": "Plan workout suggestions from activity data."
     },
     "defaultCookingMethod": "Prepare the ingredients, cook the items that need heat, then combine and season lightly: {{ingredients}}.",
+    "generatedDishName": "Dish with {{ingredients}}",
+    "generatedCookingMethod": "1. Prepare and measure the portions: {{ingredients}}. 2. Cook {{mainIngredient}} first, then add the remaining ingredients from longest to shortest cooking time. 3. Season lightly, limit added oil, mix well, and serve warm.",
     "activitySuggestionsTitle": "Activity suggestions for this date",
     "activitySuggestionsDescription": "Combining exercise with your plan can help you reach your goal sooner.",
     "logged": "Logged",
@@ -1349,7 +1361,7 @@
       "selectActivity": "Choose an activity type and select \"Create 2 options\".",
       "loggedMeal": "You have logged {{meal}} on this date. Remove the old meal if you want to choose another option.",
       "selectMeal": "Choose a meal type and select \"Create 2 options\".",
-      "noRecipes": "No matching recipes yet. Run the recipe seed or remove some food filters."
+      "noRecipes": "No matching recipes were found. Remove some ingredients or switch to Create a meal."
     },
     "suggestion": {
       "activityMessage": "Activities are suggested based on your goal and current profile.",
@@ -1358,7 +1370,7 @@
     },
     "savedNotes": {
       "meal": "Meal suggested from remaining calories",
-      "activity": "Exercise suggested by AI Planner"
+      "activity": "Exercise in your activity plan"
     },
     "success": {
       "mealAdded": "Added \"{{name}}\". The alternative option will not be added.",
@@ -1373,6 +1385,7 @@
       "loadRecipes": "Unable to load meal recipes.",
       "overBudget": "This option exceeds your remaining calories. Generate new suggestions.",
       "addMeal": "Unable to add the meal to your diary.",
+      "selectFoodBeforeSave": "Select at least one available food before saving this dish as a recipe.",
       "deleteMeal": "Unable to delete the meal.",
       "addActivity": "Unable to log the activity.",
       "deleteActivity": "Unable to delete the activity."
@@ -1491,6 +1504,7 @@
     "weeks_one": "{{count}} week",
     "weeks_other": "{{count}} weeks",
     "planDate": "Tracking date",
+    "complete": "Complete",
     "progressDetail": "Start: {{startDate}} · {{elapsedDays}}/{{durationDays}} days elapsed",
     "empty": {
       "title": "You have not set a goal",
@@ -1502,6 +1516,34 @@
       "dailyCalories": "Daily calories",
       "dailyActivity": "Daily activity",
       "duration": "Duration"
+    },
+    "mealCard": {
+      "title": "Meals for {{date}}",
+      "description": "Data is synchronized directly from your meal plan.",
+      "empty": "There are no planned meals for this date.",
+      "progress": "Meal progress",
+      "progressHint": "Complete your selected meals",
+      "noFood": "No meal selected",
+      "completeTitle": "Mark this meal as complete",
+      "loadError": "Unable to load the meal plan.",
+      "types": {
+        "breakfast": "Breakfast",
+        "morningSnack": "Morning snack",
+        "lunch": "Lunch",
+        "afternoonSnack": "Afternoon snack",
+        "dinner": "Dinner",
+        "eveningSnack": "Evening snack"
+      }
+    },
+    "workoutCard": {
+      "title": "Activities for {{date}}",
+      "description": "Data is synchronized directly from your workout plan.",
+      "empty": "There are no planned activities for this date.",
+      "progress": "Activity progress",
+      "progressHint": "Complete your selected activities",
+      "minutes": "{{count}} minutes",
+      "completeTitle": "Mark this activity as complete",
+      "loadError": "Unable to load the workout plan."
     },
     "tabs": {
       "meals": "Meal plan",

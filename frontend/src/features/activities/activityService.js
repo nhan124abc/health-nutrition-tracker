@@ -2,6 +2,36 @@ import api from '../../api/api';
 import { getAccessToken, getCurrentUserRole } from '../../api/api';
 import activityConfig from '../../config/activityConfig';
 
+function getActivityChangeDate(payload = {}) {
+  return payload.loggedAt
+    ? String(payload.loggedAt).slice(0, 10)
+    : payload.date || String(payload.createdAt || '').slice(0, 10) || '';
+}
+
+function notifyActivitiesChanged(action, payload = {}) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(new CustomEvent('activities:changed', {
+    detail: {
+      action,
+      date: getActivityChangeDate(payload),
+      activity: payload,
+    },
+  }));
+}
+
+function notifyWorkoutPlansChanged(action, payload = {}) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(new CustomEvent('workout-plans:changed', {
+    detail: { action, plan: payload },
+  }));
+}
+
 function withAdminAuth() {
   const token = getAccessToken();
   const role = getCurrentUserRole();
@@ -25,15 +55,27 @@ export function getActivitiesByDate(date) {
 }
 
 export function createActivityLog(payload) {
-  return api.post(activityConfig.endpoints.createLog, payload);
+  return api.post(activityConfig.endpoints.createLog, payload)
+    .then((response) => {
+      notifyActivitiesChanged('create', response.data?.data || response.data || payload);
+      return response;
+    });
 }
 
 export function updateActivityLog(id, payload) {
-  return api.put(activityConfig.endpoints.updateById(id), payload);
+  return api.put(activityConfig.endpoints.updateById(id), payload)
+    .then((response) => {
+      notifyActivitiesChanged('update', response.data?.data || response.data || payload);
+      return response;
+    });
 }
 
 export function deleteActivityById(id) {
-  return api.delete(activityConfig.endpoints.deleteById(id));
+  return api.delete(activityConfig.endpoints.deleteById(id))
+    .then((response) => {
+      notifyActivitiesChanged('delete', { id });
+      return response;
+    });
 }
 
 export function getWorkoutPlans() {
@@ -41,21 +83,36 @@ export function getWorkoutPlans() {
 }
 
 export function createWorkoutPlan(payload) {
-  return api.post(activityConfig.endpoints.workoutPlans, payload);
+  return api.post(activityConfig.endpoints.workoutPlans, payload)
+    .then((response) => {
+      notifyWorkoutPlansChanged('create', response.data?.data || response.data || payload);
+      return response;
+    });
 }
 
 export function updateWorkoutPlan(id, payload) {
-  return api.put(activityConfig.endpoints.workoutPlanDetail(id), payload);
+  return api.put(activityConfig.endpoints.workoutPlanDetail(id), payload)
+    .then((response) => {
+      notifyWorkoutPlansChanged('update', response.data?.data || response.data || { id, ...payload });
+      return response;
+    });
 }
 
 export function updateWorkoutPlanActive(id, active) {
   return api.patch(activityConfig.endpoints.workoutPlanActive(id), null, {
     params: { active },
+  }).then((response) => {
+    notifyWorkoutPlansChanged('active', response.data?.data || response.data || { id, active });
+    return response;
   });
 }
 
 export function deleteWorkoutPlan(id) {
-  return api.delete(activityConfig.endpoints.workoutPlanDetail(id));
+  return api.delete(activityConfig.endpoints.workoutPlanDetail(id))
+    .then((response) => {
+      notifyWorkoutPlansChanged('delete', { id });
+      return response;
+    });
 }
 
 export function getActivityTypes() {

@@ -23,8 +23,8 @@ function withAdminAuth() {
   return { headers };
 }
 
-export function getFoods(params = {}) {
-  return api.get(nutritionConfig.endpoints.foods, { params });
+export function getFoods(params = {}, config = {}) {
+  return api.get(nutritionConfig.endpoints.foods, { ...config, params });
 }
 
 export function getFoodById(id) {
@@ -103,8 +103,8 @@ export function updateFoodCategoryVisibility(id, hidden) {
   return api.patch(endpoint, {}, withAdminAuth());
 }
 
-export function getRecipeSuggestions(params = {}) {
-  return api.get(nutritionConfig.endpoints.recipeSuggestions, { params });
+export function getRecipeSuggestions(params = {}, config = {}) {
+  return api.get(nutritionConfig.endpoints.recipeSuggestions, { ...config, params });
 }
 
 export function createRecipe(payload) {

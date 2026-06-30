@@ -19,7 +19,14 @@ export function readCompletionIds(scope) {
 }
 
 export function saveCompletionIds(scope, ids) {
-  localStorage.setItem(getStorageKey(scope), JSON.stringify([...new Set(ids.map(String))]));
+  const nextIds = [...new Set(ids.map(String))];
+  localStorage.setItem(getStorageKey(scope), JSON.stringify(nextIds));
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('completion:changed', {
+      detail: { scope, ids: nextIds },
+    }));
+  }
 }
 
 export function toggleCompletionId(scope, id) {

@@ -27,11 +27,19 @@ public interface FoodItemRepository extends JpaRepository<FoodItem, Long> {
                    LOWER(f.nameVi) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
                    LOWER(f.brand) LIKE LOWER(CONCAT('%', :keyword, '%')))
               AND (:categoryId IS NULL OR f.category.id = :categoryId)
-            ORDER BY f.verified DESC, f.name ASC
+            ORDER BY
+              CASE WHEN :recipeFirst = true AND EXISTS (
+                  SELECT ingredient.id FROM RecipeIngredient ingredient
+                  WHERE ingredient.foodItem = f
+                    AND ingredient.recipe.isPublic = true
+              ) THEN 0 ELSE 1 END,
+              f.verified DESC,
+              f.name ASC
             """)
     Page<FoodItem> search(
             @Param("keyword")    String keyword,
             @Param("categoryId") Integer categoryId,
+            @Param("recipeFirst") boolean recipeFirst,
             Pageable pageable
     );
 

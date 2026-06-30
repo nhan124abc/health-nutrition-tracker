@@ -276,8 +276,11 @@ public class PlannerRuleEngine {
                     .distinct()
                     .toList();
             for (String name : selectedNames) {
-                boolean alreadySelectedById = pool.stream()
-                        .anyMatch(activity -> normalizeText(activity.name).equals(normalizeText(name)));
+                boolean alreadySelectedById = selectedActivityTypeIds.stream()
+                        .map(id -> findCatalogActivityById(id, activityCatalog))
+                        .flatMap(java.util.Optional::stream)
+                        .anyMatch(candidate -> normalizeText(candidate.name()).equals(normalizeText(name))
+                                || normalizeText(candidate.nameVi()).equals(normalizeText(name)));
                 if (alreadySelectedById) {
                     continue;
                 }
@@ -331,6 +334,22 @@ public class PlannerRuleEngine {
         int size = pool.size();
         if (size > 0) {
             int firstIdx = Math.abs(index) % size;
+            if (size == 1) {
+                ActivityInfo base = pool.get(firstIdx);
+                int alternativeDuration = Math.max(base.durationMinutes + 10,
+                        (int) Math.round(base.durationMinutes * 1.25));
+                result.add(base);
+                result.add(new ActivityInfo(
+                        base.activityTypeId,
+                        base.name,
+                        alternativeDuration,
+                        base.met > 0
+                                ? (int) Math.round(base.caloriesBurned * (alternativeDuration / (double) base.durationMinutes))
+                                : base.caloriesBurned,
+                        base.met
+                ));
+                return result;
+            }
             int secondIdx = Math.abs(index + 1) % size;
             if (firstIdx == secondIdx) {
                 secondIdx = (firstIdx + 1) % size;
