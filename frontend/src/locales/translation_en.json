@@ -437,7 +437,9 @@
       "value": "Value",
       "setting": "Setting",
       "group": "Group",
-      "empty": "No data found."
+      "empty": "No data found.",
+      "previousPage": "Previous",
+      "nextPage": "Next"
     },
     "dashboard": {
       "title": "System overview",

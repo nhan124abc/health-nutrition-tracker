@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Col, Form, InputGroup, Modal, Row, Spinner, Table } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { FaArrowLeft, FaDumbbell, FaEdit, FaEye, FaEyeSlash, FaPlus, FaSearch, FaTrash, FaUtensils } from 'react-icons/fa';
+import { FaArrowLeft, FaArrowRight, FaDumbbell, FaEdit, FaEye, FaEyeSlash, FaPlus, FaSearch, FaTrash, FaUtensils } from 'react-icons/fa';
 import {
   getAdminActivityCategories,
   getActivityCategories,
@@ -26,6 +26,8 @@ import {
 } from '../../features/nutrition/nutritionUtils';
 import { getLocalizedName } from '../../utils/localizedName';
 import ErrorModal from '../../components/ErrorModal';
+
+const ADMIN_PAGE_SIZE = 16;
 
 const catalogItems = [
   {
@@ -120,6 +122,7 @@ function AdminCatalogs({ type = 'overview' }) {
   const [visibilityCandidate, setVisibilityCandidate] = useState(null);
   const [successKey, setSuccessKey] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const isFoodCategories = type === 'food';
   const isActivityCategories = type === 'activity';
 
@@ -209,6 +212,20 @@ function AdminCatalogs({ type = 'overview' }) {
       .toLowerCase()
       .includes(normalizedSearch));
   }, [categories, i18n.language, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredCategories.length / ADMIN_PAGE_SIZE));
+  const pageStartIndex = (currentPage - 1) * ADMIN_PAGE_SIZE;
+  const paginatedCategories = filteredCategories.slice(pageStartIndex, pageStartIndex + ADMIN_PAGE_SIZE);
+  const paginationFrom = filteredCategories.length === 0 ? 0 : pageStartIndex + 1;
+  const paginationTo = Math.min(filteredCategories.length, pageStartIndex + ADMIN_PAGE_SIZE);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, type]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   const getActionError = (requestError) => {
     const message = requestError.response?.data?.message || '';
@@ -509,7 +526,7 @@ function AdminCatalogs({ type = 'overview' }) {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredCategories.map((category) => {
+                      {paginatedCategories.map((category) => {
                         const visibilityActionKey = `visibility:${category.id}`;
                         const deleteActionKey = `delete:${category.id}`;
 
@@ -582,6 +599,35 @@ function AdminCatalogs({ type = 'overview' }) {
                       )}
                     </tbody>
                   </Table>
+                </div>
+                <div className="d-flex flex-column align-items-center justify-content-center gap-2 mt-3">
+                  <div className="d-flex align-items-center justify-content-center gap-2">
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="pagination-arrow-btn"
+                      aria-label={t('admin.table.previousPage')}
+                      title={t('admin.table.previousPage')}
+                      disabled={currentPage <= 1}
+                      onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                    >
+                      <FaArrowLeft />
+                    </Button>
+                    <span className="small text-secondary">
+                      {currentPage}/{totalPages}
+                    </span>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      className="pagination-arrow-btn"
+                      aria-label={t('admin.table.nextPage')}
+                      title={t('admin.table.nextPage')}
+                      disabled={currentPage >= totalPages}
+                      onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                    >
+                      <FaArrowRight />
+                    </Button>
+                  </div>
                 </div>
               </Card.Body>
             </Card>

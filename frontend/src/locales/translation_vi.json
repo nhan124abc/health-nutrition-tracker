@@ -1189,7 +1189,9 @@
       "value": "Giá trị",
       "setting": "Cấu hình",
       "group": "Nhóm",
-      "empty": "Không tìm thấy dữ liệu."
+      "empty": "Không tìm thấy dữ liệu.",
+      "previousPage": "Trước",
+      "nextPage": "Sau"
     },
     "dashboard": {
       "title": "Tổng quan hệ thống",

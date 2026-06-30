@@ -5,8 +5,8 @@ import ErrorModal from '../components/ErrorModal';
 import {
   FaBookOpen,
   FaCheck,
-  FaChevronLeft,
-  FaChevronRight,
+  FaArrowLeft,
+  FaArrowRight,
   FaDumbbell,
   FaFireAlt,
   FaRobot,
@@ -1016,14 +1016,15 @@ function Planner() {
               </div>
               <div className="planner-food-pagination">
                 <Button
-                  variant="outline-secondary"
+                  variant="link"
                   size="sm"
+                  className="pagination-arrow-btn"
                   aria-label={t('plannerPage.previousPage')}
                   title={t('plannerPage.previousPage')}
                   disabled={foodSearchLoading || foodPage <= 0}
                   onClick={() => setFoodPage((current) => Math.max(0, current - 1))}
                 >
-                  <FaChevronLeft />
+                  <FaArrowLeft />
                 </Button>
                 <span>
                   {t('plannerPage.foodPageInfo', {
@@ -1033,14 +1034,15 @@ function Planner() {
                   })}
                 </span>
                 <Button
-                  variant="outline-secondary"
+                  variant="link"
                   size="sm"
+                  className="pagination-arrow-btn"
                   aria-label={t('plannerPage.nextPage')}
                   title={t('plannerPage.nextPage')}
                   disabled={foodSearchLoading || foodPage + 1 >= foodTotalPages}
                   onClick={() => setFoodPage((current) => Math.min(foodTotalPages - 1, current + 1))}
                 >
-                  <FaChevronRight />
+                  <FaArrowRight />
                 </Button>
               </div>
               <Form.Text muted>{t('plannerPage.selectedFoodsHint', { count: selectedFoodCount, max: maxSelectedFoods })}</Form.Text>
@@ -1142,14 +1144,15 @@ function Planner() {
               </div>
               <div className="planner-food-pagination">
                 <Button
-                  variant="outline-secondary"
+                  variant="link"
                   size="sm"
+                  className="pagination-arrow-btn"
                   aria-label={t('plannerPage.previousPage')}
                   title={t('plannerPage.previousPage')}
                   disabled={activityPage <= 0}
                   onClick={() => setActivityPage((current) => Math.max(0, current - 1))}
                 >
-                  <FaChevronLeft />
+                  <FaArrowLeft />
                 </Button>
                 <span>
                   {t('plannerPage.activityPageInfo', {
@@ -1159,14 +1162,15 @@ function Planner() {
                   })}
                 </span>
                 <Button
-                  variant="outline-secondary"
+                  variant="link"
                   size="sm"
+                  className="pagination-arrow-btn"
                   aria-label={t('plannerPage.nextPage')}
                   title={t('plannerPage.nextPage')}
                   disabled={activityPage + 1 >= activityTotalPages}
                   onClick={() => setActivityPage((current) => Math.min(activityTotalPages - 1, current + 1))}
                 >
-                  <FaChevronRight />
+                  <FaArrowRight />
                 </Button>
               </div>
               <Form.Text muted>{t('plannerPage.selectedActivitiesHint', { count: selectedActivityCount, max: maxSelectedActivities })}</Form.Text>
