@@ -494,7 +494,6 @@ function AdminCatalogs({ type = 'overview' }) {
                       onClick={openCreateModal}
                       title={t('admin.catalogs.addCategory')}
                     >
-                      <FaPlus className="me-2" />
                       {t('admin.catalogs.addCategory')}
                     </Button>
                   )}
