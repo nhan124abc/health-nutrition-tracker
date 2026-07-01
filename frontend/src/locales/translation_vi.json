@@ -807,6 +807,8 @@
     },
     "title": "Profile sức khỏe",
     "savedMessage": "Đã lưu hồ sơ thành công.",
+    "validationMinimumAgeTitle": "Chưa đủ tuổi",
+    "validationMinimumAge": "Người dùng phải từ 16 tuổi trở lên.",
     "updateSuccess": {
       "title": "Thành công",
       "message": "Đã cập nhật hồ sơ thành công."

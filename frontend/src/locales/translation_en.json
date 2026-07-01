@@ -1233,6 +1233,8 @@
   "profilePage": {
     "title": "Health profile",
     "savedMessage": "Profile saved successfully.",
+    "validationMinimumAgeTitle": "Age restriction",
+    "validationMinimumAge": "Users must be at least 16 years old.",
     "updateSuccess": {
       "title": "Success",
       "message": "Profile updated successfully."
