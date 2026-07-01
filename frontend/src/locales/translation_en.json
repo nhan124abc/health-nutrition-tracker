@@ -102,7 +102,6 @@
       "createAccount": "Create account"
     },
     "hero": {
-      "description": "Health Nutrition helps you record meals, water, activity, and weight in one place. It makes it easier to understand your daily habits and see what you may need to adjust.",
       "secondary": "Built for people who want to lose weight, gain weight, maintain their shape, or simply build healthier everyday habits."
     },
     "snapshot": {
@@ -1467,7 +1466,7 @@
     "summary": "Total energy change: {{energy}} kcal · Minimum safe duration: {{weeks}} weeks",
     "form": {
       "title": "Goal information",
-      "currentWeight": "Current",
+      "currentWeight": "Current weight",
       "goal": "Goal",
       "targetChange": "Weight change in kg",
       "targetWeeks": "Preferred duration (weeks)",

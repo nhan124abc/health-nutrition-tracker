@@ -302,7 +302,6 @@
       "createAccount": "Tạo tài khoản"
     },
     "hero": {
-      "description": "Health Nutrition giúp bạn ghi lại bữa ăn, lượng nước, vận động và cân nặng trong một nơi. Từ đó bạn dễ nhìn thấy mình đang ăn uống ra sao và cần điều chỉnh điều gì.",
       "secondary": "Phù hợp cho người muốn giảm cân, tăng cân, duy trì vóc dáng hoặc đơn giản là xây dựng thói quen sống lành mạnh hơn."
     },
     "snapshot": {
@@ -1030,7 +1029,7 @@
     "summary": "Tổng năng lượng cần thay đổi: {{energy}} kcal · Thời gian an toàn tối thiểu: {{weeks}} tuần",
     "form": {
       "title": "Thông tin mục tiêu",
-      "currentWeight": "Hiện tại",
+      "currentWeight": "Cân nặng hiện tại",
       "goal": "Mục tiêu",
       "targetChange": "Số kg muốn thay đổi",
       "targetWeeks": "Thời gian mong muốn (tuần)",
