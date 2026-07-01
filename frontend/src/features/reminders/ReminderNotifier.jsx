@@ -15,8 +15,14 @@ import {
   readCompletionIds,
 } from '../../utils/completionStorage';
 import { sendReminderEmail } from './reminderService';
+import {
+  canSyncNotificationSettings,
+  getNotificationSettings,
+  notificationSettingsSyncedAtKey,
+  persistNotificationSettings,
+  readStoredNotificationSettings,
+} from './notificationSettingsService';
 
-const settingsStorageKey = 'userSettings';
 const lastSeenStorageKey = 'reminders:lastSeenAt';
 const sentStorageKey = 'reminders:sent';
 const popupStorageKey = 'reminders:popup';
@@ -74,7 +80,31 @@ function hasActiveGoal(profile) {
   );
 }
 
-function queueReminderEmail(key, payload) {
+function inferReminderKind(item = {}) {
+  if (item.kind) {
+    return item.kind;
+  }
+
+  const key = String(item.key || '');
+  if (key.includes('activity')) return 'activity';
+  if (key.includes('body-metrics')) return 'bodyMetric';
+  if (key.includes('breakfast') || key.includes('lunch') || key.includes('dinner')) return 'meal';
+  return '';
+}
+
+function reminderKindEnabled(kindOrItem, settings = readSettings()) {
+  const kind = typeof kindOrItem === 'string' ? kindOrItem : inferReminderKind(kindOrItem);
+  if (kind === 'meal') return settings.mealReminder === true;
+  if (kind === 'activity') return settings.activityReminder === true;
+  if (kind === 'bodyMetric') return settings.bodyMetricsReminder === true;
+  return true;
+}
+
+function queueReminderEmail(key, payload, kind) {
+  if (!reminderKindEnabled(kind)) {
+    return;
+  }
+
   const ownerKey = getOwnerKey();
   const map = readJson(pendingEmailStorageKey, {});
   const ownerValues = Array.isArray(map[ownerKey]) ? map[ownerKey] : [];
@@ -85,13 +115,17 @@ function queueReminderEmail(key, payload) {
 
   localStorage.setItem(pendingEmailStorageKey, JSON.stringify({
     ...map,
-    [ownerKey]: [...ownerValues, { key, payload }],
+    [ownerKey]: [...ownerValues, { key, payload, kind }],
   }));
 }
 
-async function sendOrQueueReminderEmail(key, payload) {
+async function sendOrQueueReminderEmail(key, payload, kind) {
+  if (!reminderKindEnabled(kind)) {
+    return;
+  }
+
   if (!isBrowserOnline()) {
-    queueReminderEmail(key, payload);
+    queueReminderEmail(key, payload, kind);
     return;
   }
 
@@ -106,6 +140,7 @@ async function flushQueuedReminderEmails() {
   const ownerKey = getOwnerKey();
   const map = readJson(pendingEmailStorageKey, {});
   const ownerValues = Array.isArray(map[ownerKey]) ? map[ownerKey] : [];
+  const settings = readSettings();
 
   if (ownerValues.length === 0) {
     return;
@@ -113,6 +148,10 @@ async function flushQueuedReminderEmails() {
 
   const remaining = [];
   for (const item of ownerValues) {
+    if (!reminderKindEnabled(item, settings)) {
+      continue;
+    }
+
     try {
       await sendReminderEmail(item.payload);
     } catch {
@@ -143,11 +182,40 @@ function markOnce(key, storageKey) {
 }
 
 function readSettings() {
-  return {
-    mealReminder: true,
-    activityReminder: true,
-    ...readJson(settingsStorageKey, {}),
-  };
+  return readStoredNotificationSettings();
+}
+
+async function syncSettingsFromApi(maxAgeMs = 5 * 60 * 1000) {
+  if (!canSyncNotificationSettings()) {
+    return readSettings();
+  }
+
+  const syncedAt = Number(localStorage.getItem(notificationSettingsSyncedAtKey));
+  if (Number.isFinite(syncedAt) && Date.now() - syncedAt < maxAgeMs) {
+    return readSettings();
+  }
+
+  try {
+    const settings = await getNotificationSettings();
+    return persistNotificationSettings(settings);
+  } catch {
+    return readSettings();
+  }
+}
+
+function pruneQueuedReminderEmails(settings = readSettings()) {
+  const ownerKey = getOwnerKey();
+  const map = readJson(pendingEmailStorageKey, {});
+  const ownerValues = Array.isArray(map[ownerKey]) ? map[ownerKey] : [];
+
+  if (ownerValues.length === 0) {
+    return;
+  }
+
+  localStorage.setItem(pendingEmailStorageKey, JSON.stringify({
+    ...map,
+    [ownerKey]: ownerValues.filter((item) => reminderKindEnabled(item, settings)),
+  }));
 }
 
 function getMealSlotReminderState(meals, completedIds, slot) {
@@ -201,7 +269,8 @@ function ReminderNotifier() {
     checkingRef.current = true;
 
     try {
-      const settings = readSettings();
+      const settings = await syncSettingsFromApi();
+      pruneQueuedReminderEmails(settings);
       const today = getTodayDate();
       const now = new Date();
       const lastSeenDate = readLastSeenDate();
@@ -265,7 +334,7 @@ function ReminderNotifier() {
         const missedWhileAway = Boolean(lastSeenDate && lastSeenDate < slotDate);
         if (missedWhileAway || !isWebActiveNow()) {
           if (markOnce(key, sentStorageKey)) {
-            await sendOrQueueReminderEmail(key, buildReminderMessage(slot, status, t));
+            await sendOrQueueReminderEmail(key, buildReminderMessage(slot, status, t), slot.kind);
           }
           continue;
         }
@@ -301,6 +370,7 @@ function ReminderNotifier() {
     };
     const handleSettingsChanged = (event) => {
       const settings = event.detail || readSettings();
+      pruneQueuedReminderEmails(settings);
       setActiveReminder((current) => {
         if (!current) return null;
         if (current.kind === 'meal' && !settings.mealReminder) return null;

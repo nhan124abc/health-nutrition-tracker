@@ -51,11 +51,11 @@ public class UserNotificationSetting {
     private boolean weightReminderEnabled = true;
 
     /**
-     * Ngày trong tuần nhắc cân: 1 = Thứ 2, 7 = Chủ nhật
+     * Số ngày giữa các lần nhắc cập nhật cân nặng/chỉ số cơ thể.
      */
     @Column(name = "weight_reminder_day")
     @Builder.Default
-    private Integer weightReminderDay = 1;
+    private Integer weightReminderDay = 7;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;

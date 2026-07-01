@@ -1008,6 +1008,8 @@
       "mealReminder": "Meal reminders",
       "waterReminder": "Water reminders",
       "bodyMetricsReminder": "Body metrics reminders",
+      "loadError": "Unable to load notification settings from the database.",
+      "saveError": "Unable to save notification settings.",
       "activityReminder": "Activity reminders",
       "weeklyReport": "Weekly report summary"
     }
@@ -1406,6 +1408,7 @@
     "empty": {
       "loggedActivity": "You have logged an activity on this date. Remove the old activity if you want to change it.",
       "selectActivity": "Choose an activity type and select \"Create 2 options\".",
+      "noActivityCatalog": "No suitable activity is available in the catalog. Check the activity data or choose a specific activity from the list.",
       "loggedMeal": "You have logged {{meal}} on this date. Remove the old meal if you want to choose another option.",
       "selectMeal": "Choose a meal type and select \"Create 2 options\".",
       "noRecipes": "No matching recipes were found. Remove some ingredients or switch to Create a meal."

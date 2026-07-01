@@ -15,12 +15,12 @@ import {
 } from 'react-icons/fa';
 import { getAiPlanSuggestions } from '../features/ai/aiService';
 import { createMeal, createMealPlan, getMealsByDate, deleteMealById } from '../features/meals/mealService';
-import { extractMealsFromApi, getMealTotals, getMealsTotals, normalizeMealFromApi } from '../features/meals/mealUtils';
+import { extractMealsFromApi, formatCalories, getMealTotals, getMealsTotals, normalizeMealFromApi } from '../features/meals/mealUtils';
 import { getProfile } from '../features/profile/profileService';
 import { extractProfileFromApi, mapProfileFromApi } from '../features/profile/profileUtils';
 import { getActivitiesByDate, createActivityLog, createWorkoutPlan, deleteActivityById, getActivityTypes } from '../features/activities/activityService';
 import { extractActivitiesFromApi, extractActivityTypesFromApi, normalizeActivityFromApi, normalizeActivityType } from '../features/activities/activityUtils';
-import { createRecipe, getFoods, getRecipeSuggestions } from '../features/nutrition/nutritionService';
+import { getFoods, getRecipeSuggestions } from '../features/nutrition/nutritionService';
 import { extractFoodsFromApi, normalizeFoodFromApi } from '../features/nutrition/nutritionUtils';
 import { getLocalizedName } from '../utils/localizedName';
 import { isVietnameseSearchLanguage, valuesMatchSearch } from '../utils/searchText';
@@ -41,16 +41,19 @@ function today() {
 
 function mapFoodOption(food) {
   const normalizedFood = normalizeFoodFromApi(food);
+  const servingSizeG = Number(food.servingSizeG ?? String(normalizedFood.servingSize).replace(/[^\d.]/g, ''));
 
   return {
     id: normalizedFood.id,
     name: normalizedFood.name,
     nameVi: normalizedFood.nameVi,
-    servingSizeG: Number(normalizedFood.servingSizeG) || 100,
+    servingSizeG: servingSizeG || 100,
     calories: Number(normalizedFood.calories) || 0,
-    proteinG: Number(normalizedFood.proteinG) || 0,
-    carbsG: Number(normalizedFood.carbsG) || 0,
-    fatG: Number(normalizedFood.fatG) || 0,
+    proteinG: Number(normalizedFood.protein) || 0,
+    carbsG: Number(normalizedFood.carbs) || 0,
+    fatG: Number(normalizedFood.fat) || 0,
+    fiberG: Number(normalizedFood.fiber) || 0,
+    sodiumMg: Number(normalizedFood.sodium) || 0,
   };
 }
 
@@ -532,6 +535,56 @@ function Planner() {
     setSelectedOption(null);
   };
 
+  const buildGeneratedMealItems = (option) => {
+    const aiIngredients = Array.isArray(option.ingredients)
+      ? option.ingredients.filter((ingredient) => ingredient.foodItemId)
+      : [];
+    const sourceItems = aiIngredients.length > 0
+      ? aiIngredients
+      : selectedFoodOptions.map((food) => ({
+        foodItemId: food.id,
+        name: food.name,
+        nameVi: food.nameVi,
+        servingSizeG: food.servingSizeG,
+        quantity: 1,
+        calories: food.calories,
+        proteinG: food.proteinG,
+        carbsG: food.carbsG,
+        fatG: food.fatG,
+        fiberG: food.fiberG,
+        sodiumMg: food.sodiumMg,
+      }));
+
+    return sourceItems.map((ingredient) => {
+      const matchedFood = foodOptions.find((food) => String(food.id) === String(ingredient.foodItemId));
+      const servingSizeG = Number(ingredient.servingSizeG || ingredient.quantityG || matchedFood?.servingSizeG) || 100;
+      const quantity = Number(ingredient.quantity) || 1;
+      const fallbackScale = servingSizeG / Math.max(Number(matchedFood?.servingSizeG) || servingSizeG, 1);
+      const scaledValue = (fieldName, fallbackName) => {
+        const directValue = Number(ingredient[fieldName]);
+        if (directValue > 0 || fieldName === 'fiberG' || fieldName === 'sodiumMg') {
+          return directValue || 0;
+        }
+        return (Number(matchedFood?.[fallbackName]) || 0) * fallbackScale * quantity;
+      };
+
+      return {
+        itemType: 'FOOD',
+        foodItemId: ingredient.foodItemId,
+        recipeId: null,
+        foodName: getLocalizedName(matchedFood || ingredient, i18n.language) || ingredient.name || matchedFood?.name || '',
+        servingSizeG,
+        quantity,
+        calories: scaledValue('calories', 'calories'),
+        proteinG: scaledValue('proteinG', 'proteinG'),
+        carbsG: scaledValue('carbsG', 'carbsG'),
+        fatG: scaledValue('fatG', 'fatG'),
+        fiberG: scaledValue('fiberG', 'fiberG'),
+        sodiumMg: scaledValue('sodiumMg', 'sodiumMg'),
+      };
+    }).filter((item) => item.foodItemId && item.foodName && item.calories >= 0);
+  };
+
   const findActivityTypeByName = (activityName, activityTypeId = null) => activityOptions.find((type) => {
     if (activityTypeId && String(type.id) === String(activityTypeId)) {
       return true;
@@ -768,53 +821,52 @@ function Planner() {
         throw new Error(t('plannerPage.errors.overBudget'));
       }
 
-      // Persist AI dishes as recipes backed by existing food items before logging the meal.
-      let recipeOption = option;
-      if (!option.recipeId) {
-        const aiIngredients = Array.isArray(option.ingredients)
-          ? option.ingredients.filter((ingredient) => ingredient.foodItemId)
-          : [];
-        const recipeIngredients = aiIngredients.length > 0
-          ? aiIngredients.map((ingredient) => ({
-            foodItemId: ingredient.foodItemId,
-            quantityG: Number(ingredient.servingSizeG || ingredient.quantityG) || 100,
-          }))
-          : selectedFoodOptions.map((food) => ({
-            foodItemId: food.id,
-            quantityG: Number(food.servingSizeG) || 100,
-          }));
-        if (recipeIngredients.length === 0) {
-          throw new Error(t('plannerPage.errors.selectFoodBeforeSave'));
-        }
-        const recipeResponse = await createRecipe({
-          name: optionDisplayName,
-          description: getOptionCookingMethod(option) || option.description || '',
-          servings: 1,
-          ingredients: recipeIngredients,
-        });
-        recipeOption = normalizeRecipeOption(recipeResponse.data);
-      }
-
-      const mealItems = [{
+      const mealItems = option.recipeId ? [{
         itemType: 'RECIPE',
         foodItemId: null,
-        recipeId: recipeOption.recipeId,
-        foodName: recipeOption.name,
-        servingSizeG: Number(recipeOption.servingSizeG) || 100,
+        recipeId: option.recipeId,
+        foodName: option.name,
+        servingSizeG: Number(option.servingSizeG) || 100,
         quantity: 1,
-        calories: Number(recipeOption.calories) || 0,
-        proteinG: Number(recipeOption.proteinG) || 0,
-        carbsG: Number(recipeOption.carbsG) || 0,
-        fatG: Number(recipeOption.fatG) || 0,
-        fiberG: Number(recipeOption.fiberG) || 0,
-        sodiumMg: Number(recipeOption.sodiumMg) || 0,
-      }];
+        calories: Number(option.calories) || 0,
+        proteinG: Number(option.proteinG) || 0,
+        carbsG: Number(option.carbsG) || 0,
+        fatG: Number(option.fatG) || 0,
+        fiberG: Number(option.fiberG) || 0,
+        sodiumMg: Number(option.sodiumMg) || 0,
+      }] : buildGeneratedMealItems(option);
+
+      if (mealItems.length === 0) {
+        throw new Error(t('plannerPage.errors.selectFoodBeforeSave'));
+      }
+
+      const mealPlanEntries = option.recipeId ? [{
+        planDate,
+        mealType: mealTypeToApi[selectedMeal] || selectedMeal.toUpperCase(),
+        foodItemId: null,
+        recipeId: option.recipeId,
+        foodName: option.name,
+        servingSizeG: Number(option.servingSizeG) || 100,
+        quantity: 1,
+        calories: Number(option.calories) || 0,
+        notes: getOptionCookingMethod(option) || option.description || '',
+      }] : mealItems.map((item) => ({
+        planDate,
+        mealType: mealTypeToApi[selectedMeal] || selectedMeal.toUpperCase(),
+        foodItemId: item.foodItemId,
+        recipeId: null,
+        foodName: item.foodName,
+        servingSizeG: item.servingSizeG,
+        quantity: item.quantity,
+        calories: item.calories,
+        notes: optionDisplayName,
+      }));
 
       const payload = {
         mealType: selectedMeal.toUpperCase(),
         mealDate: planDate,
         mealTime: null,
-        notes: `${t('plannerPage.savedNotes.meal')}: ${recipeOption.name}`,
+        notes: `${t('plannerPage.savedNotes.meal')}: ${optionDisplayName}`,
         items: mealItems,
       };
       const replacedMealIds = loggedMealsForSlot.map((meal) => meal.id).filter(Boolean);
@@ -823,21 +875,11 @@ function Planner() {
       }
       const mealPlanPayload = {
         name: `${selectedMealLabel} - ${planDate}`,
-        description: `${t('plannerPage.savedNotes.meal')}: ${recipeOption.name}`,
+        description: `${t('plannerPage.savedNotes.meal')}: ${optionDisplayName}`,
         startDate: planDate,
         endDate: planDate,
         active: true,
-        entries: [{
-          planDate,
-          mealType: mealTypeToApi[selectedMeal] || selectedMeal.toUpperCase(),
-          foodItemId: null,
-          recipeId: recipeOption.recipeId,
-          foodName: recipeOption.name,
-          servingSizeG: Number(recipeOption.servingSizeG) || 100,
-          quantity: 1,
-          calories: Number(recipeOption.calories) || 0,
-          notes: getOptionCookingMethod(recipeOption) || recipeOption.description || '',
-        }],
+        entries: mealPlanEntries,
       };
       const response = await createMeal(payload);
       createMealPlan(mealPlanPayload).catch((planError) => {
@@ -848,7 +890,7 @@ function Planner() {
         normalizeMealFromApi(response.data),
       ]);
       setSelectedOption(index);
-      setSelectedRecipeId(recipeOption.recipeId);
+      setSelectedRecipeId(option.recipeId || null);
       setSuccess(t(replacedMealIds.length > 0 ? 'plannerPage.success.mealReplaced' : 'plannerPage.success.mealAdded', { name: optionDisplayName }));
     } catch (err) {
       setError(err.response?.data?.message || err.message || t('plannerPage.errors.addMeal'));
@@ -1035,8 +1077,8 @@ function Planner() {
             <div className="planner-budget-tile">
               <div>
                 <span>{t('plannerPage.calorieBudget')}</span>
-                <strong>{remaining} kcal</strong>
-                <small>{t('plannerPage.consumed', { consumed: totals.calories, goal: calorieGoal })}</small>
+                <strong>{formatCalories(remaining)} kcal</strong>
+                <small>{t('plannerPage.consumed', { consumed: formatCalories(totals.calories), goal: formatCalories(calorieGoal) })}</small>
               </div>
               <FaFireAlt />
             </div>
@@ -1440,7 +1482,7 @@ function Planner() {
                         <Card.Body className="d-flex flex-column">
                           <div className="d-flex justify-content-between gap-2">
                             <FaBookOpen className="text-success fs-5" />
-                            <span className="small fw-semibold text-success">{recipe.calories} kcal</span>
+                            <span className="small fw-semibold text-success">{formatCalories(recipe.calories)} kcal</span>
                           </div>
                           <h3 className="h5 fw-bold mt-3">{getRecipeDisplayName(recipe)}</h3>
                           <div className="d-flex flex-wrap gap-2 mb-3">
@@ -1566,6 +1608,11 @@ function Planner() {
                 {t('plannerPage.suggestion.mealMessage')} {t('plannerPage.suggestion.mealBudget')}: <strong>{suggestion.mealBudget} kcal</strong>.
               </Alert>
             )}
+            {isExerciseMode && (suggestion.options || []).length === 0 ? (
+              <Alert variant="warning" className="border">
+                {t('plannerPage.empty.noActivityCatalog')}
+              </Alert>
+            ) : (
             <Row className="g-3">
               {(suggestion.options || []).map((option, index) => {
                 const logged = isOptionLogged(option.name) || selectedOption === index;
@@ -1597,7 +1644,7 @@ function Planner() {
                           <span className={`small fw-semibold text-${isExercise ? 'primary' : 'success'}`}>
                             {isExercise
                               ? t('plannerPage.caloriesBurned', { calories: activityPreviewCalories })
-                              : `${option.calories} kcal`}
+                              : `${formatCalories(option.calories)} kcal`}
                           </span>
                         </div>
                         <h3 className="h5 fw-bold mt-3">{isExercise ? getActivityDisplayName(option, matchedActivityType) : optionDisplayName}</h3>
@@ -1690,6 +1737,7 @@ function Planner() {
                 );
               })}
             </Row>
+            )}
 
           </>
         )}

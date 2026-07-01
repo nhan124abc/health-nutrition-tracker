@@ -1,12 +1,14 @@
 import { Button, Card } from 'react-bootstrap';
 import { FaCheck, FaUtensils } from 'react-icons/fa';
-import { getMealTotals, mealTypes } from '../mealUtils';
+import { formatCalories, getMealDisplayName, getMealTotals, mealTypes } from '../mealUtils';
 
 function MealCard({ completed = false, meal, onOpen, onToggleComplete, t }) {
   const type = mealTypes.find((item) => item.key === meal.type);
   const label = type ? t(type.labelKey) : meal.type;
   const mealTotals = getMealTotals(meal);
   const notes = meal.notes || (meal.notesKey ? t(meal.notesKey) : '');
+  const mealName = getMealDisplayName(meal, label);
+  const shouldShowNotes = notes && notes !== mealName && !notes.endsWith(`: ${mealName}`);
 
   const handleKeyDown = (event) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -23,11 +25,12 @@ function MealCard({ completed = false, meal, onOpen, onToggleComplete, t }) {
             <span className="meal-icon"><FaUtensils /></span>
             <div>
               <Card.Title className="h5 fw-bold mb-0">{label} - {meal.time}</Card.Title>
-              <Card.Text className="text-secondary small mb-0">{notes || t('common.noNotes')}</Card.Text>
+              <div className="fw-semibold text-dark mt-1">{mealName}</div>
+              {shouldShowNotes && <Card.Text className="text-secondary small mb-0">{notes}</Card.Text>}
             </div>
           </div>
           <div className="text-end">
-            <div className="fw-semibold">{mealTotals.calories} kcal</div>
+            <div className="fw-semibold">{formatCalories(mealTotals.calories)} kcal</div>
             <div className="text-secondary small mt-1">{meal.items.length} {t('foodDiary.items')}</div>
             <Button
               variant="link"

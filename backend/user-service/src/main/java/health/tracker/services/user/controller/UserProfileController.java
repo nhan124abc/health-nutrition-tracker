@@ -1,6 +1,7 @@
 package health.tracker.services.user.controller;
 
 import health.tracker.services.user.dto.*;
+import health.tracker.services.user.service.NotificationSettingsService;
 import health.tracker.services.user.service.UserProfileService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,7 @@ public class UserProfileController {
 
     private final UserProfileService profileService;
     private final health.tracker.services.user.service.GoalPlanService goalPlanService;
+    private final NotificationSettingsService notificationSettingsService;
 
     @PostMapping("/goal-plans/suggestions")
     public ResponseEntity<GoalPlanResponse> suggestGoalPlan(
@@ -50,6 +52,19 @@ public class UserProfileController {
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody GoalPlanRequest request) {
         return ResponseEntity.ok(goalPlanService.apply(userId, request));
+    }
+
+    @GetMapping("/notification-settings")
+    public ResponseEntity<NotificationSettingsResponse> getNotificationSettings(
+            @RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(notificationSettingsService.getSettings(userId));
+    }
+
+    @PutMapping("/notification-settings")
+    public ResponseEntity<NotificationSettingsResponse> updateNotificationSettings(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestBody NotificationSettingsRequest request) {
+        return ResponseEntity.ok(notificationSettingsService.updateSettings(userId, request));
     }
 
     // ─── Profile ──────────────────────────────────────────────────────────────

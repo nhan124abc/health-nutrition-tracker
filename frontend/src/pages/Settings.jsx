@@ -1,41 +1,84 @@
 import { useEffect, useState } from 'react';
-import { Card, Col, Form, Row } from 'react-bootstrap';
+import { Alert, Card, Col, Form, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaBell } from 'react-icons/fa';
-
-const settingsStorageKey = 'userSettings';
-
-const defaultSettings = {
-  mealReminder: true,
-  waterReminder: true,
-  bodyMetricsReminder: true,
-  activityReminder: true,
-  weeklyReport: true,
-};
-
-function readStoredSettings() {
-  try {
-    return JSON.parse(localStorage.getItem(settingsStorageKey)) || {};
-  } catch {
-    return {};
-  }
-}
+import {
+  canSyncNotificationSettings,
+  defaultNotificationSettings,
+  getNotificationSettings,
+  persistNotificationSettings,
+  readStoredNotificationSettings,
+  updateNotificationSettings,
+} from '../features/reminders/notificationSettingsService';
 
 function Settings() {
   const { t } = useTranslation();
-  const [settings, setSettings] = useState(() => ({
-    ...defaultSettings,
-    ...readStoredSettings(),
-  }));
+  const [settings, setSettings] = useState(readStoredNotificationSettings);
+  const [loading, setLoading] = useState(true);
+  const [savingName, setSavingName] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    localStorage.setItem(settingsStorageKey, JSON.stringify(settings));
-    window.dispatchEvent(new CustomEvent('settings:notificationsChanged', { detail: settings }));
-  }, [settings]);
+    let mounted = true;
 
-  const updateNotification = (event) => {
+    async function loadSettings() {
+      if (!canSyncNotificationSettings()) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const syncedSettings = await getNotificationSettings();
+        if (!mounted) return;
+        persistNotificationSettings(syncedSettings);
+        setSettings(syncedSettings);
+      } catch {
+        if (mounted) {
+          setError(t('settingsPage.notifications.loadError'));
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadSettings();
+
+    return () => {
+      mounted = false;
+    };
+  }, [t]);
+
+  const updateNotification = async (event) => {
     const { checked, name } = event.target;
-    setSettings((current) => ({ ...current, [name]: checked }));
+    const nextSettings = {
+      ...settings,
+      [name]: checked,
+    };
+    const previousSettings = settings;
+
+    setError('');
+    setSavingName(name);
+    setSettings(nextSettings);
+    persistNotificationSettings(nextSettings);
+
+    if (!canSyncNotificationSettings()) {
+      setSavingName('');
+      return;
+    }
+
+    try {
+      const syncedSettings = await updateNotificationSettings(nextSettings);
+      setSettings(syncedSettings);
+      persistNotificationSettings(syncedSettings);
+    } catch {
+      setSettings(previousSettings);
+      persistNotificationSettings(previousSettings);
+      setError(t('settingsPage.notifications.saveError'));
+    } finally {
+      setSavingName('');
+    }
   };
 
   return (
@@ -53,15 +96,18 @@ function Settings() {
               <div className="d-flex align-items-center gap-2 mb-3">
                 <FaBell className="text-success" />
                 <Card.Title className="fw-bold mb-0">{t('settingsPage.notifications.title')}</Card.Title>
+                {loading && <Spinner animation="border" size="sm" className="ms-auto" />}
               </div>
+              {error && <Alert variant="warning">{error}</Alert>}
               <div className="settings-option-list">
-                {Object.keys(defaultSettings).map((name) => (
+                {Object.keys(defaultNotificationSettings).map((name) => (
                   <Form.Check
                     key={name}
                     type="switch"
                     id={`setting-${name}`}
                     name={name}
                     checked={settings[name]}
+                    disabled={loading || savingName === name}
                     onChange={updateNotification}
                     label={t(`settingsPage.notifications.${name}`)}
                   />

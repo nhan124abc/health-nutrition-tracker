@@ -38,7 +38,7 @@ public class ReminderSchedulerService {
 
     private final Set<String> fallbackSentKeys = ConcurrentHashMap.newKeySet();
 
-    @Value("${app.reminders.scheduler.enabled:true}")
+    @Value("${app.reminders.scheduler.enabled:false}")
     private boolean enabled;
 
     @Value("${app.reminders.time-zone:Asia/Ho_Chi_Minh}")

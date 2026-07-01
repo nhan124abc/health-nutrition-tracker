@@ -571,6 +571,8 @@
       "mealReminder": "Nhắc bữa ăn",
       "waterReminder": "Nhắc uống nước",
       "bodyMetricsReminder": "Nhắc cập nhật chỉ số cơ thể",
+      "loadError": "Không thể tải cài đặt thông báo từ cơ sở dữ liệu.",
+      "saveError": "Không thể lưu cài đặt thông báo.",
       "activityReminder": "Nhắc vận động",
       "weeklyReport": "Tổng kết tuần"
     }
@@ -969,6 +971,7 @@
     "empty": {
       "loggedActivity": "Bạn đã ghi nhận hoạt động vận động trong ngày này. Có thể xóa hoạt động cũ nếu muốn thay đổi.",
       "selectActivity": "Chọn loại hoạt động vận động rồi nhấn \"Tạo 2 phương án\".",
+      "noActivityCatalog": "Chưa có hoạt động phù hợp trong danh mục. Hãy kiểm tra lại dữ liệu hoạt động hoặc chọn hoạt động cụ thể từ danh sách.",
       "loggedMeal": "Bạn đã ghi nhận bữa {{meal}} trong ngày này. Hãy xóa bữa cũ nếu muốn chọn phương án khác.",
       "selectMeal": "Chọn loại bữa rồi nhấn \"Tạo 2 phương án\".",
       "noRecipes": "Chưa có công thức phù hợp. Hãy bỏ bớt nguyên liệu hoặc chuyển sang tab Tạo bữa ăn."
