@@ -693,6 +693,9 @@
     "allCategories": "Tất cả category",
     "activityCount": "Số hoạt động",
     "typeTitle": "Loại hoạt động",
+    "todayCategoryTitle": "Nhóm hôm nay",
+    "categorySummary": "{{count}} hoạt động · {{minutes}} phút",
+    "noCategorySummary": "Chưa có hoạt động nào trong ngày này.",
     "newLogTitle": "Ghi hoạt động mới",
     "updateLogTitle": "Cập nhật hoạt động",
     "editLog": "Chỉnh sửa activity log",
@@ -719,8 +722,10 @@
     "categories": {
       "cardio": "Cardio",
       "strength": "Sức mạnh",
+      "walking": "Đi bộ",
       "flexibility": "Linh hoạt",
       "sports": "Thể thao",
+      "outdoor": "Ngoài trời",
       "daily": "Hoạt động hằng ngày",
       "other": "Khác"
     },
@@ -832,6 +837,8 @@
   },
   "plannerPage": {
     "title": "Chọn bữa ăn phù hợp",
+    "planDate": "Ngày lập kế hoạch",
+    "activityKind": "Lập kế hoạch vận động",
     "calorieBudget": "Ngân sách calo của ngày đã chọn",
     "consumed": "Đã ăn {{consumed}} / {{goal}} kcal",
     "selectSlot": "Chọn bữa ăn",
@@ -995,6 +1002,8 @@
     },
     "option": {
       "weeks": "{{count}} tuần",
+      "weeks_one": "{{count}} tuần",
+      "weeks_other": "{{count}} tuần",
       "safe": "Phù hợp",
       "unsafe": "Không an toàn",
       "activity": "Vận động",
@@ -1038,7 +1047,7 @@
     "calculateMissingProfile": "Hãy hoàn thiện ngày sinh, giới tính, chiều cao và cân nặng trong hồ sơ.",
     "results": {
       "title": "Chỉ số ước tính",
-      "bodyFat": "Body fat",
+      "bodyFat": "Mỡ cơ thể",
       "bmi": "BMI",
       "bmr": "BMR"
     },
@@ -1046,16 +1055,17 @@
       "date": "Ngày ghi nhận",
       "weight": "Cân nặng kg",
       "height": "Chiều cao cm",
-      "bodyFat": "Body fat %",
-      "muscleMass": "Muscle mass kg",
+      "bodyFat": "Mỡ cơ thể %",
+      "muscleMass": "Khối lượng cơ kg",
       "waist": "Vòng eo cm",
       "hip": "Vòng mông cm",
       "chest": "Vòng ngực cm"
     },
     "table": {
-      "bodyFat": "Body fat",
+      "bodyFat": "Mỡ cơ thể",
       "bmi": "BMI",
       "bmr": "BMR",
+      "muscle": "Khối lượng cơ",
       "measurements": "Eo/Mông/Ngực"
     }
   },
@@ -1501,6 +1511,8 @@
     "timeProgress": "Tiến độ thời gian",
     "unknown": "Chưa xác định",
     "weeks": "{{count}} tuần",
+    "weeks_one": "{{count}} tuần",
+    "weeks_other": "{{count}} tuần",
     "planDate": "Ngày theo dõi",
     "complete": "Hoàn thành",
     "progressDetail": "Bắt đầu: {{startDate}} · Đã qua {{elapsedDays}}/{{durationDays}} ngày",
@@ -1517,8 +1529,8 @@
     },
     "mealCard": {
       "title": "Bữa ăn ngày {{date}}",
-      "description": "Dữ liệu được đồng bộ trực tiếp từ kế hoạch bữa ăn.",
-      "empty": "Ngày này chưa có bữa ăn nào trong kế hoạch.",
+      "description": "Dữ liệu được đồng bộ trực tiếp từ nhật ký bữa ăn.",
+      "empty": "Ngày này chưa có bữa ăn nào trong nhật ký.",
       "progress": "Tiến độ bữa ăn",
       "progressHint": "Hoàn thành các bữa đã chọn",
       "noFood": "Chưa có món",
@@ -1535,8 +1547,8 @@
     },
     "workoutCard": {
       "title": "Vận động ngày {{date}}",
-      "description": "Dữ liệu được đồng bộ trực tiếp từ kế hoạch tập luyện.",
-      "empty": "Ngày này chưa có hoạt động nào trong kế hoạch.",
+      "description": "Dữ liệu được đồng bộ trực tiếp từ hoạt động đã ghi nhận.",
+      "empty": "Ngày này chưa có hoạt động nào được ghi nhận.",
       "progress": "Tiến độ vận động",
       "progressHint": "Hoàn thành các hoạt động đã chọn",
       "minutes": "{{count}} phút",

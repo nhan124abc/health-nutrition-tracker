@@ -1,8 +1,20 @@
 import { Card, ProgressBar } from 'react-bootstrap';
-import { getLocalizedName } from '../../../utils/localizedName';
 
-function ActivitySummaryCard({ activityGoal = 0, activityTypes, language, logCount, summary, t }) {
+function ActivitySummaryCard({ activityGoal = 0, logCount, logs = [], summary, t }) {
   const percent = activityGoal > 0 ? Math.round((summary.calories / activityGoal) * 100) : 0;
+  const categorySummary = logs.reduce((items, log) => {
+    const category = log.category || 'other';
+    const current = items[category] || { count: 0, minutes: 0 };
+    return {
+      ...items,
+      [category]: {
+        count: current.count + 1,
+        minutes: current.minutes + Number(log.duration || 0),
+      },
+    };
+  }, {});
+  const categoryRows = Object.entries(categorySummary);
+
   return (
     <Card className="border-0 shadow-sm sticky-panel">
       <Card.Body>
@@ -21,14 +33,18 @@ function ActivitySummaryCard({ activityGoal = 0, activityTypes, language, logCou
           <ProgressBar now={Math.min(percent, 100)} variant={percent >= 100 ? 'success' : 'warning'} />
         </>}
         <hr />
-        <h3 className="h6 fw-bold">{t('activityPage.typeTitle')}</h3>
+        <h3 className="h6 fw-bold">{t('activityPage.todayCategoryTitle')}</h3>
         <div className="d-grid gap-2">
-          {activityTypes.map((type) => (
-            <div className="type-pill" key={type.id}>
-              <span>{getLocalizedName(type, language)}</span>
-              <span className="text-secondary small">{t(`activityPage.categories.${type.category}`)}</span>
+          {categoryRows.length > 0 ? categoryRows.map(([category, item]) => (
+            <div className="type-pill" key={category}>
+              <span>{t(`activityPage.categories.${category}`, category)}</span>
+              <span className="text-secondary small">
+                {t('activityPage.categorySummary', { count: item.count, minutes: item.minutes })}
+              </span>
             </div>
-          ))}
+          )) : (
+            <div className="type-pill text-secondary small">{t('activityPage.noCategorySummary')}</div>
+          )}
         </div>
       </Card.Body>
     </Card>

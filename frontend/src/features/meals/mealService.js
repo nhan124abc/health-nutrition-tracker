@@ -19,6 +19,16 @@ function notifyMealsChanged(action, payload = {}) {
   }));
 }
 
+function notifyMealPlansChanged(action, payload = {}) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(new CustomEvent('meal-plans:changed', {
+    detail: { action, plan: payload },
+  }));
+}
+
 export function updateMeal(id, payload) {
   return api.put(mealConfig.endpoints.update(id), payload)
     .then((response) => {
@@ -58,19 +68,34 @@ export function getMealPlans() {
 }
 
 export function createMealPlan(payload) {
-  return api.post(mealConfig.endpoints.mealPlans, payload);
+  return api.post(mealConfig.endpoints.mealPlans, payload)
+    .then((response) => {
+      notifyMealPlansChanged('create', response.data?.data || response.data || payload);
+      return response;
+    });
 }
 
 export function updateMealPlan(id, payload) {
-  return api.put(mealConfig.endpoints.mealPlanDetail(id), payload);
+  return api.put(mealConfig.endpoints.mealPlanDetail(id), payload)
+    .then((response) => {
+      notifyMealPlansChanged('update', response.data?.data || response.data || { id, ...payload });
+      return response;
+    });
 }
 
 export function updateMealPlanActive(id, active) {
   return api.patch(mealConfig.endpoints.mealPlanActive(id), null, {
     params: { active },
+  }).then((response) => {
+    notifyMealPlansChanged('active', response.data?.data || response.data || { id, active });
+    return response;
   });
 }
 
 export function deleteMealPlan(id) {
-  return api.delete(mealConfig.endpoints.mealPlanDetail(id));
+  return api.delete(mealConfig.endpoints.mealPlanDetail(id))
+    .then((response) => {
+      notifyMealPlansChanged('delete', { id });
+      return response;
+    });
 }

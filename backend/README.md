@@ -185,6 +185,7 @@ GET    /api/v1/auth/oauth2/callback/{provider}    # OAuth2 callback
 ### 3. User Service — Port `8082`
 
 **Database:** `user_db` | **Entities:** `UserProfile`, `BodyMetric`, `WaterLog`, `UserNotificationSetting`
+**Message Broker:** Kafka producer for `water.logged`, `body-metric.recorded`, and `profile.snapshot`.
 
 **Chức năng chính:**
 
@@ -304,6 +305,7 @@ POST   /api/meals/favorites                # Thêm yêu thích
 ### 6. Activity Service — Port `8085`
 
 **Database:** `activity_db` | **Entities:** `ActivityType`, `ActivityLog`, `WorkoutPlan`, `WorkoutPlanExercise`, `StepLog`
+**Message Broker:** Kafka producer for `activity.logged` create/update/delete events.
 
 **Chức năng chính:**
 
@@ -344,7 +346,7 @@ POST   /api/activities/steps               # Log số bước chân
 ### 7. Analytics Service — Port `8086`
 
 **Database:** `analytics_db` | **Entities:** `DailySummary`, `WeeklyReport`, `MonthlyReport`, `NutritionTrend`, `UserStreak`, `HealthInsight`
-**Message Broker:** Kafka (Consumer — lắng nghe events từ meal-service và activity-service)
+**Message Broker:** Kafka consumer for events from meal-service, activity-service, and user-service.
 
 **Chức năng chính:**
 

@@ -19,7 +19,7 @@ import { extractMealsFromApi, getMealTotals, getMealsTotals, normalizeMealFromAp
 import { getProfile } from '../features/profile/profileService';
 import { extractProfileFromApi, mapProfileFromApi } from '../features/profile/profileUtils';
 import { getActivitiesByDate, createActivityLog, createWorkoutPlan, deleteActivityById, getActivityTypes } from '../features/activities/activityService';
-import { extractActivityTypesFromApi, normalizeActivityType } from '../features/activities/activityUtils';
+import { extractActivitiesFromApi, extractActivityTypesFromApi, normalizeActivityFromApi, normalizeActivityType } from '../features/activities/activityUtils';
 import { createRecipe, getFoods, getRecipeSuggestions } from '../features/nutrition/nutritionService';
 import { extractFoodsFromApi, normalizeFoodFromApi } from '../features/nutrition/nutritionUtils';
 import { getLocalizedName } from '../utils/localizedName';
@@ -120,6 +120,39 @@ function getCurrentTime() {
 function getPlannerDayOfWeek(date) {
   const dayOfWeek = new Date(`${date}T00:00:00`).getDay();
   return dayOfWeek === 0 ? 7 : dayOfWeek;
+}
+
+function getMealItemFoodId(item = {}) {
+  return item.foodItemId || item.foodId || item.food?.id || item.id;
+}
+
+function getRecipeId(recipe = {}) {
+  return recipe.recipeId || recipe.id;
+}
+
+function hasVietnameseText(value = '') {
+  return /[À-ỹĐđ]/u.test(String(value));
+}
+
+function textMatchesLanguage(value = '', language = '') {
+  const text = String(value || '').trim();
+  if (!text) {
+    return false;
+  }
+  const wantsVietnamese = String(language).toLowerCase().startsWith('vi');
+  return wantsVietnamese ? hasVietnameseText(text) : !hasVietnameseText(text);
+}
+
+function normalizePlannerActivityLog(activity = {}) {
+  const normalized = normalizeActivityFromApi(activity);
+  return {
+    ...activity,
+    ...normalized,
+    activityTypeId: normalized.typeId,
+    activityName: normalized.customName,
+    durationMinutes: normalized.duration,
+    caloriesBurned: normalized.calories,
+  };
 }
 
 function Planner() {
@@ -286,22 +319,23 @@ function Planner() {
 
   const findLoggedActivityByName = (activityName) => activities.find((activity) => activity.activityName === activityName);
 
+  const getLocalizedMealItemName = (item = {}) => {
+    const matchedFood = foodOptions.find((food) => String(food.id) === String(getMealItemFoodId(item)));
+    return getLocalizedName(matchedFood || item, i18n.language);
+  };
+
   const getLoggedMealTitle = (meal, fallbackLabel) => {
     const noteText = String(meal.notes || '');
     const noteTitle = noteText.includes(':')
       ? noteText.split(':').slice(1).join(':').trim()
       : '';
 
-    if (noteTitle) {
-      return noteTitle;
-    }
-
     const itemNames = (meal.items || [])
-      .map((item) => item.name)
+      .map(getLocalizedMealItemName)
       .filter(Boolean)
       .join(', ');
 
-    return itemNames || fallbackLabel;
+    return itemNames || noteTitle || fallbackLabel;
   };
 
   const getOptionCookingMethod = (option) => {
@@ -318,7 +352,12 @@ function Planner() {
       'điều chỉnh khẩu phần',
     ];
 
-    if (option?.recipeId && normalizedText && !genericHints.some((hint) => normalizedText.toLowerCase().includes(hint))) {
+    if (
+      option?.recipeId
+      && normalizedText
+      && textMatchesLanguage(normalizedText, i18n.language)
+      && !genericHints.some((hint) => normalizedText.toLowerCase().includes(hint))
+    ) {
       return normalizedText;
     }
 
@@ -340,20 +379,36 @@ function Planner() {
     return getLocalizedName(matchedFood || ingredient, i18n.language);
   }
 
+  const getLocalizedActivityCategory = (category) => {
+    const key = String(category || 'other').toLowerCase();
+    return t(`activityPage.categories.${key}`, { defaultValue: key });
+  };
+
+  const getLocalizedOptionAmount = (option) => {
+    if (!option) {
+      return '';
+    }
+    if (!option.recipeId) {
+      return t('plannerPage.oneServing');
+    }
+    const servings = Number(option.servings);
+    return servings > 1 ? t('plannerPage.servings', { count: servings }) : t('plannerPage.oneServing');
+  };
+
   const getOptionDisplayName = (option) => {
-    if (option?.recipeId || !Array.isArray(option?.ingredients) || option.ingredients.length === 0) {
+    if (option?.recipeId) {
+      return getRecipeDisplayName(option);
+    }
+    if (!Array.isArray(option?.ingredients) || option.ingredients.length === 0) {
       return option?.name || '';
     }
     const ingredientNames = option.ingredients.map(getLocalizedIngredientName).filter(Boolean).slice(0, 3);
     return t('plannerPage.generatedDishName', { ingredients: ingredientNames.join(', ') });
   };
 
-  const getRecipeDisplayName = (recipe) => {
+  function getRecipeDisplayName(recipe) {
     const originalName = String(recipe?.name || '').trim();
-    const hasVietnameseCharacters = /[À-ỹĐđ]/.test(originalName);
-    const isVietnamese = String(i18n.language).toLowerCase().startsWith('vi');
-    const nameMatchesLanguage = isVietnamese ? hasVietnameseCharacters : !hasVietnameseCharacters;
-    if (originalName && nameMatchesLanguage) return originalName;
+    if (textMatchesLanguage(originalName, i18n.language)) return originalName;
     const ingredientNames = (recipe?.ingredients || [])
       .map(getLocalizedIngredientName)
       .filter(Boolean)
@@ -362,20 +417,18 @@ function Planner() {
     return ingredientNames
       ? t('plannerPage.localizedRecipeName', { ingredients: ingredientNames })
       : originalName;
-  };
+  }
 
   const normalizeRecipeOption = useCallback((recipe) => {
     const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
     const servingSizeG = ingredients.reduce((sum, ingredient) => sum + Number(ingredient.quantityG || ingredient.servingSizeG || 0), 0);
     return {
-      recipeId: recipe.id,
+      recipeId: getRecipeId(recipe),
       name: recipe.name,
       description: recipe.description || '',
       cookingMethod: recipe.description || '',
       servings: Number(recipe.servings) || 1,
-      amount: recipe.servings && recipe.servings > 1
-        ? t('plannerPage.servings', { count: recipe.servings })
-        : t('plannerPage.oneServing'),
+      amount: '',
       servingSizeG: servingSizeG || 100,
       calories: Number(recipe.calories) || 0,
       proteinG: Number(recipe.proteinG) || 0,
@@ -395,7 +448,7 @@ function Planner() {
         fatG: Number(ingredient.fatG) || 0,
       })),
     };
-  }, [t]);
+  }, []);
 
   const loadRecipes = useCallback(async (signal) => {
     if (!canSearchRecipes) {
@@ -536,10 +589,7 @@ function Planner() {
           return;
         }
         setMeals(extractMealsFromApi(mealsResponse.data).map(normalizeMealFromApi));
-        const actList = Array.isArray(activitiesResponse.data)
-          ? activitiesResponse.data
-          : activitiesResponse.data?.content || activitiesResponse.data?.data || [];
-        setActivities(actList);
+        setActivities(extractActivitiesFromApi(activitiesResponse.data).map(normalizePlannerActivityLog));
       })
       .catch((err) => {
         if (!cancelled) {
@@ -777,10 +827,10 @@ function Planner() {
           notes: getOptionCookingMethod(recipeOption) || recipeOption.description || '',
         }],
       };
-      const [response] = await Promise.all([
-        createMeal(payload),
-        createMealPlan(mealPlanPayload),
-      ]);
+      const response = await createMeal(payload);
+      createMealPlan(mealPlanPayload).catch((planError) => {
+        console.warn('[Planner] Meal was logged, but meal plan synchronization failed:', planError);
+      });
       setMeals((current) => [
         ...current.filter((meal) => !replacedMealIds.includes(meal.id)),
         normalizeMealFromApi(response.data),
@@ -857,9 +907,10 @@ function Planner() {
     };
 
     try {
+      const activityDisplayName = getActivityDisplayName(activity, matchedActivityType);
       const workoutPlanPayload = {
-        name: `Ke hoach van dong - ${planDate}`,
-        description: `${t('plannerPage.savedNotes.activity')}: ${activity.name}`,
+        name: `${t('plannerPage.sections.activityPlan')} - ${planDate}`,
+        description: `${t('plannerPage.savedNotes.activity')}: ${activityDisplayName}`,
         goal: activeGoal === 'LOSE_WEIGHT' || activeGoal === 'CUTTING'
           ? 'WEIGHT_LOSS'
           : activeGoal === 'GAIN_MUSCLE'
@@ -870,19 +921,19 @@ function Planner() {
         exercises: [{
           dayOfWeek: getPlannerDayOfWeek(planDate),
           activityTypeId: matchedActivityType?.id || activity.activityTypeId || null,
-          exerciseName: activity.name,
+          exerciseName: activityDisplayName,
           durationMinutes: getActivityDurationMinutes(activity),
           sortOrder: 0,
           notes: t('plannerPage.savedNotes.activity'),
         }],
       };
-      const [response] = await Promise.all([
-        createActivityLog(payload),
-        createWorkoutPlan(workoutPlanPayload),
-      ]);
-      setActivities((current) => [...current, response.data]);
+      const response = await createActivityLog(payload);
+      createWorkoutPlan(workoutPlanPayload).catch((planError) => {
+        console.warn('[Planner] Activity was logged, but workout plan synchronization failed:', planError);
+      });
+      setActivities((current) => [...current, normalizePlannerActivityLog(response.data)]);
       setSelectedOption(idx);
-      setSuccess(t('plannerPage.success.activityAdded', { name: activity.name }));
+      setSuccess(t('plannerPage.success.activityAdded', { name: activityDisplayName }));
     } catch (err) {
       setError(err.response?.data?.message || t('plannerPage.errors.addActivity'));
     } finally {
@@ -1270,7 +1321,7 @@ function Planner() {
                               <ul className="small text-secondary ps-3 mb-0">
                                 {mealItems.map((item) => (
                                   <li key={item.id || item.name}>
-                                    {item.name}{item.serving ? ` - ${item.serving}` : ''}
+                                    {getLocalizedMealItemName(item)}{item.serving ? ` - ${item.serving}` : ''}
                                   </li>
                                 ))}
                               </ul>
@@ -1314,7 +1365,7 @@ function Planner() {
                     <Card className="border-0 shadow-sm bg-white h-100">
                       <Card.Body className="d-flex flex-column p-3">
                         <div className="d-flex justify-content-between align-items-center mb-2">
-                          <span className="fw-bold text-dark">{act.activityName}</span>
+                          <span className="fw-bold text-dark">{getActivityDisplayName({ name: act.activityName, activityTypeId: act.activityTypeId })}</span>
                           <span className="small fw-semibold text-primary">{Math.round(act.caloriesBurned)} kcal</span>
                         </div>
                         <div className="text-secondary small mb-3">{t('plannerPage.duration', { minutes: act.durationMinutes })}</div>
@@ -1367,11 +1418,12 @@ function Planner() {
                   const matchedIngredientCount = recipe.ingredients.filter((ingredient) =>
                     selectedFoodIds.some((foodId) => String(foodId) === String(ingredient.foodItemId))
                   ).length;
-                  const logged = selectedRecipeId === recipe.recipeId || loggedMealsForSlot.some((meal) =>
-                    (meal.items || []).some((item) => item.recipeId === recipe.recipeId || item.name === recipe.name)
+                  const recipeId = getRecipeId(recipe);
+                  const logged = selectedRecipeId === recipeId || loggedMealsForSlot.some((meal) =>
+                    (meal.items || []).some((item) => getRecipeId(item) === recipeId || item.name === recipe.name)
                   );
                   return (
-                    <Col md={6} key={recipe.recipeId || recipe.name}>
+                    <Col md={6} key={recipeId || recipe.name}>
                       <Card className="border-0 shadow-sm h-100">
                         <Card.Body className="d-flex flex-column">
                           <div className="d-flex justify-content-between gap-2">
@@ -1402,7 +1454,7 @@ function Planner() {
                               </div>
                               <ul className="small text-secondary ps-3 mb-0">
                                 {recipe.ingredients.map((ingredient) => (
-                                  <li key={`${recipe.recipeId}-${ingredient.foodItemId || ingredient.name}`}>
+                                  <li key={`${recipeId}-${ingredient.foodItemId || ingredient.name}`}>
                                     {getLocalizedIngredientName(ingredient)} - {Math.round(ingredient.servingSizeG)}g
                                   </li>
                                 ))}
@@ -1537,7 +1589,7 @@ function Planner() {
                           </span>
                         </div>
                         <h3 className="h5 fw-bold mt-3">{isExercise ? getActivityDisplayName(option, matchedActivityType) : optionDisplayName}</h3>
-                        <p className="text-secondary">{!isExercise && !option.recipeId ? t('plannerPage.oneServing') : option.amount}</p>
+                        <p className="text-secondary">{!isExercise ? getLocalizedOptionAmount(option) : option.amount}</p>
                         {!isExercise && (
                           <div className="d-flex flex-wrap gap-2 mb-3">
                             <span className={`small fw-semibold text-${option.recipeId ? 'info' : 'secondary'}`}>
@@ -1562,7 +1614,7 @@ function Planner() {
                             )}
                             {matchedActivityType?.category && (
                               <span className="text-secondary small">
-                                {t('plannerPage.activityCategory')}: {matchedActivityType.category.toUpperCase()}
+                                {t('plannerPage.activityCategory')}: {getLocalizedActivityCategory(matchedActivityType.category)}
                               </span>
                             )}
                           </div>
@@ -1649,7 +1701,7 @@ function Planner() {
       </Modal.Body>
       <Modal.Footer>
         <Button variant="outline-secondary" onClick={() => setPlannerNotice(null)}>
-          {plannerNotice?.onConfirm ? t('common.cancel', 'Hủy') : t('common.close', 'Đóng')}
+          {plannerNotice?.onConfirm ? t('common.cancel') : t('common.close')}
         </Button>
         {plannerNotice?.onConfirm && (
           <Button

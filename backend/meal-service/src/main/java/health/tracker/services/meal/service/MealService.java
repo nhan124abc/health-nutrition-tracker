@@ -154,21 +154,46 @@ public class MealService {
 
     private void publishMealEvent(String eventType, Meal meal) {
         try {
-            Map<String, Object> event = Map.of(
-                    "eventType", eventType,
-                    "userId",    meal.getUserId(),
-                    "mealId",    meal.getId(),
-                    "mealDate",  meal.getMealDate().toString(),
-                    "calories",  meal.getTotalCalories(),
-                    "proteinG",  meal.getTotalProteinG(),
-                    "carbsG",    meal.getTotalCarbsG(),
-                    "fatG",      meal.getTotalFatG()
+            Map<String, Object> event = Map.ofEntries(
+                    Map.entry("eventId", java.util.UUID.randomUUID().toString()),
+                    Map.entry("eventType", eventType),
+                    Map.entry("userId", meal.getUserId()),
+                    Map.entry("mealId", meal.getId()),
+                    Map.entry("mealDate", meal.getMealDate().toString()),
+                    Map.entry("calories", meal.getTotalCalories()),
+                    Map.entry("proteinG", meal.getTotalProteinG()),
+                    Map.entry("carbsG", meal.getTotalCarbsG()),
+                    Map.entry("fatG", meal.getTotalFatG()),
+                    Map.entry("fiberG", meal.getTotalFiberG()),
+                    Map.entry("sodiumMg", meal.getItems().stream()
+                            .map(MealItem::getSodiumMg)
+                            .filter(java.util.Objects::nonNull)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add)),
+                    Map.entry("items", meal.getItems().stream().map(item -> {
+                        Map<String, Object> trendItem = new java.util.HashMap<>();
+                        if (item.getFoodItemId() != null) trendItem.put("foodItemId", item.getFoodItemId());
+                        trendItem.put("foodName", item.getFoodName());
+                        trendItem.put("calories", item.getCalories());
+                        return trendItem;
+                    }).toList())
             );
-            kafkaTemplate.send(TOPIC_MEAL_LOGGED, String.valueOf(meal.getUserId()), event);
+            sendAfterCommit(() -> kafkaTemplate.send(TOPIC_MEAL_LOGGED, String.valueOf(meal.getUserId()), event)
+                    .whenComplete((result, error) -> {
+                        if (error != null) log.error("Failed to publish meal event for mealId={}", meal.getId(), error);
+                    }));
         } catch (Exception e) {
             // Không để Kafka lỗi ảnh hưởng đến response chính
             log.warn("Failed to publish meal.logged event for mealId={}: {}", meal.getId(), e.getMessage());
         }
+    }
+
+    private void sendAfterCommit(Runnable action) {
+        if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override public void afterCommit() { action.run(); }
+                    });
+        } else action.run();
     }
 
     // ─── Mapper ───────────────────────────────────────────────────────────────

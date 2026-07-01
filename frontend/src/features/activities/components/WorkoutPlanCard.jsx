@@ -1,34 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Card, Form, ListGroup, ProgressBar, Spinner } from 'react-bootstrap';
-import { getWorkoutPlans } from '../activityService';
+import { getActivitiesByDate } from '../activityService';
+import { extractActivitiesFromApi, normalizeActivityFromApi } from '../activityUtils';
 import { getActivityCompletionId, readCompletionIds, toggleCompletionId } from '../../../utils/completionStorage';
 import ErrorModal from '../../../components/ErrorModal';
 import { useTranslation } from 'react-i18next';
 
-function extractPlans(data) {
-  return Array.isArray(data) ? data : data?.data || [];
-}
-
-function getPlannerDayOfWeek(date) {
-  const dayOfWeek = new Date(`${date}T00:00:00`).getDay();
-  return dayOfWeek === 0 ? 7 : dayOfWeek;
-}
-
-function getExercisesForDate(plans, selectedDate) {
-  const selectedDay = getPlannerDayOfWeek(selectedDate);
-
-  return plans
-    .filter((plan) => plan.active !== false)
-    .flatMap((plan) => (plan.exercises || []).map((exercise) => ({
-      ...exercise,
-      id: exercise.id || `${plan.id}-${exercise.dayOfWeek}-${exercise.exerciseName}`,
-      planName: plan.name,
-      date: selectedDate,
-      customName: exercise.exerciseName,
-      duration: exercise.durationMinutes,
-      calories: 0,
-    })))
-    .filter((exercise) => Number(exercise.dayOfWeek) === selectedDay);
+function getActivitiesForDate(data, selectedDate) {
+  return extractActivitiesFromApi(data)
+    .map(normalizeActivityFromApi)
+    .filter((activity) => activity.date === selectedDate);
 }
 
 function WorkoutPlanCard({ selectedDate }) {
@@ -45,10 +26,10 @@ function WorkoutPlanCard({ selectedDate }) {
       setLoading(true);
     }
     setError('');
-    getWorkoutPlans()
+    getActivitiesByDate(selectedDate)
       .then((response) => {
         if (active) {
-          setActivities(getExercisesForDate(extractPlans(response.data), selectedDate));
+          setActivities(getActivitiesForDate(response.data, selectedDate));
         }
       })
       .catch((err) => {
@@ -79,11 +60,13 @@ function WorkoutPlanCard({ selectedDate }) {
     };
 
     window.addEventListener('focus', refreshOnFocus);
+    window.addEventListener('activities:changed', refreshOnFocus);
     window.addEventListener('workout-plans:changed', refreshOnFocus);
     window.addEventListener('completion:changed', refreshCompletions);
 
     return () => {
       window.removeEventListener('focus', refreshOnFocus);
+      window.removeEventListener('activities:changed', refreshOnFocus);
       window.removeEventListener('workout-plans:changed', refreshOnFocus);
       window.removeEventListener('completion:changed', refreshCompletions);
     };

@@ -67,8 +67,12 @@ function normalizeMealItemFromApi(item = {}) {
 
   return {
     id: item.id || item.foodId || `I${Date.now()}-${Math.random()}`,
-    foodId: item.foodId || item.food?.id || '',
+    foodId: item.foodItemId || item.foodId || item.food?.id || '',
+    foodItemId: item.foodItemId || item.foodId || item.food?.id || '',
+    recipeId: item.recipeId || item.recipe?.id || '',
     name: item.name || item.foodName || item.itemName || '',
+    nameVi: item.nameVi || item.foodNameVi || item.food?.nameVi || '',
+    nameEn: item.nameEn || item.foodNameEn || item.food?.nameEn || '',
     serving: typeof servingSize === 'number' ? `${servingSize}g` : servingSize || '100g',
     quantity: normalizeNumber(item.quantity || 1),
     totalWeight: normalizeNumber(item.totalWeightG),

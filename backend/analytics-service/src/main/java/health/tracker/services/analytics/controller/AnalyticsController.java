@@ -4,10 +4,14 @@ import health.tracker.services.analytics.dto.AdminOverviewResponse;
 import health.tracker.services.analytics.dto.AdminSystemAnalyticsResponse;
 import health.tracker.services.analytics.dto.DailySummaryResponse;
 import health.tracker.services.analytics.exception.AppException;
-import health.tracker.services.analytics.repository.DailySummaryRepository;
+import health.tracker.services.analytics.entity.WeeklyReport;
+import health.tracker.services.analytics.entity.MonthlyReport;
+import health.tracker.services.analytics.entity.NutritionTrend;
+import health.tracker.services.analytics.entity.HealthInsight;
 import health.tracker.services.analytics.service.AdminOverviewService;
 import health.tracker.services.analytics.service.AdminSystemAnalyticsService;
 import health.tracker.services.analytics.service.AnalyticsService;
+import health.tracker.services.analytics.service.ReportAggregationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +44,7 @@ public class AnalyticsController {
     private final AnalyticsService analyticsService;
     private final AdminOverviewService adminOverviewService;
     private final AdminSystemAnalyticsService adminSystemAnalyticsService;
-    private final DailySummaryRepository summaryRepository;
+    private final ReportAggregationService reportAggregationService;
 
     @GetMapping("/admin/overview")
     public ResponseEntity<AdminOverviewResponse> getAdminOverview(
@@ -103,10 +108,11 @@ public class AnalyticsController {
     @GetMapping("/monthly")
     public ResponseEntity<List<DailySummaryResponse>> getMonthly(
             @RequestHeader("X-User-Id") Long userId,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDate).now().getYear()}")   int year,
-            @RequestParam(defaultValue = "#{T(java.time.LocalDate).now().getMonthValue()}") int month) {
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month) {
 
-        LocalDate start = LocalDate.of(year, month, 1);
+        YearMonth targetMonth = year == null || month == null ? YearMonth.now() : YearMonth.of(year, month);
+        LocalDate start = targetMonth.atDay(1);
         LocalDate end   = start.with(TemporalAdjusters.lastDayOfMonth());
         return ResponseEntity.ok(analyticsService.getRange(userId, start, end));
     }
@@ -119,18 +125,43 @@ public class AnalyticsController {
     public ResponseEntity<Map<String, Object>> getStreak(
             @RequestHeader("X-User-Id") Long userId) {
 
-        return summaryRepository.findByUserIdAndSummaryDate(userId, LocalDate.now())
-                .map(s -> {
-                    DailySummaryResponse r = analyticsService.getDailySummary(userId, LocalDate.now());
-                    return ResponseEntity.ok(Map.<String, Object>of(
-                            "currentStreak", r.getCurrentStreak(),
-                            "streakLabel",   r.getStreakLabel()
-                    ));
-                })
-                .orElse(ResponseEntity.ok(Map.of(
-                        "currentStreak", 0,
-                        "streakLabel",   "Bắt đầu streak mới!"
-                )));
+        return ResponseEntity.ok(analyticsService.getStreakSummary(userId));
+    }
+
+    @GetMapping("/reports/weekly")
+    public ResponseEntity<WeeklyReport> getWeeklyReport(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(reportAggregationService.aggregateWeek(userId, date == null ? LocalDate.now() : date));
+    }
+
+    @GetMapping("/reports/monthly")
+    public ResponseEntity<MonthlyReport> getMonthlyReport(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month) {
+        YearMonth targetMonth = year == null || month == null ? YearMonth.now() : YearMonth.of(year, month);
+        return ResponseEntity.ok(reportAggregationService.aggregateMonth(userId, targetMonth));
+    }
+
+    @GetMapping("/trends")
+    public ResponseEntity<List<NutritionTrend>> getTrends(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month) {
+        YearMonth targetMonth = year == null || month == null ? YearMonth.now() : YearMonth.of(year, month);
+        return ResponseEntity.ok(analyticsService.getNutritionTrends(userId, targetMonth));
+    }
+
+    @GetMapping("/insights")
+    public ResponseEntity<List<HealthInsight>> getInsights(@RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(analyticsService.getInsights(userId));
+    }
+
+    @PatchMapping("/insights/{id}/read")
+    public ResponseEntity<HealthInsight> markInsightRead(
+            @RequestHeader("X-User-Id") Long userId, @PathVariable Long id) {
+        return ResponseEntity.ok(analyticsService.markInsightRead(userId, id));
     }
 }
 
