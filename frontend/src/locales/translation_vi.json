@@ -8,7 +8,8 @@
     "dashboard": "Tổng quan",
     "nutrition": "Dinh dưỡng",
     "diary": "Nhật ký bữa ăn",
-    "activity": "Vận động",
+    "activity": "Nhật ký vận động",
+    "activityList": "Hoạt động",
     "water": "Theo dõi nước uống",
     "goals": "Mục tiêu",
     "planner": "Gợi ý & Lập kế hoạch",
@@ -610,7 +611,7 @@
     }
   },
   "foodDiaryPage": {
-    "title": "Meal log trong ngày",
+    "title": "Bữa ăn trong ngày",
     "createMeal": "Tạo bữa ăn",
     "deleteMeal": "Xóa bữa ăn",
     "updateMeal": "Cập nhật bữa ăn",
@@ -725,12 +726,16 @@
     }
   },
   "activityPage": {
-    "title": "Activity logs trong ngày",
+    "title": "Hoạt động trong ngày",
     "addActivity": "Ghi hoạt động",
     "listTitle": "Danh sách hoạt động",
     "allCategories": "Tất cả category",
     "activityCount": "Số hoạt động",
     "typeTitle": "Loại hoạt động",
+    "searchPlaceholder": "Tìm kiếm danh mục hoạt động...",
+    "resultCount": "Đang hiển thị {{count}} hoạt động từ cơ sở dữ liệu.",
+    "noCatalogResults": "Không tìm thấy hoạt động phù hợp.",
+    "noSelection": "Chọn một hoạt động để xem chi tiết.",
     "todayCategoryTitle": "Nhóm hôm nay",
     "categorySummary": "{{count}} hoạt động · {{minutes}} phút",
     "noCategorySummary": "Chưa có hoạt động nào trong ngày này.",
@@ -789,8 +794,20 @@
     "sampleNotes": {
       "morningRun": "Chạy sáng"
     },
+    "tabs": {
+      "logs": "Nhật ký trong ngày",
+      "catalog": "Danh mục hoạt động"
+    },
     "markActivityCompleted": "Đánh dấu hoàn thành vận động",
     "activityCompleted": "Vận động đã hoàn thành"
+  },
+  "activityListPage": {
+    "title": "Danh sách hoạt động",
+    "loading": "Đang tải hoạt động từ cơ sở dữ liệu...",
+    "searchPlaceholder": "Tìm kiếm hoạt động...",
+    "resultCount": "Đang hiển thị {{count}} hoạt động từ cơ sở dữ liệu.",
+    "noResults": "Không tìm thấy hoạt động phù hợp.",
+    "noSelection": "Chọn một hoạt động để xem chi tiết."
   },
   "profilePage": {
     "completion": {
