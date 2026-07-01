@@ -2956,6 +2956,21 @@ tr.is-completed {
   margin-bottom: 0;
 }
 
+.admin-catalog-summary {
+  min-width: 0;
+}
+
+.admin-catalog-title {
+  font-size: 0.95rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.admin-catalog-manage {
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
 .admin-back-link {
   align-items: center;
   color: var(--health-primary-dark);

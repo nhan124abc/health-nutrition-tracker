@@ -1259,6 +1259,11 @@
       "recentDescription": "Các thay đổi và dữ liệu cần admin theo dõi.",
       "dataHealthTitle": "Tình trạng dữ liệu",
       "dataHealthDescription": "Mức độ hoàn thiện các nhóm dữ liệu chính.",
+      "catalogs": {
+        "foodCategories": "Danh mục thực phẩm",
+        "activityCategories": "Danh mục hoạt động",
+        "manage": "Quản lý"
+      },
       "stats": {
         "users": "Người dùng",
         "foods": "Món ăn",
@@ -1291,12 +1296,9 @@
       "loading": "Đang tải dữ liệu phân tích toàn hệ thống...",
       "loadError": "Không thể tải dữ liệu phân tích toàn hệ thống.",
       "userGrowth": "Tăng trưởng người dùng",
-      "userGrowthDescription": "Tổng số người dùng đăng ký trong 6 tháng gần nhất.",
       "systemUsage": "Mức sử dụng hệ thống",
-      "systemUsageDescription": "Số lượt ghi nhận theo từng nhóm chức năng.",
       "logs": "Lượt ghi nhận",
       "featureAdoption": "Mức độ sử dụng tính năng",
-      "featureAdoptionDescription": "Tỷ lệ người dùng hoạt động có sử dụng từng tính năng.",
       "stats": {
         "totalUsers": "Tổng người dùng",
         "activeUsers": "Người dùng hoạt động",

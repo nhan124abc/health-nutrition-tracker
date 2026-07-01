@@ -474,6 +474,11 @@
       "recentDescription": "Recent changes and data that admins should monitor.",
       "dataHealthTitle": "Data health",
       "dataHealthDescription": "Completion status of the main data groups.",
+      "catalogs": {
+        "foodCategories": "Food categories",
+        "activityCategories": "Activity categories",
+        "manage": "Manage"
+      },
       "stats": {
         "users": "Users",
         "foods": "Foods",
@@ -506,12 +511,9 @@
       "loading": "Loading system-wide analytics...",
       "loadError": "Unable to load system-wide analytics.",
       "userGrowth": "User growth",
-      "userGrowthDescription": "Total registered users over the last six months.",
       "systemUsage": "System usage",
-      "systemUsageDescription": "Recorded events by core product area.",
       "logs": "Recorded events",
       "featureAdoption": "Feature adoption",
-      "featureAdoptionDescription": "Percentage of active users using each feature.",
       "stats": {
         "totalUsers": "Total users",
         "activeUsers": "Active users",
