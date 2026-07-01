@@ -23,8 +23,8 @@ public interface FoodItemRepository extends JpaRepository<FoodItem, Long> {
             SELECT f FROM FoodItem f
             WHERE f.isPublic = true
               AND (:keyword IS NULL OR
-                   LOWER(f.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
-                   LOWER(f.nameVi) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                   (:vietnamese = true AND LOWER(f.nameVi) LIKE LOWER(CONCAT('%', :keyword, '%'))) OR
+                   (:vietnamese = false AND LOWER(f.name) LIKE LOWER(CONCAT('%', :keyword, '%'))) OR
                    LOWER(f.brand) LIKE LOWER(CONCAT('%', :keyword, '%')))
               AND (:categoryId IS NULL OR f.category.id = :categoryId)
             ORDER BY
@@ -40,6 +40,7 @@ public interface FoodItemRepository extends JpaRepository<FoodItem, Long> {
             @Param("keyword")    String keyword,
             @Param("categoryId") Integer categoryId,
             @Param("recipeFirst") boolean recipeFirst,
+            @Param("vietnamese") boolean vietnamese,
             Pageable pageable
     );
 

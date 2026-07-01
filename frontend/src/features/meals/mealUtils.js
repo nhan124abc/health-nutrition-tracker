@@ -129,6 +129,23 @@ export function getMealTotals(meal) {
   };
 }
 
+export function getMealDisplayName(meal, fallback = '') {
+  const noteText = String(meal?.notes || '').trim();
+  const noteTitle = noteText.includes(':')
+    ? noteText.split(':').slice(1).join(':').trim()
+    : '';
+  const itemNames = (meal?.items || [])
+    .map((item) => item.name || item.foodName)
+    .filter(Boolean)
+    .join(', ');
+
+  return noteTitle || itemNames || noteText || fallback;
+}
+
+export function formatCalories(value) {
+  return Math.round(Number(value) || 0);
+}
+
 export function getMealsTotals(meals) {
   return meals.map(getMealTotals).reduce(
     (sum, item) => ({

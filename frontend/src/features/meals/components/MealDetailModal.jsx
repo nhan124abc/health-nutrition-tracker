@@ -1,5 +1,5 @@
 import { Modal, Table } from 'react-bootstrap';
-import { getMealTotals, mealTypes } from '../mealUtils';
+import { formatCalories, getMealDisplayName, getMealTotals, mealTypes } from '../mealUtils';
 
 function MealDetailModal({ loading, meal, onClose, t }) {
   const getTitle = () => {
@@ -14,6 +14,8 @@ function MealDetailModal({ loading, meal, onClose, t }) {
 
   const totals = meal ? getMealTotals(meal) : null;
   const notes = meal?.notes || (meal?.notesKey ? t(meal.notesKey) : '');
+  const mealName = meal ? getMealDisplayName(meal, getTitle()) : '';
+  const shouldShowNotes = notes && notes !== mealName && !notes.endsWith(`: ${mealName}`);
 
   return (
     <Modal show={Boolean(meal)} onHide={onClose} size="lg" centered>
@@ -24,9 +26,10 @@ function MealDetailModal({ loading, meal, onClose, t }) {
         {loading && <div className="alert alert-light border">{t('foodDiaryPage.loadingDetail')}</div>}
         {meal && (
           <>
-            <p className="text-secondary mb-3">{notes || t('common.noNotes')}</p>
+            <h3 className="h5 fw-bold mb-1">{mealName}</h3>
+            <p className="text-secondary mb-3">{shouldShowNotes ? notes : t('common.noNotes')}</p>
             <div className="nutrition-detail-grid mb-4">
-              <div><span>{t('common.calories')}</span><strong>{totals.calories} kcal</strong></div>
+              <div><span>{t('common.calories')}</span><strong>{formatCalories(totals.calories)} kcal</strong></div>
               <div><span>{t('common.protein')}</span><strong>{totals.protein}g</strong></div>
               <div><span>{t('common.carbs')}</span><strong>{totals.carbs}g</strong></div>
               <div><span>{t('common.fat')}</span><strong>{totals.fat}g</strong></div>
@@ -52,7 +55,7 @@ function MealDetailModal({ loading, meal, onClose, t }) {
                       <td>{item.name}</td>
                       <td>{item.serving}</td>
                       <td className="text-end">{item.quantity}</td>
-                      <td className="text-end">{item.calories}</td>
+                      <td className="text-end">{formatCalories(item.calories)}</td>
                       <td className="text-end">{item.protein}/{item.carbs}/{item.fat}g</td>
                       <td className="text-end">{item.fiber}g</td>
                       <td className="text-end">{item.sodium}mg</td>

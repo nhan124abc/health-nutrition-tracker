@@ -23,6 +23,9 @@ public class PlannerRuleEngine {
 
         if ("exercise".equals(mealType)) {
             List<ActivityInfo> exerciseOptions = getExerciseOptions(context, goal, weight, dayOfWeek + offset, activityCatalog);
+            if (exerciseOptions.size() < 2) {
+                return emptyActivitySuggestionJson();
+            }
             ActivityInfo act1 = exerciseOptions.get(0);
             ActivityInfo act2 = exerciseOptions.get(1);
 
@@ -31,11 +34,9 @@ public class PlannerRuleEngine {
             sb.append("  \"message\": \"Gợi ý hoạt động vận động lành mạnh, phù hợp với thể trạng của bạn.\",\n");
             sb.append("  \"mealBudget\": 0,\n");
             sb.append("  \"options\": [\n");
-            sb.append(String.format("    { \"name\": \"%s\", \"amount\": \"%d phút\", \"durationMinutes\": %d, \"servingSizeG\": 0, \"calories\": %d, \"caloriesBurned\": %d, \"proteinG\": 0, \"carbsG\": 0, \"fatG\": 0 }",
-                    act1.name, act1.durationMinutes, act1.durationMinutes, act1.caloriesBurned, act1.caloriesBurned));
+            sb.append(formatActivityOption(act1));
             sb.append(",\n");
-            sb.append(String.format("    { \"name\": \"%s\", \"amount\": \"%d phút\", \"durationMinutes\": %d, \"servingSizeG\": 0, \"calories\": %d, \"caloriesBurned\": %d, \"proteinG\": 0, \"carbsG\": 0, \"fatG\": 0 }\n",
-                    act2.name, act2.durationMinutes, act2.durationMinutes, act2.caloriesBurned, act2.caloriesBurned));
+            sb.append(formatActivityOption(act2)).append("\n");
             sb.append("  ]\n");
             sb.append("}");
             return sb.toString();
@@ -114,8 +115,8 @@ public class PlannerRuleEngine {
         sb.append("  \"activities\": [\n");
         for (int i = 0; i < activities.size(); i++) {
             ActivityInfo act = activities.get(i);
-            sb.append(String.format("    { \"name\": \"%s\", \"durationMinutes\": %d, \"caloriesBurned\": %d }",
-                    act.name, act.durationMinutes, act.caloriesBurned));
+            sb.append(String.format("    { \"activityTypeId\": %s, \"name\": \"%s\", \"durationMinutes\": %d, \"caloriesBurned\": %d }",
+                    activityTypeIdJson(act), act.name, act.durationMinutes, act.caloriesBurned));
             if (i < activities.size() - 1) {
                 sb.append(",\n");
             } else {
@@ -160,6 +161,30 @@ public class PlannerRuleEngine {
             this.caloriesBurned = caloriesBurned;
             this.met = met;
         }
+    }
+
+    private static String formatActivityOption(ActivityInfo activity) {
+        return String.format(
+                "    { \"activityTypeId\": %s, \"name\": \"%s\", \"amount\": \"%d phút\", \"durationMinutes\": %d, \"servingSizeG\": 0, \"calories\": %d, \"caloriesBurned\": %d, \"proteinG\": 0, \"carbsG\": 0, \"fatG\": 0 }",
+                activityTypeIdJson(activity),
+                activity.name,
+                activity.durationMinutes,
+                activity.durationMinutes,
+                activity.caloriesBurned,
+                activity.caloriesBurned
+        );
+    }
+
+    private static String activityTypeIdJson(ActivityInfo activity) {
+        return activity.activityTypeId == null ? "null" : String.valueOf(activity.activityTypeId);
+    }
+
+    private static String emptyActivitySuggestionJson() {
+        return "{\n"
+                + "  \"message\": \"Chưa có dữ liệu hoạt động phù hợp trong danh mục.\",\n"
+                + "  \"mealBudget\": 0,\n"
+                + "  \"options\": []\n"
+                + "}";
     }
 
     private static MealOption calculateMealOption(String name, int calories, double pRatio, double cRatio, double fRatio, double density, String unit) {
@@ -285,14 +310,27 @@ public class PlannerRuleEngine {
                     continue;
                 }
                 int duration = estimateDurationMinutes(name);
-                pool.add(buildActivityInfo(name.trim(), duration, weight, activityCatalog));
+                findCatalogActivityByName(name, activityCatalog)
+                        .map(candidate -> buildActivityInfo(candidate, duration, weight))
+                        .ifPresent(pool::add);
             }
         }
 
         if (!pool.isEmpty()) {
-            return pickActivityOptions(pool.stream()
+            return pickActivityOptions(onlyCatalogActivities(pool).stream()
                     .map(activity -> adjustActivityToTarget(activity, context, weight))
                     .toList(), index);
+        }
+
+        List<ActivityInfo> catalogPool = buildCatalogActivityPool(goal, weight, activityCatalog);
+        if (!catalogPool.isEmpty()) {
+            return pickActivityOptions(catalogPool.stream()
+                    .map(activity -> adjustActivityToTarget(activity, context, weight))
+                    .toList(), index);
+        }
+
+        if (catalogPool.isEmpty()) {
+            return List.of();
         }
 
         if (isFatLossGoal(goal)) {
@@ -391,6 +429,23 @@ public class PlannerRuleEngine {
                 .findFirst();
     }
 
+    private static java.util.Optional<ActivityCandidate> findCatalogActivityByName(String activityName, List<ActivityCandidate> activityCatalog) {
+        if (activityName == null || activityCatalog == null || activityCatalog.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        String normalized = normalizeText(activityName);
+        return activityCatalog.stream()
+                .filter(candidate -> normalized.equals(normalizeText(candidate.name()))
+                        || normalized.equals(normalizeText(candidate.nameVi())))
+                .findFirst();
+    }
+
+    private static List<ActivityInfo> onlyCatalogActivities(List<ActivityInfo> activities) {
+        return activities.stream()
+                .filter(activity -> activity.activityTypeId != null)
+                .toList();
+    }
+
     private static String displayActivityName(ActivityCandidate candidate) {
         if (candidate.nameVi() != null && !candidate.nameVi().isBlank()) {
             return candidate.nameVi();
@@ -402,6 +457,37 @@ public class PlannerRuleEngine {
         String name = displayActivityName(candidate);
         double met = candidate.metValue().doubleValue();
         return new ActivityInfo(candidate.id(), name, durationMinutes, calculateCaloriesBurned(met, weight, durationMinutes), met);
+    }
+
+    private static List<ActivityInfo> buildCatalogActivityPool(String goal, double weight, List<ActivityCandidate> activityCatalog) {
+        if (activityCatalog == null || activityCatalog.isEmpty()) {
+            return List.of();
+        }
+
+        List<ActivityInfo> preferred = activityCatalog.stream()
+                .filter(candidate -> isPreferredActivityForGoal(candidate, goal))
+                .map(candidate -> buildActivityInfo(candidate, estimateDurationMinutes(displayActivityName(candidate)), weight))
+                .toList();
+        if (!preferred.isEmpty()) {
+            return preferred;
+        }
+
+        return activityCatalog.stream()
+                .map(candidate -> buildActivityInfo(candidate, estimateDurationMinutes(displayActivityName(candidate)), weight))
+                .toList();
+    }
+
+    private static boolean isPreferredActivityForGoal(ActivityCandidate candidate, String goal) {
+        String category = candidate.category() == null ? "OTHER" : candidate.category().trim().toUpperCase();
+        double met = candidate.metValue() == null ? 0 : candidate.metValue().doubleValue();
+
+        if (isFatLossGoal(goal)) {
+            return List.of("CARDIO", "WALKING", "OUTDOOR", "SPORTS").contains(category) || met >= 5.5;
+        }
+        if (isStrengthGoal(goal)) {
+            return "STRENGTH".equals(category) || met >= 4.5;
+        }
+        return List.of("CARDIO", "WALKING", "FLEXIBILITY", "SPORTS", "OUTDOOR", "DAILY").contains(category);
     }
 
     private static ActivityInfo buildActivityInfo(String name, int durationMinutes, double weight,
@@ -485,6 +571,17 @@ public class PlannerRuleEngine {
     private static List<ActivityInfo> getActivities(String goal, double weight, int index,
                                                     List<ActivityCandidate> activityCatalog,
                                                     PlannerSuggestRequest context) {
+        List<ActivityInfo> catalogPool = buildCatalogActivityPool(goal, weight, activityCatalog);
+        if (!catalogPool.isEmpty()) {
+            return pickActivityOptions(catalogPool.stream()
+                    .map(activity -> adjustActivityToTarget(activity, context, weight))
+                    .toList(), index);
+        }
+
+        if (catalogPool.isEmpty()) {
+            return List.of();
+        }
+
         List<ActivityInfo> list = new ArrayList<>();
         int key = Math.abs(index) % 7;
         if (isFatLossGoal(goal)) {

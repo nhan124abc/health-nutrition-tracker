@@ -27,8 +27,9 @@ public class FoodItemService {
 
     @Transactional(readOnly = true)
     public Page<FoodItemResponse> search(
-            String keyword, Integer categoryId, boolean recipeFirst, Pageable pageable) {
-        return foodItemRepository.search(keyword, categoryId, recipeFirst, pageable)
+            String keyword, Integer categoryId, String locale, boolean recipeFirst, Pageable pageable) {
+        boolean vietnamese = locale != null && locale.toLowerCase().startsWith("vi");
+        return foodItemRepository.search(keyword, categoryId, recipeFirst, vietnamese, pageable)
                 .map(this::toResponse);
     }
 
