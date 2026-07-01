@@ -1,7 +1,9 @@
 import { Button, Card, Col, Form, Row } from 'react-bootstrap';
 import { bodyMetricFields, bodyMetricResultFields } from '../profileUtils';
 
-function BodyMetricFormCard({ form, onCalculate, onChange, onSubmit, saving, t }) {
+function BodyMetricFormCard({ form, onChange, onSubmit, saving, t }) {
+  const hasCalculatedMetrics = bodyMetricResultFields.some(([name]) => form[name] !== '' && form[name] != null);
+
   return (
     <Card className="border-0 shadow-sm">
       <Card.Body>
@@ -23,6 +25,7 @@ function BodyMetricFormCard({ form, onCalculate, onChange, onSubmit, saving, t }
                 </Form.Group>
               </Col>
             ))}
+            {hasCalculatedMetrics && (
             <Col xs={12}>
               <div className="body-metric-result-panel">
                 <div className="body-metric-result-header">
@@ -50,11 +53,9 @@ function BodyMetricFormCard({ form, onCalculate, onChange, onSubmit, saving, t }
                 </Row>
               </div>
             </Col>
+            )}
             <Col xs={12}>
               <div className="d-flex flex-wrap gap-2">
-                <Button type="button" variant="outline-success" disabled={saving} onClick={onCalculate}>
-                  {t('bodyMetricsPage.calculateMetrics')}
-                </Button>
                 <Button type="submit" variant="success" disabled={saving}>
                   {saving ? t('bodyMetricsPage.saving') : t('bodyMetricsPage.saveMetric')}
                 </Button>
