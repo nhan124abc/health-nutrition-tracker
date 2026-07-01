@@ -15,6 +15,7 @@
     "reports": "Reports",
     "statistics": "Reports & Statistics",
     "bodyMetrics": "Body metrics",
+    "healthInsights": "Health insights",
     "news": "News",
     "settings": "Settings",
     "profile": "Profile",
@@ -178,6 +179,29 @@
   "dashboard": {
     "title": "Health Overview",
     "subtitle": "Track body metrics, macro ratio and calorie balance for the week."
+  },
+  "healthInsightsPage": {
+    "title": "Health insights",
+    "loading": "Loading health insights...",
+    "loadError": "Unable to load health insights.",
+    "empty": "No health insights yet.",
+    "refresh": "Refresh",
+    "markRead": "Mark as read",
+    "marking": "Saving...",
+    "markReadError": "Unable to mark as read.",
+    "updatedAt": "Updated {{date}}",
+    "status": {
+      "read": "Read",
+      "unread": "Unread"
+    },
+    "types": {
+      "WARNING": "Warning",
+      "GOAL_PROGRESS": "Goal progress",
+      "ACHIEVEMENT": "Achievement",
+      "ACTIVITY_TIP": "Activity tip",
+      "NUTRITION_TIP": "Nutrition tip",
+      "UNKNOWN": "Insight"
+    }
   },
   "foodDiary": {
     "title": "Nutrition Diary",
@@ -898,6 +922,19 @@
       "activityExcellent": "🎉 Great goal progress! ({{percent}}%)",
       "activityComplete": "✓ Goal reached ({{percent}}%)",
       "activityRemaining": "🏃 Burn {{calories}} kcal more"
+    },
+    "insights": {
+      "title": "Health insights",
+      "markRead": "Mark as read",
+      "marking": "Saving...",
+      "markReadError": "Unable to mark the insight as read.",
+      "types": {
+        "NUTRITION_TIP": "Nutrition tip",
+        "ACTIVITY_TIP": "Activity tip",
+        "GOAL_PROGRESS": "Goal progress",
+        "ACHIEVEMENT": "Achievement",
+        "WARNING": "Warning"
+      }
     }
   },
   "reportsPage": {

@@ -15,6 +15,7 @@
     "reports": "Báo cáo",
     "statistics": "Báo cáo & thống kê",
     "bodyMetrics": "Chỉ số cơ thể",
+    "healthInsights": "Gợi ý sức khỏe",
     "news": "Tin tức",
     "settings": "Cài đặt",
     "profile": "Hồ sơ",
@@ -146,6 +147,29 @@
   "dashboard": {
     "title": "Tổng quan sức khỏe",
     "subtitle": "Theo dõi chỉ số cơ thể, tỷ lệ macro và cân bằng calo trong tuần."
+  },
+  "healthInsightsPage": {
+    "title": "Gợi ý sức khỏe",
+    "loading": "Đang tải gợi ý sức khỏe...",
+    "loadError": "Không thể tải gợi ý sức khỏe.",
+    "empty": "Chưa có gợi ý sức khỏe nào.",
+    "refresh": "Tải lại",
+    "markRead": "Đánh dấu đã đọc",
+    "marking": "Đang lưu...",
+    "markReadError": "Không thể đánh dấu đã đọc.",
+    "updatedAt": "Cập nhật {{date}}",
+    "status": {
+      "read": "Đã đọc",
+      "unread": "Chưa đọc"
+    },
+    "types": {
+      "WARNING": "Cảnh báo",
+      "GOAL_PROGRESS": "Tiến độ mục tiêu",
+      "ACHIEVEMENT": "Thành tựu",
+      "ACTIVITY_TIP": "Gợi ý vận động",
+      "NUTRITION_TIP": "Gợi ý dinh dưỡng",
+      "UNKNOWN": "Gợi ý"
+    }
   },
   "foodDiary": {
     "title": "Nhật ký dinh dưỡng",
@@ -463,6 +487,19 @@
       "activityExcellent": "🎉 Vượt mục tiêu tốt! ({{percent}}%)",
       "activityComplete": "✓ Đạt mục tiêu ({{percent}}%)",
       "activityRemaining": "🏃 Cần đốt thêm {{calories}} kcal"
+    },
+    "insights": {
+      "title": "Gợi ý sức khỏe",
+      "markRead": "Đánh dấu đã đọc",
+      "marking": "Đang lưu...",
+      "markReadError": "Không thể đánh dấu gợi ý là đã đọc.",
+      "types": {
+        "NUTRITION_TIP": "Gợi ý dinh dưỡng",
+        "ACTIVITY_TIP": "Gợi ý vận động",
+        "GOAL_PROGRESS": "Tiến độ mục tiêu",
+        "ACHIEVEMENT": "Thành tích",
+        "WARNING": "Cảnh báo"
+      }
     }
   },
   "reportsPage": {
