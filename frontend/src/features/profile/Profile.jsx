@@ -17,7 +17,9 @@ import {
   extractMetricRows,
   extractProfileFromApi,
   getApiErrorMessage,
+  getMinimumAllowedBirthDate,
   initialProfile,
+  isAtLeastAge,
   mergeProfileAvatar,
   mapBodyMetricToApi,
   mapProfileFromApi,
@@ -71,6 +73,7 @@ function Profile() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [ageError, setAgeError] = useState('');
   const [avatarError, setAvatarError] = useState('');
   const [avatarDraftUrl, setAvatarDraftUrl] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
@@ -218,6 +221,13 @@ function Profile() {
     event.preventDefault();
     setSaved(false);
     setError('');
+    setAgeError('');
+
+    if (!isAtLeastAge(editProfile.birthDate, 16)) {
+      setAgeError(t('profilePage.validationMinimumAge'));
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -309,6 +319,11 @@ function Profile() {
       </div>
 
       <ErrorModal error={error} onClose={() => setError('')} />
+      <ErrorModal
+        error={ageError}
+        onClose={() => setAgeError('')}
+        title={t('profilePage.validationMinimumAgeTitle')}
+      />
       <ErrorModal error={avatarError} onClose={() => setAvatarError('')} />
 
       <ProfileTabs activeTab={activeTab} onSelect={setActiveTab} t={t} />
@@ -347,6 +362,7 @@ function Profile() {
               onChange={handleChange}
               onSubmit={handleSubmit}
               profile={editProfile}
+              maxBirthDate={getMinimumAllowedBirthDate(16)}
               saving={saving}
               t={t}
             />

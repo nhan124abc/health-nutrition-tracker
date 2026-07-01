@@ -102,9 +102,12 @@ function GuestGoalPage() {
       || heightCm <= 0
       || !age
       || age <= 0
+      || age < 16
       || (showTargetChange && (!targetChangeKg || targetChangeKg <= 0))
     ) {
-      setError(t('goalPlannerPage.errors.guestCalculate'));
+      setError(age > 0 && age < 16
+        ? t('profilePage.validationMinimumAge')
+        : t('goalPlannerPage.errors.guestCalculate'));
       setLoading(false);
       return;
     }
@@ -225,7 +228,7 @@ function GuestGoalPage() {
                       <Col md={6}>
                         <Form.Group className="mb-3">
                           <Form.Label>{ageLabel}</Form.Label>
-                          <Form.Control type="number" min="1" max="120" step="1" value={form.age} onChange={(event) => setForm({ ...form, age: event.target.value })} required />
+                          <Form.Control type="number" min="16" max="120" step="1" value={form.age} onChange={(event) => setForm({ ...form, age: event.target.value })} required />
                         </Form.Group>
                       </Col>
                     </Row>

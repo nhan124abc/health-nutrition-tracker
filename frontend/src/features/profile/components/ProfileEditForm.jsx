@@ -23,6 +23,7 @@ function ProfileEditForm({
   onChange,
   onSubmit,
   profile,
+  maxBirthDate,
   saving,
   t,
 }) {
@@ -87,7 +88,15 @@ function ProfileEditForm({
               <Col md={6} key={name}>
                 <Form.Group>
                   <RequiredLabel name={name}>{t(labelKey)}</RequiredLabel>
-                  <Form.Control type={type} name={name} value={profile[name]} onChange={onChange} disabled={saving} required={requiredFieldNames.has(name)} />
+                  <Form.Control
+                    type={type}
+                    name={name}
+                    value={profile[name]}
+                    onChange={onChange}
+                    disabled={saving}
+                    max={name === 'birthDate' ? maxBirthDate : undefined}
+                    required={requiredFieldNames.has(name)}
+                  />
                 </Form.Group>
               </Col>
             ))}

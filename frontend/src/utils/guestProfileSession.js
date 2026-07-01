@@ -25,7 +25,7 @@ export async function fillMissingProfileFromGuestSession() {
   const payload = {};
   const age = Number(guest.age);
 
-  if (!current.dateOfBirth && age > 0) {
+  if (!current.dateOfBirth && age >= 16) {
     const birthDate = new Date();
     birthDate.setFullYear(birthDate.getFullYear() - age);
     payload.dateOfBirth = birthDate.toISOString().slice(0, 10);
