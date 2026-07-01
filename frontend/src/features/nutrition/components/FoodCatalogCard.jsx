@@ -2,6 +2,15 @@ import { Card, Col, Form, InputGroup, Row, Table } from 'react-bootstrap';
 import { FaSearch } from 'react-icons/fa';
 import { getLocalizedName } from '../../../utils/localizedName';
 
+function getAlternateName(item = {}, language = '') {
+  const primaryName = getLocalizedName(item, language);
+  const alternateName = String(language).toLowerCase().startsWith('vi')
+    ? item.name || ''
+    : item.nameVi || '';
+
+  return alternateName && alternateName !== primaryName ? alternateName : '';
+}
+
 function FoodCatalogCard({
   category,
   categories,
@@ -44,17 +53,22 @@ function FoodCatalogCard({
               </tr>
             </thead>
             <tbody>
-              {foods.map((food) => (
-                <tr key={food.id} onClick={() => onSelectFood(food)} className="clickable-row">
-                  <td>
-                    <strong>{getLocalizedName(food, language)}</strong>
-                    {food.brand && <div className="text-secondary small">{food.brand}</div>}
-                  </td>
-                  <td>{getLocalizedName({ name: food.categoryName, nameVi: food.categoryNameVi }, language)}</td>
-                  <td className="text-end">{food.calories}</td>
-                  <td className="text-end">{food.protein}/{food.carbs}/{food.fat}g</td>
-                </tr>
-              ))}
+              {foods.map((food) => {
+                const alternateName = getAlternateName(food, language);
+
+                return (
+                  <tr key={food.id} onClick={() => onSelectFood(food)} className="clickable-row">
+                    <td>
+                      <strong>{getLocalizedName(food, language)}</strong>
+                      {alternateName && <div className="text-secondary small">{alternateName}</div>}
+                      {food.brand && <div className="text-secondary small">{food.brand}</div>}
+                    </td>
+                    <td>{getLocalizedName({ name: food.categoryName, nameVi: food.categoryNameVi }, language)}</td>
+                    <td className="text-end">{food.calories}</td>
+                    <td className="text-end">{food.protein}/{food.carbs}/{food.fat}g</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </Table>
         </div>

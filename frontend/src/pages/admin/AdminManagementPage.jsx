@@ -37,6 +37,7 @@ import {
 } from '../../features/nutrition/nutritionService';
 import { cleanText } from '../../features/nutrition/nutritionUtils';
 import { getLocalizedName } from '../../utils/localizedName';
+import { valuesMatchSearch } from '../../utils/searchText';
 import ErrorModal from '../../components/ErrorModal';
 import { getCurrentUser } from '../../api/api';
 
@@ -451,23 +452,18 @@ function AdminManagementPage({ type }) {
   }, [i18n.language, pageKey, t, type]);
 
   const filteredRows = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
-    if (!normalizedSearch) {
+    if (!searchTerm.trim()) {
       return rows;
     }
 
-    return rows.filter((row) =>
-      row.cells
-        .map((cell) => {
-          if (isTranslationKey(cell)) {
-            return t(cell);
-          }
-          return String(cell);
-        })
-        .join(' ')
-        .toLowerCase()
-        .includes(normalizedSearch)
-    );
+    return rows.filter((row) => valuesMatchSearch([
+      ...row.cells.map((cell) => (isTranslationKey(cell) ? t(cell) : cell)),
+      row.raw?.fullName,
+      row.raw?.username,
+      row.raw?.email,
+      row.raw?.brand,
+      row.raw?.category,
+    ], searchTerm));
   }, [rows, searchTerm, t]);
 
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / ADMIN_PAGE_SIZE));
