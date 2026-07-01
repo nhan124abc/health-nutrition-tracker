@@ -343,6 +343,7 @@
     "layout": {
       "brand": "Health Admin",
       "logoAlt": "Health Nutrition Admin",
+      "title": "Admin dashboard",
       "toggleSidebar": "Collapse or expand admin menu",
       "searchPlaceholder": "Search users, foods, reports...",
       "searchLabel": "Search admin data",
@@ -431,6 +432,7 @@
     },
     "table": {
       "listTitle": "User list",
+      "listDescription": "Search, view details, edit, or review data.",
       "searchPlaceholder": "Search this table...",
       "searchLabel": "Search admin table",
       "content": "Content",
@@ -469,6 +471,7 @@
     "dashboard": {
       "title": "System overview",
       "recentTitle": "Recent activity",
+      "recentDescription": "Recent changes and data that admins should monitor.",
       "dataHealthTitle": "Data health",
       "dataHealthDescription": "Completion status of the main data groups.",
       "stats": {
@@ -1162,6 +1165,9 @@
     "allCategories": "All categories",
     "activityCount": "Activities",
     "typeTitle": "Activity types",
+    "todayCategoryTitle": "Today's groups",
+    "categorySummary": "{{count}} activities · {{minutes}} min",
+    "noCategorySummary": "No activities logged for this date.",
     "newLogTitle": "Log new activity",
     "updateLogTitle": "Update activity",
     "editLog": "Edit activity log",
@@ -1188,8 +1194,10 @@
     "categories": {
       "cardio": "Cardio",
       "strength": "Strength",
+      "walking": "Walking",
       "flexibility": "Flexibility",
       "sports": "Sports",
+      "outdoor": "Outdoor",
       "daily": "Daily activity",
       "other": "Other"
     },
@@ -1465,6 +1473,7 @@
       "maintainWeight": "Maintain weight"
     },
     "option": {
+      "weeks": "{{count}} weeks",
       "weeks_one": "{{count}} week",
       "weeks_other": "{{count}} weeks",
       "safe": "Suitable",
@@ -1538,6 +1547,7 @@
     "updateGoal": "Update goal",
     "timeProgress": "Time progress",
     "unknown": "Not set",
+    "weeks": "{{count}} weeks",
     "weeks_one": "{{count}} week",
     "weeks_other": "{{count}} weeks",
     "planDate": "Tracking date",
@@ -1556,8 +1566,8 @@
     },
     "mealCard": {
       "title": "Meals for {{date}}",
-      "description": "Data is synchronized directly from your meal plan.",
-      "empty": "There are no planned meals for this date.",
+      "description": "Data is synchronized directly from your meal diary.",
+      "empty": "There are no meals in the diary for this date.",
       "progress": "Meal progress",
       "progressHint": "Complete your selected meals",
       "noFood": "No meal selected",
@@ -1574,8 +1584,8 @@
     },
     "workoutCard": {
       "title": "Activities for {{date}}",
-      "description": "Data is synchronized directly from your workout plan.",
-      "empty": "There are no planned activities for this date.",
+      "description": "Data is synchronized directly from your logged activities.",
+      "empty": "There are no logged activities for this date.",
       "progress": "Activity progress",
       "progressHint": "Complete your selected activities",
       "minutes": "{{count}} minutes",

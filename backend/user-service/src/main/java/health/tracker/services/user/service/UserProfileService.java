@@ -12,10 +12,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import health.tracker.services.user.entity.WaterLog;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -31,6 +35,7 @@ public class UserProfileService {
     private final BodyMetricRepository  metricRepository;
     private final NutritionGoalCalculator nutritionGoalCalculator;
     private final WaterLogRepository waterLogRepository;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     // ─── Profile ──────────────────────────────────────────────────────────────
 
@@ -79,7 +84,9 @@ public class UserProfileService {
 
         applyNutritionTargets(profile, request.getDailyCalorieGoal());
 
-        return toProfileResponse(profileRepository.save(profile));
+        UserProfile saved = profileRepository.save(profile);
+        publishProfileSnapshot(saved, LocalDate.now());
+        return toProfileResponse(saved);
     }
 
     // ─── Body Metrics ─────────────────────────────────────────────────────────
@@ -95,6 +102,7 @@ public class UserProfileService {
                 .loggedAt(request.getLoggedAt())
                 .build();
         WaterLog savedWaterlog = waterLogRepository.save(waterlog);
+        publishWaterEvent("CREATED", savedWaterlog);
         return toWaterLogResponse(savedWaterlog);
     }
 
@@ -137,6 +145,7 @@ public class UserProfileService {
         WaterLog waterLog = waterLogRepository.findByIdAndUserId(waterId, userId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Water not found: " + waterId));
 
+        publishWaterEvent("DELETED", waterLog);
         waterLogRepository.delete(waterLog);
         log.info("Water deleted: id={}, userId={}", waterId, userId);
     }
@@ -146,12 +155,14 @@ public class UserProfileService {
         WaterLog water = waterLogRepository.findByIdAndUserId(waterId, userId)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Water not found: " + waterId));
 
+        publishWaterEvent("DELETED", water);
         water.setAmountMl(request.getAmountMl());
         if (request.getLoggedAt() != null) {
             water.setLoggedAt(request.getLoggedAt());
         }
 
         WaterLog savedWater = waterLogRepository.save(water);
+        publishWaterEvent("CREATED", savedWater);
         log.info("Water updated: id={}, userId={}", waterId, userId);
         return toWaterLogResponse(savedWater);
     }
@@ -186,11 +197,58 @@ public class UserProfileService {
                 // Cập nhật cân nặng hiện tại trong profile
                 profile.setWeightKg(request.getWeightKg());
                 applyNutritionTargets(profile, null);
-                profileRepository.save(profile);
+                UserProfile savedProfile = profileRepository.save(profile);
+                publishProfileSnapshot(savedProfile, request.getRecordedAt());
             });
         }
 
-        return toMetricResponse(metricRepository.save(metric));
+        BodyMetric savedMetric = metricRepository.save(metric);
+        publishMetricEvent(savedMetric);
+        return toMetricResponse(savedMetric);
+    }
+
+    private void publishWaterEvent(String eventType, WaterLog water) {
+        Map<String, Object> event = new HashMap<>();
+        event.put("eventId", UUID.randomUUID().toString());
+        event.put("eventType", eventType);
+        event.put("userId", water.getUserId());
+        event.put("waterLogId", water.getId());
+        event.put("summaryDate", water.getLoggedAt().toLocalDate().toString());
+        event.put("amountMl", water.getAmountMl());
+        sendAnalyticsEvent("water.logged", water.getUserId(), event);
+    }
+
+    private void publishMetricEvent(BodyMetric metric) {
+        if (metric.getWeightKg() == null) return;
+        Map<String, Object> event = new HashMap<>();
+        event.put("eventId", UUID.randomUUID().toString());
+        event.put("userId", metric.getUserId());
+        event.put("summaryDate", metric.getRecordedAt().toString());
+        event.put("weightKg", metric.getWeightKg());
+        sendAnalyticsEvent("body-metric.recorded", metric.getUserId(), event);
+    }
+
+    private void publishProfileSnapshot(UserProfile profile, LocalDate date) {
+        Map<String, Object> event = new HashMap<>();
+        event.put("eventId", UUID.randomUUID().toString());
+        event.put("userId", profile.getUserId());
+        event.put("summaryDate", date.toString());
+        event.put("calorieGoal", profile.getDailyCalorieGoal());
+        event.put("weightKg", profile.getWeightKg());
+        sendAnalyticsEvent("profile.snapshot", profile.getUserId(), event);
+    }
+
+    private void sendAnalyticsEvent(String topic, Long userId, Map<String, Object> event) {
+        Runnable send = () -> kafkaTemplate.send(topic, String.valueOf(userId), event)
+            .whenComplete((result, error) -> {
+                if (error != null) log.error("Failed to publish {} for userId={}", topic, userId, error);
+            });
+        if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override public void afterCommit() { send.run(); }
+                    });
+        } else send.run();
     }
 
     /**

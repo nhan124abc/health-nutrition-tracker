@@ -145,6 +145,7 @@ public class ActivityService {
     private void publishActivityEvent(String eventType, ActivityLog activity) {
         try {
             Map<String, Object> event = Map.of(
+                    "eventId", java.util.UUID.randomUUID().toString(),
                     "eventType", eventType,
                     "userId", activity.getUserId(),
                     "activityId", activity.getId(),
@@ -154,11 +155,23 @@ public class ActivityService {
                     "steps", activity.getSteps() == null ? 0 : activity.getSteps(),
                     "distanceKm", activity.getDistanceKm() == null ? BigDecimal.ZERO : activity.getDistanceKm()
             );
-            kafkaTemplate.send("activity.logged", String.valueOf(activity.getUserId()), event);
+            sendAfterCommit(() -> kafkaTemplate.send("activity.logged", String.valueOf(activity.getUserId()), event)
+                    .whenComplete((result, error) -> {
+                        if (error != null) log.error("Failed to publish activity event for activityId={}", activity.getId(), error);
+                    }));
         } catch (Exception e) {
             log.warn("Failed to publish activity.logged event for activityId={}: {}",
                     activity.getId(), e.getMessage());
         }
+    }
+
+    private void sendAfterCommit(Runnable action) {
+        if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+            org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override public void afterCommit() { action.run(); }
+                    });
+        } else action.run();
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

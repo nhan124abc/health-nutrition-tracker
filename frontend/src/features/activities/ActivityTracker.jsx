@@ -164,9 +164,8 @@ function ActivityTracker() {
         <Col lg={4}>
           <ActivitySummaryCard
             activityGoal={activityGoal}
-            activityTypes={activityTypes}
-            language={i18n.language}
             logCount={logs.length}
+            logs={logs}
             summary={summary}
             t={t}
           />

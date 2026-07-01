@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Card, Form, ListGroup, ProgressBar, Spinner } from 'react-bootstrap';
-import { getMealPlans } from '../mealService';
+import { getMealsByDate } from '../mealService';
+import { extractMealsFromApi, getMealTotals, normalizeMealFromApi } from '../mealUtils';
 import { getMealCompletionId, readCompletionIds, toggleCompletionId } from '../../../utils/completionStorage';
 import ErrorModal from '../../../components/ErrorModal';
 import { useTranslation } from 'react-i18next';
@@ -14,20 +15,22 @@ const labels = {
   evening_snack: 'plansPage.mealCard.types.eveningSnack',
 };
 
-function extractPlans(data) {
-  return Array.isArray(data) ? data : data?.data || [];
+function getMealTitle(meal) {
+  return (meal.items || [])
+    .map((item) => item.name)
+    .filter(Boolean)
+    .join(', ');
 }
 
-function getEntriesForDate(plans, selectedDate) {
-  return plans
-    .flatMap((plan) => (plan.entries || []).map((entry) => ({
-      ...entry,
-      id: entry.id || `${plan.id}-${entry.planDate}-${entry.mealType}-${entry.foodName}`,
-      planName: plan.name,
-      type: String(entry.mealType || '').toLowerCase(),
-      date: entry.planDate,
-    })))
-    .filter((entry) => entry.planDate === selectedDate);
+function getEntriesForDate(data, selectedDate) {
+  return extractMealsFromApi(data)
+    .map(normalizeMealFromApi)
+    .filter((meal) => meal.date === selectedDate)
+    .map((meal) => ({
+      ...meal,
+      foodName: getMealTitle(meal),
+      calories: getMealTotals(meal).calories,
+    }));
 }
 
 function MealPlanCard({ selectedDate }) {
@@ -44,10 +47,10 @@ function MealPlanCard({ selectedDate }) {
       setLoading(true);
     }
     setError('');
-    getMealPlans()
+    getMealsByDate(selectedDate)
       .then((response) => {
         if (active) {
-          setPlanEntries(getEntriesForDate(extractPlans(response.data), selectedDate));
+          setPlanEntries(getEntriesForDate(response.data, selectedDate));
         }
       })
       .catch((err) => {
@@ -78,10 +81,14 @@ function MealPlanCard({ selectedDate }) {
     };
 
     window.addEventListener('focus', refreshOnFocus);
+    window.addEventListener('meals:changed', refreshOnFocus);
+    window.addEventListener('meal-plans:changed', refreshOnFocus);
     window.addEventListener('completion:changed', refreshCompletions);
 
     return () => {
       window.removeEventListener('focus', refreshOnFocus);
+      window.removeEventListener('meals:changed', refreshOnFocus);
+      window.removeEventListener('meal-plans:changed', refreshOnFocus);
       window.removeEventListener('completion:changed', refreshCompletions);
     };
   }, [loadMeals]);
