@@ -23,6 +23,7 @@ import { extractActivitiesFromApi, extractActivityTypesFromApi, normalizeActivit
 import { getFoods, getRecipeSuggestions } from '../features/nutrition/nutritionService';
 import { extractFoodsFromApi, normalizeFoodFromApi } from '../features/nutrition/nutritionUtils';
 import { getLocalizedName } from '../utils/localizedName';
+import { isVietnameseSearchLanguage, valuesMatchSearch } from '../utils/searchText';
 
 const goalToApi = {
   lose_weight: 'LOSE_WEIGHT',
@@ -252,15 +253,13 @@ function Planner() {
     if (!normalizedActivitySearchTerm) {
       return activityOptions;
     }
-    const keyword = normalizedActivitySearchTerm.toLowerCase();
+    const isVietnamese = isVietnameseSearchLanguage(i18n.language);
 
-    return activityOptions.filter((activity) => {
-      const values = [activity.name, activity.nameVi, activity.category]
-        .filter(Boolean)
-        .map((value) => String(value).toLowerCase());
-      return values.some((value) => value.includes(keyword));
-    });
-  }, [activityOptions, normalizedActivitySearchTerm]);
+    return activityOptions.filter((activity) => valuesMatchSearch([
+      isVietnamese ? activity.nameVi || activity.name : activity.name || activity.nameVi,
+      activity.category,
+    ], normalizedActivitySearchTerm));
+  }, [activityOptions, i18n.language, normalizedActivitySearchTerm]);
   const activityTotalPages = Math.max(1, Math.ceil(filteredActivityOptions.length / activityPageSize));
   const activitySearchResults = useMemo(() => {
     const start = activityPage * activityPageSize;
@@ -672,11 +671,12 @@ function Planner() {
     const controller = new AbortController();
     setFoodSearchLoading(true);
     const timer = setTimeout(() => {
+      const hasFoodSearch = Boolean(normalizedFoodSearchTerm);
+
       getFoods({
-        ...(normalizedFoodSearchTerm ? { q: normalizedFoodSearchTerm } : {}),
         recipeFirst: true,
-        page: foodPage,
-        size: foodPageSize,
+        page: hasFoodSearch ? 0 : foodPage,
+        size: hasFoodSearch ? 1000 : foodPageSize,
       }, { signal: controller.signal })
         .then((response) => {
           if (cancelled) {
@@ -686,12 +686,24 @@ function Planner() {
           const mappedFoods = extractFoodsFromApi(response.data)
             .map(mapFoodOption)
             .filter((food) => food.id && food.name);
-          setFoodSearchResults(mappedFoods);
-          setFoodTotalPages(getTotalPagesFromApi(response.data));
+          const searchMatchedFoods = hasFoodSearch
+            ? mappedFoods.filter((food) => valuesMatchSearch([
+              isVietnameseSearchLanguage(i18n.language) ? food.nameVi || food.name : food.name || food.nameVi,
+            ], normalizedFoodSearchTerm))
+            : mappedFoods;
+          const pageStart = hasFoodSearch ? foodPage * foodPageSize : 0;
+          const pagedFoods = hasFoodSearch
+            ? searchMatchedFoods.slice(pageStart, pageStart + foodPageSize)
+            : searchMatchedFoods;
+
+          setFoodSearchResults(pagedFoods);
+          setFoodTotalPages(hasFoodSearch
+            ? Math.max(1, Math.ceil(searchMatchedFoods.length / foodPageSize))
+            : getTotalPagesFromApi(response.data));
           setFoodOptions((current) => {
             const retainedSelectedFoods = current.filter((food) => selectedFoodNamesRef.current.includes(food.name));
             const foodMap = new Map(retainedSelectedFoods.map((food) => [food.id, food]));
-            mappedFoods.forEach((food) => foodMap.set(food.id, food));
+            searchMatchedFoods.forEach((food) => foodMap.set(food.id, food));
             return Array.from(foodMap.values());
           });
         })
@@ -713,7 +725,7 @@ function Planner() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [foodPage, normalizedFoodSearchTerm]);
+  }, [foodPage, i18n.language, normalizedFoodSearchTerm]);
 
   useEffect(() => {
     if (loading || !isRecipeMode) {

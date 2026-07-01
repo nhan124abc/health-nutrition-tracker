@@ -31,8 +31,8 @@ function Nutrition() {
   const [error, setError] = useState('');
 
   const filteredFoods = useMemo(
-    () => filterFoods(foods, query, category),
-    [category, foods, query]
+    () => filterFoods(foods, query, category, i18n.language),
+    [category, foods, i18n.language, query]
   );
 
   useEffect(() => {
@@ -44,7 +44,7 @@ function Nutrition() {
 
       try {
         const [foodsResult, categoriesResult] = await Promise.allSettled([
-          getFoods({ page: 0, size: 100 }),
+          getFoods({ page: 0, size: 1000 }),
           getFoodCategories(),
         ]);
 
