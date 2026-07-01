@@ -82,7 +82,7 @@ public class RecipeService {
 
     @Transactional(readOnly = true)
     public List<RecipeSuggestionResponse> suggest(BigDecimal maxCalories, String keyword, List<Long> foodIds,
-                                                  String goal, String mealType, String locale, int limit) {
+                                                  String goal, String mealType, int limit) {
         int safeLimit = Math.max(1, Math.min(limit, 20));
         int candidateLimit = Math.min(20, Math.max(safeLimit, safeLimit * 3));
         String normalizedKeyword = keyword == null || keyword.isBlank() ? null : keyword.trim();
@@ -98,8 +98,7 @@ public class RecipeService {
         }
 
         if (recipes.size() < candidateLimit) {
-            boolean vietnamese = locale != null && locale.toLowerCase().startsWith("vi");
-            recipeRepository.findSuggestions(maxCalories, normalizedKeyword, vietnamese, PageRequest.of(0, candidateLimit))
+            recipeRepository.findSuggestions(maxCalories, normalizedKeyword, PageRequest.of(0, candidateLimit))
                     .forEach(recipe -> recipes.putIfAbsent(recipe.getId(), recipe));
         }
 

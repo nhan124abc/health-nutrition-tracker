@@ -22,7 +22,7 @@ import { getActivitiesByDate, createActivityLog, createWorkoutPlan, deleteActivi
 import { extractActivitiesFromApi, extractActivityTypesFromApi, normalizeActivityFromApi, normalizeActivityType } from '../features/activities/activityUtils';
 import { getFoods, getRecipeSuggestions } from '../features/nutrition/nutritionService';
 import { extractFoodsFromApi, normalizeFoodFromApi } from '../features/nutrition/nutritionUtils';
-import { getLocalizedName, getLocalizedSearchValues, includesLocalizedSearch } from '../utils/localizedName';
+import { getLocalizedName } from '../utils/localizedName';
 
 const goalToApi = {
   lose_weight: 'LOSE_WEIGHT',
@@ -252,12 +252,15 @@ function Planner() {
     if (!normalizedActivitySearchTerm) {
       return activityOptions;
     }
+    const keyword = normalizedActivitySearchTerm.toLowerCase();
 
     return activityOptions.filter((activity) => {
-      const values = getLocalizedSearchValues(activity, i18n.language, [activity.category]);
-      return values.some((value) => includesLocalizedSearch(value, normalizedActivitySearchTerm, i18n.language));
+      const values = [activity.name, activity.nameVi, activity.category]
+        .filter(Boolean)
+        .map((value) => String(value).toLowerCase());
+      return values.some((value) => value.includes(keyword));
     });
-  }, [activityOptions, i18n.language, normalizedActivitySearchTerm]);
+  }, [activityOptions, normalizedActivitySearchTerm]);
   const activityTotalPages = Math.max(1, Math.ceil(filteredActivityOptions.length / activityPageSize));
   const activitySearchResults = useMemo(() => {
     const start = activityPage * activityPageSize;
@@ -463,7 +466,6 @@ function Planner() {
         limit: 12,
         goal: activeGoal,
         mealType: mealTypeToApi[selectedMeal] || selectedMeal.toUpperCase(),
-        locale: i18n.language,
       };
       if (selectedFoodIds.length > 0) {
         params.foodIds = selectedFoodKey;
@@ -494,7 +496,7 @@ function Planner() {
     } finally {
       if (requestId === recipeRequestIdRef.current) setRecipesLoading(false);
     }
-  }, [activeGoal, canSearchRecipes, i18n.language, normalizeRecipeOption, normalizedRecipeSearchTerm, selectedFoodIds.length, selectedFoodKey, selectedMeal, selectedMealBudget, t]);
+  }, [activeGoal, canSearchRecipes, normalizeRecipeOption, normalizedRecipeSearchTerm, selectedFoodIds.length, selectedFoodKey, selectedMeal, selectedMealBudget, t]);
 
   const toggleFoodName = (name) => {
     setSelectedFoodNames((current) => {
@@ -672,7 +674,6 @@ function Planner() {
     const timer = setTimeout(() => {
       getFoods({
         ...(normalizedFoodSearchTerm ? { q: normalizedFoodSearchTerm } : {}),
-        locale: i18n.language,
         recipeFirst: true,
         page: foodPage,
         size: foodPageSize,
@@ -712,7 +713,7 @@ function Planner() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [foodPage, i18n.language, normalizedFoodSearchTerm]);
+  }, [foodPage, normalizedFoodSearchTerm]);
 
   useEffect(() => {
     if (loading || !isRecipeMode) {

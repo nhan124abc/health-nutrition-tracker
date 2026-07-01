@@ -38,8 +38,7 @@ public class RecipeController {
             @RequestParam(required = false) List<Long> foodIds,
             @RequestParam(required = false) String goal,
             @RequestParam(required = false) String mealType,
-            @RequestParam(required = false) String locale,
             @RequestParam(defaultValue = "6") int limit) {
-        return ResponseEntity.ok(recipeService.suggest(maxCalories, q, foodIds, goal, mealType, locale, limit));
+        return ResponseEntity.ok(recipeService.suggest(maxCalories, q, foodIds, goal, mealType, limit));
     }
 }

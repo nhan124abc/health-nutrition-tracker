@@ -31,8 +31,8 @@ function Nutrition() {
   const [error, setError] = useState('');
 
   const filteredFoods = useMemo(
-    () => filterFoods(foods, query, category, i18n.language),
-    [category, foods, i18n.language, query]
+    () => filterFoods(foods, query, category),
+    [category, foods, query]
   );
 
   useEffect(() => {

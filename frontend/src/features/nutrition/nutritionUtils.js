@@ -1,5 +1,3 @@
-import { getLocalizedName, getLocalizedSearchValues, includesLocalizedSearch } from '../../utils/localizedName';
-
 export const emptyFood = {
   name: '',
   nameVi: '',
@@ -208,13 +206,14 @@ export function mapFoodToForm(food) {
   };
 }
 
-export function filterFoods(items, query, categoryId, language = '') {
+export function filterFoods(items, query, categoryId) {
+  const keyword = query.trim().toLowerCase();
+
   return items.filter((food) => {
-    const searchableValues = getLocalizedSearchValues(food, language, [
-      food.brand,
-      getLocalizedName({ name: food.category, nameVi: food.categoryNameVi }, language),
-    ]);
-    const matchesKeyword = searchableValues.some((value) => includesLocalizedSearch(value, query, language));
+    const searchableValues = [food.name, food.nameVi, food.brand, food.category]
+      .filter(Boolean)
+      .map((value) => String(value).toLowerCase());
+    const matchesKeyword = !keyword || searchableValues.some((value) => value.includes(keyword));
     const matchesCategory = categoryId === 'all' || String(food.categoryId) === String(categoryId);
 
     return matchesKeyword && matchesCategory;

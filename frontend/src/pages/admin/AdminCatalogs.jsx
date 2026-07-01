@@ -24,7 +24,7 @@ import {
   normalizeCategory,
   normalizeFoodFromApi,
 } from '../../features/nutrition/nutritionUtils';
-import { getLocalizedName, getLocalizedSearchValues, includesLocalizedSearch } from '../../utils/localizedName';
+import { getLocalizedName } from '../../utils/localizedName';
 import ErrorModal from '../../components/ErrorModal';
 
 const ADMIN_PAGE_SIZE = 16;
@@ -193,18 +193,24 @@ function AdminCatalogs({ type = 'overview' }) {
   );
 
   const filteredCategories = useMemo(() => {
-    if (!searchTerm.trim()) {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    if (!normalizedSearch) {
       return categories;
     }
 
-    return categories.filter((category) => {
-      const values = getLocalizedSearchValues(
-        { name: category.nameRaw, nameVi: category.nameVi },
-        i18n.language,
-        [category.category, category.id]
-      );
-      return values.some((value) => includesLocalizedSearch(value, searchTerm, i18n.language));
-    });
+    return categories.filter((category) => [
+      getLocalizedName({ name: category.nameRaw, nameVi: category.nameVi }, i18n.language),
+      category.name,
+      category.nameRaw,
+      category.nameVi,
+      category.category,
+      category.id,
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase()
+      .includes(normalizedSearch));
   }, [categories, i18n.language, searchTerm]);
 
   const totalPages = Math.max(1, Math.ceil(filteredCategories.length / ADMIN_PAGE_SIZE));

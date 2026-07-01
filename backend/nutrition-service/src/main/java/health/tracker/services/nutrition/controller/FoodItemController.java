@@ -47,13 +47,12 @@ public class FoodItemController {
     public ResponseEntity<Page<FoodItemResponse>> search(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) Integer categoryId,
-            @RequestParam(required = false) String locale,
             @RequestParam(defaultValue = "false") boolean recipeFirst,
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "20") int size) {
 
         Page<FoodItemResponse> result = foodItemService.search(
-                q, categoryId, locale, recipeFirst,
+                q, categoryId, recipeFirst,
                 PageRequest.of(page, size, Sort.by("verified").descending().and(Sort.by("name").ascending()))
         );
         return ResponseEntity.ok(result);

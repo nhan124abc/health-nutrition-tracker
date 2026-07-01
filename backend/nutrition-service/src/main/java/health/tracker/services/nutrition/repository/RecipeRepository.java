@@ -27,18 +27,13 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
                    OR EXISTS (
                        SELECT i FROM RecipeIngredient i
                        WHERE i.recipe = r
-                         AND (
-                             (:vietnamese = true AND LOWER(i.foodItem.nameVi) LIKE LOWER(CONCAT('%', :keyword, '%')))
-                             OR (:vietnamese = false AND LOWER(i.foodItem.name) LIKE LOWER(CONCAT('%', :keyword, '%')))
-                             OR LOWER(i.foodName) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                         )
+                         AND LOWER(i.foodName) LIKE LOWER(CONCAT('%', :keyword, '%'))
                    ))
             ORDER BY r.totalCalories DESC, r.id ASC
             """)
     List<Recipe> findSuggestions(
             @Param("maxCalories") BigDecimal maxCalories,
             @Param("keyword") String keyword,
-            @Param("vietnamese") boolean vietnamese,
             Pageable pageable
     );
 
