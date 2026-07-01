@@ -14,8 +14,6 @@ import { useTranslation } from 'react-i18next';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   FaBars,
-  FaBell,
-  FaChartLine,
   FaDumbbell,
   FaFolderOpen,
   FaHome,
@@ -34,7 +32,6 @@ const adminMenuItems = [
   { to: '/admin/catalogs', labelKey: 'admin.nav.catalogs', icon: FaFolderOpen },
   { to: '/admin/all-foods', labelKey: 'admin.nav.manageFoods', icon: FaUtensils },
   { to: '/admin/all-activities', labelKey: 'admin.nav.manageActivities', icon: FaDumbbell },
-  { to: '/admin/analytics', labelKey: 'admin.nav.analytics', icon: FaChartLine },
   { to: '/admin/profile', labelKey: 'admin.nav.profile', icon: FaUserCircle },
 ];
 
@@ -171,9 +168,6 @@ function AdminLayout() {
           </div>
 
           <div className="admin-header-actions">
-            <Button variant="link" className="admin-icon-button" aria-label={t('admin.layout.notifications')}>
-              <FaBell />
-            </Button>
             <LanguageSwitcher />
             <button
               type="button"

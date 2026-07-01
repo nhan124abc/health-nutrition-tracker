@@ -23,7 +23,6 @@ import HealthInsights from './pages/HealthInsights';
 import Planner from './pages/Planner';
 import Plans from './pages/Plans';
 import Settings from './pages/Settings';
-import AdminAnalytics from './pages/admin/AdminAnalytics';
 import AdminCatalogs from './pages/admin/AdminCatalogs';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminManagementPage from './pages/admin/AdminManagementPage';
@@ -109,7 +108,7 @@ function App() {
           <Route path="all-activities" element={<AdminManagementPage type="exercises" />} />
           <Route path="catalogs/foods" element={<Navigate to="/admin/catalogs/food-categories" replace />} />
           <Route path="catalogs/activities" element={<Navigate to="/admin/catalogs/activity-categories" replace />} />
-          <Route path="analytics" element={<AdminAnalytics />} />
+          <Route path="analytics" element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="profile" element={<AdminProfile />} />
         </Route>
       </Routes>
