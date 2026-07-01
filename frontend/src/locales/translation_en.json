@@ -9,6 +9,7 @@
     "nutrition": "Nutrition",
     "diary": "Nutrition Diary",
     "activity": "Activity",
+    "activityList": "Activity List",
     "water": "Water Tracker",
     "goals": "Goals",
     "planner": "Suggestions & Planner",
@@ -1168,6 +1169,10 @@
     "allCategories": "All categories",
     "activityCount": "Activities",
     "typeTitle": "Activity types",
+    "searchPlaceholder": "Search activity catalog...",
+    "resultCount": "Showing {{count}} activities from the database.",
+    "noCatalogResults": "No matching activities found.",
+    "noSelection": "Select an activity to view details.",
     "todayCategoryTitle": "Today's groups",
     "categorySummary": "{{count}} activities · {{minutes}} min",
     "noCategorySummary": "No activities logged for this date.",
@@ -1226,8 +1231,20 @@
     "sampleNotes": {
       "morningRun": "Morning run"
     },
+    "tabs": {
+      "logs": "Daily logs",
+      "catalog": "Activity catalog"
+    },
     "markActivityCompleted": "Mark activity as completed",
     "activityCompleted": "Activity completed"
+  },
+  "activityListPage": {
+    "title": "Activity list",
+    "loading": "Loading activities from the database...",
+    "searchPlaceholder": "Search activities...",
+    "resultCount": "Showing {{count}} activities from the database.",
+    "noResults": "No matching activities found.",
+    "noSelection": "Select an activity to view details."
   },
   "profilePage": {
     "title": "Health profile",

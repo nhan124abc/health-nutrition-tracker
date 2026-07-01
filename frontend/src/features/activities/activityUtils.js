@@ -1,3 +1,5 @@
+import { valuesMatchSearch } from '../../utils/searchText';
+
 export const emptyLog = {
   typeId: '',
   customName: '',
@@ -87,13 +89,55 @@ export function extractActivityTypesFromApi(data) {
 }
 
 export function normalizeActivityType(type = {}) {
+  const category = type.category || type.activityCategory || {};
+  const categoryValue = typeof category === 'object'
+    ? category.code || category.name || category.category || 'OTHER'
+    : category;
+
   return {
     id: type.id ?? type.activityTypeId,
     name: type.name || type.activityName || '',
     nameVi: type.nameVi || '',
-    category: String(type.category || 'OTHER').toLowerCase(),
+    category: String(categoryValue || 'OTHER').toLowerCase(),
+    categoryName: typeof category === 'object' ? category.name || category.code || '' : String(categoryValue || ''),
+    categoryNameVi: typeof category === 'object' ? category.nameVi || '' : '',
+    description: type.description || '',
+    descriptionVi: type.descriptionVi || '',
     met: Number(type.metValue || type.met || 4),
   };
+}
+
+export function deriveActivityCategoriesFromTypes(types = []) {
+  const categoriesById = types.reduce((groups, type) => {
+    const id = type.category || 'other';
+
+    if (!groups.has(id)) {
+      groups.set(id, {
+        id,
+        name: type.categoryName || id,
+        nameVi: type.categoryNameVi || '',
+      });
+    }
+
+    return groups;
+  }, new Map());
+
+  return Array.from(categoriesById.values());
+}
+
+export function filterActivityTypes(types = [], query = '', category = 'all', language = '') {
+  const isVietnamese = String(language).toLowerCase().startsWith('vi');
+
+  return types.filter((type) => {
+    const searchableValues = [
+      isVietnamese ? type.nameVi || type.name : type.name || type.nameVi,
+      isVietnamese ? type.categoryNameVi || type.categoryName : type.categoryName || type.categoryNameVi,
+    ];
+    const matchesQuery = valuesMatchSearch(searchableValues, query);
+    const matchesCategory = category === 'all' || String(type.category) === String(category);
+
+    return matchesQuery && matchesCategory;
+  });
 }
 
 export function normalizeActivityFromApi(activity = {}) {
