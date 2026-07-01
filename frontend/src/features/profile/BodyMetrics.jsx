@@ -14,7 +14,6 @@ import {
   updateProfile,
 } from './profileService';
 import {
-  buildBodyMetricFormFromProfile,
   bodyMetricFields,
   bodyMetricResultFields,
   emptyBodyMetric,
@@ -28,11 +27,62 @@ import {
   mapProfileFromApi,
 } from './profileUtils';
 
+function createEmptyMetricForm() {
+  return {
+    ...emptyBodyMetric,
+    date: getTodayDate(),
+  };
+}
+
+function calculateBodyMetricValues(metricForm = {}, profileData = {}) {
+  const weight = Number(metricForm.weight);
+  const height = Number(metricForm.height);
+  const gender = profileData?.gender;
+  const birthDate = profileData?.birthDate ? new Date(profileData.birthDate) : null;
+  const age = birthDate && !Number.isNaN(birthDate.getTime())
+    ? Math.floor((Date.now() - birthDate.getTime()) / 31557600000)
+    : 0;
+
+  if (!weight || !height || !age || !gender) {
+    return null;
+  }
+
+  const bmi = weight / ((height / 100) ** 2);
+  const genderOffset = gender === 'male' ? 5 : -161;
+  const bmr = 9.99 * weight + 6.25 * height - 4.92 * age + genderOffset;
+  const sex = gender === 'male' ? 1 : 0;
+  const bodyFat = 1.20 * bmi + 0.23 * age - 10.8 * sex - 5.4;
+
+  return {
+    bmi: bmi.toFixed(1),
+    bmr: String(Math.round(bmr)),
+    bodyFat: Math.max(0, bodyFat).toFixed(1),
+  };
+}
+
+function applyCalculatedMetricValues(currentForm, profileData) {
+  const calculated = calculateBodyMetricValues(currentForm, profileData);
+  const nextValues = calculated || { bmi: '', bmr: '', bodyFat: '' };
+
+  if (
+    String(currentForm.bmi || '') === String(nextValues.bmi || '') &&
+    String(currentForm.bmr || '') === String(nextValues.bmr || '') &&
+    String(currentForm.bodyFat || '') === String(nextValues.bodyFat || '')
+  ) {
+    return currentForm;
+  }
+
+  return {
+    ...currentForm,
+    ...nextValues,
+  };
+}
+
 function BodyMetrics() {
   const { t } = useTranslation();
   const [profile, setProfile] = useState(null);
   const [metrics, setMetrics] = useState([]);
-  const [form, setForm] = useState(() => ({ ...emptyBodyMetric, date: getTodayDate() }));
+  const [form, setForm] = useState(createEmptyMetricForm);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -67,7 +117,7 @@ function BodyMetrics() {
 
         setProfile(loadedProfile);
         setMetrics(loadedMetrics);
-        setForm(buildBodyMetricFormFromProfile(loadedProfile, loadedMetrics));
+        setForm(createEmptyMetricForm());
 
         const failedResult = [profileResult, metricsResult].find((result) => result.status === 'rejected');
         if (failedResult) {
@@ -99,10 +149,22 @@ function BodyMetrics() {
     setForm((current) => ({ ...current, [name]: value }));
   };
 
+  useEffect(() => {
+    setForm((current) => applyCalculatedMetricValues(current, profile));
+  }, [form.weight, form.height, profile]);
+
   const handleEditChange = (event) => {
     const { name, value } = event.target;
     setEditForm((current) => ({ ...current, [name]: value }));
   };
+
+  useEffect(() => {
+    if (!editingMetric) {
+      return;
+    }
+
+    setEditForm((current) => applyCalculatedMetricValues(current, profile));
+  }, [editForm.weight, editForm.height, editingMetric, profile]);
 
   const syncProfileWeight = (nextMetrics) => {
     const latestMetric = getLatestBodyMetric(nextMetrics);
@@ -167,14 +229,18 @@ function BodyMetrics() {
       const nextProfile = {
         ...(profile || {}),
         weight: form.weight,
+        height: form.height,
       };
 
       setMetrics(nextMetrics);
       setProfile(nextProfile);
-      setForm(buildBodyMetricFormFromProfile(nextProfile, nextMetrics));
+      setForm(createEmptyMetricForm());
 
-      if (Number(form.weight) > 0) {
-        updateProfile({ weightKg: Number(form.weight) })
+      if (Number(form.weight) > 0 || Number(form.height) > 0) {
+        updateProfile({
+          ...(Number(form.weight) > 0 ? { weightKg: Number(form.weight) } : {}),
+          ...(Number(form.height) > 0 ? { heightCm: Number(form.height) } : {}),
+        })
           .then(() => window.dispatchEvent(new CustomEvent('profile:updated', { detail: nextProfile })))
           .catch((syncError) => {
             console.error('[BodyMetrics] Error syncing profile weight:', syncError);
@@ -188,34 +254,6 @@ function BodyMetrics() {
     } finally {
       setSaving(false);
     }
-  };
-
-  const calculateMetrics = () => {
-    const weight = Number(form.weight);
-    const height = Number(form.height);
-    const gender = profile?.gender;
-    const birthDate = profile?.birthDate ? new Date(profile.birthDate) : null;
-    const age = birthDate && !Number.isNaN(birthDate.getTime())
-      ? Math.floor((Date.now() - birthDate.getTime()) / 31557600000)
-      : 0;
-
-    if (!weight || !height || !age || !gender) {
-      setError(t('bodyMetricsPage.calculateMissingProfile'));
-      return;
-    }
-
-    const bmi = weight / ((height / 100) ** 2);
-    const genderOffset = gender === 'male' ? 5 : -161;
-    const bmr = 9.99 * weight + 6.25 * height - 4.92 * age + genderOffset;
-    const sex = gender === 'male' ? 1 : 0;
-    const bodyFat = 1.20 * bmi + 0.23 * age - 10.8 * sex - 5.4;
-
-    setForm((current) => ({
-      ...current,
-      bmi: bmi.toFixed(1),
-      bmr: Math.round(bmr),
-      bodyFat: Math.max(0, bodyFat).toFixed(1),
-    }));
   };
 
   const updateMetric = async (event) => {
@@ -237,7 +275,7 @@ function BodyMetrics() {
       ));
 
       setMetrics(nextMetrics);
-      setForm(buildBodyMetricFormFromProfile(profile || {}, nextMetrics));
+      setForm(createEmptyMetricForm());
       syncProfileWeight(nextMetrics);
       setEditingMetric(null);
       setEditForm(emptyBodyMetric);
@@ -263,7 +301,7 @@ function BodyMetrics() {
       const nextMetrics = metrics.filter((item) => item.id !== metric.id);
 
       setMetrics(nextMetrics);
-      setForm(buildBodyMetricFormFromProfile(profile || {}, nextMetrics));
+      setForm(createEmptyMetricForm());
       syncProfileWeight(nextMetrics);
       setSaved(true);
     } catch (requestError) {
@@ -291,8 +329,7 @@ function BodyMetrics() {
       ) : (
         <Row className="g-4">
           <Col lg={5}>
-          <BodyMetricFormCard
-            onCalculate={calculateMetrics}
+            <BodyMetricFormCard
               form={form}
               onChange={handleChange}
               onSubmit={addMetric}

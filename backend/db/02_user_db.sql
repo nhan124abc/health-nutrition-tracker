@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS body_metrics (
     body_fat_percentage     DECIMAL(4,1)    NULL COMMENT 'Tỷ lệ mỡ cơ thể (%)',
     muscle_mass_kg          DECIMAL(5,2)    NULL COMMENT 'Khối lượng cơ (kg)',
     bmi                     DECIMAL(4,1)    NULL COMMENT 'Chỉ số BMI (tính toán từ height & weight)',
+    bmr                     DECIMAL(7,0)    NULL COMMENT 'Basal metabolic rate (kcal/day)',
     waist_cm                DECIMAL(5,2)    NULL COMMENT 'Vòng eo (cm)',
     hip_cm                  DECIMAL(5,2)    NULL COMMENT 'Vòng hông (cm)',
     chest_cm                DECIMAL(5,2)    NULL COMMENT 'Vòng ngực (cm)',

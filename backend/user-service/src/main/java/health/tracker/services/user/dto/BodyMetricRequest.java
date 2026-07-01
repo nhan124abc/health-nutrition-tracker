@@ -24,6 +24,12 @@ public class BodyMetricRequest {
     private BigDecimal muscleMassKg;
 
     @DecimalMin(value = "1.0")  @DecimalMax(value = "200.0")
+    private BigDecimal bmi;
+
+    @DecimalMin(value = "1.0")  @DecimalMax(value = "10000.0")
+    private BigDecimal bmr;
+
+    @DecimalMin(value = "1.0")  @DecimalMax(value = "200.0")
     private BigDecimal waistCm;
 
     @DecimalMin(value = "1.0")  @DecimalMax(value = "200.0")

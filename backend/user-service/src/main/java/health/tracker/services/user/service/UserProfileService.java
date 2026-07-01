@@ -175,6 +175,8 @@ public class UserProfileService {
                 .weightKg(request.getWeightKg())
                 .bodyFatPercentage(request.getBodyFatPercentage())
                 .muscleMassKg(request.getMuscleMassKg())
+                .bmi(request.getBmi())
+                .bmr(request.getBmr())
                 .waistCm(request.getWaistCm())
                 .hipCm(request.getHipCm())
                 .chestCm(request.getChestCm())
@@ -195,6 +197,12 @@ public class UserProfileService {
                     }
                 }
                 // Cập nhật cân nặng hiện tại trong profile
+                if (metric.getBmr() == null) {
+                    BigDecimal calculatedBmr = calculateBmr(profile, request.getWeightKg());
+                    if (calculatedBmr != null) {
+                        metric.setBmr(calculatedBmr);
+                    }
+                }
                 profile.setWeightKg(request.getWeightKg());
                 applyNutritionTargets(profile, null);
                 UserProfile savedProfile = profileRepository.save(profile);
@@ -331,7 +339,7 @@ public class UserProfileService {
         return BodyMetricResponse.builder()
                 .id(m.getId()).userId(m.getUserId()).recordedAt(m.getRecordedAt())
                 .weightKg(m.getWeightKg()).bodyFatPercentage(m.getBodyFatPercentage())
-                .muscleMassKg(m.getMuscleMassKg()).bmi(m.getBmi())
+                .muscleMassKg(m.getMuscleMassKg()).bmi(m.getBmi()).bmr(m.getBmr())
                 .waistCm(m.getWaistCm()).hipCm(m.getHipCm()).chestCm(m.getChestCm())
                 .notes(m.getNotes()).createdAt(m.getCreatedAt())
                 .build();
@@ -349,6 +357,22 @@ public class UserProfileService {
         int sex = profile.getGender() == UserProfile.Gender.MALE ? 1 : 0;
         double bodyFat = 1.20 * bmi + 0.23 * age - 10.8 * sex - 5.4;
         return BigDecimal.valueOf(Math.max(0, bodyFat)).setScale(1, RoundingMode.HALF_UP);
+    }
+
+    private BigDecimal calculateBmr(UserProfile profile, BigDecimal weightKg) {
+        if (weightKg == null || profile.getHeightCm() == null
+                || profile.getDateOfBirth() == null || profile.getGender() == null
+                || profile.getGender() == UserProfile.Gender.OTHER) {
+            return null;
+        }
+
+        int age = java.time.Period.between(profile.getDateOfBirth(), java.time.LocalDate.now()).getYears();
+        int genderOffset = profile.getGender() == UserProfile.Gender.MALE ? 5 : -161;
+        double bmr = 9.99 * weightKg.doubleValue()
+                + 6.25 * profile.getHeightCm().doubleValue()
+                - 4.92 * age
+                + genderOffset;
+        return BigDecimal.valueOf(Math.round(bmr));
     }
 
     private void applyNutritionTargets(UserProfile profile, Integer manualCalorieGoal) {
