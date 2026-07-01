@@ -192,7 +192,6 @@ function GuestGoalPage() {
           <div className="page-heading">
             <div>
               <h1>{t('goalPlannerPage.title')}</h1>
-              <p>{t('home.hero.description')}</p>
             </div>
           </div>
 
