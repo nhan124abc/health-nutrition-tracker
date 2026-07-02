@@ -12,6 +12,8 @@ import java.util.List;
 @Repository
 public interface BodyMetricRepository extends JpaRepository<BodyMetric, Long> {
 
+    java.util.Optional<BodyMetric> findByIdAndUserId(Long id, Long userId);
+
     Page<BodyMetric> findByUserIdOrderByRecordedAtDesc(Long userId, Pageable pageable);
 
     List<BodyMetric> findByUserIdAndRecordedAtBetweenOrderByRecordedAtAsc(
