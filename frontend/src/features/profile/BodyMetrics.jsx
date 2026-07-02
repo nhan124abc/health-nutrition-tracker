@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Button, Col, Form, Modal, Row, Spinner } from 'react-bootstrap';
+import { Button, Col, Modal, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import ErrorModal from '../../components/ErrorModal';
 import BodyMetricChart from './components/BodyMetricChart';
@@ -14,8 +14,6 @@ import {
   updateProfile,
 } from './profileService';
 import {
-  bodyMetricFields,
-  bodyMetricResultFields,
   emptyBodyMetric,
   extractBodyMetricFromApi,
   extractMetricRows,
@@ -86,9 +84,10 @@ function BodyMetrics() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [saved, setSaved] = useState(false);
+  const [successMessageKey, setSuccessMessageKey] = useState('');
+  const [deleteCandidate, setDeleteCandidate] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const [editingMetric, setEditingMetric] = useState(null);
-  const [editForm, setEditForm] = useState(emptyBodyMetric);
   const [updating, setUpdating] = useState(false);
 
   useEffect(() => {
@@ -153,19 +152,6 @@ function BodyMetrics() {
     setForm((current) => applyCalculatedMetricValues(current, profile));
   }, [form.weight, form.height, profile]);
 
-  const handleEditChange = (event) => {
-    const { name, value } = event.target;
-    setEditForm((current) => ({ ...current, [name]: value }));
-  };
-
-  useEffect(() => {
-    if (!editingMetric) {
-      return;
-    }
-
-    setEditForm((current) => applyCalculatedMetricValues(current, profile));
-  }, [editForm.weight, editForm.height, editingMetric, profile]);
-
   const syncProfileWeight = (nextMetrics) => {
     const latestMetric = getLatestBodyMetric(nextMetrics);
     const nextWeight = latestMetric.weightKg ?? latestMetric.weight;
@@ -195,28 +181,29 @@ function BodyMetrics() {
   });
 
   const openEditMetric = (metric) => {
-    setEditingMetric(metric);
-    setEditForm(mapMetricToForm(metric));
-  };
-
-  const closeEditMetric = () => {
     if (updating) {
       return;
     }
 
-    setEditingMetric(null);
-    setEditForm(emptyBodyMetric);
+    setEditingMetric(metric);
+    setForm(mapMetricToForm(metric));
+    setSuccessMessageKey('');
   };
 
   const addMetric = async (event) => {
     event.preventDefault();
+
+    if (editingMetric) {
+      updateMetric(event);
+      return;
+    }
 
     if (saving) {
       return;
     }
 
     setSaving(true);
-    setSaved(false);
+    setSuccessMessageKey('');
     setError('');
 
     try {
@@ -235,6 +222,7 @@ function BodyMetrics() {
       setMetrics(nextMetrics);
       setProfile(nextProfile);
       setForm(createEmptyMetricForm());
+      setEditingMetric(null);
 
       if (Number(form.weight) > 0 || Number(form.height) > 0) {
         updateProfile({
@@ -247,7 +235,7 @@ function BodyMetrics() {
           });
       }
 
-      setSaved(true);
+      setSuccessMessageKey('bodyMetricsPage.savedMessage');
     } catch (requestError) {
       console.error('[BodyMetrics] Error saving metric:', requestError);
       setError(getApiErrorMessage(requestError, t('bodyMetricsPage.saveError')));
@@ -264,11 +252,11 @@ function BodyMetrics() {
     }
 
     setUpdating(true);
-    setSaved(false);
+    setSuccessMessageKey('');
     setError('');
 
     try {
-      const response = await updateBodyMetric(editingMetric.id, mapBodyMetricToApi(editForm));
+      const response = await updateBodyMetric(editingMetric.id, mapBodyMetricToApi(form));
       const updatedMetric = extractBodyMetricFromApi(response.data);
       const nextMetrics = metrics.map((item) => (
         item.id === editingMetric.id ? { ...item, ...updatedMetric } : item
@@ -278,8 +266,7 @@ function BodyMetrics() {
       setForm(createEmptyMetricForm());
       syncProfileWeight(nextMetrics);
       setEditingMetric(null);
-      setEditForm(emptyBodyMetric);
-      setSaved(true);
+      setSuccessMessageKey('bodyMetricsPage.savedMessage');
     } catch (requestError) {
       console.error('[BodyMetrics] Error updating metric:', requestError);
       setError(getApiErrorMessage(requestError, t('bodyMetricsPage.updateError')));
@@ -288,25 +275,42 @@ function BodyMetrics() {
     }
   };
 
-  const removeMetric = async (metric) => {
-    if (!window.confirm(t('bodyMetricsPage.confirmDeleteMetric'))) {
+  const removeMetric = (metric) => {
+    setDeleteCandidate(metric);
+  };
+
+  const closeDeleteConfirm = () => {
+    if (deleting) {
       return;
     }
 
-    setSaved(false);
+    setDeleteCandidate(null);
+  };
+
+  const confirmDeleteMetric = async () => {
+    if (!deleteCandidate || deleting) {
+      return;
+    }
+
+    setDeleting(true);
+    setSuccessMessageKey('');
     setError('');
 
     try {
-      await deleteBodyMetric(metric.id);
-      const nextMetrics = metrics.filter((item) => item.id !== metric.id);
+      await deleteBodyMetric(deleteCandidate.id);
+      const nextMetrics = metrics.filter((item) => item.id !== deleteCandidate.id);
 
       setMetrics(nextMetrics);
       setForm(createEmptyMetricForm());
+      setEditingMetric(null);
+      setDeleteCandidate(null);
       syncProfileWeight(nextMetrics);
-      setSaved(true);
+      setSuccessMessageKey('bodyMetricsPage.deletedMessage');
     } catch (requestError) {
       console.error('[BodyMetrics] Error deleting metric:', requestError);
       setError(getApiErrorMessage(requestError, t('bodyMetricsPage.deleteError')));
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -319,7 +323,6 @@ function BodyMetrics() {
       </div>
 
       <ErrorModal error={error} onClose={() => setError('')} />
-      {saved && <Alert variant="success">{t('bodyMetricsPage.savedMessage')}</Alert>}
 
       {loading ? (
         <div className="py-5 text-center text-secondary">
@@ -333,7 +336,7 @@ function BodyMetrics() {
               form={form}
               onChange={handleChange}
               onSubmit={addMetric}
-              saving={saving}
+              saving={saving || updating}
               t={t}
             />
           </Col>
@@ -345,6 +348,7 @@ function BodyMetrics() {
               metrics={metrics}
               onDelete={removeMetric}
               onEdit={openEditMetric}
+              editingMetric={editingMetric}
               t={t}
               titleKey="bodyMetricsPage.historyTitle"
             />
@@ -352,66 +356,31 @@ function BodyMetrics() {
         </Row>
       )}
 
-      <Modal show={Boolean(editingMetric)} onHide={closeEditMetric} centered>
-        <Form onSubmit={updateMetric}>
-          <Modal.Header closeButton>
-            <Modal.Title>{t('bodyMetricsPage.editTitle')}</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Row className="g-3">
-              {bodyMetricFields.map(([name, labelKey, type]) => (
-                <Col md={name === 'date' ? 12 : 6} key={name}>
-                  <Form.Group>
-                    <Form.Label>{t(labelKey)}</Form.Label>
-                    <Form.Control
-                      type={type}
-                      name={name}
-                      value={editForm[name]}
-                      onChange={handleEditChange}
-                      disabled={updating}
-                      required={name === 'date'}
-                    />
-                  </Form.Group>
-                </Col>
-              ))}
-              <Col xs={12}>
-                <div className="body-metric-result-panel">
-                  <div className="body-metric-result-header">
-                    <span>{t('bodyMetricsPage.results.title')}</span>
-                  </div>
-                  <Row className="g-2">
-                    {bodyMetricResultFields.map(([name, labelKey, type, unit]) => (
-                      <Col sm={4} key={name}>
-                        <Form.Group className="body-metric-result-tile">
-                          <Form.Label>{t(labelKey)}</Form.Label>
-                          <Form.Control
-                            type={type}
-                            name={name}
-                            value={editForm[name]}
-                            onChange={handleEditChange}
-                            disabled={updating}
-                            min="0"
-                            step="0.1"
-                            placeholder="--"
-                          />
-                          <Form.Text>{unit}</Form.Text>
-                        </Form.Group>
-                      </Col>
-                    ))}
-                  </Row>
-                </div>
-              </Col>
-            </Row>
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="outline-secondary" onClick={closeEditMetric} disabled={updating}>
-              {t('common.cancel')}
-            </Button>
-            <Button variant="success" type="submit" disabled={updating}>
-              {updating ? t('bodyMetricsPage.updating') : t('common.save')}
-            </Button>
-          </Modal.Footer>
-        </Form>
+      <Modal show={Boolean(deleteCandidate)} onHide={closeDeleteConfirm} centered>
+        <Modal.Header closeButton={!deleting}>
+          <Modal.Title>{t('bodyMetricsPage.confirmDeleteTitle', 'Xác nhận xóa')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{t('bodyMetricsPage.confirmDeleteMetric')}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={closeDeleteConfirm} disabled={deleting}>
+            {t('common.cancel')}
+          </Button>
+          <Button variant="danger" onClick={confirmDeleteMetric} disabled={deleting}>
+            {deleting ? t('bodyMetricsPage.deleting', 'Đang xóa...') : t('bodyMetricsPage.deleteMetric')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={Boolean(successMessageKey)} onHide={() => setSuccessMessageKey('')} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{t('bodyMetricsPage.successTitle', 'Thành công')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{successMessageKey ? t(successMessageKey) : ''}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={() => setSuccessMessageKey('')}>
+            {t('common.close')}
+          </Button>
+        </Modal.Footer>
       </Modal>
     </>
   );

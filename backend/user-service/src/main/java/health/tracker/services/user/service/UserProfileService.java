@@ -215,6 +215,62 @@ public class UserProfileService {
         return toMetricResponse(savedMetric);
     }
 
+    @Transactional
+    public BodyMetricResponse updateMetric(Long userId, Long metricId, BodyMetricRequest request) {
+        BodyMetric metric = metricRepository.findByIdAndUserId(metricId, userId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Body metric not found: " + metricId));
+
+        metric.setRecordedAt(request.getRecordedAt());
+        metric.setWeightKg(request.getWeightKg());
+        metric.setBodyFatPercentage(request.getBodyFatPercentage());
+        metric.setMuscleMassKg(request.getMuscleMassKg());
+        metric.setBmi(request.getBmi());
+        metric.setBmr(request.getBmr());
+        metric.setWaistCm(request.getWaistCm());
+        metric.setHipCm(request.getHipCm());
+        metric.setChestCm(request.getChestCm());
+        metric.setNotes(request.getNotes());
+
+        if (request.getWeightKg() != null) {
+            profileRepository.findByUserId(userId).ifPresent(profile -> {
+                if (profile.getHeightCm() != null) {
+                    BigDecimal heightM = profile.getHeightCm().divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
+                    BigDecimal bmi = request.getWeightKg()
+                            .divide(heightM.multiply(heightM), 1, RoundingMode.HALF_UP);
+                    metric.setBmi(bmi);
+                    BigDecimal estimatedBodyFat = calculateBodyFat(profile, request);
+                    if (estimatedBodyFat != null) {
+                        metric.setBodyFatPercentage(estimatedBodyFat);
+                    }
+                }
+                if (metric.getBmr() == null) {
+                    BigDecimal calculatedBmr = calculateBmr(profile, request.getWeightKg());
+                    if (calculatedBmr != null) {
+                        metric.setBmr(calculatedBmr);
+                    }
+                }
+                profile.setWeightKg(request.getWeightKg());
+                applyNutritionTargets(profile, null);
+                UserProfile savedProfile = profileRepository.save(profile);
+                publishProfileSnapshot(savedProfile, request.getRecordedAt());
+            });
+        }
+
+        BodyMetric savedMetric = metricRepository.save(metric);
+        publishMetricEvent(savedMetric);
+        log.info("Body metric updated: id={}, userId={}", metricId, userId);
+        return toMetricResponse(savedMetric);
+    }
+
+    @Transactional
+    public void deleteMetric(Long userId, Long metricId) {
+        BodyMetric metric = metricRepository.findByIdAndUserId(metricId, userId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Body metric not found: " + metricId));
+
+        metricRepository.delete(metric);
+        log.info("Body metric deleted: id={}, userId={}", metricId, userId);
+    }
+
     private void publishWaterEvent(String eventType, WaterLog water) {
         Map<String, Object> event = new HashMap<>();
         event.put("eventId", UUID.randomUUID().toString());

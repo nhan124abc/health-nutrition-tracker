@@ -937,6 +937,19 @@ body::-webkit-scrollbar,
   line-height: 1;
 }
 
+.body-metric-history-row {
+  cursor: pointer;
+}
+
+.body-metric-history-row:focus-visible {
+  outline: 2px solid var(--health-primary);
+  outline-offset: -2px;
+}
+
+.body-metric-history-row.is-selected > * {
+  background: #eef8f3;
+}
+
 .goal-row {
   display: grid;
   gap: 0.5rem;

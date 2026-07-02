@@ -68,7 +68,6 @@ function HomePage() {
             <Row className="align-items-center g-5">
               <Col lg={6}>
                 <h1>{t('app.name')}</h1>
-                <p className="premium-hero-copy">{t('home.hero.description')}</p>
                 <div className="premium-hero-actions">
                   <Button as={Link} to="/guest-goals" variant="success" size="lg">
                     {t('home.actions.start')}

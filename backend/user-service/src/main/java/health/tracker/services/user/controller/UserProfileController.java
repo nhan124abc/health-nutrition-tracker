@@ -127,6 +127,27 @@ public class UserProfileController {
         );
         return ResponseEntity.ok(result);
     }
+
+    @PutMapping("/metrics/{id}")
+    public ResponseEntity<BodyMetricResponse> updateMetric(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id,
+            @Valid @RequestBody BodyMetricRequest request) {
+
+        log.debug("Update body metric for userId={}, metricId={}", userId, id);
+        return ResponseEntity.ok(profileService.updateMetric(userId, id, request));
+    }
+
+    @DeleteMapping("/metrics/{id}")
+    public ResponseEntity<Void> deleteMetric(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id) {
+
+        log.debug("Delete body metric for userId={}, metricId={}", userId, id);
+        profileService.deleteMetric(userId, id);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/water")
     public ResponseEntity<WaterLogResponse> logWater(
             @RequestHeader("X-User-Id") Long userId,
