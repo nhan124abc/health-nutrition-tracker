@@ -177,6 +177,7 @@ public class UserProfileService {
                 .muscleMassKg(request.getMuscleMassKg())
                 .bmi(request.getBmi())
                 .bmr(request.getBmr())
+                .tdee(request.getTdee())
                 .waistCm(request.getWaistCm())
                 .hipCm(request.getHipCm())
                 .chestCm(request.getChestCm())
@@ -203,6 +204,9 @@ public class UserProfileService {
                         metric.setBmr(calculatedBmr);
                     }
                 }
+                if (metric.getTdee() == null && metric.getBmr() != null) {
+                    metric.setTdee(calculateTdee(profile, metric.getBmr()));
+                }
                 profile.setWeightKg(request.getWeightKg());
                 applyNutritionTargets(profile, null);
                 UserProfile savedProfile = profileRepository.save(profile);
@@ -226,6 +230,7 @@ public class UserProfileService {
         metric.setMuscleMassKg(request.getMuscleMassKg());
         metric.setBmi(request.getBmi());
         metric.setBmr(request.getBmr());
+        metric.setTdee(request.getTdee());
         metric.setWaistCm(request.getWaistCm());
         metric.setHipCm(request.getHipCm());
         metric.setChestCm(request.getChestCm());
@@ -248,6 +253,9 @@ public class UserProfileService {
                     if (calculatedBmr != null) {
                         metric.setBmr(calculatedBmr);
                     }
+                }
+                if (metric.getTdee() == null && metric.getBmr() != null) {
+                    metric.setTdee(calculateTdee(profile, metric.getBmr()));
                 }
                 profile.setWeightKg(request.getWeightKg());
                 applyNutritionTargets(profile, null);
@@ -395,7 +403,7 @@ public class UserProfileService {
         return BodyMetricResponse.builder()
                 .id(m.getId()).userId(m.getUserId()).recordedAt(m.getRecordedAt())
                 .weightKg(m.getWeightKg()).bodyFatPercentage(m.getBodyFatPercentage())
-                .muscleMassKg(m.getMuscleMassKg()).bmi(m.getBmi()).bmr(m.getBmr())
+                .muscleMassKg(m.getMuscleMassKg()).bmi(m.getBmi()).bmr(m.getBmr()).tdee(m.getTdee())
                 .waistCm(m.getWaistCm()).hipCm(m.getHipCm()).chestCm(m.getChestCm())
                 .notes(m.getNotes()).createdAt(m.getCreatedAt())
                 .build();
@@ -429,6 +437,24 @@ public class UserProfileService {
                 - 4.92 * age
                 + genderOffset;
         return BigDecimal.valueOf(Math.round(bmr));
+    }
+
+    private BigDecimal calculateTdee(UserProfile profile, BigDecimal bmr) {
+        return BigDecimal.valueOf(Math.round(bmr.doubleValue() * activityFactor(profile.getActivityLevel())));
+    }
+
+    private double activityFactor(UserProfile.ActivityLevel activityLevel) {
+        UserProfile.ActivityLevel level = activityLevel != null
+                ? activityLevel
+                : UserProfile.ActivityLevel.SEDENTARY;
+
+        return switch (level) {
+            case SEDENTARY -> 1.2;
+            case LIGHTLY_ACTIVE -> 1.375;
+            case MODERATELY_ACTIVE -> 1.55;
+            case VERY_ACTIVE -> 1.725;
+            case EXTRA_ACTIVE -> 1.9;
+        };
     }
 
     private void applyNutritionTargets(UserProfile profile, Integer manualCalorieGoal) {

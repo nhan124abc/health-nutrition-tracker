@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge, Button, Card, Col, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
-import { FaCheckCircle } from 'react-icons/fa';
+import { FaCheckCircle, FaSyncAlt } from 'react-icons/fa';
 import { getHealthInsights, markHealthInsightRead } from '../features/analytics/analyticsService';
 
 function HealthInsights() {
@@ -68,6 +68,15 @@ function HealthInsights() {
             <span>{t('healthInsightsPage.title')}</span>
           </h1>
         </div>
+        <Button
+          variant="outline-success"
+          className="d-inline-flex align-items-center gap-2"
+          disabled={loading}
+          onClick={loadInsights}
+        >
+          {loading ? <Spinner animation="border" size="sm" /> : <FaSyncAlt />}
+          {t('healthInsightsPage.refresh')}
+        </Button>
       </div>
 
       {loadError && <div className="alert alert-warning">{loadError}</div>}

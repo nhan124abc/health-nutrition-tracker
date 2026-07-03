@@ -91,6 +91,14 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
     }
 
+    @PostMapping("/password/change")
+    public ResponseEntity<Map<String, String>> changePassword(
+            @RequestHeader("X-User-Id") Long userId,
+            @Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(userId, request);
+        return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+    }
+
     @PostMapping("/email/verification/send")
     public ResponseEntity<Map<String, String>> sendEmailVerification(
             @Valid @RequestBody ForgotPasswordRequest request) {

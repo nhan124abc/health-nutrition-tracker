@@ -1,6 +1,7 @@
 package health.tracker.services.auth.service;
 
 import health.tracker.services.auth.dto.AuthResponse;
+import health.tracker.services.auth.dto.ChangePasswordRequest;
 import health.tracker.services.auth.dto.LoginRequest;
 import health.tracker.services.auth.dto.RefreshTokenRequest;
 import health.tracker.services.auth.dto.RegisterRequest;
@@ -178,6 +179,31 @@ public class AuthService {
         userCacheService.evict(email);
         rateLimitService.recordSuccess(email);
         log.info("Password reset completed for: {}", email);
+    }
+
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+        User user = userRepository.findById(userId)
+                .filter(User::isActive)
+                .orElseThrow(() -> new AppException(HttpStatus.UNAUTHORIZED, "User account is unavailable or inactive"));
+
+        if (user.getPassword() == null || !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Current password is incorrect");
+        }
+
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Password confirmation does not match");
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "New password must be different from current password");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        userCacheService.evict(user.getEmail());
+        rateLimitService.recordSuccess(user.getEmail());
+        log.info("Password changed for userId={}", userId);
     }
 
     public void requestEmailVerification(String email) {

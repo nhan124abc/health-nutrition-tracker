@@ -32,6 +32,16 @@ function createEmptyMetricForm() {
   };
 }
 
+function getActivityFactor(activityLevel) {
+  return {
+    sedentary: 1.2,
+    light: 1.375,
+    moderate: 1.55,
+    active: 1.725,
+    very_active: 1.9,
+  }[activityLevel] || 1.2;
+}
+
 function calculateBodyMetricValues(metricForm = {}, profileData = {}) {
   const weight = Number(metricForm.weight);
   const height = Number(metricForm.height);
@@ -48,23 +58,26 @@ function calculateBodyMetricValues(metricForm = {}, profileData = {}) {
   const bmi = weight / ((height / 100) ** 2);
   const genderOffset = gender === 'male' ? 5 : -161;
   const bmr = 9.99 * weight + 6.25 * height - 4.92 * age + genderOffset;
+  const tdee = bmr * getActivityFactor(profileData?.activityLevel);
   const sex = gender === 'male' ? 1 : 0;
   const bodyFat = 1.20 * bmi + 0.23 * age - 10.8 * sex - 5.4;
 
   return {
     bmi: bmi.toFixed(1),
     bmr: String(Math.round(bmr)),
+    tdee: String(Math.round(tdee)),
     bodyFat: Math.max(0, bodyFat).toFixed(1),
   };
 }
 
 function applyCalculatedMetricValues(currentForm, profileData) {
   const calculated = calculateBodyMetricValues(currentForm, profileData);
-  const nextValues = calculated || { bmi: '', bmr: '', bodyFat: '' };
+  const nextValues = calculated || { bmi: '', bmr: '', tdee: '', bodyFat: '' };
 
   if (
     String(currentForm.bmi || '') === String(nextValues.bmi || '') &&
     String(currentForm.bmr || '') === String(nextValues.bmr || '') &&
+    String(currentForm.tdee || '') === String(nextValues.tdee || '') &&
     String(currentForm.bodyFat || '') === String(nextValues.bodyFat || '')
   ) {
     return currentForm;
@@ -175,6 +188,7 @@ function BodyMetrics() {
     bodyFat: metric.bodyFatPercentage ?? metric.bodyFat ?? '',
     bmi: metric.bmi ?? '',
     bmr: metric.bmr ?? '',
+    tdee: metric.tdee ?? '',
     waist: metric.waistCm ?? metric.waist ?? '',
     hip: metric.hipCm ?? metric.hip ?? '',
     chest: metric.chestCm ?? metric.chest ?? '',

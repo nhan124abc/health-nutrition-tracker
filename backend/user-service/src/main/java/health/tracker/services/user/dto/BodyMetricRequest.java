@@ -29,6 +29,9 @@ public class BodyMetricRequest {
     @DecimalMin(value = "1.0")  @DecimalMax(value = "10000.0")
     private BigDecimal bmr;
 
+    @DecimalMin(value = "1.0")  @DecimalMax(value = "20000.0")
+    private BigDecimal tdee;
+
     @DecimalMin(value = "1.0")  @DecimalMax(value = "200.0")
     private BigDecimal waistCm;
 

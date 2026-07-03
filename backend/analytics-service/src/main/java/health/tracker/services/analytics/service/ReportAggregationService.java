@@ -26,6 +26,7 @@ public class ReportAggregationService {
     private final DailySummaryRepository dailyRepository;
     private final WeeklyReportRepository weeklyRepository;
     private final MonthlyReportRepository monthlyRepository;
+    private final DailySummarySyncService dailySummarySyncService;
 
     @Scheduled(cron = "${analytics.reports.cron:0 10 0 * * *}")
     @Transactional
@@ -45,6 +46,7 @@ public class ReportAggregationService {
     public WeeklyReport aggregateWeek(Long userId, LocalDate weekStart) {
         LocalDate normalizedStart = weekStart.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         LocalDate weekEnd = normalizedStart.plusDays(6);
+        dailySummarySyncService.syncRange(userId, normalizedStart, weekEnd);
         List<DailySummary> days = dailyRepository
                 .findByUserIdAndSummaryDateBetweenOrderBySummaryDateAsc(userId, normalizedStart, weekEnd);
         WeeklyReport report = weeklyRepository.findByUserIdAndWeekStartDate(userId, normalizedStart)
@@ -58,6 +60,7 @@ public class ReportAggregationService {
 
     @Transactional
     public MonthlyReport aggregateMonth(Long userId, YearMonth month) {
+        dailySummarySyncService.syncRange(userId, month.atDay(1), month.atEndOfMonth());
         List<DailySummary> days = dailyRepository.findByUserIdAndSummaryDateBetweenOrderBySummaryDateAsc(
                 userId, month.atDay(1), month.atEndOfMonth());
         MonthlyReport report = monthlyRepository

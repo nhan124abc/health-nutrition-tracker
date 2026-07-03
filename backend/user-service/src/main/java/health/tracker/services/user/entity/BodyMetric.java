@@ -41,6 +41,9 @@ public class BodyMetric {
     @Column(precision = 7, scale = 0)
     private BigDecimal bmr;
 
+    @Column(precision = 7, scale = 0)
+    private BigDecimal tdee;
+
     @Column(name = "waist_cm", precision = 5, scale = 2)
     private BigDecimal waistCm;
 

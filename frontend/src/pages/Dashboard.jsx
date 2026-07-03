@@ -1,17 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ArcElement,
-  BarElement,
-  CategoryScale,
   Chart as ChartJS,
   Legend,
-  LinearScale,
   Tooltip,
 } from 'chart.js';
-import { Bar, Doughnut } from 'react-chartjs-2';
+import { Doughnut } from 'react-chartjs-2';
 import { useTranslation } from 'react-i18next';
-import { Button, Card, Col, ProgressBar, Row } from 'react-bootstrap';
-import { FaBullseye, FaFire } from 'react-icons/fa';
+import { Badge, Button, Card, Carousel, Col, ProgressBar, Row } from 'react-bootstrap';
+import { FaBullseye, FaLightbulb } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import GoalFireworks from '../components/GoalFireworks';
 import { getActivitiesByDate } from '../features/activities/activityService';
@@ -37,8 +34,9 @@ import {
   normalizeNumber,
 } from '../features/water/waterUtils';
 import { getTodayWater } from '../features/water/waterService';
+import { getHealthInsights } from '../features/analytics/analyticsService';
 
-ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 const emptySummary = {
   caloriesConsumed: 0,
@@ -133,10 +131,12 @@ function Dashboard() {
   const { i18n, t } = useTranslation();
   const [selectedDate, setSelectedDate] = useState(getTodayDate);
   const [dailySummary, setDailySummary] = useState(emptySummary);
-  const [week, setWeek] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [showFireworks, setShowFireworks] = useState(false);
+  const [insights, setInsights] = useState([]);
+  const [insightsLoading, setInsightsLoading] = useState(true);
+  const [insightsError, setInsightsError] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -205,7 +205,6 @@ function Dashboard() {
         .filter((result) => result.status === 'rejected');
       const streakStatus = getStreakStatus(days);
 
-      setWeek(days);
       setDailySummary({
         ...emptySummary,
         caloriesConsumed: selectedDay.calories || 0,
@@ -253,7 +252,33 @@ function Dashboard() {
     };
   }, [selectedDate, t]);
 
-  const netCalories = dailySummary.caloriesConsumed - dailySummary.caloriesBurned;
+  useEffect(() => {
+    let isMounted = true;
+
+    setInsightsLoading(true);
+    setInsightsError(false);
+    getHealthInsights({ unreadOnly: false })
+      .then((response) => {
+        if (!isMounted) return;
+        const data = response.data?.data ?? response.data ?? [];
+        setInsights(Array.isArray(data) ? data.slice(0, 5) : []);
+      })
+      .catch((error) => {
+        console.error('[Dashboard] Error loading health insights:', error);
+        if (isMounted) {
+          setInsights([]);
+          setInsightsError(true);
+        }
+      })
+      .finally(() => {
+        if (isMounted) setInsightsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [i18n.language]);
+
   const goalPercent = Math.round((dailySummary.caloriesConsumed / Math.max(dailySummary.calorieGoal, 1)) * 100);
   const waterPercent = Math.round((dailySummary.waterIntake / Math.max(dailySummary.waterGoal, 1)) * 100);
 
@@ -326,11 +351,6 @@ function Dashboard() {
   const healthGoalLabel = dailySummary.healthGoal
     ? t(`profilePage.goals.${dailySummary.healthGoal}`)
     : t('dashboardPage.goalBanner.notSet');
-  const dateFormatter = useMemo(
-    () => new Intl.DateTimeFormat(i18n.language, { weekday: 'short', day: '2-digit' }),
-    [i18n.language]
-  );
-
   const macroData = {
     labels: [t('common.protein'), t('common.carbs'), t('common.fat')],
     datasets: [
@@ -342,52 +362,6 @@ function Dashboard() {
       },
     ],
   };
-
-  const weeklyData = {
-    labels: week.map((day) => dateFormatter.format(new Date(`${day.date}T12:00:00`))),
-    datasets: [
-      {
-        label: t('common.caloriesIn'),
-        data: week.map((day) => day.calories),
-        backgroundColor: '#2f8f6b',
-        borderRadius: 6,
-      },
-      {
-        label: t('common.caloriesOut'),
-        data: week.map((day) => day.caloriesBurned),
-        backgroundColor: '#4f7cac',
-        borderRadius: 6,
-      },
-    ],
-  };
-
-  const statCards = [
-    {
-      title: t('dashboardPage.stats.consumed'),
-      value: `${dailySummary.caloriesConsumed} kcal`,
-      helper: t('dashboardPage.stats.goalPercent', { percent: goalPercent }),
-      variant: 'success',
-    },
-    {
-      title: t('dashboardPage.stats.burned'),
-      value: `${dailySummary.caloriesBurned} kcal`,
-      helper: t('dashboardPage.stats.activityCount', { count: dailySummary.activityCount }),
-      variant: 'primary',
-    },
-    {
-      title: t('dashboardPage.stats.net'),
-      value: `${netCalories} kcal`,
-      helper: t('dashboardPage.stats.netHelper'),
-      variant: 'warning',
-    },
-    {
-      title: t('dashboardPage.stats.streak'),
-      value: `${dailySummary.streak} ${t('common.days')}`,
-      helper: t('dashboardPage.stats.streakHelper'),
-      variant: 'danger',
-      isStreak: true,
-    },
-  ];
 
   return (
     <>
@@ -471,44 +445,71 @@ function Dashboard() {
         </Card>
       )}
 
-      <Row className="g-3 mb-4">
-        {statCards.map(({ title, value, helper, variant, isStreak }) => (
-          <Col xs={12} md={6} xl={3} key={title}>
-            <Card className={`metric-card border-0 shadow-sm h-100${isStreak ? ' streak-card' : ''}`}>
-              <Card.Body>
-                <div className="d-flex align-items-center justify-content-between gap-3">
-                  <div>
-                    <div className={`small fw-semibold text-${variant} mb-2`}>{title}</div>
-                    <div className="metric-value">{value}</div>
-                  </div>
-                  {isStreak && (
-                    <FaFire
-                      className={`streak-fire${dailySummary.streakActive ? ' streak-fire-active' : ''}`}
-                      aria-hidden="true"
-                    />
-                  )}
-                </div>
-                <div className="text-secondary small">{helper}</div>
-              </Card.Body>
-            </Card>
-          </Col>
-        ))}
-      </Row>
-
       <Row className="g-4">
         <Col lg={8}>
-          <Card className="border-0 shadow-sm h-100">
+          <Card className="dashboard-insight-card border-0 shadow-sm h-100">
             <Card.Body>
-              <div className="d-flex justify-content-between gap-3 mb-3">
-                <div>
-                  <Card.Title className="fw-bold mb-1">{t('dashboardPage.weeklyTitle')}</Card.Title>
-                  <Card.Text className="text-secondary small mb-0">{t('dashboardPage.weeklyDescription')}</Card.Text>
+              <div className="dashboard-insight-header">
+                <div className="d-flex align-items-center gap-2">
+                  <span className="dashboard-insight-icon" aria-hidden="true"><FaLightbulb /></span>
+                  <Card.Title className="fw-bold mb-0">{t('dashboardPage.insights.title')}</Card.Title>
                 </div>
-                <span className="text-secondary small fw-semibold">{t('common.weekly')}</span>
+                <Button as={Link} to="/health-insights" variant="link" className="dashboard-insight-view-all">
+                  {t('dashboardPage.insights.viewAll')}
+                </Button>
               </div>
-              <div className="dashboard-chart dashboard-chart-bar">
-                <Bar data={weeklyData} options={{ responsive: true, maintainAspectRatio: false }} />
-              </div>
+
+              {insightsLoading ? (
+                <div className="dashboard-insight-state">{t('healthInsightsPage.loading')}</div>
+              ) : insightsError ? (
+                <div className="dashboard-insight-state">{t('healthInsightsPage.loadError')}</div>
+              ) : insights.length === 0 ? (
+                <div className="dashboard-insight-state">{t('healthInsightsPage.empty')}</div>
+              ) : (
+                <Carousel
+                  className="dashboard-insight-carousel"
+                  controls={insights.length > 1}
+                  indicators={insights.length > 1}
+                  interval={insights.length > 1 ? 7000 : null}
+                  pause="hover"
+                >
+                  {insights.map((insight, index) => {
+                    const typeClass = String(insight.insightType || 'UNKNOWN').toLowerCase().replaceAll('_', '-');
+                    const dateValue = insight.validDate || insight.createdAt;
+
+                    return (
+                      <Carousel.Item key={insight.id}>
+                        <article className={`dashboard-insight-slide dashboard-insight-${typeClass}`}>
+                          <div className="dashboard-insight-meta">
+                            <Badge pill className="dashboard-insight-type">
+                              {t(
+                                `healthInsightsPage.types.${insight.insightType}`,
+                                insight.insightType || t('healthInsightsPage.types.UNKNOWN')
+                              )}
+                            </Badge>
+                            <span className="dashboard-insight-position">{index + 1} / {insights.length}</span>
+                          </div>
+                          <div className="dashboard-insight-copy">
+                            <h3>{insight.title}</h3>
+                            <p>{insight.content}</p>
+                          </div>
+                          {dateValue && (
+                            <small className="dashboard-insight-date">
+                              {t('healthInsightsPage.updatedAt', {
+                                date: new Date(dateValue).toLocaleDateString(i18n.language, {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric',
+                                }),
+                              })}
+                            </small>
+                          )}
+                        </article>
+                      </Carousel.Item>
+                    );
+                  })}
+                </Carousel>
+              )}
             </Card.Body>
           </Card>
         </Col>

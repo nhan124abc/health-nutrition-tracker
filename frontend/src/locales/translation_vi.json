@@ -490,6 +490,7 @@
     },
     "insights": {
       "title": "Gợi ý sức khỏe",
+      "viewAll": "Xem tất cả",
       "markRead": "Đánh dấu đã đọc",
       "marking": "Đang lưu...",
       "markReadError": "Không thể đánh dấu gợi ý là đã đọc.",
@@ -575,6 +576,20 @@
       "saveError": "Không thể lưu cài đặt thông báo.",
       "activityReminder": "Nhắc vận động",
       "weeklyReport": "Tổng kết tuần"
+    },
+    "security": {
+      "title": "Đặt lại mật khẩu",
+      "currentPassword": "Mật khẩu hiện tại",
+      "newPassword": "Mật khẩu mới",
+      "confirmPassword": "Xác nhận mật khẩu mới",
+      "passwordHint": "Tối thiểu 8 ký tự.",
+      "required": "Vui lòng nhập đầy đủ thông tin mật khẩu.",
+      "passwordTooShort": "Mật khẩu mới cần tối thiểu 8 ký tự.",
+      "passwordMismatch": "Mật khẩu xác nhận không khớp.",
+      "saveError": "Không thể thay đổi mật khẩu.",
+      "success": "Thay đổi mật khẩu thành công.",
+      "saving": "Đang lưu thay đổi...",
+      "save": "Lưu thay đổi"
     }
   },
   "reminderNotifier": {
@@ -1111,7 +1126,8 @@
       "title": "Chỉ số ước tính",
       "bodyFat": "Mỡ cơ thể",
       "bmi": "BMI",
-      "bmr": "BMR"
+      "bmr": "BMR",
+      "tdee": "TDEE"
     },
     "fields": {
       "date": "Ngày ghi nhận",
@@ -1127,6 +1143,7 @@
       "bodyFat": "Mỡ cơ thể",
       "bmi": "BMI",
       "bmr": "BMR",
+      "tdee": "TDEE",
       "muscle": "Khối lượng cơ",
       "measurements": "Eo/Mông/Ngực"
     }

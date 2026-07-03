@@ -21,6 +21,10 @@ export function resetPassword(payload) {
   return api.post(authConfig.endpoints.resetPassword, payload);
 }
 
+export function changePassword(payload) {
+  return api.post(authConfig.endpoints.changePassword, payload);
+}
+
 export function sendEmailVerification(email) {
   return api.post(authConfig.endpoints.sendEmailVerification, { email });
 }

@@ -20,6 +20,7 @@ const authConfig = {
     forgotPassword: '/auth/password/forgot',
     verifyPasswordResetOtp: '/auth/password/verify-otp',
     resetPassword: '/auth/password/reset',
+    changePassword: '/auth/password/change',
     sendEmailVerification: '/auth/email/verification/send',
     confirmEmailVerification: '/auth/email/verification/confirm',
     sendReminderEmail: '/auth/reminders/email',
