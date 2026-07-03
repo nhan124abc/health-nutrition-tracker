@@ -31,20 +31,21 @@ public class AnalyticsService {
     private final UserStreakRepository   streakRepository;
     private final NutritionTrendRepository trendRepository;
     private final HealthInsightRepository insightRepository;
+    private final DailySummarySyncService dailySummarySyncService;
 
     // ─── Query ────────────────────────────────────────────────────────────────
 
-    @Transactional(readOnly = true)
+    @Transactional
     public DailySummaryResponse getDailySummary(Long userId, LocalDate date) {
-        DailySummary summary = summaryRepository.findByUserIdAndSummaryDate(userId, date)
-                .orElseGet(() -> buildEmpty(userId, date));
+        DailySummary summary = dailySummarySyncService.syncDay(userId, date);
 
         UserStreak streak = streakRepository.findByUserId(userId).orElse(null);
         return toResponse(summary, streak);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<DailySummaryResponse> getRange(Long userId, LocalDate from, LocalDate to) {
+        dailySummarySyncService.syncRange(userId, from, to);
         return summaryRepository
                 .findByUserIdAndSummaryDateBetweenOrderBySummaryDateAsc(userId, from, to)
                 .stream()
@@ -272,7 +273,7 @@ public class AnalyticsService {
                 .totalActiveMinutes(s.getTotalActiveMinutes())
                 .totalSteps(s.getTotalSteps()).totalDistanceKm(s.getTotalDistanceKm())
                 .activityCount(s.getActivityCount())
-                .netCalories(s.getNetCalories())
+                .netCalories(s.getTotalCaloriesConsumed().subtract(s.getTotalCaloriesBurned()))
                 .waterIntakeMl(s.getWaterIntakeMl())
                 .calorieGoal(s.getCalorieGoal()).calorieGoalMet(s.isCalorieGoalMet())
                 .calorieGoalPercent(goalPercent)

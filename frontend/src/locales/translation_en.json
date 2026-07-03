@@ -927,6 +927,7 @@
     },
     "insights": {
       "title": "Health insights",
+      "viewAll": "View all",
       "markRead": "Mark as read",
       "marking": "Saving...",
       "markReadError": "Unable to mark the insight as read.",
@@ -1012,6 +1013,20 @@
       "saveError": "Unable to save notification settings.",
       "activityReminder": "Activity reminders",
       "weeklyReport": "Weekly report summary"
+    },
+    "security": {
+      "title": "Reset password",
+      "currentPassword": "Current password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "passwordHint": "Use at least 8 characters.",
+      "required": "Please fill in all password fields.",
+      "passwordTooShort": "New password must be at least 8 characters.",
+      "passwordMismatch": "Password confirmation does not match.",
+      "saveError": "Unable to change password.",
+      "success": "Password changed successfully.",
+      "saving": "Saving changes...",
+      "save": "Save changes"
     }
   },
   "reminderNotifier": {
@@ -1548,7 +1563,8 @@
       "title": "Calculated metrics",
       "bodyFat": "Body fat",
       "bmi": "BMI",
-      "bmr": "BMR"
+      "bmr": "BMR",
+      "tdee": "TDEE"
     },
     "fields": {
       "date": "Record date",
@@ -1564,6 +1580,7 @@
       "bodyFat": "Body fat",
       "bmi": "BMI",
       "bmr": "BMR",
+      "tdee": "TDEE",
       "muscle": "Muscle",
       "measurements": "Waist/Buttocks/Chest"
     }

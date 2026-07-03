@@ -679,6 +679,232 @@ body::-webkit-scrollbar,
   border-radius: 0.75rem;
 }
 
+.dashboard-insight-card {
+  border: 1px solid #e4ebe7 !important;
+  border-top: 4px solid var(--health-primary) !important;
+  overflow: hidden;
+}
+
+.dashboard-insight-card .card-body {
+  display: flex;
+  flex-direction: column;
+  padding: 1.25rem 1.5rem 1.35rem;
+}
+
+.dashboard-insight-header {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-insight-icon {
+  align-items: center;
+  background: #e8f5ee;
+  border-radius: 50%;
+  color: var(--health-primary-dark);
+  display: inline-flex;
+  flex: 0 0 2.25rem;
+  height: 2.25rem;
+  justify-content: center;
+}
+
+.dashboard-insight-view-all {
+  color: var(--health-primary-dark);
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.35rem 0.5rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.dashboard-insight-view-all:hover,
+.dashboard-insight-view-all:focus {
+  color: var(--health-primary);
+  text-decoration: underline;
+}
+
+.dashboard-insight-carousel {
+  flex: 1;
+  margin-top: 1rem;
+  min-height: 17.5rem;
+}
+
+.dashboard-insight-slide {
+  --insight-accent: #2f8f6b;
+  --insight-bg: #f4faf7;
+  background: var(--insight-bg);
+  border: 1px solid color-mix(in srgb, var(--insight-accent) 22%, #e7ece9);
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 17.5rem;
+  padding: 1.35rem 4.5rem 3.25rem 1.5rem;
+  text-align: left;
+}
+
+.dashboard-insight-warning {
+  --insight-accent: #c98218;
+  --insight-bg: #fff9ee;
+}
+
+.dashboard-insight-achievement {
+  --insight-accent: #268557;
+  --insight-bg: #f1faf5;
+}
+
+.dashboard-insight-activity-tip {
+  --insight-accent: #3f78a8;
+  --insight-bg: #f3f8fc;
+}
+
+.dashboard-insight-goal-progress {
+  --insight-accent: #a55267;
+  --insight-bg: #fcf5f7;
+}
+
+.dashboard-insight-meta {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.dashboard-insight-type {
+  background: var(--insight-accent) !important;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.45rem 0.7rem;
+}
+
+.dashboard-insight-position {
+  color: #738078;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.dashboard-insight-copy {
+  margin: auto 0;
+}
+
+.dashboard-insight-slide h3 {
+  color: var(--health-ink);
+  font-size: 1.4rem;
+  font-weight: 850;
+  line-height: 1.35;
+  margin: 1rem 0 0.6rem;
+  max-width: 680px;
+}
+
+.dashboard-insight-slide p {
+  color: #5f6d65;
+  line-height: 1.65;
+  margin: 0;
+  max-width: 700px;
+}
+
+.dashboard-insight-date {
+  color: #7b8780;
+  font-size: 0.78rem;
+  margin-top: 1rem;
+}
+
+.dashboard-insight-carousel .carousel-control-prev,
+.dashboard-insight-carousel .carousel-control-next {
+  background: #fff;
+  border: 1px solid #dbe6e0;
+  border-radius: 0.4rem;
+  bottom: 0.75rem;
+  box-shadow: 0 0.2rem 0.5rem rgba(35, 70, 56, 0.08);
+  height: 2.1rem;
+  opacity: 1;
+  top: auto;
+  width: 2.1rem;
+}
+
+.dashboard-insight-carousel .carousel-control-prev {
+  left: auto;
+  right: 3.35rem;
+}
+
+.dashboard-insight-carousel .carousel-control-next {
+  right: 0.85rem;
+}
+
+.dashboard-insight-carousel .carousel-control-prev-icon,
+.dashboard-insight-carousel .carousel-control-next-icon {
+  filter: invert(42%) sepia(24%) saturate(1031%) hue-rotate(104deg) brightness(91%);
+  height: 1.1rem;
+  width: 1.1rem;
+}
+
+.dashboard-insight-carousel .carousel-indicators {
+  bottom: 0.9rem;
+  justify-content: flex-start;
+  margin: 0 6.5rem 0 1.5rem;
+}
+
+.dashboard-insight-carousel .carousel-indicators button {
+  background-color: #91a69b;
+  border: 0;
+  border-radius: 999px;
+  height: 0.35rem;
+  margin: 0 0.2rem;
+  opacity: 0.45;
+  width: 1.15rem;
+}
+
+.dashboard-insight-carousel .carousel-indicators .active {
+  background-color: var(--health-primary);
+  opacity: 1;
+  width: 1.8rem;
+}
+
+.dashboard-insight-state {
+  color: #6c757d;
+  min-height: 9rem;
+  padding: 3.25rem 1rem;
+  text-align: center;
+}
+
+@media (max-width: 575.98px) {
+  .dashboard-insight-card .card-body {
+    padding: 1rem;
+  }
+
+  .dashboard-insight-slide {
+    min-height: 16rem;
+    padding: 1rem 1rem 3.25rem;
+  }
+
+  .dashboard-insight-slide h3 {
+    font-size: 1.12rem;
+  }
+
+  .dashboard-insight-slide p {
+    font-size: 0.9rem;
+  }
+
+  .dashboard-insight-carousel .carousel-control-prev,
+  .dashboard-insight-carousel .carousel-control-next {
+    height: 2rem;
+    width: 2rem;
+  }
+
+  .dashboard-insight-carousel .carousel-control-prev {
+    right: 3rem;
+  }
+
+  .dashboard-insight-carousel .carousel-control-next {
+    right: 0.65rem;
+  }
+
+  .dashboard-insight-carousel .carousel-indicators {
+    margin-left: 1rem;
+  }
+}
+
 .dashboard-goal-card {
   background:
     radial-gradient(circle at top right, rgba(255, 255, 255, 0.9), transparent 38%),

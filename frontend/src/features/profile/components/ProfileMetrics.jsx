@@ -44,6 +44,7 @@ function ProfileMetrics({
                   <th className="text-end">{t('bodyMetricsPage.table.bodyFat')}</th>
                   <th className="text-end">{t('bodyMetricsPage.table.bmi')}</th>
                   <th className="text-end">{t('bodyMetricsPage.table.bmr')}</th>
+                  <th className="text-end">{t('bodyMetricsPage.table.tdee')}</th>
                   <th className="text-end">{t('bodyMetricsPage.table.measurements')}</th>
                   {showActions && <th className="text-end">{t('admin.table.actions')}</th>}
                 </tr>
@@ -64,6 +65,7 @@ function ProfileMetrics({
                       <td className="text-end">{formatMetricValue(item.bodyFatPercentage ?? item.bodyFat, '%')}</td>
                       <td className="text-end">{formatMetricValue(item.bmi)}</td>
                       <td className="text-end">{formatMetricValue(item.bmr, ' kcal')}</td>
+                      <td className="text-end">{formatMetricValue(item.tdee, ' kcal')}</td>
                       <td className="text-end">{item.waistCm ?? item.waist ?? '-'}/{item.hipCm ?? item.hip ?? '-'}/{item.chestCm ?? item.chest ?? '-'}cm</td>
                       {showActions && (
                         <td className="text-end">

@@ -58,6 +58,7 @@ export const emptyBodyMetric = {
   bodyFat: '',
   bmi: '',
   bmr: '',
+  tdee: '',
   muscleMass: '',
   waist: '',
   hip: '',
@@ -78,6 +79,7 @@ export const bodyMetricResultFields = [
   ['bodyFat', 'bodyMetricsPage.results.bodyFat', 'number', '%'],
   ['bmi', 'bodyMetricsPage.results.bmi', 'number', 'kg/m2'],
   ['bmr', 'bodyMetricsPage.results.bmr', 'number', 'kcal'],
+  ['tdee', 'bodyMetricsPage.results.tdee', 'number', 'kcal'],
 ];
 
 const activityFromApi = {
@@ -198,6 +200,7 @@ export function mapBodyMetricToApi(metric) {
     bodyFatPercentage: normalizeNumber(metric.bodyFat),
     bmi: normalizeNumber(metric.bmi),
     bmr: normalizeNumber(metric.bmr),
+    tdee: normalizeNumber(metric.tdee),
     muscleMassKg: normalizeNumber(metric.muscleMass),
     waistCm: normalizeNumber(metric.waist),
     hipCm: normalizeNumber(metric.hip),
@@ -223,6 +226,7 @@ export function buildBodyMetricFormFromProfile(profile = {}, metrics = []) {
     bodyFat: latestMetric.bodyFatPercentage ?? latestMetric.bodyFat ?? '',
     bmi: latestMetric.bmi ?? '',
     bmr: latestMetric.bmr ?? '',
+    tdee: latestMetric.tdee ?? '',
     waist: latestMetric.waistCm ?? latestMetric.waist ?? '',
     hip: latestMetric.hipCm ?? latestMetric.hip ?? '',
     chest: latestMetric.chestCm ?? latestMetric.chest ?? '',
