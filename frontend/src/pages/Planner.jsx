@@ -195,6 +195,7 @@ function Planner() {
   const [deletingActivityId, setDeletingActivityId] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [mealSuccessPopup, setMealSuccessPopup] = useState(null);
   const [plannerNotice, setPlannerNotice] = useState(null);
   const recipeCacheRef = useRef(new Map());
   const recipeRequestIdRef = useRef(0);
@@ -810,6 +811,8 @@ function Planner() {
     setSaving(true);
     setSelectingOption(true);
     setError('');
+    setSuccess('');
+    setMealSuccessPopup(null);
     try {
       const optionDisplayName = getOptionDisplayName(option);
       const optionCalories = Number(option.calories) || 0;
@@ -892,6 +895,9 @@ function Planner() {
       setSelectedOption(index);
       setSelectedRecipeId(option.recipeId || null);
       setSuccess(t(replacedMealIds.length > 0 ? 'plannerPage.success.mealReplaced' : 'plannerPage.success.mealAdded', { name: optionDisplayName }));
+      setMealSuccessPopup({
+        message: t('plannerPage.successPopup.mealSelected'),
+      });
     } catch (err) {
       setError(err.response?.data?.message || err.message || t('plannerPage.errors.addMeal'));
     } finally {
@@ -905,12 +911,16 @@ function Planner() {
     setDeletingId(mealId);
     setError('');
     setSuccess('');
+    setMealSuccessPopup(null);
     try {
       await deleteMealById(mealId);
       setMeals((current) => current.filter((m) => m.id !== mealId));
       setSelectedOption(null);
       setSelectedRecipeId(null);
       setSuccess(t('plannerPage.success.mealDeleted'));
+      setMealSuccessPopup({
+        message: t('plannerPage.successPopup.mealUnselected'),
+      });
     } catch (err) {
       setError(err.response?.data?.message || t('plannerPage.errors.deleteMeal'));
     } finally {
@@ -1751,6 +1761,19 @@ function Planner() {
         <h2 className="h5 mb-2">{t('plannerPage.selectionProgress.title')}</h2>
         <p className="text-secondary mb-0">{t('plannerPage.selectionProgress.message')}</p>
       </Modal.Body>
+    </Modal>
+    <Modal show={Boolean(mealSuccessPopup)} onHide={() => setMealSuccessPopup(null)} centered>
+      <Modal.Header closeButton>
+        <Modal.Title>{t('plannerPage.successPopup.title')}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <p className="text-secondary mb-0">{mealSuccessPopup?.message}</p>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="success" onClick={() => setMealSuccessPopup(null)}>
+          {t('common.close')}
+        </Button>
+      </Modal.Footer>
     </Modal>
     <Modal show={Boolean(plannerNotice)} onHide={() => setPlannerNotice(null)} centered>
       <Modal.Header closeButton>

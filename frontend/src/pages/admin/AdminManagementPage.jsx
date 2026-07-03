@@ -289,6 +289,72 @@ function isTranslationKey(value) {
   );
 }
 
+const excludedUserDetailFields = new Set(['active', 'authProvider', 'emailVerified']);
+
+function isExcludedUserDetailField(key) {
+  const fieldName = String(key).split('.').pop();
+  return excludedUserDetailFields.has(fieldName);
+}
+
+function isDateLikeField(key, value) {
+  return typeof value === 'string'
+    && /(?:^|\.)(createdAt|updatedAt|deletedAt|lastLoginAt|dateOfBirth|birthDate|verifiedAt)$/i.test(key)
+    && !Number.isNaN(Date.parse(value));
+}
+
+function formatDetailValue(key, value) {
+  if (value === null || value === undefined || value === '') {
+    return '-';
+  }
+
+  if (typeof value === 'boolean') {
+    return value ? 'true' : 'false';
+  }
+
+  if (isDateLikeField(key, value)) {
+    return new Date(value).toLocaleString();
+  }
+
+  if (Array.isArray(value)) {
+    return value.length ? JSON.stringify(value) : '[]';
+  }
+
+  if (typeof value === 'object') {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
+}
+
+function flattenUserFields(value, parentKey = '') {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return [];
+  }
+
+  return Object.entries(value).flatMap(([key, fieldValue]) => {
+    const nextKey = parentKey ? `${parentKey}.${key}` : key;
+
+    if (
+      fieldValue
+      && typeof fieldValue === 'object'
+      && !Array.isArray(fieldValue)
+      && !(fieldValue instanceof Date)
+    ) {
+      const nestedFields = flattenUserFields(fieldValue, nextKey);
+      return nestedFields.length ? nestedFields : [[nextKey, fieldValue]];
+    }
+
+    return [[nextKey, fieldValue]];
+  });
+}
+
+function getUserDetailFieldLabel(t, key) {
+  const fieldName = String(key).split('.').pop();
+  return t(`admin.userDetails.fields.${key}`, {
+    defaultValue: t(`admin.userDetails.fields.${fieldName}`, { defaultValue: key }),
+  });
+}
+
 const emptyFoodForm = {
   name: '',
   nameVi: '',
@@ -819,16 +885,30 @@ function AdminManagementPage({ type }) {
     }
   };
 
-  const userDetailRows = selectedUser ? [
-    [t('admin.table.name'), selectedUser.cells[0]],
-    [t('admin.table.email'), selectedUser.cells[1]],
-    [t('admin.table.role'), selectedUser.cells[2]],
-    [t('admin.table.status'), displayCell(selectedUser.cells[3])],
-    ['ID', selectedUser.id || '-'],
-    [t('admin.userDetails.username'), selectedUser.raw?.username || '-'],
-    [t('admin.userDetails.phone'), selectedUser.raw?.phone || selectedUser.raw?.phoneNumber || '-'],
-    [t('admin.userDetails.createdAt'), selectedUser.raw?.createdAt ? new Date(selectedUser.raw.createdAt).toLocaleString() : '-'],
-  ] : [];
+  const userDetailRows = selectedUser ? (() => {
+    const fieldMap = new Map(flattenUserFields(selectedUser.raw));
+
+    [
+      ['id', selectedUser.id],
+      ['displayName', selectedUser.cells[0]],
+      ['email', selectedUser.cells[1]],
+      ['role', selectedUser.cells[2]],
+      ['status', displayCell(selectedUser.cells[3])],
+    ].forEach(([key, value]) => {
+      if (!fieldMap.has(key)) {
+        fieldMap.set(key, value);
+      }
+    });
+
+    return Array.from(fieldMap.entries())
+      .filter(([key]) => !isExcludedUserDetailField(key))
+      .sort(([firstKey], [secondKey]) => firstKey.localeCompare(secondKey))
+      .map(([key, value]) => [
+        key,
+        getUserDetailFieldLabel(t, key),
+        formatDetailValue(key, value),
+      ]);
+  })() : [];
 
   return (
     <>
@@ -1028,16 +1108,16 @@ function AdminManagementPage({ type }) {
         </Card.Body>
       </Card>
 
-      <Modal show={Boolean(selectedUser)} onHide={() => setSelectedUser(null)} centered>
+      <Modal show={Boolean(selectedUser)} onHide={() => setSelectedUser(null)} centered size="lg">
         <Modal.Header closeButton>
           <Modal.Title>{t('admin.userDetails.title')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <div className="profile-summary-list">
-            {userDetailRows.map(([label, value]) => (
-              <div className="profile-summary-row" key={label}>
+          <div className="profile-summary-list user-detail-field-list">
+            {userDetailRows.map(([key, label, value]) => (
+              <div className="profile-summary-row" key={key}>
                 <span>{label}</span>
-                <strong>{value || '-'}</strong>
+                <strong title={value}>{value || '-'}</strong>
               </div>
             ))}
           </div>

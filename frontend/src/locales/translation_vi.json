@@ -20,7 +20,9 @@
     "news": "Tin tức",
     "settings": "Cài đặt",
     "profile": "Hồ sơ",
-    "logout": "Đăng xuất"
+    "logout": "Đăng xuất",
+    "logoutConfirmTitle": "Xác nhận đăng xuất",
+    "logoutConfirmMessage": "Bạn có chắc muốn đăng xuất?"
   },
   "header": {
     "searchPlaceholder": "Tìm nhanh thực phẩm, báo cáo, mục tiêu...",
@@ -705,7 +707,7 @@
     "mealCompleted": "Bữa ăn đã hoàn thành"
   },
   "nutritionPage": {
-    "title": "Dinh dưỡng và thực phẩm",
+    "title": "Danh sách thực phẩm",
     "addFood": "Thêm thực phẩm",
     "loading": "Đang tải dữ liệu dinh dưỡng...",
     "loadingDetail": "Đang tải chi tiết thực phẩm...",
@@ -1024,6 +1026,11 @@
       "activityAdded": "Đã ghi nhận bài tập \"{{name}}\".",
       "activityDeleted": "Đã xóa hoạt động khỏi nhật ký.",
       "mealReplaced": "Đã thay bữa cũ bằng \"{{name}}\"."
+    },
+    "successPopup": {
+      "title": "Thành công",
+      "mealSelected": "Chọn bữa ăn thành công.",
+      "mealUnselected": "Hủy chọn bữa ăn thành công."
     },
     "errors": {
       "load": "Không thể tải dữ liệu hôm nay.",
@@ -1498,7 +1505,49 @@
       "open": "Xem chi tiết người dùng",
       "username": "Tên đăng nhập",
       "phone": "Số điện thoại",
-      "createdAt": "Ngày tạo"
+      "createdAt": "Ngày tạo",
+      "fields": {
+        "avatarUrl": "Ảnh đại diện",
+        "bio": "Giới thiệu",
+        "birthDate": "Ngày sinh",
+        "createdAt": "Ngày tạo",
+        "dailyCalorieGoal": "Mục tiêu calo/ngày",
+        "dailyCarbsGoal": "Mục tiêu carbs/ngày",
+        "dailyFatGoal": "Mục tiêu chất béo/ngày",
+        "dailyProteinGoal": "Mục tiêu protein/ngày",
+        "dailyWaterGoal": "Mục tiêu nước/ngày",
+        "dateOfBirth": "Ngày sinh",
+        "deletedAt": "Ngày xóa",
+        "displayName": "Tên hiển thị",
+        "email": "Email",
+        "enabled": "Đang bật",
+        "fullName": "Họ và tên",
+        "gender": "Giới tính",
+        "healthGoal": "Mục tiêu sức khỏe",
+        "height": "Chiều cao",
+        "heightCm": "Chiều cao",
+        "hidden": "Đang ẩn",
+        "id": "ID",
+        "isActive": "Trạng thái hoạt động",
+        "lastLoginAt": "Lần đăng nhập cuối",
+        "locked": "Bị khóa",
+        "name": "Tên",
+        "phone": "Số điện thoại",
+        "phoneNumber": "Số điện thoại",
+        "pictureUrl": "Ảnh",
+        "profilePictureUrl": "Ảnh hồ sơ",
+        "role": "Vai trò",
+        "status": "Trạng thái",
+        "sub": "Mã định danh",
+        "targetWeight": "Cân nặng mục tiêu",
+        "targetWeightKg": "Cân nặng mục tiêu",
+        "timezone": "Múi giờ",
+        "updatedAt": "Ngày cập nhật",
+        "userId": "ID người dùng",
+        "username": "Tên đăng nhập",
+        "weight": "Cân nặng",
+        "weightKg": "Cân nặng"
+      }
     },
     "catalogs": {
       "title": "Quản lý danh mục",
