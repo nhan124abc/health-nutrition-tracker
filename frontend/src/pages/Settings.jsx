@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Button, Card, Form, Nav, Spinner } from 'react-bootstrap';
+import { Alert, Button, Card, Form, Modal, Nav, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { FaBell, FaLock } from 'react-icons/fa';
 import { changePassword } from '../features/auth/authService';
@@ -27,6 +27,7 @@ function Settings() {
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [showPasswordSuccess, setShowPasswordSuccess] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -124,6 +125,7 @@ function Settings() {
       await changePassword(passwordForm);
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setPasswordSuccess(t('settingsPage.security.success'));
+      setShowPasswordSuccess(true);
     } catch (requestError) {
       setPasswordError(requestError.response?.data?.message || t('settingsPage.security.saveError'));
     } finally {
@@ -193,7 +195,6 @@ function Settings() {
                 <Card.Title className="fw-bold mb-0">{t('settingsPage.security.title')}</Card.Title>
               </div>
               {passwordError && <Alert variant="danger">{passwordError}</Alert>}
-              {passwordSuccess && <Alert variant="success">{passwordSuccess}</Alert>}
               <Form onSubmit={submitPasswordChange}>
                 <Form.Group className="mb-3" controlId="currentPassword">
                   <Form.Label>{t('settingsPage.security.currentPassword')}</Form.Label>
@@ -242,6 +243,18 @@ function Settings() {
           )}
         </Card.Body>
       </Card>
+
+      <Modal show={showPasswordSuccess} onHide={() => setShowPasswordSuccess(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{t('settingsPage.security.successTitle')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{passwordSuccess}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={() => setShowPasswordSuccess(false)}>
+            {t('common.close')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }

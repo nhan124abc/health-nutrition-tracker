@@ -33,7 +33,7 @@ function BodyMetricFormCard({ form, onChange, onSubmit, saving, t }) {
                 </div>
                 <Row className="g-2">
                   {bodyMetricResultFields.map(([name, labelKey, type, unit]) => (
-                    <Col sm={6} xl={3} key={name}>
+                    <Col sm={6} key={name}>
                       <Form.Group className="body-metric-result-tile">
                         <Form.Label>{t(labelKey)}</Form.Label>
                         <Form.Control

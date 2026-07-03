@@ -192,6 +192,14 @@ function AdminCatalogs({ type = 'overview' }) {
     () => categories.reduce((sum, category) => sum + category.count, 0),
     [categories]
   );
+  const activeCategoriesCount = useMemo(
+    () => categories.filter((category) => !category.hidden).length,
+    [categories]
+  );
+  const hiddenCategoriesCount = useMemo(
+    () => categories.filter((category) => category.hidden).length,
+    [categories]
+  );
 
   const filteredCategories = useMemo(() => {
     if (!searchTerm.trim()) {
@@ -288,6 +296,7 @@ function AdminCatalogs({ type = 'overview' }) {
             ? mapActivityCategory({ ...category.raw, ...data, hidden: nextHidden })
             : category))
           .sort((left, right) => left.name.localeCompare(right.name)));
+        setSuccessKey(nextHidden ? 'admin.catalogs.activityHideSuccess' : 'admin.catalogs.activityShowSuccess');
       } else {
         const response = await updateFoodCategoryVisibility(item.id, nextHidden);
         const data = response.data?.data ?? response.data ?? { hidden: nextHidden };
@@ -448,29 +457,55 @@ function AdminCatalogs({ type = 'overview' }) {
         {!loading && !error && (
           <>
             <Row className="g-4 mb-4">
-              <Col md={6}>
+              <Col md={6} xl={3}>
                 <Card className="admin-mini-stat border-0 shadow-sm">
                   <Card.Body>
-                    <div className="admin-mini-stat-icon">
-                      {isFoodCategories ? <FaUtensils /> : <FaDumbbell />}
-                    </div>
-                    <div>
+                    <div className="admin-mini-stat-header">
+                      <div className="admin-mini-stat-icon">
+                        {isFoodCategories ? <FaUtensils /> : <FaDumbbell />}
+                      </div>
                       <span>{t('admin.catalogs.totalCategoryBlocks')}</span>
-                      <strong>{categories.length}</strong>
                     </div>
+                    <strong>{categories.length}</strong>
                   </Card.Body>
                 </Card>
               </Col>
-              <Col md={6}>
+              <Col md={6} xl={3}>
                 <Card className="admin-mini-stat border-0 shadow-sm">
                   <Card.Body>
-                    <div className="admin-mini-stat-icon">
-                      <FaPlus />
-                    </div>
-                    <div>
+                    <div className="admin-mini-stat-header">
+                      <div className="admin-mini-stat-icon">
+                        <FaPlus />
+                      </div>
                       <span>{t('admin.catalogs.totalDataItems')}</span>
-                      <strong>{totalItems}</strong>
                     </div>
+                    <strong>{totalItems}</strong>
+                  </Card.Body>
+                </Card>
+              </Col>
+              <Col md={6} xl={3}>
+                <Card className="admin-mini-stat border-0 shadow-sm">
+                  <Card.Body>
+                    <div className="admin-mini-stat-header">
+                      <div className="admin-mini-stat-icon">
+                        <FaEye />
+                      </div>
+                      <span>{t('admin.catalogs.activeCategoryBlocks')}</span>
+                    </div>
+                    <strong>{activeCategoriesCount}</strong>
+                  </Card.Body>
+                </Card>
+              </Col>
+              <Col md={6} xl={3}>
+                <Card className="admin-mini-stat border-0 shadow-sm">
+                  <Card.Body>
+                    <div className="admin-mini-stat-header">
+                      <div className="admin-mini-stat-icon">
+                        <FaEyeSlash />
+                      </div>
+                      <span>{t('admin.catalogs.hiddenCategoryBlocks')}</span>
+                    </div>
+                    <strong>{hiddenCategoriesCount}</strong>
                   </Card.Body>
                 </Card>
               </Col>

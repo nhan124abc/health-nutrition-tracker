@@ -430,7 +430,8 @@ function AdminManagementPage({ type }) {
     ],
     foods: [
       ['total', foodSummary.total ?? foodRows.length],
-      ['pending', foodRows.filter((row) => !row.verified).length],
+      ['active', foodRows.filter((row) => row.active).length],
+      ['hidden', foodRows.filter((row) => !row.active).length],
       [
         'macroFull',
         `${foodRows.length
@@ -440,8 +441,9 @@ function AdminManagementPage({ type }) {
     ],
     exercises: [
       ['total', activityRows.length],
+      ['active', activityRows.filter((row) => row.active).length],
+      ['hidden', activityRows.filter((row) => !row.active).length],
       ['hasMet', activityRows.filter((row) => row.hasMet).length],
-      ['needsReview', activityRows.filter((row) => !row.hasMet).length],
     ],
   }[type] ?? config.stats;
 
@@ -920,13 +922,15 @@ function AdminManagementPage({ type }) {
 
       <Row className="g-4 mb-4">
         {stats.map(([labelKey, value]) => (
-          <Col md={4} key={labelKey}>
+          <Col md={6} xl={3} key={labelKey}>
             <Card className="admin-mini-stat border-0 shadow-sm">
               <Card.Body>
-                <div className="admin-mini-stat-icon">
-                  <Icon />
+                <div className="admin-mini-stat-header">
+                  <div className="admin-mini-stat-icon">
+                    <Icon />
+                  </div>
+                  <span>{t(`${pageKey}.stats.${labelKey}`)}</span>
                 </div>
-                <span>{t(`${pageKey}.stats.${labelKey}`)}</span>
                 <strong>{value}</strong>
               </Card.Body>
             </Card>

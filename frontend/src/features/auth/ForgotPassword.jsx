@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Container, Form, Modal, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import ErrorModal from '../../components/ErrorModal';
 import { Link, useNavigate } from 'react-router-dom';
@@ -16,6 +16,7 @@ function ForgotPassword() {
   const [step, setStep] = useState('request');
   const [form, setForm] = useState({ email: '', otp: '', newPassword: '', confirmPassword: '' });
   const [messageKey, setMessageKey] = useState('');
+  const [showResetSuccess, setShowResetSuccess] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -79,8 +80,8 @@ function ForgotPassword() {
         otp: form.otp,
         newPassword: form.newPassword,
       });
-      setMessageKey('auth.resetSuccess');
-      setTimeout(() => navigate('/login', { replace: true }), 800);
+      setShowResetSuccess(true);
+      setTimeout(() => navigate('/login', { replace: true }), 1200);
     } catch (err) {
       setError(err.response?.data?.message || t('auth.resetError'));
     } finally {
@@ -183,6 +184,18 @@ function ForgotPassword() {
           </Card>
         </Col>
       </Row>
+
+      <Modal show={showResetSuccess} onHide={() => setShowResetSuccess(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{t('auth.resetSuccessTitle')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{t('auth.resetSuccess')}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={() => setShowResetSuccess(false)}>
+            {t('common.close')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 }
