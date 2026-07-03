@@ -17,6 +17,9 @@ public class BodyMetricRequest {
     @DecimalMin(value = "1.0")  @DecimalMax(value = "500.0")
     private BigDecimal weightKg;
 
+    @DecimalMin(value = "50.0")  @DecimalMax(value = "300.0")
+    private BigDecimal heightCm;
+
     @DecimalMin(value = "1.0")  @DecimalMax(value = "100.0")
     private BigDecimal bodyFatPercentage;
 

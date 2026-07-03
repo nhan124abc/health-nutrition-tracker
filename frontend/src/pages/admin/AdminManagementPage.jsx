@@ -289,7 +289,7 @@ function isTranslationKey(value) {
   );
 }
 
-const excludedUserDetailFields = new Set(['active', 'authProvider', 'emailVerified']);
+const excludedUserDetailFields = new Set(['active', 'authProvider', 'emailVerified', 'avatarUrl']);
 
 function isExcludedUserDetailField(key) {
   const fieldName = String(key).split('.').pop();
@@ -397,6 +397,8 @@ function AdminManagementPage({ type }) {
   const [foodCategories, setFoodCategories] = useState([]);
   const [activityRows, setActivityRows] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [detailAvatarLoading, setDetailAvatarLoading] = useState(false);
+  const [detailAvatarFailed, setDetailAvatarFailed] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [showUserForm, setShowUserForm] = useState(false);
   const [editForm, setEditForm] = useState({ fullName: '', email: '', role: 'USER', active: true });
@@ -910,6 +912,15 @@ function AdminManagementPage({ type }) {
       ]);
   })() : [];
 
+  const selectedUserAvatar = selectedUser?.raw?.avatarUrl || '';
+  const selectedUserName = selectedUser?.cells?.[0] || selectedUser?.raw?.fullName || '-';
+  const selectedUserInitial = String(selectedUserName).trim().charAt(0).toUpperCase() || '?';
+
+  useEffect(() => {
+    setDetailAvatarFailed(false);
+    setDetailAvatarLoading(Boolean(selectedUserAvatar));
+  }, [selectedUser?.id, selectedUserAvatar]);
+
   return (
     <>
       <div className="admin-page-heading">
@@ -1113,6 +1124,31 @@ function AdminManagementPage({ type }) {
           <Modal.Title>{t('admin.userDetails.title')}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
+          <div className="admin-user-detail-identity">
+            <div className="admin-user-detail-avatar" aria-busy={detailAvatarLoading}>
+              {selectedUserAvatar && !detailAvatarFailed ? (
+                <>
+                  {detailAvatarLoading && <Spinner animation="border" size="sm" />}
+                  <img
+                    src={selectedUserAvatar}
+                    alt={selectedUserName}
+                    className={detailAvatarLoading ? 'is-loading' : ''}
+                    onLoad={() => setDetailAvatarLoading(false)}
+                    onError={() => {
+                      setDetailAvatarLoading(false);
+                      setDetailAvatarFailed(true);
+                    }}
+                  />
+                </>
+              ) : (
+                <span>{selectedUserInitial}</span>
+              )}
+            </div>
+            <div>
+              <h3>{selectedUserName}</h3>
+              <p>{selectedUser?.cells?.[1] || '-'}</p>
+            </div>
+          </div>
           <div className="profile-summary-list user-detail-field-list">
             {userDetailRows.map(([key, label, value]) => (
               <div className="profile-summary-row" key={key}>

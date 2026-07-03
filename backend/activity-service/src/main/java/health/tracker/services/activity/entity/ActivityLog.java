@@ -56,6 +56,13 @@ public class ActivityLog {
     @Column(name = "logged_at", nullable = false)
     private LocalDateTime loggedAt;
 
+    @Column(name = "is_completed", nullable = false)
+    @Builder.Default
+    private boolean completed = false;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
     // ─── Thông số Cardio ──────────────────────────────────────────────────────
 
     @Column(name = "distance_km", precision = 6, scale = 2)

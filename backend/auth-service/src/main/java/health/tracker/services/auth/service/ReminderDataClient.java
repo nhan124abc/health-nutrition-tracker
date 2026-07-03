@@ -116,9 +116,9 @@ public class ReminderDataClient {
     public record UserProfile(String healthGoal, Integer dailyCalorieGoal, Integer dailyActivityGoalKcal) {
     }
 
-    public record MealLog(String mealType) {
+    public record MealLog(String mealType, boolean completed) {
     }
 
-    public record ActivityLog(Long id) {
+    public record ActivityLog(Long id, boolean completed) {
     }
 }

@@ -17,12 +17,8 @@ import {
 import {
   getActivitiesByDate,
   getActivityTypes,
+  updateActivityCompletion,
 } from './activityService';
-import {
-  getActivityCompletionId,
-  readCompletionIds,
-  toggleCompletionId,
-} from '../../utils/completionStorage';
 
 function ActivityTracker() {
   const { i18n, t } = useTranslation();
@@ -33,7 +29,7 @@ function ActivityTracker() {
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [activityError, setActivityError] = useState('');
   const [showFireworks, setShowFireworks] = useState(false);
-  const [completedActivityIds, setCompletedActivityIds] = useState(() => readCompletionIds('activities'));
+  const [updatingCompletionId, setUpdatingCompletionId] = useState(null);
   const wasActivityGoalComplete = useRef(false);
   const [activityGoal] = useState(() => {
     try { return JSON.parse(localStorage.getItem('activeGoalPlan'))?.dailyActivityGoalKcal || 0; } catch { return 0; }
@@ -123,14 +119,26 @@ function ActivityTracker() {
     };
   }, [selectedDate, t]);
 
-  const toggleActivityCompleted = (activity) => {
-    const completionId = getActivityCompletionId(activity);
-    const wasCompleted = completedActivityIds.includes(completionId);
-    setCompletedActivityIds(toggleCompletionId('activities', completionId));
+  const toggleActivityCompleted = async (activity) => {
+    if (!activity.id || updatingCompletionId === activity.id) return;
+    const nextCompleted = !activity.completed;
+    setUpdatingCompletionId(activity.id);
+    setActivityError('');
 
-    if (!wasCompleted) {
-      setShowFireworks(true);
-      window.setTimeout(() => setShowFireworks(false), 2400);
+    try {
+      const response = await updateActivityCompletion(activity.id, nextCompleted);
+      const updatedActivity = normalizeActivityFromApi(response.data?.data ?? response.data);
+      setLogs((current) => current.map((item) => (
+        item.id === activity.id ? { ...item, ...updatedActivity } : item
+      )));
+      if (nextCompleted) {
+        setShowFireworks(true);
+        window.setTimeout(() => setShowFireworks(false), 2400);
+      }
+    } catch (error) {
+      setActivityError(error.response?.data?.message || t('activityPage.completeError'));
+    } finally {
+      setUpdatingCompletionId(null);
     }
   };
 
@@ -152,7 +160,7 @@ function ActivityTracker() {
           {loadingLogs && <div className="alert alert-light border">{t('activityPage.loading')}</div>}
           <ActivityLogTable
             activityTypes={activityTypes}
-            completedIds={completedActivityIds}
+            completedIds={logs.filter((log) => log.completed).map((log) => String(log.id))}
             language={i18n.language}
             loading={loadingLogs}
             logs={logs}

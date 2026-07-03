@@ -14,14 +14,9 @@ import {
   getTodayDate,
   normalizeMealFromApi,
 } from './mealUtils';
-import { getMealById, getMealsByDate } from './mealService';
+import { getMealById, getMealsByDate, updateMealCompletion } from './mealService';
 import { getProfile } from '../profile/profileService';
 import { extractProfileFromApi, mapProfileFromApi } from '../profile/profileUtils';
-import {
-  getMealCompletionId,
-  readCompletionIds,
-  toggleCompletionId,
-} from '../../utils/completionStorage';
 
 function FoodDiary() {
   const { t } = useTranslation();
@@ -33,8 +28,8 @@ function FoodDiary() {
   const [mealError, setMealError] = useState('');
   const [selectedMealDetail, setSelectedMealDetail] = useState(null);
   const [calorieGoal, setCalorieGoal] = useState(2000);
-  const [completedMealIds, setCompletedMealIds] = useState(() => readCompletionIds('meals'));
   const [showFireworks, setShowFireworks] = useState(false);
+  const [updatingCompletionId, setUpdatingCompletionId] = useState(null);
 
   useEffect(() => {
     getProfile().then((response) => {
@@ -100,14 +95,26 @@ function FoodDiary() {
     }
   };
 
-  const toggleMealCompleted = (meal) => {
-    const completionId = getMealCompletionId(meal);
-    const wasCompleted = completedMealIds.includes(completionId);
-    setCompletedMealIds(toggleCompletionId('meals', completionId));
+  const toggleMealCompleted = async (meal) => {
+    if (!meal.id || updatingCompletionId === meal.id) return;
+    const nextCompleted = !meal.completed;
+    setUpdatingCompletionId(meal.id);
+    setMealError('');
 
-    if (!wasCompleted) {
-      setShowFireworks(true);
-      window.setTimeout(() => setShowFireworks(false), 2400);
+    try {
+      const response = await updateMealCompletion(meal.id, nextCompleted);
+      const updatedMeal = normalizeMealFromApi(extractMealFromApi(response.data));
+      setMeals((current) => current.map((item) => (
+        item.id === meal.id ? { ...item, ...updatedMeal } : item
+      )));
+      if (nextCompleted) {
+        setShowFireworks(true);
+        window.setTimeout(() => setShowFireworks(false), 2400);
+      }
+    } catch (error) {
+      setMealError(error.response?.data?.message || t('foodDiaryPage.completeError'));
+    } finally {
+      setUpdatingCompletionId(null);
     }
   };
 
@@ -135,7 +142,7 @@ function FoodDiary() {
             )}
             {dayMeals.map((meal) => (
               <MealCard
-                completed={completedMealIds.includes(getMealCompletionId(meal))}
+                completed={meal.completed}
                 key={meal.id}
                 meal={meal}
                 onOpen={openMealDetail}

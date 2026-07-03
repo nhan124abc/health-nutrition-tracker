@@ -16,6 +16,8 @@ public interface BodyMetricRepository extends JpaRepository<BodyMetric, Long> {
 
     Page<BodyMetric> findByUserIdOrderByRecordedAtDesc(Long userId, Pageable pageable);
 
+    java.util.Optional<BodyMetric> findFirstByUserIdAndWeightKgIsNotNullOrderByRecordedAtDescIdDesc(Long userId);
+
     List<BodyMetric> findByUserIdAndRecordedAtBetweenOrderByRecordedAtAsc(
             Long userId, LocalDate from, LocalDate to);
 

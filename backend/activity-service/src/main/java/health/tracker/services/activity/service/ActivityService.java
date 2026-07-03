@@ -131,6 +131,15 @@ public class ActivityService {
         return toResponse(saved);
     }
 
+    @Transactional
+    public ActivityLogResponse setCompleted(Long logId, Long userId, boolean completed) {
+        ActivityLog activity = logRepository.findByIdAndUserId(logId, userId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Activity log not found: " + logId));
+        activity.setCompleted(completed);
+        activity.setCompletedAt(completed ? java.time.LocalDateTime.now() : null);
+        return toResponse(logRepository.save(activity));
+    }
+
     // ─── Xoá log ──────────────────────────────────────────────────────────────
 
     @Transactional
@@ -198,6 +207,7 @@ public class ActivityService {
                 .category(a.getActivityType() != null ? a.getActivityType().getCategory() : ActivityType.Category.OTHER)
                 .durationMinutes(a.getDurationMinutes()).caloriesBurned(a.getCaloriesBurned())
                 .notes(a.getNotes()).loggedAt(a.getLoggedAt())
+                .completed(a.isCompleted()).completedAt(a.getCompletedAt())
                 .distanceKm(a.getDistanceKm()).avgHeartRate(a.getAvgHeartRate()).maxHeartRate(a.getMaxHeartRate())
                 .sets(a.getSets()).repsPerSet(a.getRepsPerSet()).weightKg(a.getWeightKg())
                 .steps(a.getSteps()).createdAt(a.getCreatedAt())

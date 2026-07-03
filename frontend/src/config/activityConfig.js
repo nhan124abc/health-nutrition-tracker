@@ -3,6 +3,7 @@ const activityConfig = {
     listByDate: '/activities',
     createLog: '/activities',
     updateById: (id) => `/activities/${id}`,
+    completion: (id) => `/activities/${id}/completion`,
     deleteById: (id) => `/activities/${id}`,
     workoutPlans: '/activities/workout-plans',
     workoutPlanDetail: (id) => `/activities/workout-plans/${id}`,

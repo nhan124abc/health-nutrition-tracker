@@ -515,6 +515,8 @@
     "partialLoadError": "Một phần dữ liệu báo cáo chưa tải được.",
     "title": "Báo cáo & thống kê",
     "daily": "Theo ngày",
+    "weekly": "Theo tuần",
+    "monthly": "Theo tháng",
     "caloriesTitle": "Calories in/out",
     "macroTitle": "Macro trend",
     "metrics": {
@@ -709,7 +711,8 @@
       "goalReached": "Bạn đã hoàn thành mục tiêu nước hôm nay."
     },
     "markMealCompleted": "Đánh dấu hoàn thành bữa ăn",
-    "mealCompleted": "Bữa ăn đã hoàn thành"
+    "mealCompleted": "Bữa ăn đã hoàn thành",
+    "completeError": "Không thể lưu trạng thái hoàn thành bữa ăn."
   },
   "nutritionPage": {
     "title": "Danh sách thực phẩm",
@@ -821,7 +824,8 @@
       "catalog": "Danh mục hoạt động"
     },
     "markActivityCompleted": "Đánh dấu hoàn thành vận động",
-    "activityCompleted": "Vận động đã hoàn thành"
+    "activityCompleted": "Vận động đã hoàn thành",
+    "completeError": "Không thể lưu trạng thái hoàn thành vận động."
   },
   "activityListPage": {
     "title": "Danh sách hoạt động",

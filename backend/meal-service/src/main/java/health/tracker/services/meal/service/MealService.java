@@ -76,6 +76,15 @@ public class MealService {
         return toResponse(saved);
     }
 
+    @Transactional
+    public MealResponse setCompleted(Long mealId, Long userId, boolean completed) {
+        Meal meal = mealRepository.findByIdAndUserId(mealId, userId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Meal not found: " + mealId));
+        meal.setCompleted(completed);
+        meal.setCompletedAt(completed ? java.time.LocalDateTime.now() : null);
+        return toResponse(mealRepository.save(meal));
+    }
+
     // Cập nhật bữa ăn
 
     @Transactional
@@ -214,7 +223,7 @@ public class MealService {
         return MealResponse.builder()
                 .id(m.getId()).userId(m.getUserId())
                 .mealType(m.getMealType()).mealDate(m.getMealDate()).mealTime(m.getMealTime())
-                .notes(m.getNotes())
+                .notes(m.getNotes()).completed(m.isCompleted()).completedAt(m.getCompletedAt())
                 .totalCalories(m.getTotalCalories()).totalProteinG(m.getTotalProteinG())
                 .totalCarbsG(m.getTotalCarbsG()).totalFatG(m.getTotalFatG()).totalFiberG(m.getTotalFiberG())
                 .items(itemResponses)

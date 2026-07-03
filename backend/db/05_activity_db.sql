@@ -103,6 +103,8 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     calories_burned     DECIMAL(7,2)    NOT NULL DEFAULT 0 COMMENT 'Calo đốt (kcal)',
     notes               TEXT            NULL,
     logged_at           DATETIME        NOT NULL COMMENT 'Thời điểm thực hiện',
+    is_completed        TINYINT(1)      NOT NULL DEFAULT 0,
+    completed_at        DATETIME        NULL,
 
     -- Thông số Cardio
     distance_km         DECIMAL(6,2)    NULL COMMENT 'Quãng đường (km)',

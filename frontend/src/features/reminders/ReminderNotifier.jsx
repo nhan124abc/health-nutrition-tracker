@@ -226,7 +226,7 @@ function getMealSlotReminderState(meals, completedIds, slot) {
 
   const completionIds = slotMeals.map(getMealCompletionId).filter(Boolean);
   return {
-    status: slotMeals.every((meal) => completedIds.includes(getMealCompletionId(meal))) ? 'complete' : 'incomplete',
+    status: slotMeals.every((meal) => meal.completed || completedIds.includes(getMealCompletionId(meal))) ? 'complete' : 'incomplete',
     identity: completionIds.join('|') || slotMeals.map((meal) => meal.id).filter(Boolean).join('|') || 'logged',
   };
 }
@@ -238,7 +238,7 @@ function getActivitySlotReminderState(activities, completedIds) {
 
   const completionIds = activities.map(getActivityCompletionId).filter(Boolean);
   return {
-    status: activities.every((activity) => completedIds.includes(getActivityCompletionId(activity))) ? 'complete' : 'incomplete',
+    status: activities.every((activity) => activity.completed || completedIds.includes(getActivityCompletionId(activity))) ? 'complete' : 'incomplete',
     identity: completionIds.join('|') || activities.map((activity) => activity.id).filter(Boolean).join('|') || 'logged',
   };
 }

@@ -138,6 +138,14 @@ public class MealController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/{id}/completion")
+    public ResponseEntity<MealResponse> setCompleted(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id,
+            @RequestParam boolean completed) {
+        return ResponseEntity.ok(mealService.setCompleted(id, userId, completed));
+    }
+
     /**
      * DELETE /api/v1/meals/{id}
      * Xoá bữa ăn. Chỉ chủ sở hữu mới được xoá.

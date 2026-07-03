@@ -162,6 +162,8 @@ export function normalizeActivityFromApi(activity = {}) {
     reps: normalizeNumber(activity.repsPerSet ?? activity.reps),
     strengthWeight: normalizeNumber(activity.weightKg ?? activity.strengthWeight),
     notes: activity.notes || '',
+    completed: Boolean(activity.completed),
+    completedAt: activity.completedAt || '',
   };
 }
 

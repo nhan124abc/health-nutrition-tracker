@@ -83,9 +83,8 @@ public class AnalyticsController {
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
-        LocalDate start = date != null
-                ? date
-                : LocalDate.now().with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
+        LocalDate referenceDate = date != null ? date : LocalDate.now();
+        LocalDate start = referenceDate.with(TemporalAdjusters.previousOrSame(java.time.DayOfWeek.MONDAY));
         LocalDate end = start.plusDays(6);
         return ResponseEntity.ok(analyticsService.getRange(userId, start, end));
     }

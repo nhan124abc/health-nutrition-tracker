@@ -70,6 +70,10 @@ export function updateActivityLog(id, payload) {
     });
 }
 
+export function updateActivityCompletion(id, completed) {
+  return api.patch(activityConfig.endpoints.completion(id), null, { params: { completed } });
+}
+
 export function deleteActivityById(id) {
   return api.delete(activityConfig.endpoints.deleteById(id))
     .then((response) => {

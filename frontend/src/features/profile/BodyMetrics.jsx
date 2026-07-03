@@ -11,7 +11,6 @@ import {
   getBodyMetrics,
   getProfile,
   updateBodyMetric,
-  updateProfile,
 } from './profileService';
 import {
   emptyBodyMetric,
@@ -165,18 +164,18 @@ function BodyMetrics() {
     setForm((current) => applyCalculatedMetricValues(current, profile));
   }, [form.weight, form.height, profile]);
 
-  const syncProfileWeight = (nextMetrics) => {
+  const syncProfileWeight = (nextMetrics, nextHeight = profile?.height) => {
     const latestMetric = getLatestBodyMetric(nextMetrics);
     const nextWeight = latestMetric.weightKg ?? latestMetric.weight;
 
     if (Number(nextWeight) > 0) {
-      const nextProfile = { ...(profile || {}), weight: nextWeight };
+      const nextProfile = {
+        ...(profile || {}),
+        weight: nextWeight,
+        ...(Number(nextHeight) > 0 ? { height: nextHeight } : {}),
+      };
       setProfile(nextProfile);
-      updateProfile({ weightKg: Number(nextWeight) })
-        .then(() => window.dispatchEvent(new CustomEvent('profile:updated', { detail: nextProfile })))
-        .catch((syncError) => {
-          console.error('[BodyMetrics] Error syncing profile weight:', syncError);
-        });
+      window.dispatchEvent(new CustomEvent('profile:updated', { detail: nextProfile }));
     }
   };
 
@@ -238,16 +237,7 @@ function BodyMetrics() {
       setForm(createEmptyMetricForm());
       setEditingMetric(null);
 
-      if (Number(form.weight) > 0 || Number(form.height) > 0) {
-        updateProfile({
-          ...(Number(form.weight) > 0 ? { weightKg: Number(form.weight) } : {}),
-          ...(Number(form.height) > 0 ? { heightCm: Number(form.height) } : {}),
-        })
-          .then(() => window.dispatchEvent(new CustomEvent('profile:updated', { detail: nextProfile })))
-          .catch((syncError) => {
-            console.error('[BodyMetrics] Error syncing profile weight:', syncError);
-          });
-      }
+      window.dispatchEvent(new CustomEvent('profile:updated', { detail: nextProfile }));
 
       setSuccessMessageKey('bodyMetricsPage.savedMessage');
     } catch (requestError) {
@@ -278,7 +268,7 @@ function BodyMetrics() {
 
       setMetrics(nextMetrics);
       setForm(createEmptyMetricForm());
-      syncProfileWeight(nextMetrics);
+      syncProfileWeight(nextMetrics, form.height);
       setEditingMetric(null);
       setSuccessMessageKey('bodyMetricsPage.savedMessage');
     } catch (requestError) {

@@ -994,6 +994,8 @@
     "partialLoadError": "Some report data could not be loaded.",
     "title": "Reports & Statistics",
     "daily": "By day",
+    "weekly": "By week",
+    "monthly": "By month",
     "caloriesTitle": "Calories in/out",
     "macroTitle": "Macro trend",
     "metrics": {
@@ -1188,7 +1190,8 @@
       "goalReached": "Today's water goal is complete."
     },
     "markMealCompleted": "Mark meal as completed",
-    "mealCompleted": "Meal completed"
+    "mealCompleted": "Meal completed",
+    "completeError": "Unable to save the meal completion status."
   },
   "nutritionPage": {
     "title": "Nutrition and foods",
@@ -1300,7 +1303,8 @@
       "catalog": "Activity catalog"
     },
     "markActivityCompleted": "Mark activity as completed",
-    "activityCompleted": "Activity completed"
+    "activityCompleted": "Activity completed",
+    "completeError": "Unable to save the activity completion status."
   },
   "activityListPage": {
     "title": "Activity list",
