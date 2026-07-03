@@ -7,6 +7,7 @@ import CrudActions from '../../../components/CrudActions';
 function WaterHistoryCard({
   logs,
   onDelete,
+  onRequestDelete,
   onUpdate,
   t,
 }) {
@@ -96,7 +97,7 @@ function WaterHistoryCard({
                           editLabel={t('waterPage.editLog')}
                           deleteLabel={t('waterPage.deleteLog')}
                           onEdit={() => openEditModal(log)}
-                          onDelete={() => onDelete(log)}
+                          onDelete={() => (onRequestDelete || onDelete)?.(log)}
                         />
                       </td>
                     </tr>
