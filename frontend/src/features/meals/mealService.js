@@ -55,6 +55,10 @@ export function getMealById(id) {
   return api.get(mealConfig.endpoints.detail(id));
 }
 
+export function updateMealCompletion(id, completed) {
+  return api.patch(mealConfig.endpoints.completion(id), null, { params: { completed } });
+}
+
 export function deleteMealById(id) {
   return api.delete(mealConfig.endpoints.deleteById(id))
     .then((response) => {

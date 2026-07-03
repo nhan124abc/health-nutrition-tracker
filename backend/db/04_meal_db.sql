@@ -26,6 +26,8 @@ CREATE TABLE IF NOT EXISTS meals (
     meal_date       DATE            NOT NULL COMMENT 'Ngày ăn',
     meal_time       TIME            NULL COMMENT 'Giờ ăn (tùy chọn)',
     notes           TEXT            NULL,
+    is_completed    TINYINT(1)      NOT NULL DEFAULT 0,
+    completed_at    DATETIME        NULL,
 
     -- Tổng dinh dưỡng của bữa ăn (tính từ meal_items)
     total_calories  DECIMAL(8,2)    NOT NULL DEFAULT 0,

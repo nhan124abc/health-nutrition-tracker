@@ -25,6 +25,11 @@ public class ActivityLogResponse {
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime loggedAt;
 
+    private boolean completed;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime completedAt;
+
     // Cardio
     private BigDecimal distanceKm;
     private Integer avgHeartRate;

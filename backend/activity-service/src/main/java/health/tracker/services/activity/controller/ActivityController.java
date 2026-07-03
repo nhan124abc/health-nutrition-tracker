@@ -98,6 +98,14 @@ public class ActivityController {
         return ResponseEntity.ok(activityService.update(id, userId, request));
     }
 
+    @PatchMapping("/{id}/completion")
+    public ResponseEntity<ActivityLogResponse> setCompleted(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id,
+            @RequestParam boolean completed) {
+        return ResponseEntity.ok(activityService.setCompleted(id, userId, completed));
+    }
+
     /**
      * DELETE /api/v1/activities/{id}
      * Xoá một log hoạt động. Chỉ chủ sở hữu mới được xoá.

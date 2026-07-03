@@ -90,7 +90,7 @@ public class ReminderSchedulerService {
                     meals = reminderDataClient.getMeals(user.getId(), today);
                 }
                 // A reminder is meaningful only after the user has selected a meal to complete.
-                if (!hasMeal(meals, slot.mealType())) {
+                if (!hasIncompleteMeal(meals, slot.mealType())) {
                     continue;
                 }
             } else {
@@ -98,7 +98,7 @@ public class ReminderSchedulerService {
                     activities = reminderDataClient.getActivities(user.getId(), today);
                 }
                 // Do not ask users to tick an activity that does not exist in their daily log.
-                if (activities.isEmpty()) {
+                if (activities.isEmpty() || activities.stream().allMatch(ReminderDataClient.ActivityLog::completed)) {
                     continue;
                 }
             }
@@ -121,11 +121,10 @@ public class ReminderSchedulerService {
                 || positive(profile.dailyActivityGoalKcal()));
     }
 
-    private boolean hasMeal(List<ReminderDataClient.MealLog> meals, String mealType) {
+    private boolean hasIncompleteMeal(List<ReminderDataClient.MealLog> meals, String mealType) {
         return meals.stream()
-                .map(ReminderDataClient.MealLog::mealType)
-                .filter(this::hasText)
-                .anyMatch(value -> value.equalsIgnoreCase(mealType));
+                .filter(meal -> hasText(meal.mealType()))
+                .anyMatch(meal -> meal.mealType().equalsIgnoreCase(mealType) && !meal.completed());
     }
 
     private boolean markSent(String key) {

@@ -94,6 +94,8 @@ export function normalizeMealFromApi(meal = {}) {
     date: normalizeDate(meal.date || meal.mealDate || meal.createdAt),
     time: meal.time || meal.mealTime || '',
     notes: meal.notes || '',
+    completed: Boolean(meal.completed),
+    completedAt: meal.completedAt || '',
     notesKey: '',
     totals: {
       calories: normalizeNumber(meal.totalCalories),

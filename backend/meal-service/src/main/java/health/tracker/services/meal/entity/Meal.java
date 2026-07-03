@@ -46,6 +46,13 @@ public class Meal {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @Column(name = "is_completed", nullable = false)
+    @Builder.Default
+    private boolean completed = false;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
     // ─── Tổng dinh dưỡng (tính từ meal_items) ────────────────────────────────
 
     @Column(name = "total_calories", nullable = false, precision = 8, scale = 2)

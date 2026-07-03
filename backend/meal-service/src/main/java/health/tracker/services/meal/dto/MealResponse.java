@@ -27,6 +27,10 @@ public class MealResponse {
     private LocalTime mealTime;
 
     private String notes;
+    private boolean completed;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime completedAt;
 
     // Tổng dinh dưỡng của toàn bộ bữa
     private BigDecimal totalCalories;
