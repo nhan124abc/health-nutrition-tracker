@@ -84,6 +84,7 @@ function MainLayout() {
   const [profileAvatarFailed, setProfileAvatarFailed] = useState(false);
   const [currentUser, setCurrentUser] = useState(() => getCurrentUser());
   const [showProfileRequiredModal, setShowProfileRequiredModal] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [missingProfileFields, setMissingProfileFields] = useState([]);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(
     () => localStorage.getItem('sidebarCollapsed') === 'true'
@@ -305,7 +306,12 @@ function MainLayout() {
     });
   };
 
+  const requestLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
   const handleLogout = async () => {
+    setShowLogoutConfirm(false);
     await logout();
     navigate('/login');
   };
@@ -437,7 +443,7 @@ function MainLayout() {
             <button
               type="button"
               className="btn btn-light layout-user-toggle"
-              onClick={handleLogout}
+              onClick={requestLogout}
               aria-label={t('nav.logout')}
               title={t('nav.logout')}
             >
@@ -597,6 +603,26 @@ function MainLayout() {
           </Button>
           <Button variant="success" onClick={goToProfile}>
             {t('profilePage.completion.goToProfile')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showLogoutConfirm} onHide={() => setShowLogoutConfirm(false)} centered className="logout-confirm-modal">
+        <Modal.Header closeButton className="logout-confirm-header">
+          <div className="logout-confirm-icon">
+            <FaSignOutAlt />
+          </div>
+          <Modal.Title>{t('nav.logoutConfirmTitle')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="logout-confirm-body">
+          {t('nav.logoutConfirmMessage')}
+        </Modal.Body>
+        <Modal.Footer className="logout-confirm-footer">
+          <Button variant="outline-secondary" className="logout-confirm-cancel" onClick={() => setShowLogoutConfirm(false)}>
+            {t('common.cancel')}
+          </Button>
+          <Button variant="danger" className="logout-confirm-submit" onClick={handleLogout}>
+            {t('nav.logout')}
           </Button>
         </Modal.Footer>
       </Modal>

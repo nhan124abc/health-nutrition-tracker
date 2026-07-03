@@ -20,7 +20,9 @@
     "news": "News",
     "settings": "Settings",
     "profile": "Profile",
-    "logout": "Logout"
+    "logout": "Logout",
+    "logoutConfirmTitle": "Confirm logout",
+    "logoutConfirmMessage": "Are you sure you want to log out?"
   },
   "header": {
     "searchPlaceholder": "Quick search foods, reports, goals...",
@@ -671,7 +673,49 @@
       "open": "View user details",
       "username": "Username",
       "phone": "Phone",
-      "createdAt": "Created at"
+      "createdAt": "Created at",
+      "fields": {
+        "avatarUrl": "Avatar",
+        "bio": "Bio",
+        "birthDate": "Birth date",
+        "createdAt": "Created at",
+        "dailyCalorieGoal": "Daily calorie goal",
+        "dailyCarbsGoal": "Daily carbs goal",
+        "dailyFatGoal": "Daily fat goal",
+        "dailyProteinGoal": "Daily protein goal",
+        "dailyWaterGoal": "Daily water goal",
+        "dateOfBirth": "Date of birth",
+        "deletedAt": "Deleted at",
+        "displayName": "Display name",
+        "email": "Email",
+        "enabled": "Enabled",
+        "fullName": "Full name",
+        "gender": "Gender",
+        "healthGoal": "Health goal",
+        "height": "Height",
+        "heightCm": "Height",
+        "hidden": "Hidden",
+        "id": "ID",
+        "isActive": "Active status",
+        "lastLoginAt": "Last login",
+        "locked": "Locked",
+        "name": "Name",
+        "phone": "Phone",
+        "phoneNumber": "Phone number",
+        "pictureUrl": "Picture",
+        "profilePictureUrl": "Profile picture",
+        "role": "Role",
+        "status": "Status",
+        "sub": "Subject",
+        "targetWeight": "Target weight",
+        "targetWeightKg": "Target weight",
+        "timezone": "Timezone",
+        "updatedAt": "Updated at",
+        "userId": "User ID",
+        "username": "Username",
+        "weight": "Weight",
+        "weightKg": "Weight"
+      }
     },
     "catalogs": {
       "title": "System catalogs",
@@ -1461,6 +1505,11 @@
       "activityAdded": "Logged exercise \"{{name}}\".",
       "activityDeleted": "The activity was removed from your diary.",
       "mealReplaced": "Replaced the old meal with \"{{name}}\"."
+    },
+    "successPopup": {
+      "title": "Success",
+      "mealSelected": "Meal selected successfully.",
+      "mealUnselected": "Meal unselected successfully."
     },
     "errors": {
       "load": "Unable to load today's data.",
