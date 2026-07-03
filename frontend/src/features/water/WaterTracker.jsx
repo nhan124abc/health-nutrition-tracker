@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Col, Row } from 'react-bootstrap';
+import { Button, Col, Modal, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import GoalFireworks from '../../components/GoalFireworks';
 import { getProfile, updateProfile } from '../profile/profileService';
@@ -38,7 +38,8 @@ function WaterTracker() {
   const [waterGoalInput, setWaterGoalInput] = useState(waterSettings.goalMl);
   const [waterReminderMessage, setWaterReminderMessage] = useState('');
   const [waterError, setWaterError] = useState('');
-  const [waterNotice, setWaterNotice] = useState('');
+  const [waterPopup, setWaterPopup] = useState(null);
+  const [deleteCandidate, setDeleteCandidate] = useState(null);
   const [showFireworks, setShowFireworks] = useState(false);
   const wasWaterGoalComplete = useRef(false);
 
@@ -167,9 +168,12 @@ function WaterTracker() {
     return () => window.clearInterval(timerId);
   }, [lastWaterLog, selectedDate, t, totalWaterMl, userSettings.waterReminder, waterSettings]);
 
-  const showNotice = (message) => {
-    setWaterNotice(message);
-    window.setTimeout(() => setWaterNotice(''), 2800);
+  const showSuccessPopup = (title, message) => {
+    setWaterPopup({ title, message });
+  };
+
+  const closeSuccessPopup = () => {
+    setWaterPopup(null);
   };
 
   const addWaterLog = async (amount = waterAmount) => {
@@ -199,7 +203,7 @@ function WaterTracker() {
         setDailyWaterTotal(normalizeDailyWaterFromApi(todayResponse.data).totalAmountMl);
       }
 
-      showNotice(t('waterPage.loggedMessage', { amount: normalizedAmount }));
+      showSuccessPopup(t('waterPage.successTitle'), t('waterPage.loggedMessage', { amount: normalizedAmount }));
     } catch (error) {
       console.error('[WaterTracker] Error creating water log:', error);
       setWaterError(error.response?.data?.message || t('dashboardPage.loadError'));
@@ -235,32 +239,38 @@ function WaterTracker() {
         setDailyWaterTotal((current) => current - normalizeNumber(log.amountMl) + normalizedAmount);
       }
 
-      showNotice(t('waterPage.updatedMessage'));
+      showSuccessPopup(t('waterPage.successTitle'), t('waterPage.updatedMessage'));
     } catch (error) {
       console.error('[WaterTracker] Error updating water log:', error);
       setWaterError(error.response?.data?.message || t('dashboardPage.loadError'));
     }
   };
 
-  const removeWaterLog = async (log) => {
-    if (!window.confirm(t('waterPage.confirmDeleteLog'))) {
+  const requestDeleteWaterLog = (log) => {
+    setDeleteCandidate(log);
+  };
+
+  const confirmDeleteWaterLog = async () => {
+    if (!deleteCandidate) {
       return;
     }
 
     setWaterError('');
 
     try {
-      await deleteWaterLog(log.id);
-      setWaterLogs((current) => current.filter((item) => item.id !== log.id));
+      await deleteWaterLog(deleteCandidate.id);
+      setWaterLogs((current) => current.filter((item) => item.id !== deleteCandidate.id));
 
-      if (log.date === getTodayDate()) {
-        setDailyWaterTotal((current) => Math.max(0, current - normalizeNumber(log.amountMl)));
+      if (deleteCandidate.date === getTodayDate()) {
+        setDailyWaterTotal((current) => Math.max(0, current - normalizeNumber(deleteCandidate.amountMl)));
       }
 
-      showNotice(t('waterPage.deletedMessage'));
+      showSuccessPopup(t('waterPage.successTitle'), t('waterPage.deletedMessage'));
     } catch (error) {
       console.error('[WaterTracker] Error deleting water log:', error);
       setWaterError(error.response?.data?.message || t('dashboardPage.loadError'));
+    } finally {
+      setDeleteCandidate(null);
     }
   };
 
@@ -277,10 +287,10 @@ function WaterTracker() {
 
     try {
       await updateProfile({ dailyWaterGoalMl: goalMl });
-      showNotice(t('waterPage.goalSaved'));
+      showSuccessPopup(t('waterPage.successTitle'), t('waterPage.goalSaved'));
     } catch (error) {
       console.error('[WaterTracker] Error saving water goal:', error);
-      showNotice(t('waterPage.localGoalSaved'));
+      showSuccessPopup(t('waterPage.successTitle'), t('waterPage.localGoalSaved'));
     }
   };
 
@@ -300,7 +310,6 @@ function WaterTracker() {
             error={waterError}
             onCloseError={() => setWaterError('')}
             goalInput={waterGoalInput}
-            notice={waterNotice}
             onAddWater={addWaterLog}
             onGoalInputChange={setWaterGoalInput}
             onSaveGoal={saveWaterGoal}
@@ -318,13 +327,40 @@ function WaterTracker() {
           <div className="planner-side-stack">
             <WaterHistoryCard
               logs={dayWaterLogs}
-              onDelete={removeWaterLog}
+              onRequestDelete={requestDeleteWaterLog}
               onUpdate={updateWaterLogAmount}
               t={t}
             />
           </div>
         </Col>
       </Row>
+
+      <Modal show={Boolean(deleteCandidate)} onHide={() => setDeleteCandidate(null)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{t('waterPage.confirmDeleteTitle')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{t('waterPage.confirmDeleteLog')}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setDeleteCandidate(null)}>
+            {t('common.cancel')}
+          </Button>
+          <Button variant="danger" onClick={confirmDeleteWaterLog}>
+            {t('waterPage.deleteLog')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={Boolean(waterPopup)} onHide={closeSuccessPopup} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{waterPopup?.title}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{waterPopup?.message}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={closeSuccessPopup}>
+            {t('common.close')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 }

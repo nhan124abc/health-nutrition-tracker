@@ -50,6 +50,17 @@ function Login() {
     setErrorKey('');
   };
 
+  const getInvalidLoginMessage = (requestError) => {
+    const message = String(requestError?.response?.data?.message || requestError?.message || '').toLowerCase();
+    const attemptsMatch = message.match(/(\d+)\s+attempts?\s+remaining/);
+
+    if (attemptsMatch) {
+      return t('auth.loginInvalidAttempts', { count: Number(attemptsMatch[1]) });
+    }
+
+    return t('auth.loginInvalid');
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     clearLoginError();
@@ -86,7 +97,7 @@ function Login() {
       } else if (isLockedAccountError(err)) {
         setErrorKey('auth.accountLocked');
       } else {
-        setError(err.response?.data?.message || err.message || t('auth.loginError'));
+        setError(getInvalidLoginMessage(err));
       }
     } finally {
       setLoading(false);

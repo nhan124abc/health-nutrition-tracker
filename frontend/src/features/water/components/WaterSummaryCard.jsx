@@ -6,7 +6,6 @@ import ErrorModal from '../../../components/ErrorModal';
 function WaterSummaryCard({
   error,
   goalInput,
-  notice,
   onAddWater,
   onGoalInputChange,
   onCloseError,
@@ -38,7 +37,6 @@ function WaterSummaryCard({
         <ProgressBar now={progress} className="mb-3" />
 
         <ErrorModal error={error} onClose={onCloseError} />
-        {notice && <div className="alert alert-success py-2">{notice}</div>}
         {reminderMessage && (
           <div className="alert alert-info py-2 d-flex align-items-center gap-2">
             <FaBell />
