@@ -38,7 +38,11 @@
     "aiLoadingHistory": "Đang tải lịch sử chat...",
     "aiHistoryError": "Không thể tải lịch sử chat.",
     "aiClear": "Xóa lịch sử",
-    "aiClearError": "Không thể xóa lịch sử chat."
+    "aiClearError": "Không thể xóa lịch sử chat.",
+    "aiClearConfirmTitle": "Xác nhận xóa lịch sử chat",
+    "aiClearConfirmMessage": "Bạn có chắc muốn xóa toàn bộ lịch sử chat AI?",
+    "aiClearSuccessTitle": "Đã xóa lịch sử",
+    "aiClearSuccessMessage": "Lịch sử chat AI đã được xóa thành công."
   },
   "sidebar": {
     "title": "Theo dõi sức khỏe",
@@ -510,6 +514,7 @@
     "loadError": "Không thể tải dữ liệu báo cáo.",
     "partialLoadError": "Một phần dữ liệu báo cáo chưa tải được.",
     "title": "Báo cáo & thống kê",
+    "daily": "Theo ngày",
     "caloriesTitle": "Calories in/out",
     "macroTitle": "Macro trend",
     "metrics": {

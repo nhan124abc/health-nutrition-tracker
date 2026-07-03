@@ -4,7 +4,7 @@ import { getLocalizedName } from '../../../utils/localizedName';
 function FoodDetailCard({ food, language, t }) {
   if (!food) {
     return (
-      <Card className="border-0 shadow-sm sticky-panel">
+      <Card className="border-0 shadow-sm sticky-panel nutrition-detail-card">
         <Card.Body className="text-secondary">{t('nutritionPage.noSelection')}</Card.Body>
       </Card>
     );
@@ -21,7 +21,7 @@ function FoodDetailCard({ food, language, t }) {
   ];
 
   return (
-    <Card className="border-0 shadow-sm sticky-panel">
+    <Card className="border-0 shadow-sm sticky-panel nutrition-detail-card">
       <Card.Body>
         <h2 className="h4 fw-bold mb-1">{getLocalizedName(food, language)}</h2>
         <p className="text-secondary">

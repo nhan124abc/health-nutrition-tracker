@@ -29,12 +29,17 @@ function toLocalDate(date) {
   return `${year}-${month}-${day}`;
 }
 
-function getDateRange(range) {
+function getDateRange(range, selectedDate) {
   const today = new Date();
-  const start = new Date(today);
+  const baseDate = selectedDate ? new Date(`${selectedDate}T12:00:00`) : today;
+  const start = new Date(baseDate);
+
+  if (range === 'daily') {
+    return [toLocalDate(baseDate)];
+  }
 
   if (range === 'weekly') {
-    start.setDate(today.getDate() - 6);
+    start.setDate(baseDate.getDate() - 6);
   } else {
     start.setDate(1);
   }
@@ -73,7 +78,8 @@ function calculateStreak(days) {
 
 function Reports() {
   const { i18n, t } = useTranslation();
-  const [range, setRange] = useState('weekly');
+  const [range, setRange] = useState('daily');
+  const [selectedDate, setSelectedDate] = useState(() => toLocalDate(new Date()));
   const [days, setDays] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -85,7 +91,7 @@ function Reports() {
       setLoading(true);
       setLoadError('');
 
-      const dates = getDateRange(range);
+      const dates = getDateRange(range, selectedDate);
       const results = await Promise.allSettled(
         dates.flatMap((date) => [
           getMealsByDate(date),
@@ -137,12 +143,14 @@ function Reports() {
     return () => {
       isMounted = false;
     };
-  }, [range, t]);
+  }, [range, selectedDate, t]);
 
   const labelFormatter = useMemo(
     () => new Intl.DateTimeFormat(i18n.language, range === 'weekly'
       ? { weekday: 'short', day: '2-digit' }
-      : { day: '2-digit' }),
+      : range === 'daily'
+        ? { weekday: 'short', month: '2-digit', day: '2-digit' }
+        : { day: '2-digit' }),
     [i18n.language, range]
   );
 
@@ -195,10 +203,21 @@ function Reports() {
         <div>
           <h1>{t('reportsPage.title')}</h1>
         </div>
-        <Form.Select className="page-date-input" value={range} onChange={(event) => setRange(event.target.value)}>
-          <option value="weekly">{t('common.sevenDays')}</option>
-          <option value="monthly">{t('common.thisMonth')}</option>
-        </Form.Select>
+        <div className="d-flex flex-wrap gap-2">
+          <Form.Select className="page-date-input" value={range} onChange={(event) => setRange(event.target.value)}>
+            <option value="daily">{t('reportsPage.daily')}</option>
+            <option value="weekly">{t('common.sevenDays')}</option>
+            <option value="monthly">{t('common.thisMonth')}</option>
+          </Form.Select>
+          {range === 'daily' && (
+            <Form.Control
+              className="page-date-input"
+              type="date"
+              value={selectedDate}
+              onChange={(event) => setSelectedDate(event.target.value)}
+            />
+          )}
+        </div>
       </div>
 
       {loading && <div className="alert alert-light border">{t('reportsPage.loading')}</div>}

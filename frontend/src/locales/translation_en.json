@@ -38,7 +38,11 @@
     "aiLoadingHistory": "Loading chat history...",
     "aiHistoryError": "Unable to load chat history.",
     "aiClear": "Clear history",
-    "aiClearError": "Unable to clear chat history."
+    "aiClearError": "Unable to clear chat history.",
+    "aiClearConfirmTitle": "Confirm clear chat history",
+    "aiClearConfirmMessage": "Do you want to clear all AI chat history?",
+    "aiClearSuccessTitle": "History cleared",
+    "aiClearSuccessMessage": "AI chat history was cleared successfully."
   },
   "sidebar": {
     "title": "Navigation",
@@ -989,6 +993,7 @@
     "loadError": "Unable to load report data.",
     "partialLoadError": "Some report data could not be loaded.",
     "title": "Reports & Statistics",
+    "daily": "By day",
     "caloriesTitle": "Calories in/out",
     "macroTitle": "Macro trend",
     "metrics": {
