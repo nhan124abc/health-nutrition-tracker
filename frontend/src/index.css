@@ -1360,6 +1360,11 @@ body::-webkit-scrollbar,
   top: calc(var(--layout-header-height) + 1rem);
 }
 
+.nutrition-detail-card {
+  max-height: calc(100vh - var(--layout-header-height) - 2rem);
+  overflow-y: auto;
+}
+
 .clickable-row {
   cursor: pointer;
 }

@@ -20,7 +20,6 @@ import {
   FaWeight,
   FaBullseye,
   FaCalendarAlt,
-  FaLightbulb,
 } from 'react-icons/fa';
 import { getCurrentUser, logout } from '../api/api';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -58,7 +57,6 @@ const menuItems = [
   { to: '/goals', labelKey: 'nav.goals', icon: FaBullseye },
   { to: '/planner', labelKey: 'nav.planner', icon: FaRobot },
   { to: '/plans', labelKey: 'nav.plans', icon: FaCalendarAlt },
-  { to: '/health-insights', labelKey: 'nav.healthInsights', icon: FaLightbulb },
   { to: '/meals', labelKey: 'nav.diary', icon: FaUtensils },
   { to: '/water', labelKey: 'nav.water', icon: FaTint },
   { to: '/activity', labelKey: 'nav.activity', icon: FaDumbbell },
@@ -78,6 +76,8 @@ function MainLayout() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiHistoryLoading, setAiHistoryLoading] = useState(false);
   const [aiError, setAiError] = useState('');
+  const [showAiClearConfirm, setShowAiClearConfirm] = useState(false);
+  const [showAiClearSuccess, setShowAiClearSuccess] = useState(false);
   const [showProfileSummary, setShowProfileSummary] = useState(false);
   const [currentProfile, setCurrentProfile] = useState(null);
   const [profileAvatarVersion, setProfileAvatarVersion] = useState(Date.now());
@@ -359,10 +359,12 @@ function MainLayout() {
     }
 
     setAiError('');
+    setShowAiClearConfirm(false);
 
     try {
       await clearChatHistory();
       setAiMessages([]);
+      setShowAiClearSuccess(true);
     } catch (err) {
       setAiError(err.response?.data?.message || t('header.aiClearError'));
     }
@@ -507,7 +509,7 @@ function MainLayout() {
               variant="outline-secondary"
               size="sm"
               className="ms-auto me-3"
-              onClick={handleClearAiHistory}
+              onClick={() => setShowAiClearConfirm(true)}
               disabled={aiLoading || aiHistoryLoading}
             >
               {t('header.aiClear')}
@@ -551,6 +553,33 @@ function MainLayout() {
             </InputGroup>
           </Form>
         </Modal.Body>
+      </Modal>
+
+      <Modal show={showAiClearConfirm} onHide={() => setShowAiClearConfirm(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{t('header.aiClearConfirmTitle')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{t('header.aiClearConfirmMessage')}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="outline-secondary" onClick={() => setShowAiClearConfirm(false)}>
+            {t('common.cancel')}
+          </Button>
+          <Button variant="danger" onClick={handleClearAiHistory} disabled={aiLoading || aiHistoryLoading}>
+            {t('header.aiClear')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showAiClearSuccess} onHide={() => setShowAiClearSuccess(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{t('header.aiClearSuccessTitle')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{t('header.aiClearSuccessMessage')}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={() => setShowAiClearSuccess(false)}>
+            {t('common.close')}
+          </Button>
+        </Modal.Footer>
       </Modal>
 
       <Overlay

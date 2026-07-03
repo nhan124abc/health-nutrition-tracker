@@ -26,7 +26,7 @@ function GoalPlanner() {
   const navigate = useNavigate();
   const { i18n, t } = useTranslation();
   const [profile, setProfile] = useState(null);
-  const [form, setForm] = useState({ goal: 'LOSE_WEIGHT', targetChangeKg: 5, targetWeeks: '' });
+  const [form, setForm] = useState({ goal: '', targetChangeKg: 5, targetWeeks: '' });
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -39,6 +39,18 @@ function GoalPlanner() {
     }).catch((err) => setError(err.response?.data?.message || t('goalPlannerPage.errors.loadProfile')))
       .finally(() => setLoading(false));
   }, [t]);
+
+  useEffect(() => {
+    if (!profile?.healthGoal) {
+      return;
+    }
+
+    const defaultGoal = goalValueToApi[profile.healthGoal] || '';
+
+    setForm((current) => (
+      current.goal ? current : { ...current, goal: defaultGoal }
+    ));
+  }, [profile]);
 
   const loadSuggestions = async (event) => {
     event?.preventDefault();
