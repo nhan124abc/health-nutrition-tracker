@@ -329,10 +329,6 @@ public class PlannerRuleEngine {
                     .toList(), index);
         }
 
-        if (catalogPool.isEmpty()) {
-            return List.of();
-        }
-
         if (isFatLossGoal(goal)) {
             pool.add(new ActivityInfo("Chạy bộ ngoài trời (Cardio giảm mỡ)", 35, calculateCaloriesBurned(8.0, weight, 35)));
             pool.add(new ActivityInfo("Tập HIIT toàn thân đốt mỡ nhanh", 25, calculateCaloriesBurned(8.0, weight, 25)));
@@ -576,10 +572,6 @@ public class PlannerRuleEngine {
             return pickActivityOptions(catalogPool.stream()
                     .map(activity -> adjustActivityToTarget(activity, context, weight))
                     .toList(), index);
-        }
-
-        if (catalogPool.isEmpty()) {
-            return List.of();
         }
 
         List<ActivityInfo> list = new ArrayList<>();

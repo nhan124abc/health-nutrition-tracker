@@ -396,10 +396,7 @@ public class AiChatService {
                 .max(BigDecimal.valueOf(0.5));
 
         ObjectNode option = options.addObject();
-        String cookingMethod = buildCookingMethod(foods, context);
         option.put("name", buildDishName(foods, optionIndex));
-        option.put("description", cookingMethod);
-        option.put("cookingMethod", cookingMethod);
         option.put("amount", "1 phần");
 
         BigDecimal totalServing = BigDecimal.ZERO;
@@ -500,7 +497,6 @@ public class AiChatService {
                 Target calories for EACH suggested dish: %d kcal.
                 Acceptable calories for EACH suggested dish: %d to %d kcal.
                 User selected foods or ingredients: %s.
-                Preferred cooking method: %s.
                 Do not use these previous dish or food names: %s.
                 Required selected food ids for every suggested dish: %s.
                 Database catalog (id | name | serving | nutrition): %s
@@ -514,7 +510,6 @@ public class AiChatService {
                   "options": [
                     {
                       "name": "dish name in Vietnamese",
-                      "description": "short cooking instructions in Vietnamese",
                       "ingredients": [
                         {"foodItemId":1, "portionRatio":1.0},
                         {"foodItemId":2, "portionRatio":0.7}
@@ -522,7 +517,6 @@ public class AiChatService {
                     },
                     {
                       "name": "another dish name in Vietnamese",
-                      "description": "short cooking instructions in Vietnamese",
                       "ingredients": [
                         {"foodItemId":3, "portionRatio":1.0},
                         {"foodItemId":4, "portionRatio":0.5}
@@ -533,14 +527,12 @@ public class AiChatService {
                 Use only ids from the catalog. Do not invent food nutrition values.
                 Each dish must have 2 to %d ingredients.
                 If required selected food ids is not empty, every dish must include all required selected food ids.
-                If a cooking method is provided, describe steps that follow that method.
                 The dish name may combine the selected ingredients, for example "Com ga ap chao voi bong cai".
                 """.formatted(
                 context.getMealType(), normalizeGoal(context.getGoal()), context.getWeightKg(), context.getTargetWeightKg(),
                 context.getActivityLevel(), goalGuidance(context.getGoal()), context.getDailyCalorieGoal(), context.getCaloriesConsumed(), budget,
                 Math.max(100, budget - calorieBuffer), budget,
                 normalizedList(context.getSelectedFoodNames()),
-                blankToDefault(context.getCookingMethod(), "not specified"),
                 context.getExcludedFoodNames() == null ? List.of() : context.getExcludedFoodNames(),
                 requiredFoodIds, catalog, budget, calorieBuffer, maxIngredientCount);
     }
@@ -612,8 +604,6 @@ public class AiChatService {
 
             ObjectNode normalized = normalizedOptions.addObject();
             normalized.put("name", name);
-            normalized.put("description", option.path("description").asText(""));
-            normalized.put("cookingMethod", blankToDefault(context.getCookingMethod(), option.path("description").asText("")));
             normalized.put("amount", "1 phần");
 
             BigDecimal totalServing = BigDecimal.ZERO;
@@ -705,7 +695,6 @@ public class AiChatService {
             option.put("recipeId", recipe.id());
             option.put("name", recipe.name());
             option.put("description", recipe.description());
-            option.put("cookingMethod", recipe.description());
             option.put("amount", recipe.servings() <= 1 ? "1 phần" : recipe.servings() + " phần");
             option.put("servingSizeG", recipe.ingredients().stream()
                     .map(NutritionCatalogClient.RecipeIngredientCandidate::quantityG)
@@ -740,10 +729,6 @@ public class AiChatService {
                                                                             int maxCalories) {
         List<Long> selectedFoodIds = normalizedLongList(context.getSelectedFoodIds());
         List<String> keywords = new java.util.ArrayList<>(normalizedList(context.getSelectedFoodNames()));
-        String cookingMethod = normalize(context.getCookingMethod());
-        if (cookingMethod != null) {
-            keywords.add(cookingMethod);
-        }
 
         Map<Long, NutritionCatalogClient.RecipeCandidate> recipes = new java.util.LinkedHashMap<>();
         String goal = normalizeGoal(context.getGoal());
@@ -777,7 +762,6 @@ public class AiChatService {
         return getMatchingRecipes(context, maxCalories).stream()
                 .filter(recipe -> !isExcluded(recipe.name(), context))
                 .filter(recipe -> matchesRequestedFoods(recipe, context))
-                .filter(recipe -> matchesCookingMethod(recipe, context))
                 .limit(2)
                 .toList();
     }
@@ -806,17 +790,6 @@ public class AiChatService {
                         .toList()).toLowerCase();
         return selectedFoods.stream()
                 .allMatch(food -> searchable.contains(food.toLowerCase()));
-    }
-
-    private boolean matchesCookingMethod(NutritionCatalogClient.RecipeCandidate recipe,
-                                         PlannerSuggestRequest context) {
-        String cookingMethod = normalize(context.getCookingMethod());
-        if (cookingMethod == null) {
-            return true;
-        }
-
-        String searchable = (recipe.name() + " " + recipe.description()).toLowerCase();
-        return searchable.contains(cookingMethod.toLowerCase());
     }
 
     private boolean isExcluded(String name, PlannerSuggestRequest context) {
@@ -867,26 +840,6 @@ public class AiChatService {
                 : main + " va " + side + " can bang";
     }
 
-    private String buildCookingMethod(List<NutritionCatalogClient.FoodCandidate> foods, PlannerSuggestRequest context) {
-        String preferred = normalize(context.getCookingMethod());
-        if (preferred != null) {
-            return preferred;
-        }
-
-        List<String> names = foods.stream()
-                .map(NutritionCatalogClient.FoodCandidate::name)
-                .map(this::cleanFoodName)
-                .filter(name -> !name.isBlank())
-                .limit(4)
-                .toList();
-        String ingredients = String.join(", ", names);
-        String main = names.isEmpty() ? "nguyen lieu chinh" : names.get(0);
-
-        return "1. So che va can dung khau phan: " + ingredients + ". "
-                + "2. Lam nong chao/noi, nau chin " + main + " truoc; them cac nguyen lieu con lai theo thu tu can nhieu nhiet den it nhiet. "
-                + "3. Nem nhe, han che dau/mo, tron deu va dung khi mon con am de giu vi ngon.";
-    }
-
     private String cleanFoodName(String value) {
         String normalized = normalize(value);
         if (normalized == null) {
@@ -899,11 +852,6 @@ public class AiChatService {
                 .replace(" raw", "")
                 .replaceAll("\\s+", " ")
                 .trim();
-    }
-
-    private String blankToDefault(String value, String fallback) {
-        String normalized = normalize(value);
-        return normalized == null ? fallback : normalized;
     }
 
     private BigDecimal decimal(JsonNode node, String field, BigDecimal fallback) {
