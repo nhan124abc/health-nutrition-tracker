@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Spinner } from 'react-bootstrap';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getDefaultRouteForCurrentUser, saveAuthTokens } from '../../api/api';
+import { fillMissingProfileFromGuestSession } from '../../utils/guestProfileSession';
 
 function OAuth2Redirect() {
   const navigate = useNavigate();
@@ -18,7 +19,13 @@ function OAuth2Redirect() {
     }
 
     saveAuthTokens({ accessToken: token, refreshToken });
-    navigate(getDefaultRouteForCurrentUser(), { replace: true });
+    fillMissingProfileFromGuestSession()
+      .catch((profileError) => {
+        console.error('[OAuth2Redirect] Could not import guest profile data:', profileError);
+      })
+      .finally(() => {
+        navigate(getDefaultRouteForCurrentUser(), { replace: true });
+      });
   }, [navigate, searchParams]);
 
   return (

@@ -341,42 +341,6 @@ function Planner() {
     return itemNames || noteTitle || fallbackLabel;
   };
 
-  const getOptionCookingMethod = (option) => {
-    const description = option?.description || option?.cookingSteps || option?.instructions;
-    const cookingMethod = option?.cookingMethod;
-    const text = cookingMethod || description;
-    const normalizedText = String(text || '').trim();
-    const genericHints = [
-      'ket hop cac thuc pham',
-      'kết hợp các thực phẩm',
-      'che bien don gian',
-      'chế biến đơn giản',
-      'dieu chinh khau phan',
-      'điều chỉnh khẩu phần',
-    ];
-
-    if (
-      option?.recipeId
-      && normalizedText
-      && textMatchesLanguage(normalizedText, i18n.language)
-      && !genericHints.some((hint) => normalizedText.toLowerCase().includes(hint))
-    ) {
-      return normalizedText;
-    }
-
-    if (!Array.isArray(option?.ingredients) || option.ingredients.length === 0) {
-      return '';
-    }
-
-    const names = option.ingredients
-      .map(getLocalizedIngredientName)
-      .filter(Boolean)
-      .join(', ');
-
-    const mainIngredient = getLocalizedIngredientName(option.ingredients[0]) || names;
-    return t('plannerPage.generatedCookingMethod', { ingredients: names, mainIngredient });
-  };
-
   function getLocalizedIngredientName(ingredient) {
     const matchedFood = foodOptions.find((food) => String(food.id) === String(ingredient?.foodItemId));
     return getLocalizedName(matchedFood || ingredient, i18n.language);
@@ -409,6 +373,16 @@ function Planner() {
     return t('plannerPage.generatedDishName', { ingredients: ingredientNames.join(', ') });
   };
 
+  const getPreparationSteps = (option) => {
+    if (Array.isArray(option?.preparationSteps) && option.preparationSteps.length > 0) {
+      return option.preparationSteps.map((step) => String(step || '').trim()).filter(Boolean);
+    }
+    if (option?.preparation) {
+      return [String(option.preparation).trim()].filter(Boolean);
+    }
+    return [];
+  };
+
   function getRecipeDisplayName(recipe) {
     const originalName = String(recipe?.name || '').trim();
     if (textMatchesLanguage(originalName, i18n.language)) return originalName;
@@ -429,7 +403,6 @@ function Planner() {
       recipeId: getRecipeId(recipe),
       name: recipe.name,
       description: recipe.description || '',
-      cookingMethod: recipe.description || '',
       servings: Number(recipe.servings) || 1,
       amount: '',
       servingSizeG: servingSizeG || 100,
@@ -513,7 +486,6 @@ function Planner() {
       }
       return [...current, name];
     });
-    setSuggestion(null);
     setSelectedOption(null);
   };
 
@@ -532,7 +504,6 @@ function Planner() {
       }
       return [...current, name];
     });
-    setSuggestion(null);
     setSelectedOption(null);
   };
 
@@ -632,7 +603,6 @@ function Planner() {
   useEffect(() => {
     let cancelled = false;
     setError('');
-    setSuggestion(null);
     setSelectedOption(null);
     setSelectedRecipeId(null);
 
@@ -779,7 +749,6 @@ function Planner() {
         selectedActivityNames: isExerciseMode ? selectedActivityNames : [],
         dailyActivityGoalKcal: dailyActivityGoal,
         activityCaloriesBurned: Math.round(activityCaloriesToday),
-        cookingMethod: null,
         suggestionOffset: suggestionOffsets[effectiveMealType] || 0,
         locale: i18n.language,
       });
@@ -815,6 +784,10 @@ function Planner() {
     setMealSuccessPopup(null);
     try {
       const optionDisplayName = getOptionDisplayName(option);
+      const preparationSteps = getPreparationSteps(option);
+      const preparationNote = preparationSteps.length > 0
+        ? `\n${t('plannerPage.cookingMethod')}: ${preparationSteps.join(' ')}`
+        : '';
       const optionCalories = Number(option.calories) || 0;
       const fallbackMealBudgetLimit = isRecipeMode
         ? Math.round(selectedMealBudget * 1.12)
@@ -852,7 +825,7 @@ function Planner() {
         servingSizeG: Number(option.servingSizeG) || 100,
         quantity: 1,
         calories: Number(option.calories) || 0,
-        notes: getOptionCookingMethod(option) || option.description || '',
+        notes: '',
       }] : mealItems.map((item) => ({
         planDate,
         mealType: mealTypeToApi[selectedMeal] || selectedMeal.toUpperCase(),
@@ -869,7 +842,7 @@ function Planner() {
         mealType: selectedMeal.toUpperCase(),
         mealDate: planDate,
         mealTime: null,
-        notes: `${t('plannerPage.savedNotes.meal')}: ${optionDisplayName}`,
+        notes: `${t('plannerPage.savedNotes.meal')}: ${optionDisplayName}${preparationNote}`,
         items: mealItems,
       };
       const replacedMealIds = loggedMealsForSlot.map((meal) => meal.id).filter(Boolean);
@@ -878,7 +851,7 @@ function Planner() {
       }
       const mealPlanPayload = {
         name: `${selectedMealLabel} - ${planDate}`,
-        description: `${t('plannerPage.savedNotes.meal')}: ${optionDisplayName}`,
+        description: `${t('plannerPage.savedNotes.meal')}: ${optionDisplayName}${preparationNote}`,
         startDate: planDate,
         endDate: planDate,
         active: true,
@@ -1101,7 +1074,7 @@ function Planner() {
               ) : (
                 <Form.Select
                   value={selectedMeal}
-                  onChange={(e) => { setSelectedMeal(e.target.value); setSuggestion(null); setSelectedOption(null); }}
+                  onChange={(e) => { setSelectedMeal(e.target.value); setSelectedOption(null); }}
                 >
                   {mealTypes.filter(([value]) => value !== 'exercise')
                     .map(([value, labelKey]) => <option value={value} key={value}>{t(labelKey)}</option>)}
@@ -1126,7 +1099,6 @@ function Planner() {
                     className="p-0 planner-clear-foods"
                     onClick={() => {
                       setSelectedFoodNames([]);
-                      setSuggestion(null);
                       setSelectedOption(null);
                     }}
                   >
@@ -1252,7 +1224,6 @@ function Planner() {
                     className="p-0 planner-clear-foods"
                     onClick={() => {
                       setSelectedActivityNames([]);
-                      setSuggestion(null);
                       setSelectedOption(null);
                     }}
                   >
@@ -1525,12 +1496,6 @@ function Planner() {
                               </ul>
                             </div>
                           )}
-                          <div className="mb-3 p-3 rounded border bg-light">
-                            <div className="text-uppercase text-secondary small fw-semibold mb-1">
-                              {t('plannerPage.cookingMethod')}
-                            </div>
-                            <p className="small mb-0">{getOptionCookingMethod({ ...recipe, recipeId: null }) || t('plannerPage.noCookingGuide')}</p>
-                          </div>
                           <div className="quick-grid mb-3">
                             <span>{t('common.protein')}<strong>{recipe.proteinG}g</strong></span>
                             <span>{t('common.carbs')}<strong>{recipe.carbsG}g</strong></span>
@@ -1627,7 +1592,6 @@ function Planner() {
               {(suggestion.options || []).map((option, index) => {
                 const logged = isOptionLogged(option.name) || selectedOption === index;
                 const isExercise = isExerciseMode;
-                const cookingMethod = getOptionCookingMethod(option);
                 const matchedActivityType = isExercise ? findActivityTypeByName(option.name, option.activityTypeId) : null;
                 const loggedActivity = isExercise ? findLoggedActivityByName(option.name) : null;
                 const activityPreviewCalories = loggedActivity
@@ -1638,6 +1602,7 @@ function Planner() {
                 const activityDurationMinutes = loggedActivity?.durationMinutes || getActivityDurationMinutes(option);
                 const ingredientCount = Array.isArray(option.ingredients) ? option.ingredients.length : 0;
                 const optionDisplayName = isExercise ? option.name : getOptionDisplayName(option);
+                const preparationSteps = isExercise ? [] : getPreparationSteps(option);
                 const isBlockedByOtherSelection = isExercise 
                   ? (hasLoggedActivityInSlot && !logged) 
                   : selectedOption !== null;
@@ -1673,7 +1638,7 @@ function Planner() {
                         )}
                         {isExercise && (
                           <div className="d-flex flex-wrap gap-2 mb-3">
-                            <span className="text-primary small fw-semibold">
+                            <span className="text-secondary small fw-semibold">
                               {t('plannerPage.activityOptionNumber', { number: index + 1 })}
                             </span>
                             {activityDurationMinutes && (
@@ -1698,16 +1663,19 @@ function Planner() {
                             </p>
                           </div>
                         )}
-
-                        {!isExercise && cookingMethod && (
-                          <div className="mb-3 p-3 rounded border bg-light">
+                        {!isExercise && preparationSteps.length > 0 && (
+                          <div className="mb-3">
                             <div className="text-uppercase text-secondary small fw-semibold mb-1">
                               {t('plannerPage.cookingMethod')}
                             </div>
-                            <p className="small mb-0">{cookingMethod}</p>
+                            <ol className="small text-secondary ps-3 mb-0">
+                              {preparationSteps.map((step, stepIndex) => (
+                                <li key={`${option.name}-prep-${stepIndex}`}>{step}</li>
+                              ))}
+                            </ol>
                           </div>
                         )}
-                        
+
                         {!isExercise && (
                           <div className="quick-grid mb-3">
                             <span>{t('common.protein')}<strong>{option.proteinG}g</strong></span>

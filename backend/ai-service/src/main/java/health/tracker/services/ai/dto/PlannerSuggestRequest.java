@@ -24,5 +24,4 @@ public class PlannerSuggestRequest {
     private List<String> selectedFoodNames;
     private List<Integer> selectedActivityTypeIds;
     private List<String> selectedActivityNames;
-    private String cookingMethod;
 }

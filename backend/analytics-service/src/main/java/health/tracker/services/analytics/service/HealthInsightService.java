@@ -40,13 +40,14 @@ public class HealthInsightService {
     private final JdbcTemplate jdbcTemplate;
 
     @Transactional
-    public List<HealthInsightResponse> getInsights(Long userId, boolean unreadOnly) {
-        refreshTodayInsights(userId, LocalDate.now(), isVietnamese());
+    public List<HealthInsightResponse> getInsights(Long userId, boolean unreadOnly, LocalDate date) {
+        LocalDate targetDate = date == null ? LocalDate.now() : date;
+        refreshTodayInsights(userId, targetDate, isVietnamese());
 
         Locale locale = LocaleContextHolder.getLocale();
         List<HealthInsight> insights = unreadOnly
-                ? insightRepository.findByUserIdAndReadFalseOrderByCreatedAtDesc(userId)
-                : insightRepository.findByUserIdOrderByCreatedAtDesc(userId);
+                ? insightRepository.findByUserIdAndValidDateAndReadFalseOrderByCreatedAtDesc(userId, targetDate)
+                : insightRepository.findByUserIdAndValidDateOrderByCreatedAtDesc(userId, targetDate);
 
         return insights.stream()
                 .map(insight -> toResponse(insight, locale))
