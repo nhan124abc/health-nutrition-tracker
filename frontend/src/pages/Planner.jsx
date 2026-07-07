@@ -159,6 +159,44 @@ function normalizePlannerActivityLog(activity = {}) {
   };
 }
 
+function getRecipeIngredientSource(recipe = {}) {
+  if (Array.isArray(recipe.ingredients)) return recipe.ingredients;
+  if (Array.isArray(recipe.recipeIngredients)) return recipe.recipeIngredients;
+  if (Array.isArray(recipe.recipeItems)) return recipe.recipeItems;
+  if (Array.isArray(recipe.foodItems)) return recipe.foodItems;
+  if (Array.isArray(recipe.items)) return recipe.items;
+  if (Array.isArray(recipe.ingredients?.content)) return recipe.ingredients.content;
+  if (Array.isArray(recipe.ingredients?.items)) return recipe.ingredients.items;
+  return [];
+}
+
+function normalizeRecipeIngredient(ingredient = {}) {
+  const food = ingredient.food || ingredient.foodItem || ingredient.item || {};
+
+  return {
+    foodItemId: ingredient.foodItemId || ingredient.foodId || food.id || food.foodId || ingredient.id || '',
+    name: ingredient.name || ingredient.foodName || food.name || food.foodName || '',
+    nameVi: ingredient.nameVi || ingredient.foodNameVi || food.nameVi || food.foodNameVi || '',
+    servingSizeG: Number(
+      ingredient.quantityG
+      || ingredient.servingSizeG
+      || ingredient.amountG
+      || ingredient.weightG
+      || ingredient.servingSize
+      || food.servingSizeG
+    ) || 100,
+    quantity: Number(ingredient.quantity || ingredient.amount || 1) || 1,
+    calories: Number(ingredient.calories || ingredient.caloriesKcal || food.calories) || 0,
+    proteinG: Number(ingredient.proteinG || ingredient.protein || food.proteinG) || 0,
+    carbsG: Number(ingredient.carbsG || ingredient.carbs || food.carbsG) || 0,
+    fatG: Number(ingredient.fatG || ingredient.fat || food.fatG) || 0,
+  };
+}
+
+function hasRecipeIngredients(recipe = {}) {
+  return getRecipeIngredientSource(recipe).length > 0;
+}
+
 function Planner() {
   const { i18n, t } = useTranslation();
   const [profile, setProfile] = useState(null);
@@ -282,10 +320,10 @@ function Planner() {
   const selectedMealBudget = getMealBudget(calorieGoal, effectiveCaloriesConsumed, selectedMeal);
   const rankedRecipes = useMemo(() => {
     const selectedIdSet = new Set(selectedFoodIds.map(String));
-    return recipes.map((recipe, originalIndex) => ({ recipe, originalIndex })).sort((leftItem, rightItem) => {
+    return recipes.filter(hasRecipeIngredients).map((recipe, originalIndex) => ({ recipe, originalIndex })).sort((leftItem, rightItem) => {
       const left = leftItem.recipe;
       const right = rightItem.recipe;
-      const matchCount = (recipe) => (recipe.ingredients || []).filter(
+      const matchCount = (recipe) => getRecipeIngredientSource(recipe).map(normalizeRecipeIngredient).filter(
         (ingredient) => selectedIdSet.has(String(ingredient.foodItemId))
       ).length;
       const matchDifference = matchCount(right) - matchCount(left);
@@ -386,7 +424,8 @@ function Planner() {
   function getRecipeDisplayName(recipe) {
     const originalName = String(recipe?.name || '').trim();
     if (textMatchesLanguage(originalName, i18n.language)) return originalName;
-    const ingredientNames = (recipe?.ingredients || [])
+    const ingredientNames = getRecipeIngredientSource(recipe)
+      .map(normalizeRecipeIngredient)
       .map(getLocalizedIngredientName)
       .filter(Boolean)
       .slice(0, 3)
@@ -397,8 +436,8 @@ function Planner() {
   }
 
   const normalizeRecipeOption = useCallback((recipe) => {
-    const ingredients = Array.isArray(recipe.ingredients) ? recipe.ingredients : [];
-    const servingSizeG = ingredients.reduce((sum, ingredient) => sum + Number(ingredient.quantityG || ingredient.servingSizeG || 0), 0);
+    const ingredients = getRecipeIngredientSource(recipe).map(normalizeRecipeIngredient);
+    const servingSizeG = ingredients.reduce((sum, ingredient) => sum + Number(ingredient.servingSizeG || 0), 0);
     return {
       recipeId: getRecipeId(recipe),
       name: recipe.name,
@@ -412,17 +451,7 @@ function Planner() {
       fatG: Number(recipe.fatG) || 0,
       fiberG: Number(recipe.fiberG) || 0,
       sodiumMg: Number(recipe.sodiumMg) || 0,
-      ingredients: ingredients.map((ingredient) => ({
-        foodItemId: ingredient.foodItemId,
-        name: ingredient.name,
-        nameVi: ingredient.nameVi,
-        servingSizeG: Number(ingredient.quantityG || ingredient.servingSizeG) || 100,
-        quantity: 1,
-        calories: Number(ingredient.calories) || 0,
-        proteinG: Number(ingredient.proteinG) || 0,
-        carbsG: Number(ingredient.carbsG) || 0,
-        fatG: Number(ingredient.fatG) || 0,
-      })),
+      ingredients,
     };
   }, []);
 
@@ -456,7 +485,9 @@ function Planner() {
       setRecipesLoading(true);
       setError('');
       const response = await getRecipeSuggestions(params, { signal });
-      const normalizedRecipes = Array.isArray(response.data) ? response.data.map(normalizeRecipeOption) : [];
+      const normalizedRecipes = Array.isArray(response.data)
+        ? response.data.filter(hasRecipeIngredients).map(normalizeRecipeOption).filter(hasRecipeIngredients)
+        : [];
       if (recipeCacheRef.current.size >= 30) {
         recipeCacheRef.current.delete(recipeCacheRef.current.keys().next().value);
       }
@@ -1450,7 +1481,8 @@ function Planner() {
             {!recipesLoading && recipes.length > 0 && (
               <Row className="g-3">
                 {pagedRecipes.map((recipe, index) => {
-                  const matchedIngredientCount = recipe.ingredients.filter((ingredient) =>
+                  const recipeIngredients = getRecipeIngredientSource(recipe).map(normalizeRecipeIngredient);
+                  const matchedIngredientCount = recipeIngredients.filter((ingredient) =>
                     selectedFoodIds.some((foodId) => String(foodId) === String(ingredient.foodItemId))
                   ).length;
                   const recipeId = getRecipeId(recipe);
@@ -1469,7 +1501,7 @@ function Planner() {
                           <div className="d-flex flex-wrap gap-2 mb-3">
                             <span className="text-info small fw-semibold">{t('plannerPage.savedRecipe')}</span>
                             <span className="text-secondary small">
-                              {t('plannerPage.ingredientCount', { count: recipe.ingredients.length })}
+                              {t('plannerPage.ingredientCount', { count: recipeIngredients.length })}
                             </span>
                             <span className="text-secondary small">
                               {recipe.servings > 1
@@ -1482,13 +1514,13 @@ function Planner() {
                               </span>
                             )}
                           </div>
-                          {recipe.ingredients.length > 0 && (
+                          {recipeIngredients.length > 0 && (
                             <div className="mb-3">
                               <div className="text-uppercase text-secondary small fw-semibold mb-1">
                                 {t('plannerPage.ingredients')}
                               </div>
                               <ul className="small text-secondary ps-3 mb-0">
-                                {recipe.ingredients.map((ingredient) => (
+                                {recipeIngredients.map((ingredient) => (
                                   <li key={`${recipeId}-${ingredient.foodItemId || ingredient.name}`}>
                                     {getLocalizedIngredientName(ingredient)} - {Math.round(ingredient.servingSizeG)}g
                                   </li>
