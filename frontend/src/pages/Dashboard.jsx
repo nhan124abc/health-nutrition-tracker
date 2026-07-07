@@ -257,11 +257,15 @@ function Dashboard() {
 
     setInsightsLoading(true);
     setInsightsError(false);
-    getHealthInsights({ unreadOnly: false })
+    getHealthInsights({ unreadOnly: false, date: getTodayDate() })
       .then((response) => {
         if (!isMounted) return;
         const data = response.data?.data ?? response.data ?? [];
-        setInsights(Array.isArray(data) ? data.slice(0, 5) : []);
+        const today = getTodayDate();
+        const todayInsights = Array.isArray(data)
+          ? data.filter((insight) => insight.validDate === today)
+          : [];
+        setInsights(todayInsights.slice(0, 5));
       })
       .catch((error) => {
         console.error('[Dashboard] Error loading health insights:', error);
@@ -454,9 +458,6 @@ function Dashboard() {
                   <span className="dashboard-insight-icon" aria-hidden="true"><FaLightbulb /></span>
                   <Card.Title className="fw-bold mb-0">{t('dashboardPage.insights.title')}</Card.Title>
                 </div>
-                <Button as={Link} to="/health-insights" variant="link" className="dashboard-insight-view-all">
-                  {t('dashboardPage.insights.viewAll')}
-                </Button>
               </div>
 
               {insightsLoading ? (

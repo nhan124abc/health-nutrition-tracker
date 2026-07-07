@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -42,6 +43,7 @@ public class AiChatService {
     private final ObjectMapper objectMapper;
     private final NutritionCatalogClient nutritionCatalogClient;
     private final ActivityCatalogClient activityCatalogClient;
+    private final UserContextClient userContextClient;
 
     public AiChatService(
             ObjectProvider<ChatClient.Builder> chatClientBuilderProvider,
@@ -50,6 +52,7 @@ public class AiChatService {
             ObjectMapper objectMapper,
             NutritionCatalogClient nutritionCatalogClient,
             ActivityCatalogClient activityCatalogClient,
+            UserContextClient userContextClient,
             @Value("${spring.ai.openai.chat.options.model:llama-3.1-8b-instant}") String model,
             @Value("${ai.limits.guest-daily:5}") int guestDailyLimit,
             @Value("${ai.limits.user-daily:50}") int userDailyLimit) {
@@ -59,6 +62,7 @@ public class AiChatService {
         this.objectMapper = objectMapper;
         this.nutritionCatalogClient = nutritionCatalogClient;
         this.activityCatalogClient = activityCatalogClient;
+        this.userContextClient = userContextClient;
         this.model = model;
         this.guestDailyLimit = guestDailyLimit;
         this.userDailyLimit = userDailyLimit;
@@ -83,10 +87,13 @@ public class AiChatService {
                 .build());
 
         List<ChatMessage> recentMessages = recentMessages(owner, 10);
+        String userHealthSnapshot = userContextClient.buildSnapshot(owner.userId());
 
         String systemPrompt = """
                 You are the AI assistant inside Health Nutrition Tracker.
                 Give concise, practical answers about nutrition, activity, body metrics, and app usage.
+                Personalize advice using the saved user health snapshot when it is available.
+                If saved data is missing or unknown, say what information is missing instead of inventing numbers.
                 Do not provide medical diagnosis. Encourage users to consult a healthcare professional for medical concerns.
                 """;
 
@@ -95,6 +102,9 @@ public class AiChatService {
                 Guest id: %s
                 Username/email: %s
                 Optional app context: %s
+                Saved user health snapshot:
+                %s
+
                 Recent conversation:
                 %s
 
@@ -105,6 +115,7 @@ public class AiChatService {
                 owner.guestId() == null ? "none" : owner.guestId(),
                 username == null || username.isBlank() ? "unknown" : username,
                 request.getContext() == null || request.getContext().isBlank() ? "none" : request.getContext(),
+                userHealthSnapshot,
                 formatRecentMessages(recentMessages),
                 request.getMessage()
         );
@@ -305,13 +316,13 @@ public class AiChatService {
                     .call()
                     .content();
 
-            String normalized = validateAndNormalizePlan(raw, budget, calorieBuffer, context, foods);
+            String normalized = validateAndNormalizePlan(raw, budget, calorieBuffer, context, foods, builder);
             log.info("Generated planner suggestions with AI model={} for userId={}, budget={}",
                     model, userId, budget);
             return normalized;
         } catch (Exception exception) {
             try {
-                return generateCatalogFoodPlan(context, budget, calorieBuffer);
+                return generateCatalogFoodPlan(context, budget, calorieBuffer, builder);
             } catch (Exception fallbackException) {
                 log.warn("Nutrition catalog fallback failed after AI planner failure: {}", fallbackException.getMessage());
             }
@@ -325,6 +336,11 @@ public class AiChatService {
     }
 
     private String generateCatalogFoodPlan(PlannerSuggestRequest context, int budget, int calorieBuffer) throws Exception {
+        return generateCatalogFoodPlan(context, budget, calorieBuffer, null);
+    }
+
+    private String generateCatalogFoodPlan(PlannerSuggestRequest context, int budget, int calorieBuffer,
+                                           ChatClient.Builder builder) throws Exception {
         List<NutritionCatalogClient.FoodCandidate> foods = getPlannerFoodCatalog(context);
         if (foods.size() < 2) {
             throw new IllegalStateException("Nutrition database has too few foods");
@@ -377,7 +393,7 @@ public class AiChatService {
                 throw new IllegalStateException("Not enough catalog foods to build meal suggestion");
             }
 
-            addCatalogMealOption(options, selected, budget, context, optionIndex);
+            addCatalogMealOption(options, selected, budget, context, optionIndex, builder);
         }
 
         return objectMapper.writeValueAsString(result);
@@ -387,7 +403,8 @@ public class AiChatService {
                                       List<NutritionCatalogClient.FoodCandidate> foods,
                                       int budget,
                                       PlannerSuggestRequest context,
-                                      int optionIndex) {
+                                      int optionIndex,
+                                      ChatClient.Builder builder) {
         BigDecimal baseCalories = foods.stream()
                 .map(NutritionCatalogClient.FoodCandidate::calories)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -396,8 +413,16 @@ public class AiChatService {
                 .max(BigDecimal.valueOf(0.5));
 
         ObjectNode option = options.addObject();
-        option.put("name", buildDishName(foods, optionIndex));
         option.put("amount", "1 phần");
+
+        String dishName = buildDishName(foods, optionIndex);
+        option.put("name", dishName);
+        List<String> foodNames = foods.stream().map(NutritionCatalogClient.FoodCandidate::name).toList();
+        List<String> preparationSteps = buildAiPreparationSteps(builder, dishName, foodNames)
+                .orElseGet(() -> buildPreparationStepsFromFoodNames(foodNames));
+        option.put("preparation", String.join(" ", preparationSteps));
+        ArrayNode preparationStepsNode = option.putArray("preparationSteps");
+        preparationSteps.forEach(preparationStepsNode::add);
 
         BigDecimal totalServing = BigDecimal.ZERO;
         BigDecimal totalCalories = BigDecimal.ZERO;
@@ -510,6 +535,8 @@ public class AiChatService {
                   "options": [
                     {
                       "name": "dish name in Vietnamese",
+                      "preparation": "2-3 sentence cooking method in Vietnamese",
+                      "preparationSteps": ["short step 1", "short step 2", "short step 3"],
                       "ingredients": [
                         {"foodItemId":1, "portionRatio":1.0},
                         {"foodItemId":2, "portionRatio":0.7}
@@ -517,6 +544,8 @@ public class AiChatService {
                     },
                     {
                       "name": "another dish name in Vietnamese",
+                      "preparation": "2-3 sentence cooking method in Vietnamese",
+                      "preparationSteps": ["short step 1", "short step 2", "short step 3"],
                       "ingredients": [
                         {"foodItemId":3, "portionRatio":1.0},
                         {"foodItemId":4, "portionRatio":0.5}
@@ -525,6 +554,7 @@ public class AiChatService {
                   ]
                 }
                 Use only ids from the catalog. Do not invent food nutrition values.
+                The preparation and preparationSteps must use only the selected ingredients and simple healthy methods such as boiling, steaming, sauteing with little oil, grilling, or mixing.
                 Each dish must have 2 to %d ingredients.
                 If required selected food ids is not empty, every dish must include all required selected food ids.
                 The dish name may combine the selected ingredients, for example "Com ga ap chao voi bong cai".
@@ -550,7 +580,8 @@ public class AiChatService {
     }
 
     private String validateAndNormalizePlan(String raw, int budget, int calorieBuffer, PlannerSuggestRequest context,
-                                            List<NutritionCatalogClient.FoodCandidate> foods) throws Exception {
+                                            List<NutritionCatalogClient.FoodCandidate> foods,
+                                            ChatClient.Builder builder) throws Exception {
         if (raw == null || raw.isBlank()) throw new IllegalArgumentException("AI returned an empty response");
         String json = raw.trim().replaceFirst("^```(?:json)?\\s*", "").replaceFirst("\\s*```$", "");
         JsonNode parsed = objectMapper.readTree(json);
@@ -605,6 +636,9 @@ public class AiChatService {
             ObjectNode normalized = normalizedOptions.addObject();
             normalized.put("name", name);
             normalized.put("amount", "1 phần");
+            String preparation = normalizePreparation(option);
+            ArrayNode preparationSteps = normalized.putArray("preparationSteps");
+            normalizePreparationSteps(option).forEach(preparationSteps::add);
 
             BigDecimal totalServing = BigDecimal.ZERO;
             BigDecimal totalCalories = BigDecimal.ZERO;
@@ -614,10 +648,12 @@ public class AiChatService {
             BigDecimal totalFiber = BigDecimal.ZERO;
             BigDecimal totalSodium = BigDecimal.ZERO;
             ArrayNode normalizedIngredients = normalized.putArray("ingredients");
+            List<String> ingredientNames = new java.util.ArrayList<>();
 
             for (JsonNode ingredient : ingredients) {
                 long foodId = ingredient.path("foodItemId").asLong(-1);
                 NutritionCatalogClient.FoodCandidate food = foodById.get(foodId);
+                ingredientNames.add(food.name());
                 BigDecimal portionRatio = decimal(ingredient, "portionRatio", BigDecimal.ONE);
                 BigDecimal ingredientScale = portionRatio.multiply(dishScale);
                 BigDecimal servingSize = food.servingSizeG().multiply(ingredientScale).setScale(0, RoundingMode.HALF_UP);
@@ -649,6 +685,13 @@ public class AiChatService {
                 totalSodium = totalSodium.add(sodium);
             }
 
+            if (preparation == null) {
+                List<String> fallbackSteps = buildAiPreparationSteps(builder, name, ingredientNames)
+                        .orElseGet(() -> buildPreparationStepsFromFoodNames(ingredientNames));
+                preparation = String.join(" ", fallbackSteps);
+                fallbackSteps.forEach(preparationSteps::add);
+            }
+            normalized.put("preparation", preparation);
             normalized.put("servingSizeG", totalServing);
             normalized.put("calories", totalCalories);
             normalized.put("proteinG", totalProtein);
@@ -695,6 +738,18 @@ public class AiChatService {
             option.put("recipeId", recipe.id());
             option.put("name", recipe.name());
             option.put("description", recipe.description());
+            List<String> fallbackSteps = buildPreparationStepsFromFoodNames(
+                    recipe.ingredients().stream()
+                            .map(NutritionCatalogClient.RecipeIngredientCandidate::name)
+                            .toList());
+            String preparation = normalize(recipe.description());
+            option.put("preparation", preparation != null ? preparation : String.join(" ", fallbackSteps));
+            ArrayNode preparationSteps = option.putArray("preparationSteps");
+            if (preparation != null) {
+                preparationSteps.add(preparation);
+            } else {
+                fallbackSteps.forEach(preparationSteps::add);
+            }
             option.put("amount", recipe.servings() <= 1 ? "1 phần" : recipe.servings() + " phần");
             option.put("servingSizeG", recipe.ingredients().stream()
                     .map(NutritionCatalogClient.RecipeIngredientCandidate::quantityG)
@@ -817,6 +872,125 @@ public class AiChatService {
                 .filter(value -> value > 0)
                 .distinct()
                 .toList();
+    }
+
+    private String normalizePreparation(JsonNode option) {
+        String preparation = normalize(option.path("preparation").asText(""));
+        if (preparation != null) {
+            return preparation;
+        }
+
+        List<String> steps = normalizePreparationSteps(option);
+        return String.join(" ", steps);
+    }
+
+    private List<String> normalizePreparationSteps(JsonNode option) {
+        List<String> steps = new java.util.ArrayList<>();
+        JsonNode node = option.path("preparationSteps");
+        if (node.isArray()) {
+            for (JsonNode step : node) {
+                String normalized = normalize(step.asText(""));
+                if (normalized != null && normalized.length() <= 220) {
+                    steps.add(normalized);
+                }
+            }
+        }
+
+        if (!steps.isEmpty()) {
+            return steps.stream().limit(4).toList();
+        }
+
+        return List.of();
+    }
+
+    private List<String> buildPreparationStepsFromFoodNames(List<String> foodNames) {
+        List<String> names = foodNames == null ? List.of() : foodNames.stream()
+                .map(this::cleanFoodName)
+                .filter(name -> !name.isBlank())
+                .distinct()
+                .limit(4)
+                .toList();
+        if (names.isEmpty()) {
+            return List.of(
+                    "So che nguyen lieu va can dinh luong theo khau phan.",
+                    "Che bien bang cach hap, luoc, ap chao it dau hoac tron don gian.",
+                    "Nem nhe va dung ngay khi con am de giu huong vi."
+            );
+        }
+
+        String main = names.get(0);
+        String others = names.size() > 1 ? String.join(", ", names.subList(1, names.size())) : "";
+        List<String> steps = new java.util.ArrayList<>();
+        steps.add("So che " + String.join(", ", names) + " va can dung khau phan goi y.");
+        steps.add("Lam chin " + main + " bang cach luoc, hap hoac ap chao it dau den khi vua chin.");
+        if (!others.isBlank()) {
+            steps.add("Them " + others + " vao cuoi qua trinh nau de giu do tuoi va dinh duong.");
+        }
+        steps.add("Tron deu, nem nhe voi gia vi don gian va dung ngay.");
+        return steps;
+    }
+
+    private Optional<List<String>> buildAiPreparationSteps(ChatClient.Builder builder, String dishName, List<String> foodNames) {
+        if (builder == null) {
+            return Optional.empty();
+        }
+
+        List<String> names = foodNames == null ? List.of() : foodNames.stream()
+                .map(this::cleanFoodName)
+                .filter(name -> !name.isBlank())
+                .distinct()
+                .limit(6)
+                .toList();
+        if (names.isEmpty()) {
+            return Optional.empty();
+        }
+
+        String prompt = """
+                Write cooking instructions in Vietnamese for this meal using only the provided food items.
+                Dish name: %s
+                Food items: %s
+
+                Return JSON only:
+                {
+                  "preparationSteps": [
+                    "short practical step 1",
+                    "short practical step 2",
+                    "short practical step 3"
+                  ]
+                }
+                Do not add ingredients that are not in the food items list.
+                Prefer healthy methods: boiling, steaming, grilling, air-frying, sauteing with little oil, or mixing.
+                Keep each step under 160 characters.
+                """.formatted(dishName, names);
+
+        try {
+            String raw = builder
+                    .defaultSystem("You write concise Vietnamese cooking instructions. Return JSON only, without markdown.")
+                    .build()
+                    .prompt()
+                    .user(prompt)
+                    .call()
+                    .content();
+            JsonNode root = objectMapper.readTree(raw.trim()
+                    .replaceFirst("^```(?:json)?\\s*", "")
+                    .replaceFirst("\\s*```$", ""));
+            JsonNode node = root.path("preparationSteps");
+            if (!node.isArray()) {
+                return Optional.empty();
+            }
+
+            List<String> steps = new java.util.ArrayList<>();
+            for (JsonNode step : node) {
+                String normalized = normalize(step.asText(""));
+                if (normalized != null && normalized.length() <= 220) {
+                    steps.add(normalized);
+                }
+            }
+            return steps.isEmpty() ? Optional.empty() : Optional.of(steps.stream().limit(4).toList());
+        } catch (Exception exception) {
+            log.warn("AI preparation generation failed; using local preparation fallback: {}", exception.getMessage());
+            return Optional.empty();
+        }
     }
 
     private String buildDishName(List<NutritionCatalogClient.FoodCandidate> foods, int optionIndex) {

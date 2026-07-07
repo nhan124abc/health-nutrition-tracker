@@ -143,9 +143,11 @@ public class AnalyticsController {
     @GetMapping("/insights")
     public ResponseEntity<List<HealthInsightResponse>> getInsights(
             @RequestHeader("X-User-Id") Long userId,
-            @RequestParam(defaultValue = "false") boolean unreadOnly) {
+            @RequestParam(defaultValue = "false") boolean unreadOnly,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
-        return ResponseEntity.ok(healthInsightService.getInsights(userId, unreadOnly));
+        return ResponseEntity.ok(healthInsightService.getInsights(userId, unreadOnly, date));
     }
 
     @PutMapping("/insights/{id}/read")

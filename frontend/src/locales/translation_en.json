@@ -1447,6 +1447,7 @@
     "chooseOption": "Choose this option",
     "chooseRecipe": "Add recipe to meal",
     "ingredients": "Ingredients",
+    "cookingMethod": "Cooking method",
     "ingredientCount": "{{count}} ingredients",
     "savedRecipe": "Saved recipe",
     "aiGenerated": "New suggestion",
@@ -1488,7 +1489,6 @@
       "activityPlan": "Activity plan",
       "activityPlanDescription": "Plan workout suggestions from activity data."
     },
-    "defaultCookingMethod": "Prepare the ingredients, cook the items that need heat, then combine and season lightly: {{ingredients}}.",
     "generatedDishName": "Dish with {{ingredients}}",
     "activitySuggestionsTitle": "Activity suggestions for this date",
     "activitySuggestionsDescription": "Combining exercise with your plan can help you reach your goal sooner.",

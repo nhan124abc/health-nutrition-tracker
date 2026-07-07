@@ -373,6 +373,16 @@ function Planner() {
     return t('plannerPage.generatedDishName', { ingredients: ingredientNames.join(', ') });
   };
 
+  const getPreparationSteps = (option) => {
+    if (Array.isArray(option?.preparationSteps) && option.preparationSteps.length > 0) {
+      return option.preparationSteps.map((step) => String(step || '').trim()).filter(Boolean);
+    }
+    if (option?.preparation) {
+      return [String(option.preparation).trim()].filter(Boolean);
+    }
+    return [];
+  };
+
   function getRecipeDisplayName(recipe) {
     const originalName = String(recipe?.name || '').trim();
     if (textMatchesLanguage(originalName, i18n.language)) return originalName;
@@ -476,7 +486,6 @@ function Planner() {
       }
       return [...current, name];
     });
-    setSuggestion(null);
     setSelectedOption(null);
   };
 
@@ -495,7 +504,6 @@ function Planner() {
       }
       return [...current, name];
     });
-    setSuggestion(null);
     setSelectedOption(null);
   };
 
@@ -595,7 +603,6 @@ function Planner() {
   useEffect(() => {
     let cancelled = false;
     setError('');
-    setSuggestion(null);
     setSelectedOption(null);
     setSelectedRecipeId(null);
 
@@ -777,6 +784,10 @@ function Planner() {
     setMealSuccessPopup(null);
     try {
       const optionDisplayName = getOptionDisplayName(option);
+      const preparationSteps = getPreparationSteps(option);
+      const preparationNote = preparationSteps.length > 0
+        ? `\n${t('plannerPage.cookingMethod')}: ${preparationSteps.join(' ')}`
+        : '';
       const optionCalories = Number(option.calories) || 0;
       const fallbackMealBudgetLimit = isRecipeMode
         ? Math.round(selectedMealBudget * 1.12)
@@ -831,7 +842,7 @@ function Planner() {
         mealType: selectedMeal.toUpperCase(),
         mealDate: planDate,
         mealTime: null,
-        notes: `${t('plannerPage.savedNotes.meal')}: ${optionDisplayName}`,
+        notes: `${t('plannerPage.savedNotes.meal')}: ${optionDisplayName}${preparationNote}`,
         items: mealItems,
       };
       const replacedMealIds = loggedMealsForSlot.map((meal) => meal.id).filter(Boolean);
@@ -840,7 +851,7 @@ function Planner() {
       }
       const mealPlanPayload = {
         name: `${selectedMealLabel} - ${planDate}`,
-        description: `${t('plannerPage.savedNotes.meal')}: ${optionDisplayName}`,
+        description: `${t('plannerPage.savedNotes.meal')}: ${optionDisplayName}${preparationNote}`,
         startDate: planDate,
         endDate: planDate,
         active: true,
@@ -1063,7 +1074,7 @@ function Planner() {
               ) : (
                 <Form.Select
                   value={selectedMeal}
-                  onChange={(e) => { setSelectedMeal(e.target.value); setSuggestion(null); setSelectedOption(null); }}
+                  onChange={(e) => { setSelectedMeal(e.target.value); setSelectedOption(null); }}
                 >
                   {mealTypes.filter(([value]) => value !== 'exercise')
                     .map(([value, labelKey]) => <option value={value} key={value}>{t(labelKey)}</option>)}
@@ -1088,7 +1099,6 @@ function Planner() {
                     className="p-0 planner-clear-foods"
                     onClick={() => {
                       setSelectedFoodNames([]);
-                      setSuggestion(null);
                       setSelectedOption(null);
                     }}
                   >
@@ -1214,7 +1224,6 @@ function Planner() {
                     className="p-0 planner-clear-foods"
                     onClick={() => {
                       setSelectedActivityNames([]);
-                      setSuggestion(null);
                       setSelectedOption(null);
                     }}
                   >
@@ -1593,6 +1602,7 @@ function Planner() {
                 const activityDurationMinutes = loggedActivity?.durationMinutes || getActivityDurationMinutes(option);
                 const ingredientCount = Array.isArray(option.ingredients) ? option.ingredients.length : 0;
                 const optionDisplayName = isExercise ? option.name : getOptionDisplayName(option);
+                const preparationSteps = isExercise ? [] : getPreparationSteps(option);
                 const isBlockedByOtherSelection = isExercise 
                   ? (hasLoggedActivityInSlot && !logged) 
                   : selectedOption !== null;
@@ -1651,6 +1661,18 @@ function Planner() {
                             <p className="text-secondary small mb-0">
                               {option.ingredients.map(getLocalizedIngredientName).join(', ')}
                             </p>
+                          </div>
+                        )}
+                        {!isExercise && preparationSteps.length > 0 && (
+                          <div className="mb-3">
+                            <div className="text-uppercase text-secondary small fw-semibold mb-1">
+                              {t('plannerPage.cookingMethod')}
+                            </div>
+                            <ol className="small text-secondary ps-3 mb-0">
+                              {preparationSteps.map((step, stepIndex) => (
+                                <li key={`${option.name}-prep-${stepIndex}`}>{step}</li>
+                              ))}
+                            </ol>
                           </div>
                         )}
 

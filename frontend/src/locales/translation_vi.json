@@ -960,6 +960,7 @@
     "chooseOption": "Chọn phương án này",
     "chooseRecipe": "Thêm công thức vào bữa ăn",
     "ingredients": "Nguyên liệu",
+    "cookingMethod": "Cách chế biến",
     "ingredientCount": "{{count}} nguyên liệu",
     "savedRecipe": "Công thức có sẵn",
     "aiGenerated": "Gợi ý mới",
@@ -1001,7 +1002,6 @@
       "activityPlan": "Kế hoạch vận động",
       "activityPlanDescription": "Lập gợi ý bài tập từ dữ liệu hoạt động."
     },
-    "defaultCookingMethod": "Sơ chế nguyên liệu, nấu chín các phần cần làm nóng, sau đó kết hợp và nêm nhẹ: {{ingredients}}.",
     "generatedDishName": "Món kết hợp {{ingredients}}",
     "activitySuggestionsTitle": "Gợi ý hoạt động vận động cho ngày này",
     "activitySuggestionsDescription": "Kết hợp tập luyện giúp bạn đạt mục tiêu nhanh hơn.",

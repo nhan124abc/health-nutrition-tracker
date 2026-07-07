@@ -15,6 +15,10 @@ public interface HealthInsightRepository extends JpaRepository<HealthInsight, Lo
 
     List<HealthInsight> findByUserIdAndReadFalseOrderByCreatedAtDesc(Long userId);
 
+    List<HealthInsight> findByUserIdAndValidDateOrderByCreatedAtDesc(Long userId, LocalDate validDate);
+
+    List<HealthInsight> findByUserIdAndValidDateAndReadFalseOrderByCreatedAtDesc(Long userId, LocalDate validDate);
+
     boolean existsByUserIdAndValidDate(Long userId, LocalDate validDate);
 
     @Modifying
