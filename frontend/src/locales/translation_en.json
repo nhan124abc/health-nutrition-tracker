@@ -1004,9 +1004,9 @@
     "loadError": "Unable to load report data.",
     "partialLoadError": "Some report data could not be loaded.",
     "title": "Reports & Statistics",
-    "daily": "By day",
-    "weekly": "By week",
-    "monthly": "By month",
+    "daily": "Day",
+    "weekly": "Week",
+    "monthly": "Month",
     "caloriesTitle": "Calories in/out",
     "macroTitle": "Macro trend",
     "metrics": {

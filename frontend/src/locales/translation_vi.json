@@ -517,9 +517,9 @@
     "loadError": "Không thể tải dữ liệu báo cáo.",
     "partialLoadError": "Một phần dữ liệu báo cáo chưa tải được.",
     "title": "Báo cáo & thống kê",
-    "daily": "Theo ngày",
-    "weekly": "Theo tuần",
-    "monthly": "Theo tháng",
+    "daily": "Ngày",
+    "weekly": "Tuần",
+    "monthly": "Tháng",
     "caloriesTitle": "Calories in/out",
     "macroTitle": "Macro trend",
     "metrics": {
