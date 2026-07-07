@@ -46,35 +46,6 @@ function getWeekStart(weekValue) {
   return `${januaryFourth.getUTCFullYear()}-${String(januaryFourth.getUTCMonth() + 1).padStart(2, '0')}-${String(januaryFourth.getUTCDate()).padStart(2, '0')}`;
 }
 
-function getDateRange(range, selectedDate, selectedWeek, selectedMonth) {
-  if (range === 'daily') return [selectedDate];
-
-  const start = range === 'weekly'
-    ? new Date(`${getWeekStart(selectedWeek)}T12:00:00`)
-    : new Date(`${selectedMonth}-01T12:00:00`);
-  const periodEnd = new Date(start);
-
-  if (range === 'weekly') {
-    periodEnd.setDate(periodEnd.getDate() + 6);
-  } else {
-    periodEnd.setMonth(periodEnd.getMonth() + 1, 0);
-  }
-
-  const today = new Date(`${toLocalDate(new Date())}T12:00:00`);
-  const end = periodEnd > today ? today : periodEnd;
-  if (start > end) return [];
-
-  const dates = [];
-  const cursor = new Date(start);
-
-  while (cursor <= end) {
-    dates.push(toLocalDate(cursor));
-    cursor.setDate(cursor.getDate() + 1);
-  }
-
-  return dates;
-}
-
 function average(values) {
   if (values.length === 0) {
     return 0;
@@ -99,9 +70,6 @@ function calculateStreak(days) {
 function Reports() {
   const { i18n, t } = useTranslation();
   const [range, setRange] = useState('daily');
-  const [selectedDate, setSelectedDate] = useState(() => toLocalDate(new Date()));
-  const [selectedWeek, setSelectedWeek] = useState(() => getIsoWeekValue(new Date()));
-  const [selectedMonth, setSelectedMonth] = useState(() => toLocalDate(new Date()).slice(0, 7));
   const [days, setDays] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -113,7 +81,41 @@ function Reports() {
       setLoading(true);
       setLoadError('');
 
-      const dates = getDateRange(range, selectedDate, selectedWeek, selectedMonth);
+      const today = new Date();
+      const selectedDate = toLocalDate(today);
+      const selectedWeek = getIsoWeekValue(today);
+      const selectedMonth = toLocalDate(today).slice(0, 7);
+      const dates = range === 'daily'
+        ? [selectedDate]
+        : range === 'weekly'
+          ? (() => {
+              const start = new Date(`${getWeekStart(selectedWeek)}T12:00:00`);
+              const end = new Date(start);
+              end.setDate(end.getDate() + 6);
+              const result = [];
+              const cursor = new Date(start);
+
+              while (cursor <= end) {
+                result.push(toLocalDate(cursor));
+                cursor.setDate(cursor.getDate() + 1);
+              }
+
+              return result;
+            })()
+          : (() => {
+              const start = new Date(`${selectedMonth}-01T12:00:00`);
+              const end = new Date(start);
+              end.setMonth(end.getMonth() + 1, 0);
+              const result = [];
+              const cursor = new Date(start);
+
+              while (cursor <= end) {
+                result.push(toLocalDate(cursor));
+                cursor.setDate(cursor.getDate() + 1);
+              }
+
+              return result;
+            })();
       let response;
 
       if (range === 'daily') {
@@ -163,7 +165,7 @@ function Reports() {
     return () => {
       isMounted = false;
     };
-  }, [range, selectedDate, selectedWeek, selectedMonth, t]);
+  }, [range, t]);
 
   const labelFormatter = useMemo(
     () => new Intl.DateTimeFormat(i18n.language, range === 'weekly'
@@ -229,33 +231,6 @@ function Reports() {
             <option value="weekly">{t('reportsPage.weekly')}</option>
             <option value="monthly">{t('reportsPage.monthly')}</option>
           </Form.Select>
-          {range === 'daily' && (
-            <Form.Control
-              className="page-date-input"
-              type="date"
-              value={selectedDate}
-              max={toLocalDate(new Date())}
-              onChange={(event) => setSelectedDate(event.target.value)}
-            />
-          )}
-          {range === 'weekly' && (
-            <Form.Control
-              className="page-date-input"
-              type="week"
-              value={selectedWeek}
-              max={getIsoWeekValue(new Date())}
-              onChange={(event) => setSelectedWeek(event.target.value)}
-            />
-          )}
-          {range === 'monthly' && (
-            <Form.Control
-              className="page-date-input"
-              type="month"
-              value={selectedMonth}
-              max={toLocalDate(new Date()).slice(0, 7)}
-              onChange={(event) => setSelectedMonth(event.target.value)}
-            />
-          )}
         </div>
       </div>
 
