@@ -764,7 +764,6 @@
     "activityCount": "Số hoạt động",
     "typeTitle": "Loại hoạt động",
     "searchPlaceholder": "Tìm kiếm danh mục hoạt động...",
-    "resultCount": "Đang hiển thị {{count}} hoạt động từ cơ sở dữ liệu.",
     "noCatalogResults": "Không tìm thấy hoạt động phù hợp.",
     "noSelection": "Chọn một hoạt động để xem chi tiết.",
     "todayCategoryTitle": "Nhóm hôm nay",

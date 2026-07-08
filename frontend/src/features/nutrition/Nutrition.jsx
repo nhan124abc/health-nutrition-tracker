@@ -19,6 +19,8 @@ import {
   normalizeFoodFromApi,
 } from './nutritionUtils';
 
+const FOOD_PAGE_SIZE = 30;
+
 function Nutrition() {
   const { i18n, t } = useTranslation();
   const [foods, setFoods] = useState([]);
@@ -26,6 +28,7 @@ function Nutrition() {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [selectedFood, setSelectedFood] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [error, setError] = useState('');
@@ -34,6 +37,19 @@ function Nutrition() {
     () => filterFoods(foods, query, category, i18n.language),
     [category, foods, i18n.language, query]
   );
+  const totalPages = Math.max(1, Math.ceil(filteredFoods.length / FOOD_PAGE_SIZE));
+  const paginatedFoods = useMemo(() => {
+    const startIndex = (currentPage - 1) * FOOD_PAGE_SIZE;
+    return filteredFoods.slice(startIndex, startIndex + FOOD_PAGE_SIZE);
+  }, [currentPage, filteredFoods]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [category, query, i18n.language]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   useEffect(() => {
     let isMounted = true;
@@ -124,13 +140,21 @@ function Nutrition() {
             <FoodCatalogCard
               categories={categories}
               category={category}
-              foods={filteredFoods}
+              currentPage={currentPage}
+              foods={paginatedFoods}
+              onPageChange={setCurrentPage}
               onCategoryChange={setCategory}
               onQueryChange={setQuery}
               onSelectFood={selectFood}
+              pageInfo={t('plannerPage.foodPageInfo', {
+                page: currentPage,
+                total: totalPages,
+                count: filteredFoods.length,
+              })}
               query={query}
               t={t}
               language={i18n.language}
+              totalPages={totalPages}
             />
           </Col>
 
