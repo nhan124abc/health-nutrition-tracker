@@ -1,5 +1,5 @@
 import { Card, Col, Form, InputGroup, Row, Table } from 'react-bootstrap';
-import { FaSearch } from 'react-icons/fa';
+import { FaArrowLeft, FaArrowRight, FaSearch } from 'react-icons/fa';
 import { getLocalizedName } from '../../../utils/localizedName';
 
 function getAlternateName(item = {}, language = '') {
@@ -14,13 +14,17 @@ function getAlternateName(item = {}, language = '') {
 function FoodCatalogCard({
   category,
   categories,
+  currentPage,
   foods,
+  onPageChange,
   onCategoryChange,
   onQueryChange,
   onSelectFood,
+  pageInfo,
   query,
   t,
   language,
+  totalPages,
 }) {
   return (
     <Card className="border-0 shadow-sm">
@@ -72,7 +76,33 @@ function FoodCatalogCard({
             </tbody>
           </Table>
         </div>
-        <div className="small text-secondary mt-3">{t('nutritionPage.resultCount', { count: foods.length })}</div>
+        <div className="d-flex flex-column align-items-center justify-content-center gap-2 mt-3">
+          <div className="d-flex align-items-center justify-content-center gap-2">
+            <button
+              type="button"
+              className="btn pagination-arrow-btn"
+              aria-label={t('plannerPage.previousPage')}
+              title={t('plannerPage.previousPage')}
+              disabled={currentPage <= 1}
+              onClick={() => onPageChange((page) => Math.max(1, page - 1))}
+            >
+              <FaArrowLeft />
+            </button>
+            <span className="small text-secondary">
+              {pageInfo}
+            </span>
+            <button
+              type="button"
+              className="btn pagination-arrow-btn"
+              aria-label={t('plannerPage.nextPage')}
+              title={t('plannerPage.nextPage')}
+              disabled={currentPage >= totalPages}
+              onClick={() => onPageChange((page) => Math.min(totalPages, page + 1))}
+            >
+              <FaArrowRight />
+            </button>
+          </div>
+        </div>
       </Card.Body>
     </Card>
   );

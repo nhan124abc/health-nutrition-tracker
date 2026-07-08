@@ -12,12 +12,15 @@ import {
   normalizeActivityType,
 } from './activityUtils';
 
+const ACTIVITY_PAGE_SIZE = 30;
+
 function ActivityList() {
   const { i18n, t } = useTranslation();
   const [activities, setActivities] = useState([]);
   const [selectedActivity, setSelectedActivity] = useState(null);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -29,6 +32,19 @@ function ActivityList() {
     () => filterActivityTypes(activities, query, category, i18n.language),
     [activities, category, i18n.language, query]
   );
+  const totalPages = Math.max(1, Math.ceil(filteredActivities.length / ACTIVITY_PAGE_SIZE));
+  const paginatedActivities = useMemo(() => {
+    const startIndex = (currentPage - 1) * ACTIVITY_PAGE_SIZE;
+    return filteredActivities.slice(startIndex, startIndex + ACTIVITY_PAGE_SIZE);
+  }, [currentPage, filteredActivities]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [category, query, i18n.language]);
+
+  useEffect(() => {
+    setCurrentPage((page) => Math.min(page, totalPages));
+  }, [totalPages]);
 
   useEffect(() => {
     let isMounted = true;
@@ -86,16 +102,25 @@ function ActivityList() {
         <Row className="g-4">
           <Col lg={8}>
             <ActivityCatalogCard
-              activities={filteredActivities}
+              activities={paginatedActivities}
               categories={categories}
               category={category}
+              currentPage={currentPage}
               language={i18n.language}
               onCategoryChange={setCategory}
+              onPageChange={setCurrentPage}
               onQueryChange={setQuery}
               onSelectActivity={setSelectedActivity}
+              pageInfo={t('plannerPage.activityPageInfo', {
+                page: currentPage,
+                total: totalPages,
+                count: filteredActivities.length,
+              })}
               query={query}
+              resultCount={filteredActivities.length}
               selectedActivityId={selectedActivity?.id}
               t={t}
+              totalPages={totalPages}
             />
           </Col>
 

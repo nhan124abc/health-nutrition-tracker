@@ -1251,7 +1251,6 @@
     "activityCount": "Activities",
     "typeTitle": "Activity types",
     "searchPlaceholder": "Search activity catalog...",
-    "resultCount": "Showing {{count}} activities from the database.",
     "noCatalogResults": "No matching activities found.",
     "noSelection": "Select an activity to view details.",
     "todayCategoryTitle": "Today's groups",
