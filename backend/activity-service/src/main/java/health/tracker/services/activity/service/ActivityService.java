@@ -194,7 +194,7 @@ public class ActivityService {
         BigDecimal durationHours = BigDecimal.valueOf(durationMinutes)
                 .divide(BigDecimal.valueOf(60), 4, RoundingMode.HALF_UP);
         return met.multiply(weightKg).multiply(durationHours)
-                .setScale(1, RoundingMode.HALF_UP);
+                .setScale(0, RoundingMode.HALF_UP);
     }
 
     // ─── Mapper ───────────────────────────────────────────────────────────────
@@ -205,13 +205,17 @@ public class ActivityService {
                 .activityTypeId(a.getActivityType() != null ? a.getActivityType().getId() : null)
                 .activityName(a.getActivityName())
                 .category(a.getActivityType() != null ? a.getActivityType().getCategory() : ActivityType.Category.OTHER)
-                .durationMinutes(a.getDurationMinutes()).caloriesBurned(a.getCaloriesBurned())
+                .durationMinutes(a.getDurationMinutes()).caloriesBurned(roundCalories(a.getCaloriesBurned()))
                 .notes(a.getNotes()).loggedAt(a.getLoggedAt())
                 .completed(a.isCompleted()).completedAt(a.getCompletedAt())
                 .distanceKm(a.getDistanceKm()).avgHeartRate(a.getAvgHeartRate()).maxHeartRate(a.getMaxHeartRate())
                 .sets(a.getSets()).repsPerSet(a.getRepsPerSet()).weightKg(a.getWeightKg())
                 .steps(a.getSteps()).createdAt(a.getCreatedAt())
                 .build();
+    }
+
+    private BigDecimal roundCalories(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value.setScale(0, RoundingMode.HALF_UP);
     }
 }
 

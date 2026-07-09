@@ -4,7 +4,7 @@
     "loading": "Đang tải..."
   },
   "nav": {
-    "plans": "K\u1ebf ho\u1ea1ch c\u1ee7a t\u00f4i",
+    "plans": "Kế hoạch của tôi",
     "dashboard": "Tổng quan",
     "nutrition": "Dinh dưỡng",
     "diary": "Nhật ký bữa ăn",
@@ -1111,7 +1111,7 @@
     },
     "errors": {
       "title": "Thông báo",
-      "guestCalculate": "Kh\u00f4ng th\u1ec3 t\u1ea1o k\u1ebf ho\u1ea1ch l\u00fac n\u00e0y. Vui l\u00f2ng ki\u1ec3m tra d\u1eef li\u1ec7u v\u00e0 th\u1eed l\u1ea1i.",
+      "guestCalculate": "Không thể tạo kế hoạch lúc này. Vui lòng kiểm tra dữ liệu và thử lại.",
       "loadProfile": "Không thể tải hồ sơ.",
       "calculate": "Không thể tính kế hoạch. Hãy hoàn thiện hồ sơ trước.",
       "apply": "Không thể áp dụng kế hoạch."
@@ -1255,8 +1255,8 @@
       "edit": "Chỉnh sửa",
       "approve": "Duyệt",
       "delete": "Xóa",
-      "hideAccount": "\u1ea8n t\u00e0i kho\u1ea3n",
-      "showAccount": "Hi\u1ec7n t\u00e0i kho\u1ea3n",
+      "hideAccount": "Ẩn tài khoản",
+      "showAccount": "Hiện tài khoản",
       "hideFood": "Ẩn thực phẩm",
       "showFood": "Hiện thực phẩm",
       "hideActivity": "Ẩn hoạt động",
