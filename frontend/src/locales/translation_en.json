@@ -1086,12 +1086,12 @@
       "passwordHint": "Use at least 8 characters.",
       "required": "Please fill in all password fields.",
       "passwordTooShort": "New password must be at least 8 characters.",
-    "passwordMismatch": "Password confirmation does not match.",
-    "saveError": "Unable to change password.",
-    "successTitle": "Success",
-    "success": "Password changed successfully.",
-    "saving": "Saving changes...",
-    "save": "Save changes"
+      "passwordMismatch": "Password confirmation does not match.",
+      "saveError": "Unable to change password.",
+      "successTitle": "Success",
+      "success": "Password changed successfully.",
+      "saving": "Saving changes...",
+      "save": "Save changes"
     }
   },
   "reminderNotifier": {

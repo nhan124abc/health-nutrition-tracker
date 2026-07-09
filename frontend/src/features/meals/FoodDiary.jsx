@@ -42,7 +42,11 @@ function FoodDiary() {
     () => meals.filter((meal) => meal.date === selectedDate),
     [meals, selectedDate]
   );
-  const totals = useMemo(() => getMealsTotals(dayMeals), [dayMeals]);
+  const completedMeals = useMemo(
+    () => dayMeals.filter((meal) => meal.completed),
+    [dayMeals]
+  );
+  const totals = useMemo(() => getMealsTotals(completedMeals), [completedMeals]);
 
   useEffect(() => {
     let isMounted = true;
@@ -154,7 +158,7 @@ function FoodDiary() {
         </Col>
 
         <Col lg={4}>
-          <DailyMealSummary calorieGoal={calorieGoal} mealCount={dayMeals.length} t={t} totals={totals} />
+          <DailyMealSummary calorieGoal={calorieGoal} mealCount={completedMeals.length} t={t} totals={totals} />
         </Col>
       </Row>
 

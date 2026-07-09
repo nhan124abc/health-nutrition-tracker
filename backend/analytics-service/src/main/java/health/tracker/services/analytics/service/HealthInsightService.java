@@ -634,16 +634,87 @@ public class HealthInsightService {
 
     private HealthInsightResponse toResponse(HealthInsight insight, Locale locale) {
         boolean vietnamese = locale != null && "vi".equalsIgnoreCase(locale.getLanguage());
+        String title = localizeLegacyTitle(insight.getTitle(), vietnamese);
+        String content = localizeLegacyContent(insight.getContent(), vietnamese);
         return HealthInsightResponse.builder()
                 .id(insight.getId())
                 .userId(insight.getUserId())
                 .insightType(insight.getInsightType())
-                .title(localizeLegacyTitle(insight.getTitle(), vietnamese))
-                .content(localizeLegacyContent(insight.getContent(), vietnamese))
+                .title(polishTitle(title, insight.getInsightType(), vietnamese))
+                .content(polishContent(content, insight.getInsightType(), vietnamese))
                 .read(insight.isRead())
                 .validDate(insight.getValidDate())
                 .createdAt(insight.getCreatedAt())
                 .build();
+    }
+
+    private String polishTitle(String title, HealthInsight.InsightType type, boolean vietnamese) {
+        if (title == null || title.isBlank()) {
+            return title;
+        }
+        if (vietnamese) {
+            return switch (type) {
+                case WARNING -> title.startsWith("Cần chú ý") ? title : "Cần chú ý: " + decapitalize(title);
+                case ACHIEVEMENT -> title.startsWith("Điểm tốt") ? title : "Điểm tốt: " + decapitalize(title);
+                case ACTIVITY_TIP -> title.startsWith("Gợi ý vận động") ? title : "Gợi ý vận động: " + decapitalize(title);
+                case NUTRITION_TIP -> title.startsWith("Gợi ý dinh dưỡng") ? title : "Gợi ý dinh dưỡng: " + decapitalize(title);
+                case GOAL_PROGRESS -> title.startsWith("Tiến độ") ? title : "Tiến độ: " + decapitalize(title);
+            };
+        }
+        return switch (type) {
+            case WARNING -> title.startsWith("Watch") ? title : "Watch this: " + decapitalize(title);
+            case ACHIEVEMENT -> title.startsWith("Good signal") ? title : "Good signal: " + decapitalize(title);
+            case ACTIVITY_TIP -> title.startsWith("Activity idea") ? title : "Activity idea: " + decapitalize(title);
+            case NUTRITION_TIP -> title.startsWith("Nutrition idea") ? title : "Nutrition idea: " + decapitalize(title);
+            case GOAL_PROGRESS -> title.startsWith("Progress note") ? title : "Progress note: " + decapitalize(title);
+        };
+    }
+
+    private String polishContent(String content, HealthInsight.InsightType type, boolean vietnamese) {
+        if (content == null || content.isBlank() || content.contains("Vì sao đáng chú ý:") || content.contains("Why this matters:")) {
+            return content;
+        }
+
+        String clean = ensureSentence(content);
+        if (vietnamese) {
+            return switch (type) {
+                case WARNING -> "Vì sao đáng chú ý: " + clean
+                        + " Hướng xử lý hợp lý là chọn một thay đổi nhỏ ngay hôm nay, như điều chỉnh bữa tiếp theo, uống thêm nước hoặc thêm vận động nhẹ, thay vì cố sửa tất cả cùng lúc.";
+                case NUTRITION_TIP -> "Gợi ý dựa trên dữ liệu hôm nay: " + clean
+                        + " Cách làm dễ theo là ưu tiên một lựa chọn cụ thể trong bữa kế tiếp để bạn thấy tác động ngay trên tổng calo và macro.";
+                case ACTIVITY_TIP -> "Gợi ý dựa trên nhịp vận động gần đây: " + clean
+                        + " Chỉ cần một bước nhỏ và đều, ví dụ 10-20 phút đi bộ hoặc giãn cơ, cũng đủ giúp dữ liệu tuần ổn định hơn.";
+                case GOAL_PROGRESS -> "Ý nghĩa của số liệu này: " + clean
+                        + " Nếu duy trì cách ghi nhận đều, hệ thống sẽ so sánh xu hướng chính xác hơn và gợi ý sát mục tiêu hơn.";
+                case ACHIEVEMENT -> "Điểm tích cực: " + clean
+                        + " Bạn nên giữ nhịp này thêm vài ngày để biến nó thành thói quen, vì sự đều đặn thường quan trọng hơn một ngày thật hoàn hảo.";
+            };
+        }
+
+        return switch (type) {
+            case WARNING -> "Why this matters: " + clean
+                    + " A practical next step is to make one small adjustment today, such as changing the next meal, drinking water, or adding light movement, instead of trying to fix everything at once.";
+            case NUTRITION_TIP -> "Based on today's food data: " + clean
+                    + " The easiest next move is to make one concrete choice in the next meal so you can see the effect on calories and macros.";
+            case ACTIVITY_TIP -> "Based on your recent activity pattern: " + clean
+                    + " A small consistent action, such as a 10-20 minute walk or stretching, can make the weekly trend steadier.";
+            case GOAL_PROGRESS -> "What this means: " + clean
+                    + " Keeping the logs consistent will make trend comparisons and goal suggestions more accurate.";
+            case ACHIEVEMENT -> "Positive signal: " + clean
+                    + " Keep this rhythm for a few more days; consistency usually matters more than one perfect day.";
+        };
+    }
+
+    private String ensureSentence(String value) {
+        String trimmed = value.trim();
+        return trimmed.endsWith(".") || trimmed.endsWith("!") || trimmed.endsWith("?") ? trimmed : trimmed + ".";
+    }
+
+    private String decapitalize(String value) {
+        if (value == null || value.isBlank()) {
+            return value;
+        }
+        return value.substring(0, 1).toLowerCase(Locale.ROOT) + value.substring(1);
     }
 
     private boolean isVietnamese() {
