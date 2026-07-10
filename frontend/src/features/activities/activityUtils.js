@@ -44,6 +44,14 @@ function normalizeNumber(value) {
   return value === null || value === undefined || value === '' ? '' : Number(value);
 }
 
+export function parseLocalizedNumber(value) {
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  return Number(String(value || '').trim().replace(',', '.'));
+}
+
 function emptyToNull(value) {
   return value === '' || value === null || value === undefined ? null : value;
 }
@@ -104,6 +112,9 @@ export function normalizeActivityType(type = {}) {
     description: type.description || '',
     descriptionVi: type.descriptionVi || '',
     met: Number(type.metValue || type.met || 4),
+    createdByUserId: type.createdByUserId ?? type.creatorUserId ?? null,
+    system: Boolean(type.system),
+    hidden: Boolean(type.hidden),
   };
 }
 

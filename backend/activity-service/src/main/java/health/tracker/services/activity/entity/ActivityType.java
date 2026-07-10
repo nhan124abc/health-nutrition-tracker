@@ -11,7 +11,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "activity_types", indexes = {
-        @Index(name = "idx_activity_types_category", columnList = "category")
+        @Index(name = "idx_activity_types_category", columnList = "category"),
+        @Index(name = "idx_activity_types_creator", columnList = "created_by_user_id")
 })
 @Getter
 @Setter
@@ -48,6 +49,9 @@ public class ActivityType {
     @Column(name = "is_system", nullable = false)
     @Builder.Default
     private boolean system = true;
+
+    @Column(name = "created_by_user_id")
+    private Long createdByUserId;
 
     @Column(name = "hidden", nullable = false)
     @Builder.Default

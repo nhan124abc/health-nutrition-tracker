@@ -104,7 +104,25 @@ public class FoodItemService {
     public FoodItemResponse update(Long id, FoodItemRequest request) {
         FoodItem food = foodItemRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Food item not found: " + id));
+        return updateFood(food, request);
+    }
 
+    @Transactional
+    public FoodItemResponse update(Long id, FoodItemRequest request, Long userId, String role) {
+        FoodItem food = foodItemRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Food item not found: " + id));
+
+        boolean admin = isAdmin(role);
+        boolean owner = userId != null && userId.equals(food.getCreatedByUserId());
+        if (!admin && !owner) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Only the creator can update this food item");
+        }
+
+        return updateFood(food, request);
+    }
+
+    private FoodItemResponse updateFood(FoodItem food, FoodItemRequest request) {
+        Long id = food.getId();
         if (request.getBarcode() != null &&
                 foodItemRepository.findByBarcode(request.getBarcode())
                         .filter(existing -> !existing.getId().equals(id))
@@ -152,6 +170,21 @@ public class FoodItemService {
     }
 
     @Transactional
+    public void delete(Long id, Long userId, String role) {
+        FoodItem food = foodItemRepository.findById(id)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Food item not found: " + id));
+
+        boolean admin = isAdmin(role);
+        boolean owner = userId != null && userId.equals(food.getCreatedByUserId());
+        if (!admin && !owner) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Only the creator can delete this food item");
+        }
+
+        food.setPublic(false);
+        foodItemRepository.save(food);
+    }
+
+    @Transactional
     public FoodItemResponse hide(Long id) {
         FoodItem food = foodItemRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Food item not found: " + id));
@@ -188,8 +221,14 @@ public class FoodItemService {
                 .vitaminCMg(f.getVitaminCMg()).calciumMg(f.getCalciumMg()).ironMg(f.getIronMg())
                 .imageUrl(f.getImageUrl()).verified(f.isVerified())
                 .isPublic(f.isPublic())
+                .createdByUserId(f.getCreatedByUserId())
                 .createdAt(f.getCreatedAt())
                 .build();
+    }
+
+    private boolean isAdmin(String role) {
+        String normalizedRole = role == null ? "" : role.replaceFirst("(?i)^ROLE_", "");
+        return "ADMIN".equalsIgnoreCase(normalizedRole);
     }
 }
 

@@ -113,6 +113,15 @@ public class ActivityTypeService {
 
     @Transactional
     public ActivityType create(ActivityTypeRequest request) {
+        return create(request, null, true);
+    }
+
+    @Transactional
+    public ActivityType createForUser(ActivityTypeRequest request, Long createdByUserId) {
+        return create(request, createdByUserId, false);
+    }
+
+    private ActivityType create(ActivityTypeRequest request, Long createdByUserId, boolean system) {
         String name = request.getName().trim();
         if (typeRepository.existsByNameIgnoreCase(name)) {
             throw new AppException(HttpStatus.CONFLICT, "Activity type already exists: " + name);
@@ -125,8 +134,9 @@ public class ActivityTypeService {
                 .metValue(request.getMetValue())
                 .icon(trimToNull(request.getIcon()))
                 .description(trimToNull(request.getDescription()))
-                .system(request.getSystem() == null || request.getSystem())
-                .hidden(request.getHidden() != null && request.getHidden())
+                .system(system && (request.getSystem() == null || request.getSystem()))
+                .createdByUserId(createdByUserId)
+                .hidden(system && request.getHidden() != null && request.getHidden())
                 .build();
         return typeRepository.save(type);
     }
@@ -134,6 +144,23 @@ public class ActivityTypeService {
     @Transactional
     public ActivityType update(Integer id, ActivityTypeRequest request) {
         ActivityType type = findById(id);
+        return updateType(type, request);
+    }
+
+    @Transactional
+    public ActivityType update(Integer id, ActivityTypeRequest request, Long userId, String role) {
+        ActivityType type = findById(id);
+
+        boolean admin = isAdmin(role);
+        boolean owner = userId != null && userId.equals(type.getCreatedByUserId());
+        if (!admin && !owner) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Only the creator can update this activity type");
+        }
+
+        return updateType(type, request);
+    }
+
+    private ActivityType updateType(ActivityType type, ActivityTypeRequest request) {
         String name = request.getName().trim();
         if (!type.getName().equalsIgnoreCase(name) && typeRepository.existsByNameIgnoreCase(name)) {
             throw new AppException(HttpStatus.CONFLICT, "Activity type already exists: " + name);
@@ -157,6 +184,20 @@ public class ActivityTypeService {
     @Transactional
     public void delete(Integer id) {
         ActivityType type = findById(id);
+        type.setHidden(true);
+        typeRepository.save(type);
+    }
+
+    @Transactional
+    public void delete(Integer id, Long userId, String role) {
+        ActivityType type = findById(id);
+
+        boolean admin = isAdmin(role);
+        boolean owner = userId != null && userId.equals(type.getCreatedByUserId());
+        if (!admin && !owner) {
+            throw new AppException(HttpStatus.FORBIDDEN, "Only the creator can delete this activity type");
+        }
+
         type.setHidden(true);
         typeRepository.save(type);
     }
@@ -217,5 +258,10 @@ public class ActivityTypeService {
         return categoryLabelRepository.findById(category)
                 .map(label -> label.isHidden())
                 .orElse(false);
+    }
+
+    private boolean isAdmin(String role) {
+        String normalizedRole = role == null ? "" : role.replaceFirst("(?i)^ROLE_", "");
+        return "ADMIN".equalsIgnoreCase(normalizedRole);
     }
 }

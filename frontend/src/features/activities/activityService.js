@@ -131,6 +131,18 @@ export function createActivityType(payload) {
   return api.post(activityConfig.endpoints.adminTypes, payload, withAdminAuth());
 }
 
+export function createUserActivityType(payload) {
+  return api.post(activityConfig.endpoints.createType, payload);
+}
+
+export function updateUserActivityType(id, payload) {
+  return api.put(activityConfig.endpoints.typeDetail(id), payload);
+}
+
+export function deleteUserActivityType(id) {
+  return api.delete(activityConfig.endpoints.typeDetail(id));
+}
+
 export function updateActivityType(id, payload) {
   return api.put(activityConfig.endpoints.adminTypeDetail(id), payload, withAdminAuth());
 }

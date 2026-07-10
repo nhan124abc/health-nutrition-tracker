@@ -73,6 +73,7 @@
   },
   "buttons": {
     "save": "Save",
+    "saving": "Saving...",
     "cancel": "Cancel",
     "addFood": "Add food",
     "lookup": "Lookup"
@@ -933,6 +934,9 @@
     },
     "brand": "Brand",
     "activity": "Activity",
+    "description": "Description",
+    "softDelete": "Soft delete",
+    "hardDelete": "Delete permanently",
     "duration": "Duration",
     "details": "Details",
     "date": "Date",
@@ -1214,6 +1218,8 @@
     "loadingDetail": "Loading food details...",
     "loadError": "Could not load nutrition data.",
     "detailError": "Could not load food details.",
+    "createError": "Could not add food.",
+    "requiredMetricsError": "Please enter a valid English name, serving size, calories, protein, carbs, and fat.",
     "saveError": "Could not save food.",
     "savedMessage": "Food saved successfully.",
     "updateFoodTitle": "Update food",
@@ -1223,6 +1229,8 @@
     "editAction": "Edit",
     "deleteAction": "Delete",
     "confirmDeleteFood": "Delete this food?",
+    "confirmSoftDelete": "Soft delete this food? It will be hidden from the list.",
+    "confirmHardDelete": "Permanently delete this food? The record will be removed from the system.",
     "deleteError": "Could not delete the food.",
     "actions": "Actions",
     "saving": "Saving...",
@@ -1235,9 +1243,10 @@
     "allCategories": "All categories",
     "resultCount": "Showing {{count}} results. Pagination is ready for /nutrition/foods.",
     "newFoodTitle": "Add new food",
+    "noCategory": "No category",
     "savePending": "Save food",
     "fields": {
-      "name": "Name",
+      "name": "English name",
       "nameVi": "Vietnamese name",
       "imageUrl": "Image URL",
       "servingDescription": "Serving description"
@@ -1296,6 +1305,8 @@
       "cycling": "Cycling"
     },
     "fields": {
+      "name": "English name",
+      "nameVi": "Vietnamese name",
       "activityType": "Activity type",
       "customName": "Custom name",
       "logTime": "Log time",
@@ -1321,11 +1332,17 @@
   },
   "activityListPage": {
     "title": "Activity list",
+    "addActivity": "Add activity",
     "loading": "Loading activities from the database...",
     "searchPlaceholder": "Search activities...",
     "resultCount": "Showing {{count}} activities from the database.",
     "noResults": "No matching activities found.",
-    "noSelection": "Select an activity to view details."
+    "noSelection": "Select an activity to view details.",
+    "createError": "Could not add activity.",
+    "deleteError": "Could not delete activity.",
+    "requiredMetricsError": "Please enter a valid English name, category, and MET.",
+    "confirmSoftDelete": "Soft delete this activity? It will be hidden from the list.",
+    "confirmHardDelete": "Permanently delete this activity? The record will be removed from the system."
   },
   "profilePage": {
     "title": "Health profile",
