@@ -314,7 +314,7 @@ function Nutrition() {
           <Modal.Body>
             <Row className="g-3">
               <Col md={6}>
-                <Form.Label>{t('nutritionPage.fields.name')}</Form.Label>
+                <Form.Label>{i18n.language?.startsWith('vi') ? 'Tên thực phẩm' : 'Food name'}</Form.Label>
                 <Form.Control value={createForm.name} onChange={(event) => updateCreateForm('name', event.target.value)} required />
               </Col>
               <Col md={6}>
@@ -322,7 +322,7 @@ function Nutrition() {
                 <Form.Control value={createForm.nameVi} onChange={(event) => updateCreateForm('nameVi', event.target.value)} />
               </Col>
               <Col md={6}>
-                <Form.Label>{t('common.category')}</Form.Label>
+                <Form.Label>{i18n.language?.startsWith('vi') ? 'Danh mục' : 'Category'}</Form.Label>
                 <Form.Select value={createForm.categoryId} onChange={(event) => updateCreateForm('categoryId', event.target.value)}>
                   <option value="">{t('nutritionPage.noCategory')}</option>
                   {categories.map((item) => (
@@ -331,40 +331,28 @@ function Nutrition() {
                 </Form.Select>
               </Col>
               <Col md={6}>
-                <Form.Label>{t('common.brand')}</Form.Label>
-                <Form.Control value={createForm.brand} onChange={(event) => updateCreateForm('brand', event.target.value)} />
-              </Col>
-              <Col md={4}>
-                <Form.Label>{t('common.servingSize')}</Form.Label>
+                <Form.Label>{i18n.language?.startsWith('vi') ? 'Khẩu phần (g)' : 'Serving size (g)'}</Form.Label>
                   <Form.Control inputMode="decimal" min="0.1" value={createForm.servingSize} onChange={(event) => updateCreateForm('servingSize', event.target.value)} required />
               </Col>
-              <Col md={8}>
-                <Form.Label>{t('nutritionPage.fields.servingDescription')}</Form.Label>
-                <Form.Control value={createForm.servingDescription} onChange={(event) => updateCreateForm('servingDescription', event.target.value)} />
-              </Col>
               {[
-                ['calories', t('common.calories')],
-                ['protein', t('common.protein')],
-                ['carbs', t('common.carbs')],
-                ['fat', t('common.fat')],
-                ['fiber', t('common.fiber')],
-                ['sugar', t('common.sugar')],
-                ['sodium', t('common.sodium')],
+                ['calories', 'Calories'],
+                ['protein', 'Protein (g)'],
+                ['carbs', 'Carbs (g)'],
+                ['fat', 'Fat (g)'],
+                ['fiber', 'Fiber (g)'],
+                ['sugar', 'Sugar (g)'],
+                ['sodium', 'Sodium (mg)'],
               ].map(([field, label]) => (
-                <Col md={field === 'calories' ? 4 : 2} sm={6} key={field}>
+                <Col md={4} sm={6} key={field}>
                   <Form.Label>{label}</Form.Label>
                   <Form.Control inputMode="decimal" min="0" value={createForm[field]} onChange={(event) => updateCreateForm(field, event.target.value)} required={['calories', 'protein', 'carbs', 'fat'].includes(field)} />
                 </Col>
               ))}
-              <Col md={12}>
-                <Form.Label>{t('nutritionPage.fields.imageUrl')}</Form.Label>
-                <Form.Control value={createForm.imageUrl} onChange={(event) => updateCreateForm('imageUrl', event.target.value)} />
-              </Col>
             </Row>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="outline-secondary" onClick={closeFoodModal} disabled={savingFood}>
-              {t('common.cancel')}
+              {t('common.close')}
             </Button>
             <Button variant="success" type="submit" disabled={savingFood}>
               {savingFood ? t('nutritionPage.saving') : t('common.save')}

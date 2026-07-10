@@ -38,6 +38,7 @@ function ActivityList() {
     metValue: '3.0',
     icon: '',
     description: '',
+    hidden: false,
   });
   const [error, setError] = useState('');
   const currentUser = getCurrentUser();
@@ -127,6 +128,7 @@ function ActivityList() {
         metValue,
         icon: createForm.icon.trim() || null,
         description: createForm.description.trim() || null,
+        hidden: Boolean(createForm.hidden),
       };
       const response = editingActivity
         ? await updateUserActivityType(editingActivity.id, payload)
@@ -151,6 +153,7 @@ function ActivityList() {
         metValue: '3.0',
         icon: '',
         description: '',
+        hidden: false,
       });
       setEditingActivity(null);
       setShowCreateModal(false);
@@ -184,6 +187,7 @@ function ActivityList() {
       metValue: String(activity.met || '3.0'),
       icon: activity.icon || '',
       description: activity.description || '',
+      hidden: Boolean(activity.hidden),
     });
     setShowCreateModal(true);
   };
@@ -198,6 +202,7 @@ function ActivityList() {
       metValue: '3.0',
       icon: '',
       description: '',
+      hidden: false,
     });
   };
 
@@ -244,6 +249,7 @@ function ActivityList() {
             metValue: '3.0',
             icon: '',
             description: '',
+            hidden: false,
           });
           setShowCreateModal(true);
         }}>
@@ -306,7 +312,7 @@ function ActivityList() {
           <Modal.Body>
             <Row className="g-3">
               <Col md={6}>
-                <Form.Label>{t('activityPage.fields.name')}</Form.Label>
+                <Form.Label>{i18n.language?.startsWith('vi') ? 'Tên hoạt động' : 'Activity name'}</Form.Label>
                 <Form.Control value={createForm.name} onChange={(event) => updateCreateForm('name', event.target.value)} required />
               </Col>
               <Col md={6}>
@@ -314,7 +320,7 @@ function ActivityList() {
                 <Form.Control value={createForm.nameVi} onChange={(event) => updateCreateForm('nameVi', event.target.value)} />
               </Col>
               <Col md={6}>
-                <Form.Label>{t('common.category')}</Form.Label>
+                <Form.Label>{i18n.language?.startsWith('vi') ? 'Nhóm' : 'Group'}</Form.Label>
                 <Form.Select value={createForm.category} onChange={(event) => updateCreateForm('category', event.target.value)} required>
                   {(categories.length ? categories : [
                     { id: 'cardio', name: 'CARDIO', nameVi: 'Cardio' },
@@ -332,14 +338,19 @@ function ActivityList() {
                 <Form.Control inputMode="decimal" min="0.1" max="50" value={createForm.metValue} onChange={(event) => updateCreateForm('metValue', event.target.value)} required />
               </Col>
               <Col md={12}>
-                <Form.Label>{t('common.description')}</Form.Label>
-                <Form.Control as="textarea" rows={3} value={createForm.description} onChange={(event) => updateCreateForm('description', event.target.value)} />
+                <Form.Check
+                  type="switch"
+                  id="activity-type-hidden"
+                  label={i18n.language?.startsWith('vi') ? 'Ẩn hoạt động này' : 'Hide this activity'}
+                  checked={Boolean(createForm.hidden)}
+                  onChange={(event) => updateCreateForm('hidden', event.target.checked)}
+                />
               </Col>
             </Row>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="outline-secondary" onClick={closeActivityModal} disabled={savingActivity}>
-              {t('common.cancel')}
+              {t('common.close')}
             </Button>
             <Button variant="success" type="submit" disabled={savingActivity}>
               {savingActivity ? t('activityPage.saving') : t('common.save')}

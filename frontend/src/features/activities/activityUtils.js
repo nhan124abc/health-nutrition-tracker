@@ -114,6 +114,7 @@ export function normalizeActivityType(type = {}) {
     met: Number(type.metValue || type.met || 4),
     createdByUserId: type.createdByUserId ?? type.creatorUserId ?? null,
     system: Boolean(type.system),
+    hidden: Boolean(type.hidden),
   };
 }
 
