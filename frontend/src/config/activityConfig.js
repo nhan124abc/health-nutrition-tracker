@@ -9,6 +9,8 @@ const activityConfig = {
     workoutPlanDetail: (id) => `/activities/workout-plans/${id}`,
     workoutPlanActive: (id) => `/activities/workout-plans/${id}/active`,
     listTypes: '/activities/types',
+    createType: '/activities/types',
+    typeDetail: (id) => `/activities/types/${id}`,
     adminCategories: '/activities/admin/categories',
     adminCategoryDetail: (category) => `/activities/admin/categories/${category}`,
     adminCategoryHide: (category) => `/activities/admin/categories/${category}/hide`,

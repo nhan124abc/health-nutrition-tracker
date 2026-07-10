@@ -44,7 +44,7 @@ export function createAdminFood(payload) {
 }
 
 export function updateFood(id, payload) {
-  return api.put(nutritionConfig.endpoints.foodDetail(id), payload, withAdminAuth());
+  return api.put(nutritionConfig.endpoints.foodDetail(id), payload);
 }
 
 export function updateAdminFood(id, payload) {
@@ -53,6 +53,10 @@ export function updateAdminFood(id, payload) {
 
 export function deleteFood(id) {
   return api.delete(nutritionConfig.endpoints.foodDetail(id), withAdminAuth());
+}
+
+export function deleteUserFood(id) {
+  return api.delete(nutritionConfig.endpoints.foodDetail(id));
 }
 
 export function deleteAdminFood(id) {

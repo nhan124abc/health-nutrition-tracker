@@ -93,21 +93,21 @@ public class FoodItemController {
 
     @PutMapping("/foods/{id}")
     public ResponseEntity<FoodItemResponse> update(
-            @RequestHeader("X-User-Role") String role,
+            @RequestHeader(value = "X-User-Role", required = false) String role,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PathVariable Long id,
             @Valid @RequestBody FoodItemRequest request) {
 
-        requireAdmin(role);
-        return ResponseEntity.ok(foodItemService.update(id, request));
+        return ResponseEntity.ok(foodItemService.update(id, request, userId, role));
     }
 
     @DeleteMapping("/foods/{id}")
     public ResponseEntity<Void> delete(
-            @RequestHeader("X-User-Role") String role,
+            @RequestHeader(value = "X-User-Role", required = false) String role,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @PathVariable Long id) {
 
-        requireAdmin(role);
-        foodItemService.delete(id);
+        foodItemService.delete(id, userId, role);
         return ResponseEntity.noContent().build();
     }
 

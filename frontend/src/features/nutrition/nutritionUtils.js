@@ -81,7 +81,15 @@ function normalizeNumber(value) {
 }
 
 function optionalNumber(value) {
-  return value === '' || value === null || value === undefined ? null : Number(value);
+  return value === '' || value === null || value === undefined ? null : parseLocalizedNumber(value);
+}
+
+export function parseLocalizedNumber(value) {
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  return Number(String(value || '').trim().replace(',', '.'));
 }
 
 export function extractFoodsFromApi(data) {
@@ -153,6 +161,9 @@ export function normalizeFoodFromApi(food = {}) {
     sugar: normalizeNumber(food.sugarG),
     sodium: normalizeNumber(food.sodiumMg),
     imageUrl: food.imageUrl || '',
+    createdByUserId: food.createdByUserId ?? food.creatorUserId ?? null,
+    verified: Boolean(food.verified),
+    public: food.public ?? food.isPublic ?? true,
   };
 }
 
@@ -187,12 +198,12 @@ export function mapFoodToApi(food) {
     nameVi: food.nameVi.trim() || null,
     brand: food.brand.trim() || null,
     categoryId: food.categoryId ? Number(food.categoryId) : null,
-    servingSizeG: Number(food.servingSize),
+    servingSizeG: parseLocalizedNumber(food.servingSize),
     servingDescription: food.servingDescription.trim() || null,
-    calories: Number(food.calories),
-    proteinG: Number(food.protein),
-    carbsG: Number(food.carbs),
-    fatG: Number(food.fat),
+    calories: parseLocalizedNumber(food.calories),
+    proteinG: parseLocalizedNumber(food.protein),
+    carbsG: parseLocalizedNumber(food.carbs),
+    fatG: parseLocalizedNumber(food.fat),
     fiberG: optionalNumber(food.fiber),
     sugarG: optionalNumber(food.sugar),
     sodiumMg: optionalNumber(food.sodium),

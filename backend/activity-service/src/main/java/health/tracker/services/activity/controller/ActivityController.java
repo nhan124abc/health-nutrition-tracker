@@ -174,6 +174,24 @@ public class ActivityController {
         return ResponseEntity.ok(activityTypeService.getVisibleTypes(category));
     }
 
+    @PostMapping("/types")
+    public ResponseEntity<ActivityType> createUserType(
+            @RequestHeader("X-User-Id") Long userId,
+            @Valid @RequestBody ActivityTypeRequest request) {
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(activityTypeService.createForUser(request, userId));
+    }
+
+    @PutMapping("/types/{id}")
+    public ResponseEntity<ActivityType> updateUserType(
+            @RequestHeader(value = "X-User-Role", required = false) String role,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
+            @PathVariable Integer id,
+            @Valid @RequestBody ActivityTypeRequest request) {
+
+        return ResponseEntity.ok(activityTypeService.update(id, request, userId, role));
+    }
+
     @GetMapping("/categories")
     public ResponseEntity<List<ActivityCategoryLabel>> categories() {
         return ResponseEntity.ok(categoryLabelService.list(false));
@@ -273,6 +291,16 @@ public class ActivityController {
 
         requireAdmin(role);
         activityTypeService.delete(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/types/{id}")
+    public ResponseEntity<Void> deleteUserType(
+            @RequestHeader(value = "X-User-Role", required = false) String role,
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
+            @PathVariable Integer id) {
+
+        activityTypeService.delete(id, userId, role);
         return ResponseEntity.noContent().build();
     }
 

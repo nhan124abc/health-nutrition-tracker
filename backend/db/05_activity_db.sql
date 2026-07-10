@@ -27,11 +27,13 @@ CREATE TABLE IF NOT EXISTS activity_types (
     icon        VARCHAR(50)     NULL,
     description TEXT            NULL,
     is_system   TINYINT(1)      NOT NULL DEFAULT 1 COMMENT '1 = hoạt động hệ thống, 0 = người dùng tự thêm',
+    created_by_user_id BIGINT   NULL COMMENT 'NULL = hệ thống, có giá trị = auth_db.users.id người tạo',
     hidden      TINYINT(1)      NOT NULL DEFAULT 0 COMMENT 'Ẩn loại hoạt động khỏi danh sách người dùng',
     created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
-    INDEX idx_activity_types_category (category)
+    INDEX idx_activity_types_category (category),
+    INDEX idx_activity_types_creator (created_by_user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Danh mục các loại hoạt động thể chất';
 

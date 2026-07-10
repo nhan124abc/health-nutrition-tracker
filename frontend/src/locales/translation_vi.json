@@ -73,6 +73,7 @@
   },
   "buttons": {
     "save": "Lưu",
+    "saving": "Đang lưu...",
     "cancel": "Hủy",
     "addFood": "Thêm món",
     "lookup": "Tra cứu"
@@ -124,6 +125,9 @@
     },
     "brand": "Thương hiệu",
     "activity": "Hoạt động",
+    "description": "Mô tả",
+    "softDelete": "Xóa mềm",
+    "hardDelete": "Xóa thẳng",
     "duration": "Thời lượng",
     "details": "Chi tiết",
     "date": "Ngày",
@@ -727,6 +731,8 @@
     "loadingDetail": "Đang tải chi tiết thực phẩm...",
     "loadError": "Không thể tải dữ liệu dinh dưỡng.",
     "detailError": "Không thể tải chi tiết thực phẩm.",
+    "createError": "Không thể thêm thực phẩm.",
+    "requiredMetricsError": "Vui lòng nhập tên tiếng Anh, khẩu phần, calo, đạm, tinh bột và chất béo hợp lệ.",
     "saveError": "Không thể lưu thực phẩm.",
     "savedMessage": "Đã lưu thực phẩm thành công.",
     "updateFoodTitle": "Cập nhật thực phẩm",
@@ -736,6 +742,8 @@
     "editAction": "Sửa",
     "deleteAction": "Xóa",
     "confirmDeleteFood": "Bạn có chắc muốn xóa thực phẩm này?",
+    "confirmSoftDelete": "Xóa mềm thực phẩm này? Thực phẩm sẽ bị ẩn khỏi danh sách.",
+    "confirmHardDelete": "Xóa thẳng thực phẩm này? Dữ liệu sẽ bị xóa khỏi hệ thống.",
     "deleteError": "Không thể xóa thực phẩm.",
     "actions": "Thao tác",
     "saving": "Đang lưu...",
@@ -748,9 +756,10 @@
     "allCategories": "Tất cả danh mục",
     "resultCount": "Hiển thị {{count}} kết quả.",
     "newFoodTitle": "Thêm thực phẩm mới",
+    "noCategory": "Không chọn",
     "savePending": "Lưu thực phẩm",
     "fields": {
-      "name": "Tên",
+      "name": "Tên tiếng Anh",
       "nameVi": "Tên tiếng Việt",
       "imageUrl": "URL hình ảnh",
       "servingDescription": "Mô tả khẩu phần"
@@ -809,6 +818,8 @@
       "cycling": "Cycling"
     },
     "fields": {
+      "name": "Tên tiếng Anh",
+      "nameVi": "Tên tiếng Việt",
       "activityType": "Activity type",
       "customName": "Tên custom",
       "logTime": "Thời gian log",
@@ -834,11 +845,17 @@
   },
   "activityListPage": {
     "title": "Danh sách hoạt động",
+    "addActivity": "Thêm hoạt động",
     "loading": "Đang tải hoạt động...",
     "searchPlaceholder": "Tìm kiếm hoạt động...",
     "resultCount": "Đang hiển thị {{count}} hoạt động từ cơ sở dữ liệu.",
     "noResults": "Không tìm thấy hoạt động phù hợp.",
-    "noSelection": "Chọn một hoạt động để xem chi tiết."
+    "noSelection": "Chọn một hoạt động để xem chi tiết.",
+    "createError": "Không thể thêm hoạt động.",
+    "deleteError": "Không thể xóa hoạt động.",
+    "requiredMetricsError": "Vui lòng nhập tên tiếng Anh, danh mục và MET hợp lệ.",
+    "confirmSoftDelete": "Xóa mềm hoạt động này? Hoạt động sẽ bị ẩn khỏi danh sách.",
+    "confirmHardDelete": "Xóa thẳng hoạt động này? Dữ liệu sẽ bị xóa khỏi hệ thống."
   },
   "profilePage": {
     "completion": {

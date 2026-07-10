@@ -1,4 +1,4 @@
-import { Card } from 'react-bootstrap';
+import { Button, Card } from 'react-bootstrap';
 import { getLocalizedName } from '../../../utils/localizedName';
 
 function getCategoryLabel(activity = {}, language = '') {
@@ -8,7 +8,7 @@ function getCategoryLabel(activity = {}, language = '') {
   }, language);
 }
 
-function ActivityTypeDetailCard({ activity, language, t }) {
+function ActivityTypeDetailCard({ activity, canDelete = false, canEdit = false, language, onDelete, onEdit, t }) {
   if (!activity) {
     return (
       <Card className="border-0 shadow-sm sticky-panel">
@@ -31,7 +31,23 @@ function ActivityTypeDetailCard({ activity, language, t }) {
   return (
     <Card className="border-0 shadow-sm sticky-panel">
       <Card.Body>
-        <h2 className="h4 fw-bold mb-1">{getLocalizedName(activity, language)}</h2>
+        <div className="d-flex align-items-start justify-content-between gap-3 mb-1">
+          <h2 className="h4 fw-bold mb-0">{getLocalizedName(activity, language)}</h2>
+          {(canEdit || canDelete) && (
+            <div className="d-flex flex-wrap justify-content-end gap-2">
+              {canEdit && (
+                <Button variant="outline-success" size="sm" onClick={() => onEdit?.(activity)}>
+                  {t('activityPage.editAction')}
+                </Button>
+              )}
+              {canDelete && (
+                <Button variant="outline-danger" size="sm" onClick={() => onDelete?.(activity)}>
+                  {t('activityPage.deleteAction')}
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
         <p className="text-secondary">
           {description || getCategoryLabel(activity, language)}
         </p>
