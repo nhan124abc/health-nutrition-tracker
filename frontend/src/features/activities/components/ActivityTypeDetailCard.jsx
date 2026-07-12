@@ -1,4 +1,5 @@
-import { Button, Card } from 'react-bootstrap';
+import { Card } from 'react-bootstrap';
+import CrudActions from '../../../components/CrudActions';
 import { getLocalizedName } from '../../../utils/localizedName';
 
 function getCategoryLabel(activity = {}, language = '') {
@@ -34,18 +35,12 @@ function ActivityTypeDetailCard({ activity, canDelete = false, canEdit = false, 
         <div className="d-flex align-items-start justify-content-between gap-3 mb-1">
           <h2 className="h4 fw-bold mb-0">{getLocalizedName(activity, language)}</h2>
           {(canEdit || canDelete) && (
-            <div className="d-flex flex-wrap justify-content-end gap-2">
-              {canEdit && (
-                <Button variant="outline-success" size="sm" onClick={() => onEdit?.(activity)}>
-                  {t('activityPage.editAction')}
-                </Button>
-              )}
-              {canDelete && (
-                <Button variant="outline-danger" size="sm" onClick={() => onDelete?.(activity)}>
-                  {t('activityPage.deleteAction')}
-                </Button>
-              )}
-            </div>
+            <CrudActions
+              editLabel={t('activityPage.editAction')}
+              deleteLabel={t('activityPage.deleteAction')}
+              onEdit={canEdit ? () => onEdit?.(activity) : null}
+              onDelete={canDelete ? () => onDelete?.(activity) : null}
+            />
           )}
         </div>
         <p className="text-secondary">

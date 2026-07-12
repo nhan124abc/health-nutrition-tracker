@@ -55,7 +55,7 @@ function WaterSummaryCard({
               value={goalInput}
               onChange={(event) => onGoalInputChange(event.target.value)}
             />
-            <Button variant="outline-success" onClick={onSaveGoal}>{t('common.save')}</Button>
+            <Button variant="outline-success" onClick={onSaveGoal}>{t('waterPage.saveGoal')}</Button>
           </div>
         </Form.Group>
 

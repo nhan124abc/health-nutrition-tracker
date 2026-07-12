@@ -775,6 +775,7 @@
       "linkedActivityCategoryBlocked": "This activity category cannot be deleted or hidden while activity types still exist in it."
     },
     "catalogData": {
+      "saveData": "Save data",
       "editFoodTitle": "Edit food",
       "editActivityTitle": "Edit activity",
       "foodNameLabel": "Food name",
@@ -1026,6 +1027,7 @@
     }
   },
   "waterPage": {
+    "saveGoal": "Save goal",
     "title": "Water Tracker",
     "todayTitle": "Today's water",
     "totalToday": "{{total}} / {{goal}} ml today",
@@ -1212,6 +1214,7 @@
     "completeError": "Unable to save the meal completion status."
   },
   "nutritionPage": {
+    "deleting": "Deleting food...",
     "title": "Nutrition and foods",
     "addFood": "Add food",
     "loading": "Loading nutrition data...",
@@ -1253,6 +1256,7 @@
     }
   },
   "activityPage": {
+    "deleting": "Deleting activity...",
     "title": "Daily activity logs",
     "addActivity": "Log activity",
     "listTitle": "Activity list",

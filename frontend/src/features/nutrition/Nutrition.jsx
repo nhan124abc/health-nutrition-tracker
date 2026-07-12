@@ -45,6 +45,7 @@ function Nutrition() {
   const [editingFood, setEditingFood] = useState(null);
   const [pendingDeleteFood, setPendingDeleteFood] = useState(null);
   const [deletingFood, setDeletingFood] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [savingFood, setSavingFood] = useState(false);
   const [error, setError] = useState('');
   const currentUser = getCurrentUser();
@@ -181,6 +182,9 @@ function Nutrition() {
       setCreateForm(emptyFood);
       setEditingFood(null);
       setShowCreateModal(false);
+      setSuccessMessage(editingFood
+        ? t('nutritionPage.updateSuccess', 'Đã cập nhật thực phẩm thành công.')
+        : t('nutritionPage.createSuccess', 'Đã thêm thực phẩm thành công.'));
     } catch (requestError) {
       console.error('[Nutrition] Error creating food:', requestError);
       setError(requestError.response?.data?.message || t(editingFood ? 'nutritionPage.saveError' : 'nutritionPage.createError'));
@@ -234,6 +238,7 @@ function Nutrition() {
         return foods.find((item) => String(item.id) !== String(pendingDeleteFood.id)) || null;
       });
       setPendingDeleteFood(null);
+      setSuccessMessage(t('nutritionPage.deleteSuccess', 'Đã xóa thực phẩm thành công.'));
     } catch (requestError) {
       console.error('[Nutrition] Error deleting food:', requestError);
       setError(requestError.response?.data?.message || t('nutritionPage.deleteError'));
@@ -355,7 +360,9 @@ function Nutrition() {
               {t('common.close')}
             </Button>
             <Button variant="success" type="submit" disabled={savingFood}>
-              {savingFood ? t('nutritionPage.saving') : t('common.save')}
+              {savingFood
+                ? t('nutritionPage.saving')
+                : t(editingFood ? 'nutritionPage.updateFood' : 'nutritionPage.savePending')}
             </Button>
           </Modal.Footer>
         </Form>
@@ -376,7 +383,19 @@ function Nutrition() {
             {t('common.cancel')}
           </Button>
           <Button variant="danger" className="logout-confirm-submit" onClick={confirmDeleteFood} disabled={deletingFood}>
-            {deletingFood ? t('common.deleting') : t('nutritionPage.deleteAction')}
+            {deletingFood ? t('nutritionPage.deleting') : t('nutritionPage.deleteAction')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={Boolean(successMessage)} onHide={() => setSuccessMessage('')} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{t('waterPage.successTitle', 'Thành công')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{successMessage}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={() => setSuccessMessage('')}>
+            {t('common.close')}
           </Button>
         </Modal.Footer>
       </Modal>

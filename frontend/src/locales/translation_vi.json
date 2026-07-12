@@ -539,6 +539,7 @@
     }
   },
   "waterPage": {
+    "saveGoal": "L\\u01b0u m\\u1ee5c ti\\u00eau",
     "title": "Theo dõi nước uống",
     "todayTitle": "Nước hôm nay",
     "totalToday": "{{total}} / {{goal}} ml hôm nay",
@@ -725,6 +726,7 @@
     "completeError": "Không thể lưu trạng thái hoàn thành bữa ăn."
   },
   "nutritionPage": {
+    "deleting": "\\u0110ang x\\u00f3a th\\u1ef1c ph\\u1ea9m...",
     "title": "Danh sách thực phẩm",
     "addFood": "Thêm thực phẩm",
     "loading": "Đang tải dữ liệu dinh dưỡng...",
@@ -766,6 +768,7 @@
     }
   },
   "activityPage": {
+    "deleting": "\\u0110ang x\\u00f3a ho\\u1ea1t \\u0111\\u1ed9ng...",
     "title": "Hoạt động trong ngày",
     "addActivity": "Ghi hoạt động",
     "listTitle": "Danh sách hoạt động",
@@ -1631,6 +1634,7 @@
       "linkedActivityCategoryBlocked": "Không thể xóa hoặc ẩn danh mục hoạt động khi danh mục vẫn còn hoạt động."
     },
     "catalogData": {
+      "saveData": "L\\u01b0u d\\u1eef li\\u1ec7u",
       "editFoodTitle": "Sửa thực phẩm",
       "editActivityTitle": "Sửa hoạt động",
       "foodNameLabel": "Tên thực phẩm",

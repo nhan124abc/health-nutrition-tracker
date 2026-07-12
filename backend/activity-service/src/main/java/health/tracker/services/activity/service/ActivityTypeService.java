@@ -25,13 +25,16 @@ public class ActivityTypeService {
 
     @Transactional(readOnly = true)
     public List<ActivityType> getVisibleTypes(ActivityType.Category category) {
+        return getVisibleTypes(category, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ActivityType> getVisibleTypes(ActivityType.Category category, Long userId) {
         if (category != null && isCategoryHidden(category)) {
             return List.of();
         }
 
-        List<ActivityType> types = category != null
-                ? typeRepository.findByCategoryAndHiddenFalseOrderByNameAsc(category)
-                : typeRepository.findByHiddenFalseOrderByCategoryAscNameAsc();
+        List<ActivityType> types = typeRepository.findVisibleForUser(category, userId);
         return types.stream()
                 .filter(type -> !isCategoryHidden(type.getCategory()))
                 .toList();

@@ -1,4 +1,5 @@
-import { Button, Card } from 'react-bootstrap';
+import { Card } from 'react-bootstrap';
+import CrudActions from '../../../components/CrudActions';
 import { getLocalizedName } from '../../../utils/localizedName';
 
 function FoodDetailCard({ canDelete = false, canEdit = false, food, language, onDelete, onEdit, t }) {
@@ -26,18 +27,12 @@ function FoodDetailCard({ canDelete = false, canEdit = false, food, language, on
         <div className="d-flex align-items-start justify-content-between gap-3 mb-1">
           <h2 className="h4 fw-bold mb-0">{getLocalizedName(food, language)}</h2>
           {(canEdit || canDelete) && (
-            <div className="d-flex flex-wrap justify-content-end gap-2">
-              {canEdit && (
-                <Button variant="outline-success" size="sm" onClick={() => onEdit?.(food)}>
-                  {t('nutritionPage.editAction')}
-                </Button>
-              )}
-              {canDelete && (
-                <Button variant="outline-danger" size="sm" onClick={() => onDelete?.(food)}>
-                  {t('nutritionPage.deleteAction')}
-                </Button>
-              )}
-            </div>
+            <CrudActions
+              editLabel={t('nutritionPage.editAction')}
+              deleteLabel={t('nutritionPage.deleteAction')}
+              onEdit={canEdit ? () => onEdit?.(food) : null}
+              onDelete={canDelete ? () => onDelete?.(food) : null}
+            />
           )}
         </div>
         <p className="text-secondary">
