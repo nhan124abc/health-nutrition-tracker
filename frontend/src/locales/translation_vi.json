@@ -387,6 +387,9 @@
     }
   },
   "auth": {
+    "invalidRegistrationDetails": "Nh\u1eadp h\u1ecd t\u00ean v\u00e0 email h\u1ee3p l\u1ec7.",
+    "invalidEmail": "Nh\u1eadp \u0111\u1ecba ch\u1ec9 email h\u1ee3p l\u1ec7.",
+    "invalidOtp": "Nh\u1eadp m\u00e3 OTP g\u1ed3m 6 ch\u1eef s\u1ed1 \u0111\u00e3 g\u1eedi qua email.",
     "loginTitle": "Đăng nhập",
     "password": "Mật khẩu",
     "passwordPlaceholder": "Nhập mật khẩu",
@@ -861,6 +864,7 @@
     "confirmHardDelete": "Xóa thẳng hoạt động này? Dữ liệu sẽ bị xóa khỏi hệ thống."
   },
   "profilePage": {
+    "validationInvalidMetrics": "Vui l\u00f2ng nh\u1eadp \u0111\u1ea7y \u0111\u1ee7 v\u00e0 h\u1ee3p l\u1ec7 c\u00e1c ch\u1ec9 s\u1ed1 h\u1ed3 s\u01a1.",
     "completion": {
       "title": "Hồ sơ chưa đầy đủ",
       "description": "Một số thông tin bắt buộc trong hồ sơ còn thiếu. Vui lòng cập nhật để hệ thống tính mục tiêu và gợi ý chính xác hơn.",
@@ -1065,6 +1069,7 @@
       "mealUnselected": "Hủy chọn bữa ăn thành công."
     },
     "errors": {
+      "profileRequired": "Vui l\u00f2ng ho\u00e0n th\u00e0nh h\u1ed3 s\u01a1 s\u1ee9c kh\u1ecfe tr\u01b0\u1edbc khi t\u1ea1o g\u1ee3i \u00fd.",
       "load": "Không thể tải dữ liệu hôm nay.",
       "generate": "Không thể tạo gợi ý.",
       "loadRecipes": "Không thể tải công thức bữa ăn.",
@@ -1130,6 +1135,7 @@
       "kcalPerDay": "kcal/ngày"
     },
     "errors": {
+      "invalidForm": "Vui l\u00f2ng nh\u1eadp m\u1ee5c ti\u00eau, m\u1ee9c thay \u0111\u1ed5i v\u00e0 th\u1eddi gian h\u1ee3p l\u1ec7.",
       "title": "Thông báo",
       "guestCalculate": "Không thể tạo kế hoạch lúc này. Vui lòng kiểm tra dữ liệu và thử lại.",
       "loadProfile": "Không thể tải hồ sơ.",
@@ -1138,6 +1144,7 @@
     }
   },
   "bodyMetricsPage": {
+    "invalidMetrics": "Vui l\u00f2ng nh\u1eadp ng\u00e0y, c\u00e2n n\u1eb7ng, chi\u1ec1u cao v\u00e0 c\u00e1c s\u1ed1 \u0111o h\u1ee3p l\u1ec7.",
     "title": "Theo dõi body metrics",
     "addTitle": "Thêm chỉ số",
     "saveMetric": "Lưu chỉ số",
@@ -1586,6 +1593,10 @@
       }
     },
     "catalogs": {
+      "invalidUser": "Nh\u1eadp h\u1ecd t\u00ean v\u00e0 email h\u1ee3p l\u1ec7.",
+      "invalidCatalogData": "Vui l\u00f2ng nh\u1eadp \u0111\u1ea7y \u0111\u1ee7 th\u00f4ng tin danh m\u1ee5c v\u1edbi gi\u00e1 tr\u1ecb h\u1ee3p l\u1ec7.",
+      "invalidCategory": "Vui l\u00f2ng nh\u1eadp t\u00ean danh m\u1ee5c.",
+      "duplicateCategory": "Danh m\u1ee5c c\u00f3 t\u00ean n\u00e0y \u0111\u00e3 t\u1ed3n t\u1ea1i.",
       "title": "Quản lý danh mục",
       "foodsTitle": "Danh mục thực phẩm",
       "activitiesTitle": "Danh mục hoạt động",

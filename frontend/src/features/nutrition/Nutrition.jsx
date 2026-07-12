@@ -148,13 +148,13 @@ function Nutrition() {
 
   const handleCreateFood = async (event) => {
     event.preventDefault();
-    const requiredNumberFields = ['servingSize', 'calories', 'protein', 'carbs', 'fat'];
+    const requiredNumberFields = ['servingSize', 'calories', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'sodium'];
     const invalidNumberField = requiredNumberFields.find((field) => {
       const value = Number(String(createForm[field] || '').trim().replace(',', '.'));
       return !Number.isFinite(value) || value < (field === 'servingSize' ? 0.1 : 0);
     });
 
-    if (!createForm.name.trim() || invalidNumberField) {
+    if (!createForm.name.trim() || !createForm.categoryId || invalidNumberField) {
       setError(t('nutritionPage.requiredMetricsError'));
       return;
     }
@@ -319,7 +319,7 @@ function Nutrition() {
           <Modal.Body>
             <Row className="g-3">
               <Col md={6}>
-                <Form.Label>{i18n.language?.startsWith('vi') ? 'Tên thực phẩm' : 'Food name'}</Form.Label>
+                <Form.Label>{i18n.language?.startsWith('vi') ? 'Tên thực phẩm' : 'Food name'} <span className="text-danger">*</span></Form.Label>
                 <Form.Control value={createForm.name} onChange={(event) => updateCreateForm('name', event.target.value)} required />
               </Col>
               <Col md={6}>
@@ -327,8 +327,8 @@ function Nutrition() {
                 <Form.Control value={createForm.nameVi} onChange={(event) => updateCreateForm('nameVi', event.target.value)} />
               </Col>
               <Col md={6}>
-                <Form.Label>{i18n.language?.startsWith('vi') ? 'Danh mục' : 'Category'}</Form.Label>
-                <Form.Select value={createForm.categoryId} onChange={(event) => updateCreateForm('categoryId', event.target.value)}>
+                <Form.Label>{i18n.language?.startsWith('vi') ? 'Danh mục' : 'Category'} <span className="text-danger">*</span></Form.Label>
+                <Form.Select value={createForm.categoryId} onChange={(event) => updateCreateForm('categoryId', event.target.value)} required>
                   <option value="">{t('nutritionPage.noCategory')}</option>
                   {categories.map((item) => (
                     <option value={item.id} key={item.id}>{getLocalizedName(item, i18n.language)}</option>
@@ -336,7 +336,7 @@ function Nutrition() {
                 </Form.Select>
               </Col>
               <Col md={6}>
-                <Form.Label>{i18n.language?.startsWith('vi') ? 'Khẩu phần (g)' : 'Serving size (g)'}</Form.Label>
+                <Form.Label>{i18n.language?.startsWith('vi') ? 'Khẩu phần (g)' : 'Serving size (g)'} <span className="text-danger">*</span></Form.Label>
                   <Form.Control inputMode="decimal" min="0.1" value={createForm.servingSize} onChange={(event) => updateCreateForm('servingSize', event.target.value)} required />
               </Col>
               {[
@@ -349,8 +349,8 @@ function Nutrition() {
                 ['sodium', 'Sodium (mg)'],
               ].map(([field, label]) => (
                 <Col md={4} sm={6} key={field}>
-                  <Form.Label>{label}</Form.Label>
-                  <Form.Control inputMode="decimal" min="0" value={createForm[field]} onChange={(event) => updateCreateForm(field, event.target.value)} required={['calories', 'protein', 'carbs', 'fat'].includes(field)} />
+                  <Form.Label>{label} <span className="text-danger">*</span></Form.Label>
+                  <Form.Control inputMode="decimal" min="0" value={createForm[field]} onChange={(event) => updateCreateForm(field, event.target.value)} required />
                 </Col>
               ))}
             </Row>

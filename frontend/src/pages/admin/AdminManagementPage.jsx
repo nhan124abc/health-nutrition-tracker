@@ -363,21 +363,21 @@ const emptyFoodForm = {
   categoryId: '',
   servingSizeG: '100',
   servingDescription: '',
-  calories: '0',
-  proteinG: '0',
-  carbsG: '0',
-  fatG: '0',
-  fiberG: '0',
-  sugarG: '0',
-  sodiumMg: '0',
+  calories: '',
+  proteinG: '',
+  carbsG: '',
+  fatG: '',
+  fiberG: '',
+  sugarG: '',
+  sodiumMg: '',
   imageUrl: '',
 };
 
 const emptyActivityForm = {
   name: '',
   nameVi: '',
-  category: 'OTHER',
-  metValue: '3.0',
+  category: '',
+  metValue: '',
   hidden: false,
 };
 
@@ -386,6 +386,25 @@ function toNumberOrNull(value) {
     return null;
   }
   return Number(value);
+}
+
+function isValidNumber(value, minimum = 0, maximum = Number.POSITIVE_INFINITY) {
+  const number = Number(value);
+  return Number.isFinite(number) && number >= minimum && number <= maximum;
+}
+
+function hasValidFoodCatalogForm(form) {
+  return Boolean(form.name.trim() && form.categoryId)
+    && isValidNumber(form.servingSizeG, 0.1)
+    && ['calories', 'proteinG', 'carbsG', 'fatG', 'fiberG', 'sugarG', 'sodiumMg']
+      .every((field) => isValidNumber(form[field], 0));
+}
+
+function hasValidActivityCatalogForm(form) {
+  const categories = ['CARDIO', 'STRENGTH', 'WALKING', 'SPORTS', 'FLEXIBILITY', 'OUTDOOR', 'DAILY'];
+  return Boolean(form.name.trim())
+    && categories.includes(form.category)
+    && isValidNumber(form.metValue, 0.1, 50);
 }
 
 function AdminManagementPage({ type }) {
@@ -684,6 +703,11 @@ function AdminManagementPage({ type }) {
   const saveUserEdit = async (event) => {
     event?.preventDefault();
 
+    if (!editForm.fullName.trim() || !/^\S+@\S+\.\S+$/.test(editForm.email.trim())) {
+      setActionError(t('admin.catalogs.invalidUser'));
+      return;
+    }
+
     setActionError('');
     setSavingEdit(true);
 
@@ -747,6 +771,15 @@ function AdminManagementPage({ type }) {
 
   const saveCatalog = async (event) => {
     event?.preventDefault();
+
+    const isValid = type === 'foods'
+      ? hasValidFoodCatalogForm(catalogForm)
+      : hasValidActivityCatalogForm(catalogForm);
+    if (!isValid) {
+      setActionError(t('admin.catalogs.invalidCatalogData'));
+      return;
+    }
+
     setActionError('');
     setSavingEdit(true);
 
@@ -1184,6 +1217,7 @@ function AdminManagementPage({ type }) {
                 <Form.Control
                   value={editForm.fullName}
                   onChange={(event) => setEditForm((form) => ({ ...form, fullName: event.target.value }))}
+                  required
                 />
               </Col>
               <Col md={12}>
@@ -1250,7 +1284,7 @@ function AdminManagementPage({ type }) {
                 </Col>
                 <Col md={6}>
                   <Form.Label>{t('admin.catalogData.categoryLabel')}</Form.Label>
-                  <Form.Select value={catalogForm.categoryId} onChange={(event) => setCatalogForm((form) => ({ ...form, categoryId: event.target.value }))}>
+                  <Form.Select value={catalogForm.categoryId} onChange={(event) => setCatalogForm((form) => ({ ...form, categoryId: event.target.value }))} required>
                     <option value="">{t('admin.catalogData.noCategoryOption')}</option>
                     {foodCategories.map((category) => (
                       <option key={category.id} value={category.id}>
@@ -1284,15 +1318,15 @@ function AdminManagementPage({ type }) {
                 </Col>
                 <Col md={4}>
                   <Form.Label>{t('admin.catalogData.fiberLabel')}</Form.Label>
-                  <Form.Control type="number" min="0" step="0.1" value={catalogForm.fiberG} onChange={(event) => setCatalogForm((form) => ({ ...form, fiberG: event.target.value }))} />
+                  <Form.Control required type="number" min="0" step="0.1" value={catalogForm.fiberG} onChange={(event) => setCatalogForm((form) => ({ ...form, fiberG: event.target.value }))} />
                 </Col>
                 <Col md={4}>
                   <Form.Label>{t('admin.catalogData.sugarLabel')}</Form.Label>
-                  <Form.Control type="number" min="0" step="0.1" value={catalogForm.sugarG} onChange={(event) => setCatalogForm((form) => ({ ...form, sugarG: event.target.value }))} />
+                  <Form.Control required type="number" min="0" step="0.1" value={catalogForm.sugarG} onChange={(event) => setCatalogForm((form) => ({ ...form, sugarG: event.target.value }))} />
                 </Col>
                 <Col md={4}>
                   <Form.Label>{t('admin.catalogData.sodiumLabel')}</Form.Label>
-                  <Form.Control type="number" min="0" step="0.1" value={catalogForm.sodiumMg} onChange={(event) => setCatalogForm((form) => ({ ...form, sodiumMg: event.target.value }))} />
+                  <Form.Control required type="number" min="0" step="0.1" value={catalogForm.sodiumMg} onChange={(event) => setCatalogForm((form) => ({ ...form, sodiumMg: event.target.value }))} />
                 </Col>
               </Row>
             ) : (
@@ -1307,7 +1341,8 @@ function AdminManagementPage({ type }) {
                 </Col>
                 <Col md={4}>
                   <Form.Label>{t('admin.catalogData.activityGroupLabel')}</Form.Label>
-                  <Form.Select value={catalogForm.category} onChange={(event) => setCatalogForm((form) => ({ ...form, category: event.target.value }))}>
+                  <Form.Select required value={catalogForm.category} onChange={(event) => setCatalogForm((form) => ({ ...form, category: event.target.value }))}>
+                    <option value="" disabled>{t('admin.catalogData.noCategoryOption')}</option>
                     {['CARDIO', 'STRENGTH', 'WALKING', 'SPORTS', 'FLEXIBILITY', 'OUTDOOR', 'DAILY'].map((category) => (
                       <option key={category} value={category}>{formatEnum(category)}</option>
                     ))}

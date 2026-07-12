@@ -55,7 +55,7 @@ function GuestGoalPage() {
   const [form, setForm] = useState(() => {
     const saved = readGuestProfile();
     return {
-      goal: saved?.goal || 'LOSE_WEIGHT',
+      goal: saved?.goal || '',
       gender: saved?.gender === 'FEMALE' ? 'female' : saved?.gender === 'MALE' ? 'male' : '',
       age: saved?.age || '',
       currentWeightKg: saved?.weightKg || '',
@@ -94,6 +94,7 @@ function GuestGoalPage() {
     const heightCm = Number(form.heightCm);
     const age = Number(form.age);
     const targetChangeKg = Number(form.targetChangeKg);
+    const targetWeeks = form.targetWeeks === '' ? null : Number(form.targetWeeks);
 
     if (
       !currentWeight
@@ -103,7 +104,11 @@ function GuestGoalPage() {
       || !age
       || age <= 0
       || age < 16
+      || age > 120
+      || !genderToApi[form.gender]
+      || !activityToApi[form.activityLevel]
       || (showTargetChange && (!targetChangeKg || targetChangeKg <= 0))
+      || (targetWeeks != null && (!Number.isInteger(targetWeeks) || targetWeeks < 1 || targetWeeks > 104))
     ) {
       setError(age > 0 && age < 16
         ? t('profilePage.validationMinimumAge')
@@ -115,13 +120,13 @@ function GuestGoalPage() {
     try {
       const payload = {
         goal: form.goal,
-        gender: genderToApi[form.gender] || 'MALE',
+        gender: genderToApi[form.gender],
         age,
         weightKg: currentWeight,
         heightCm,
-        activityLevel: activityToApi[form.activityLevel] || 'SEDENTARY',
+        activityLevel: activityToApi[form.activityLevel],
         targetChangeKg: showTargetChange ? targetChangeKg : 0.1,
-        ...(form.targetWeeks ? { targetWeeks: Number(form.targetWeeks) } : {}),
+        ...(targetWeeks != null ? { targetWeeks } : {}),
       };
       const response = await getGuestGoalPlanSuggestions(payload);
       setPlan(extractGoalPlanFromApi(response.data));
@@ -206,8 +211,9 @@ function GuestGoalPage() {
                   </div>
                   <Form onSubmit={loadSuggestions}>
                     <Form.Group className="mb-3">
-                      <Form.Label>{t('goalPlannerPage.form.goal')}</Form.Label>
-                      <Form.Select value={form.goal} onChange={(event) => setForm({ ...form, goal: event.target.value })}>
+                      <Form.Label>{t('goalPlannerPage.form.goal')} <span className="text-danger">*</span></Form.Label>
+                      <Form.Select required value={form.goal} onChange={(event) => setForm({ ...form, goal: event.target.value })}>
+                        <option value="" disabled>{t('common.select')}</option>
                         {goalOptions.map((goal) => (
                           <option value={goalValueToApi[goal.value]} key={goal.value}>{t(goal.labelKey)}</option>
                         ))}

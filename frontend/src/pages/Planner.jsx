@@ -749,6 +749,19 @@ function Planner() {
   }, [canSearchRecipes, isRecipeMode, loadRecipes, loading, normalizedRecipeSearchTerm, selectedFoodKey]);
 
   const generate = async () => {
+    const weightKg = Number(profile?.weight);
+    const targetWeightKg = Number(profile?.targetWeight);
+    const heightCm = Number(profile?.height);
+    const hasCompleteProfile = Number.isFinite(weightKg) && weightKg > 0
+      && Number.isFinite(targetWeightKg) && targetWeightKg > 0
+      && Number.isFinite(heightCm) && heightCm > 0
+      && Boolean(profile?.gender && profile?.activityLevel);
+
+    if (!hasCompleteProfile) {
+      setError(t('plannerPage.errors.profileRequired'));
+      return;
+    }
+
     setGenerating(true);
     setSuggestion(null);
     setSelectedOption(null);
@@ -768,11 +781,11 @@ function Planner() {
         caloriesConsumed: effectiveCaloriesConsumed,
         mealType: effectiveMealType,
         goal: activeGoal,
-        weightKg: Number(profile?.weight) || 70,
-        targetWeightKg: Number(profile?.targetWeight) || Number(profile?.weight) || 70,
-        activityLevel: profile?.activityLevel?.toUpperCase() || 'SEDENTARY',
-        heightCm: Number(profile?.height) || 170,
-        gender: profile?.gender?.toUpperCase() || 'MALE',
+        weightKg,
+        targetWeightKg,
+        activityLevel: profile.activityLevel.toUpperCase(),
+        heightCm,
+        gender: profile.gender.toUpperCase(),
         excludedFoodNames: [...new Set([...existingNames, ...(suggestedNames[effectiveMealType] || [])])],
         selectedFoodIds: isExerciseMode ? [] : selectedFoodIds,
         selectedFoodNames: isExerciseMode ? [] : selectedFoodNames,
