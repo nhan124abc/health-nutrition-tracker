@@ -20,7 +20,10 @@ function BodyMetricFormCard({ form, onChange, onSubmit, saving, t }) {
                     value={form[name]}
                     onChange={onChange}
                     disabled={saving}
-                    required={name === 'date'}
+                    required={['date', 'weight', 'height'].includes(name)}
+                    min={name === 'weight' ? 2 : name === 'height' ? 30 : type === 'number' ? 0.1 : undefined}
+                    max={name === 'weight' ? 500 : name === 'height' ? 300 : type === 'number' ? 500 : undefined}
+                    step={type === 'number' ? '0.1' : undefined}
                   />
                 </Form.Group>
               </Col>

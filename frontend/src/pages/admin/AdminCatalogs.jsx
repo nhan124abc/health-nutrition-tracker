@@ -386,12 +386,24 @@ function AdminCatalogs({ type = 'overview' }) {
 
   const saveItem = async (event) => {
     event.preventDefault();
+
+    const name = form.name.trim();
+    const normalizedName = name.toLocaleLowerCase();
+    const duplicate = categories.some((item) => (
+      String(item.id) !== String(editingItem?.id)
+      && String(item.name || '').trim().toLocaleLowerCase() === normalizedName
+    ));
+    if (!name || duplicate) {
+      setActionError(t(duplicate ? 'admin.catalogs.duplicateCategory' : 'admin.catalogs.invalidCategory'));
+      return;
+    }
+
     setActionError('');
     setSaving(true);
 
     try {
       const payload = {
-        name: form.name.trim(),
+        name,
         nameVi: form.nameVi.trim() || null,
         hidden: form.hidden,
       };

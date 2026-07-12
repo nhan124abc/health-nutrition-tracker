@@ -95,6 +95,8 @@ function ProfileEditForm({
                     onChange={onChange}
                     disabled={saving}
                     max={name === 'birthDate' ? maxBirthDate : undefined}
+                    min={name === 'height' ? 30 : name === 'weight' || name === 'targetWeight' ? 2 : name === 'dailyWaterGoal' ? 100 : undefined}
+                    step={type === 'number' ? '0.1' : undefined}
                     required={requiredFieldNames.has(name)}
                   />
                 </Form.Group>

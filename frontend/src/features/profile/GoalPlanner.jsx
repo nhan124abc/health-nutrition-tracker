@@ -26,7 +26,7 @@ function GoalPlanner() {
   const navigate = useNavigate();
   const { i18n, t } = useTranslation();
   const [profile, setProfile] = useState(null);
-  const [form, setForm] = useState({ goal: '', targetChangeKg: 5, targetWeeks: '' });
+  const [form, setForm] = useState({ goal: '', targetChangeKg: '', targetWeeks: '' });
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -56,12 +56,22 @@ function GoalPlanner() {
     event?.preventDefault();
     setError('');
     setPlan(null);
+
+    const targetChangeKg = Number(form.targetChangeKg);
+    const targetWeeks = form.targetWeeks === '' ? null : Number(form.targetWeeks);
+    if (!form.goal
+      || (showTargetChange && (!Number.isFinite(targetChangeKg) || targetChangeKg <= 0))
+      || (targetWeeks != null && (!Number.isInteger(targetWeeks) || targetWeeks < 1 || targetWeeks > 104))) {
+      setError(t('goalPlannerPage.errors.invalidForm'));
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
         goal: form.goal,
-        targetChangeKg: showTargetChange ? Number(form.targetChangeKg) : 0.1,
-        ...(form.targetWeeks ? { targetWeeks: Number(form.targetWeeks) } : {}),
+        targetChangeKg: showTargetChange ? targetChangeKg : 0.1,
+        ...(targetWeeks != null ? { targetWeeks } : {}),
       };
       const response = await getGoalPlanSuggestions(payload);
       setPlan(response.data);
@@ -128,7 +138,7 @@ function GoalPlanner() {
             <Form onSubmit={loadSuggestions}>
               <Form.Group className="mb-3">
                 <Form.Label>{t('goalPlannerPage.form.goal')}</Form.Label>
-                <Form.Select value={form.goal} onChange={(event) => setForm({ ...form, goal: event.target.value })}>
+                <Form.Select value={form.goal} onChange={(event) => setForm({ ...form, goal: event.target.value })} required>
                   {goalOptions.map((goal) => (
                     <option value={goalValueToApi[goal.value]} key={goal.value}>{t(goal.labelKey)}</option>
                   ))}

@@ -727,6 +727,10 @@
       }
     },
     "catalogs": {
+      "invalidUser": "Enter a valid full name and email address.",
+      "invalidCatalogData": "Enter all required catalog information with valid values.",
+      "invalidCategory": "Enter a category name.",
+      "duplicateCategory": "A category with this name already exists.",
       "title": "System catalogs",
       "foodsTitle": "Food catalog",
       "activitiesTitle": "Activity catalog",
@@ -817,6 +821,9 @@
     }
   },
   "auth": {
+    "invalidRegistrationDetails": "Enter a valid full name and email address.",
+    "invalidEmail": "Enter a valid email address.",
+    "invalidOtp": "Enter the 6-digit OTP sent to your email.",
     "loginTitle": "Log in",
     "password": "Password",
     "passwordPlaceholder": "Enter password",
@@ -1349,6 +1356,7 @@
     "confirmHardDelete": "Permanently delete this activity? The record will be removed from the system."
   },
   "profilePage": {
+    "validationInvalidMetrics": "Please enter complete and valid profile measurements.",
     "title": "Health profile",
     "savedMessage": "Profile saved successfully.",
     "validationMinimumAgeTitle": "Age restriction",
@@ -1553,6 +1561,7 @@
       "mealUnselected": "Meal unselected successfully."
     },
     "errors": {
+      "profileRequired": "Complete your health profile before generating suggestions.",
       "load": "Unable to load today's data.",
       "generate": "Unable to generate suggestions.",
       "loadRecipes": "Unable to load meal recipes.",
@@ -1619,6 +1628,7 @@
     },
     "errors": {
       "title": "Notice",
+      "invalidForm": "Enter a valid goal, target change, and target duration.",
       "guestCalculate": "Unable to create a plan right now. Check your information and try again.",
       "loadProfile": "Unable to load your profile.",
       "calculate": "Unable to calculate a plan. Please complete your profile first.",
@@ -1626,6 +1636,7 @@
     }
   },
   "bodyMetricsPage": {
+    "invalidMetrics": "Enter a valid date, weight, height, and valid optional measurements.",
     "title": "Track body metrics",
     "addTitle": "Add metric",
     "saveMetric": "Save metric",

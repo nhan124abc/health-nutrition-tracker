@@ -30,6 +30,21 @@ import {
 const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
 const MAX_AVATAR_SIZE_MB = MAX_AVATAR_SIZE_BYTES / (1024 * 1024);
 
+function hasValidProfileValues(profile = {}) {
+  const height = Number(profile.height);
+  const weight = Number(profile.weight);
+  const targetWeight = Number(profile.targetWeight);
+  const dailyWaterGoal = Number(profile.dailyWaterGoal);
+
+  return Boolean(profile.username?.trim())
+    && Number.isFinite(height) && height >= 30 && height <= 300
+    && Number.isFinite(weight) && weight >= 2 && weight <= 500
+    && Number.isFinite(targetWeight) && targetWeight >= 2 && targetWeight <= 500
+    && (profile.dailyWaterGoal === '' || profile.dailyWaterGoal == null
+      || (Number.isFinite(dailyWaterGoal) && dailyWaterGoal >= 100 && dailyWaterGoal <= 10000))
+    && Boolean(profile.gender && profile.activityLevel && profile.healthGoal);
+}
+
 function withImageCacheBust(url, version) {
   if (!url) {
     return '';
@@ -225,6 +240,11 @@ function Profile() {
 
     if (!isAtLeastAge(editProfile.birthDate, 16)) {
       setAgeError(t('profilePage.validationMinimumAge'));
+      return;
+    }
+
+    if (!hasValidProfileValues(editProfile)) {
+      setError(t('profilePage.validationInvalidMetrics'));
       return;
     }
 

@@ -23,6 +23,11 @@ function Register() {
     event.preventDefault();
     setError('');
 
+    if (!form.fullName.trim() || !/^\S+@\S+\.\S+$/.test(form.email.trim())) {
+      setError(t('auth.invalidRegistrationDetails'));
+      return;
+    }
+
     if (form.password.length < 8) {
       setError(t('auth.passwordTooShort'));
       return;
@@ -37,8 +42,8 @@ function Register() {
 
     try {
       await register({
-        fullName: form.fullName,
-        email: form.email,
+        fullName: form.fullName.trim(),
+        email: form.email.trim(),
         password: form.password,
       });
       navigate(`/verify-email?email=${encodeURIComponent(form.email)}`, {

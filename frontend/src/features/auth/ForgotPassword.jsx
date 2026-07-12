@@ -20,6 +20,9 @@ function ForgotPassword() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const hasValidOtp = () => /^\d{6}$/.test(form.otp.trim());
+  const hasValidEmail = () => /^\S+@\S+\.\S+$/.test(form.email.trim());
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((current) => ({ ...current, [name]: value }));
@@ -29,10 +32,15 @@ function ForgotPassword() {
     event.preventDefault();
     setError('');
     setMessageKey('');
+    if (!hasValidEmail()) {
+      setError(t('auth.invalidEmail'));
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await requestPasswordReset(form.email);
+      await requestPasswordReset(form.email.trim());
       setMessageKey('auth.otpSent');
       setStep('otp');
     } catch (err) {
@@ -46,12 +54,17 @@ function ForgotPassword() {
     event.preventDefault();
     setError('');
     setMessageKey('');
+    if (!hasValidEmail() || !hasValidOtp()) {
+      setError(t('auth.invalidOtp'));
+      return;
+    }
+
     setLoading(true);
 
     try {
       await verifyPasswordResetOtp({
-        email: form.email,
-        otp: form.otp,
+        email: form.email.trim(),
+        otp: form.otp.trim(),
       });
       setMessageKey('auth.otpVerified');
       setStep('reset');
@@ -67,7 +80,12 @@ function ForgotPassword() {
     setError('');
     setMessageKey('');
 
-    if (form.newPassword !== form.confirmPassword) {
+    if (form.newPassword.length < 8) {
+      setError(t('auth.passwordTooShort'));
+      return;
+    }
+
+    if (!hasValidEmail() || !hasValidOtp() || form.newPassword !== form.confirmPassword) {
       setError(t('auth.passwordMismatch'));
       return;
     }
@@ -76,8 +94,8 @@ function ForgotPassword() {
 
     try {
       await submitPasswordReset({
-        email: form.email,
-        otp: form.otp,
+        email: form.email.trim(),
+        otp: form.otp.trim(),
         newPassword: form.newPassword,
       });
       setShowResetSuccess(true);
@@ -131,6 +149,9 @@ function ForgotPassword() {
                       value={form.otp}
                       onChange={handleChange}
                       placeholder={t('auth.otpPlaceholder')}
+                      inputMode="numeric"
+                      maxLength={6}
+                      pattern="[0-9]{6}"
                       required
                     />
                   </Form.Group>
@@ -156,6 +177,7 @@ function ForgotPassword() {
                       name="newPassword"
                       value={form.newPassword}
                       onChange={handleChange}
+                      minLength={8}
                       required
                     />
                   </Form.Group>

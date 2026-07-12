@@ -35,8 +35,8 @@ function ActivityList() {
   const [createForm, setCreateForm] = useState({
     name: '',
     nameVi: '',
-    category: 'cardio',
-    metValue: '3.0',
+    category: '',
+    metValue: '',
     icon: '',
     description: '',
     hidden: false,
@@ -150,8 +150,8 @@ function ActivityList() {
       setCreateForm({
         name: '',
         nameVi: '',
-        category: 'cardio',
-        metValue: '3.0',
+        category: '',
+        metValue: '',
         icon: '',
         description: '',
         hidden: false,
@@ -202,8 +202,8 @@ function ActivityList() {
     setCreateForm({
       name: '',
       nameVi: '',
-      category: 'cardio',
-      metValue: '3.0',
+      category: '',
+      metValue: '',
       icon: '',
       description: '',
       hidden: false,
@@ -250,8 +250,8 @@ function ActivityList() {
           setCreateForm({
             name: '',
             nameVi: '',
-            category: 'cardio',
-            metValue: '3.0',
+            category: '',
+            metValue: '',
             icon: '',
             description: '',
             hidden: false,
@@ -317,7 +317,7 @@ function ActivityList() {
           <Modal.Body>
             <Row className="g-3">
               <Col md={6}>
-                <Form.Label>{i18n.language?.startsWith('vi') ? 'Tên hoạt động' : 'Activity name'}</Form.Label>
+                <Form.Label>{i18n.language?.startsWith('vi') ? 'Tên hoạt động' : 'Activity name'} <span className="text-danger">*</span></Form.Label>
                 <Form.Control value={createForm.name} onChange={(event) => updateCreateForm('name', event.target.value)} required />
               </Col>
               <Col md={6}>
@@ -325,8 +325,9 @@ function ActivityList() {
                 <Form.Control value={createForm.nameVi} onChange={(event) => updateCreateForm('nameVi', event.target.value)} />
               </Col>
               <Col md={6}>
-                <Form.Label>{i18n.language?.startsWith('vi') ? 'Nhóm' : 'Group'}</Form.Label>
+                <Form.Label>{i18n.language?.startsWith('vi') ? 'Nhóm' : 'Group'} <span className="text-danger">*</span></Form.Label>
                 <Form.Select value={createForm.category} onChange={(event) => updateCreateForm('category', event.target.value)} required>
+                  <option value="" disabled>{i18n.language?.startsWith('vi') ? 'Chưa chọn' : 'Not selected'}</option>
                   {(categories.length ? categories : [
                     { id: 'cardio', name: 'CARDIO', nameVi: 'Cardio' },
                     { id: 'strength', name: 'STRENGTH', nameVi: 'Tập sức mạnh' },
@@ -339,7 +340,7 @@ function ActivityList() {
                 </Form.Select>
               </Col>
               <Col md={6}>
-                <Form.Label>{t('admin.table.met', 'MET')}</Form.Label>
+                <Form.Label>{t('admin.table.met', 'MET')} <span className="text-danger">*</span></Form.Label>
                 <Form.Control inputMode="decimal" min="0.1" max="50" value={createForm.metValue} onChange={(event) => updateCreateForm('metValue', event.target.value)} required />
               </Col>
               <Col md={12}>

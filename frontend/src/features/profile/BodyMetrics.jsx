@@ -31,6 +31,24 @@ function createEmptyMetricForm() {
   };
 }
 
+function hasValidMetricForm(form = {}) {
+  const requiredMeasurements = ['weight', 'height'];
+  const optionalMeasurements = ['waist', 'hip', 'chest'];
+
+  if (!form.date || requiredMeasurements.some((name) => {
+    const value = Number(form[name]);
+    return !Number.isFinite(value) || value <= 0;
+  })) {
+    return false;
+  }
+
+  return optionalMeasurements.every((name) => {
+    if (form[name] === '' || form[name] == null) return true;
+    const value = Number(form[name]);
+    return Number.isFinite(value) && value > 0;
+  });
+}
+
 function getActivityFactor(activityLevel) {
   return {
     sedentary: 1.2,
@@ -215,6 +233,11 @@ function BodyMetrics() {
       return;
     }
 
+    if (!hasValidMetricForm(form)) {
+      setError(t('bodyMetricsPage.invalidMetrics'));
+      return;
+    }
+
     setSaving(true);
     setSuccessMessageKey('');
     setError('');
@@ -252,6 +275,11 @@ function BodyMetrics() {
     event.preventDefault();
 
     if (!editingMetric || updating) {
+      return;
+    }
+
+    if (!hasValidMetricForm(form)) {
+      setError(t('bodyMetricsPage.invalidMetrics'));
       return;
     }
 

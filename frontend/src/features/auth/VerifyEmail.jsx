@@ -20,6 +20,8 @@ function VerifyEmail() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
+  const hasValidEmail = () => /^\S+@\S+\.\S+$/.test(form.email.trim());
+  const hasValidOtp = () => /^\d{6}$/.test(form.otp.trim());
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -29,10 +31,15 @@ function VerifyEmail() {
   const resendOtp = async () => {
     setError('');
     setMessageKey('');
+    if (!hasValidEmail()) {
+      setError(t('auth.invalidEmail'));
+      return;
+    }
+
     setResending(true);
 
     try {
-      await sendEmailVerification(form.email);
+      await sendEmailVerification(form.email.trim());
       setMessageKey('auth.verifyOtpResent');
     } catch (err) {
       setError(err.response?.data?.message || t('auth.verifySendError'));
@@ -45,12 +52,17 @@ function VerifyEmail() {
     event.preventDefault();
     setError('');
     setMessageKey('');
+    if (!hasValidEmail() || !hasValidOtp()) {
+      setError(t('auth.invalidOtp'));
+      return;
+    }
+
     setLoading(true);
 
     try {
       await confirmEmailVerification({
-        email: form.email,
-        otp: form.otp,
+        email: form.email.trim(),
+        otp: form.otp.trim(),
       });
       setMessageKey('auth.verifySuccess');
       setTimeout(() => navigate('/login'), 800);
@@ -100,6 +112,7 @@ function VerifyEmail() {
                     onChange={handleChange}
                     inputMode="numeric"
                     maxLength={6}
+                    pattern="[0-9]{6}"
                     placeholder={t('auth.verifyOtpPlaceholder')}
                     required
                   />

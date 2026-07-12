@@ -27,6 +27,21 @@ const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
 const MAX_AVATAR_SIZE_MB = MAX_AVATAR_SIZE_BYTES / (1024 * 1024);
 const requiredProfileFieldNames = new Set(requiredProfileFields.map(([name]) => name));
 
+function hasValidProfileValues(profile = {}, fullName = '') {
+  const height = Number(profile.height);
+  const weight = Number(profile.weight);
+  const targetWeight = Number(profile.targetWeight);
+  const dailyWaterGoal = Number(profile.dailyWaterGoal);
+
+  return Boolean(fullName.trim())
+    && Number.isFinite(height) && height >= 30 && height <= 300
+    && Number.isFinite(weight) && weight >= 2 && weight <= 500
+    && Number.isFinite(targetWeight) && targetWeight >= 2 && targetWeight <= 500
+    && (profile.dailyWaterGoal === '' || profile.dailyWaterGoal == null
+      || (Number.isFinite(dailyWaterGoal) && dailyWaterGoal >= 100 && dailyWaterGoal <= 10000))
+    && Boolean(profile.gender && profile.activityLevel && profile.healthGoal);
+}
+
 function withImageCacheBust(url, version) {
   if (!url) {
     return '';
@@ -253,6 +268,12 @@ function AdminProfile() {
       return;
     }
 
+    const nextName = (draftUser.fullName || draftUser.name || healthProfile.username || '').trim();
+    if (!hasValidProfileValues(healthProfile, nextName)) {
+      setProfileError(t('profilePage.validationInvalidMetrics'));
+      return;
+    }
+
     setSavingProfile(true);
 
     try {
@@ -266,7 +287,6 @@ function AdminProfile() {
         savedAvatarUrl = avatarResponse.data?.avatarUrl || avatarResponse.data?.data?.avatarUrl || '';
       }
 
-      const nextName = (draftUser.fullName || draftUser.name || healthProfile.username || '').trim();
       const profileToSave = {
         ...healthProfile,
         username: nextName,
@@ -432,7 +452,7 @@ function AdminProfile() {
                 <Col md={6}>
                   <Form.Group>
                     <Form.Label>{t('admin.profile.fullName')}</Form.Label>
-                    <Form.Control name="fullName" value={draftUser.fullName || draftUser.name || ''} onChange={handleChange} />
+                    <Form.Control name="fullName" value={draftUser.fullName || draftUser.name || ''} onChange={handleChange} required />
                   </Form.Group>
                 </Col>
                 <Col md={6}>
@@ -463,6 +483,8 @@ function AdminProfile() {
                           onChange={handleHealthProfileChange}
                           disabled={savingProfile}
                           max={name === 'birthDate' ? getMinimumAllowedBirthDate(16) : undefined}
+                          min={name === 'height' ? 30 : name === 'weight' || name === 'targetWeight' ? 2 : name === 'dailyWaterGoal' ? 100 : undefined}
+                          step={type === 'number' ? '0.1' : undefined}
                           required={requiredProfileFieldNames.has(name)}
                         />
                       </Form.Group>
