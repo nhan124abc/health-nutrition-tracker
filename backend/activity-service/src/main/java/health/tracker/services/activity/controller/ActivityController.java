@@ -169,9 +169,10 @@ public class ActivityController {
      */
     @GetMapping("/types")
     public ResponseEntity<List<ActivityType>> getTypes(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @RequestParam(required = false) ActivityType.Category category) {
 
-        return ResponseEntity.ok(activityTypeService.getVisibleTypes(category));
+        return ResponseEntity.ok(activityTypeService.getVisibleTypes(category, userId));
     }
 
     @PostMapping("/types")

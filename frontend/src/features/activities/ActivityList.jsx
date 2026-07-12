@@ -31,6 +31,7 @@ function ActivityList() {
   const [editingActivity, setEditingActivity] = useState(null);
   const [pendingDeleteActivity, setPendingDeleteActivity] = useState(null);
   const [deletingActivity, setDeletingActivity] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const [createForm, setCreateForm] = useState({
     name: '',
     nameVi: '',
@@ -157,6 +158,9 @@ function ActivityList() {
       });
       setEditingActivity(null);
       setShowCreateModal(false);
+      setSuccessMessage(editingActivity
+        ? t('activityListPage.updateSuccess', 'Đã cập nhật hoạt động thành công.')
+        : t('activityListPage.createSuccess', 'Đã thêm hoạt động thành công.'));
     } catch (requestError) {
       console.error('[ActivityList] Error creating activity type:', requestError);
       setError(requestError.response?.data?.message || t(editingActivity ? 'activityPage.saveError' : 'activityListPage.createError'));
@@ -226,6 +230,7 @@ function ActivityList() {
         return activities.find((item) => String(item.id) !== String(pendingDeleteActivity.id)) || null;
       });
       setPendingDeleteActivity(null);
+      setSuccessMessage(t('activityListPage.deleteSuccess', 'Đã xóa hoạt động thành công.'));
     } catch (requestError) {
       console.error('[ActivityList] Error deleting activity type:', requestError);
       setError(requestError.response?.data?.message || t('activityListPage.deleteError'));
@@ -353,7 +358,9 @@ function ActivityList() {
               {t('common.close')}
             </Button>
             <Button variant="success" type="submit" disabled={savingActivity}>
-              {savingActivity ? t('activityPage.saving') : t('common.save')}
+              {savingActivity
+                ? t('activityPage.saving')
+                : t(editingActivity ? 'activityPage.updateActivity' : 'activityPage.saveActivity')}
             </Button>
           </Modal.Footer>
         </Form>
@@ -374,7 +381,19 @@ function ActivityList() {
             {t('common.cancel')}
           </Button>
           <Button variant="danger" className="logout-confirm-submit" onClick={confirmDeleteActivity} disabled={deletingActivity}>
-            {deletingActivity ? t('common.deleting') : t('activityPage.deleteAction')}
+            {deletingActivity ? t('activityPage.deleting') : t('activityPage.deleteAction')}
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={Boolean(successMessage)} onHide={() => setSuccessMessage('')} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>{t('waterPage.successTitle', 'Thành công')}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>{successMessage}</Modal.Body>
+        <Modal.Footer>
+          <Button variant="success" onClick={() => setSuccessMessage('')}>
+            {t('common.close')}
           </Button>
         </Modal.Footer>
       </Modal>

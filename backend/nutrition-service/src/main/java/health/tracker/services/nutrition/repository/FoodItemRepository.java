@@ -27,6 +27,7 @@ public interface FoodItemRepository extends JpaRepository<FoodItem, Long> {
                    LOWER(f.nameVi) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
                    LOWER(f.brand) LIKE LOWER(CONCAT('%', :keyword, '%')))
               AND (:categoryId IS NULL OR f.category.id = :categoryId)
+              AND (f.createdByUserId IS NULL OR f.createdByUserId = :userId)
             ORDER BY
               CASE WHEN :recipeFirst = true AND EXISTS (
                   SELECT ingredient.id FROM RecipeIngredient ingredient
@@ -39,6 +40,7 @@ public interface FoodItemRepository extends JpaRepository<FoodItem, Long> {
     Page<FoodItem> search(
             @Param("keyword")    String keyword,
             @Param("categoryId") Integer categoryId,
+            @Param("userId")     Long userId,
             @Param("recipeFirst") boolean recipeFirst,
             Pageable pageable
     );

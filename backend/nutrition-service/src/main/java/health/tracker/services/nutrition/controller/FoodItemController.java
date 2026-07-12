@@ -45,6 +45,7 @@ public class FoodItemController {
      */
     @GetMapping("/foods")
     public ResponseEntity<Page<FoodItemResponse>> search(
+            @RequestHeader(value = "X-User-Id", required = false) Long userId,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) Integer categoryId,
             @RequestParam(defaultValue = "false") boolean recipeFirst,
@@ -52,7 +53,7 @@ public class FoodItemController {
             @RequestParam(defaultValue = "20") int size) {
 
         Page<FoodItemResponse> result = foodItemService.search(
-                q, categoryId, recipeFirst,
+                q, categoryId, userId, recipeFirst,
                 PageRequest.of(page, size, Sort.by("verified").descending().and(Sort.by("name").ascending()))
         );
         return ResponseEntity.ok(result);

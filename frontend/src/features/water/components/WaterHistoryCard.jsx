@@ -136,7 +136,7 @@ function WaterHistoryCard({
             {t('common.cancel')}
           </Button>
           <Button variant="success" onClick={saveEdit} disabled={saving}>
-            {saving ? t('waterPage.savingLog') : t('common.save')}
+            {saving ? t('waterPage.savingLog') : t('waterPage.updateLog')}
           </Button>
         </Modal.Footer>
       </Modal>

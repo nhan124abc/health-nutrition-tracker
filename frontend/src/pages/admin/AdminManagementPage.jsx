@@ -1332,8 +1332,8 @@ function AdminManagementPage({ type }) {
             <Button type="button" variant="outline-secondary" onClick={closeCatalogForm} title={t('common.close')}>
               {t('common.close')}
             </Button>
-            <Button type="submit" variant="success" disabled={savingEdit} title={t('common.save')}>
-              {savingEdit ? <Spinner animation="border" size="sm" /> : t('common.save')}
+            <Button type="submit" variant="success" disabled={savingEdit} title={t('admin.catalogData.saveData')}>
+              {savingEdit ? <Spinner animation="border" size="sm" /> : t('admin.catalogData.saveData')}
             </Button>
           </Modal.Footer>
         </Form>
