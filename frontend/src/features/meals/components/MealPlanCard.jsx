@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Card, ListGroup, Spinner } from 'react-bootstrap';
-import { getMealPlans } from '../mealService';
+import { getMealsByDate } from '../mealService';
+import { extractMealsFromApi, getMealDisplayName, getMealTotals, normalizeMealFromApi } from '../mealUtils';
 import ErrorModal from '../../../components/ErrorModal';
 import { useTranslation } from 'react-i18next';
 
@@ -10,21 +11,13 @@ const labels = {
   DINNER: 'plansPage.mealCard.types.dinner', EVENING_SNACK: 'plansPage.mealCard.types.eveningSnack',
 };
 
-function plansFrom(data) { return Array.isArray(data) ? data : (data?.data || data?.content || data?.items || []); }
-
-function entriesForDate(plans, date) {
-  return plans.filter((plan) => plan.active !== false).flatMap((plan) => {
-    const byType = (plan.entries || []).filter((entry) => String(entry.planDate).slice(0, 10) === date)
-      .reduce((groups, entry) => ({ ...groups, [entry.mealType]: [...(groups[entry.mealType] || []), entry] }), {});
-    return Object.values(byType).map((entries) => ({
-      id: `${plan.id}-${entries[0].mealType}`,
-      mealType: entries[0].mealType,
-      // One plan / meal slot is displayed as one meal, including legacy plans
-      // that were accidentally saved with one entry per ingredient.
-      foodName: entries[0].recipeId ? entries[0].foodName : (String(plan.description || '').split(':').slice(1).join(':').trim() || entries[0].foodName),
-      calories: entries.reduce((sum, entry) => sum + (Number(entry.calories) || 0), 0),
-    }));
-  });
+function entriesFromMeals(data) {
+  return extractMealsFromApi(data).map(normalizeMealFromApi).map((meal) => ({
+    id: meal.id,
+    mealType: String(meal.type || '').toUpperCase(),
+    foodName: getMealDisplayName(meal),
+    calories: getMealTotals(meal).calories,
+  }));
 }
 
 function MealPlanCard({ selectedDate }) {
@@ -32,8 +25,10 @@ function MealPlanCard({ selectedDate }) {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const load = useCallback(() => getMealPlans().then((response) => {
-    setEntries(entriesForDate(plansFrom(response.data), selectedDate));
+  const load = useCallback(() => getMealsByDate(selectedDate).then((response) => {
+    // This screen is defined as a view of the meal diary.  Do not show stale
+    // standalone plan entries after a meal is replaced or deleted.
+    setEntries(entriesFromMeals(response.data));
   }).catch((err) => {
     setEntries([]); setError(err.response?.data?.message || t('plansPage.mealCard.loadError'));
   }).finally(() => setLoading(false)), [selectedDate, t]);
@@ -42,8 +37,8 @@ function MealPlanCard({ selectedDate }) {
   useEffect(() => {
     const refresh = () => load();
     window.addEventListener('focus', refresh);
-    window.addEventListener('meal-plans:changed', refresh);
-    return () => { window.removeEventListener('focus', refresh); window.removeEventListener('meal-plans:changed', refresh); };
+    window.addEventListener('meals:changed', refresh);
+    return () => { window.removeEventListener('focus', refresh); window.removeEventListener('meals:changed', refresh); };
   }, [load]);
 
   return <Card className="border-0 shadow-sm planner-side-card"><Card.Body>

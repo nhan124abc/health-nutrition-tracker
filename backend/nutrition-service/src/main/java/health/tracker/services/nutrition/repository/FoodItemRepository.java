@@ -28,13 +28,7 @@ public interface FoodItemRepository extends JpaRepository<FoodItem, Long> {
                    LOWER(f.brand) LIKE LOWER(CONCAT('%', :keyword, '%')))
               AND (:categoryId IS NULL OR f.category.id = :categoryId)
               AND (f.createdByUserId IS NULL OR f.createdByUserId = :userId)
-            ORDER BY
-              CASE WHEN :recipeFirst = true AND EXISTS (
-                  SELECT ingredient.id FROM RecipeIngredient ingredient
-                  WHERE ingredient.foodItem = f
-                    AND ingredient.recipe.isPublic = true
-              ) THEN 0 ELSE 1 END,
-              f.verified DESC,
+            ORDER BY f.verified DESC,
               f.name ASC
             """)
     Page<FoodItem> search(
@@ -42,6 +36,33 @@ public interface FoodItemRepository extends JpaRepository<FoodItem, Long> {
             @Param("categoryId") Integer categoryId,
             @Param("userId")     Long userId,
             @Param("recipeFirst") boolean recipeFirst,
+            Pageable pageable
+    );
+
+    /**
+     * Default picker for the recipe workflow. Foods used by the most public
+     * recipes come first, so a user can select reusable recipes instead of
+     * falling back to an AI-generated dish.
+     */
+    @Query("""
+            SELECT f FROM FoodItem f
+            WHERE f.isPublic = true
+              AND (:keyword IS NULL OR
+                   LOWER(f.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                   LOWER(f.nameVi) LIKE LOWER(CONCAT('%', :keyword, '%')) OR
+                   LOWER(f.brand) LIKE LOWER(CONCAT('%', :keyword, '%')))
+              AND (:categoryId IS NULL OR f.category.id = :categoryId)
+              AND (f.createdByUserId IS NULL OR f.createdByUserId = :userId)
+            ORDER BY (SELECT COUNT(ingredient) FROM RecipeIngredient ingredient
+                      WHERE ingredient.foodItem = f
+                        AND ingredient.recipe.isPublic = true) DESC,
+                     f.verified DESC,
+                     f.name ASC
+            """)
+    Page<FoodItem> searchByRecipeUsage(
+            @Param("keyword") String keyword,
+            @Param("categoryId") Integer categoryId,
+            @Param("userId") Long userId,
             Pageable pageable
     );
 

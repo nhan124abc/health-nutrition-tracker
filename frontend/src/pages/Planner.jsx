@@ -197,13 +197,26 @@ function hasRecipeIngredients(recipe = {}) {
   return getRecipeIngredientSource(recipe).length > 0;
 }
 
+function isCompleteRecipeForMeal(recipe = {}, mealType) {
+  const ingredients = getRecipeIngredientSource(recipe).map(normalizeRecipeIngredient);
+  const distinctFoodIds = new Set(ingredients.map((ingredient) => String(ingredient.foodItemId || ingredient.name)).filter(Boolean));
+  if (distinctFoodIds.size < 2) return false;
+
+  const minimumCalories = ['morning_snack', 'afternoon_snack', 'evening_snack', 'snack'].includes(mealType)
+    ? 100
+    : 200;
+  return Number(recipe.calories) >= minimumCalories;
+}
+
 function Planner() {
   const { i18n, t } = useTranslation();
   const [profile, setProfile] = useState(null);
   const [meals, setMeals] = useState([]);
   const [activities, setActivities] = useState([]);
   const [workoutPlans, setWorkoutPlans] = useState([]);
-  const [plannerMode, setPlannerMode] = useState('meal');
+  // Start from reusable recipes. The food API ranks ingredients by how many
+  // public recipes use them, so this is the no-AI path by default.
+  const [plannerMode, setPlannerMode] = useState('recipes');
   const [selectedMeal, setSelectedMeal] = useState('breakfast');
   const planDate = today();
   const [foodOptions, setFoodOptions] = useState([]);
@@ -329,7 +342,7 @@ function Planner() {
   );
   const rankedRecipes = useMemo(() => {
     const selectedIdSet = new Set(selectedFoodIds.map(String));
-    return recipes.filter(hasRecipeIngredients).map((recipe, originalIndex) => ({ recipe, originalIndex })).sort((leftItem, rightItem) => {
+    return recipes.filter((recipe) => hasRecipeIngredients(recipe) && isCompleteRecipeForMeal(recipe, selectedMeal)).map((recipe, originalIndex) => ({ recipe, originalIndex })).sort((leftItem, rightItem) => {
       const left = leftItem.recipe;
       const right = rightItem.recipe;
       const matchCount = (recipe) => getRecipeIngredientSource(recipe).map(normalizeRecipeIngredient).filter(
@@ -501,7 +514,9 @@ function Planner() {
       setError('');
       const response = await getRecipeSuggestions(params, { signal });
       const normalizedRecipes = Array.isArray(response.data)
-        ? response.data.filter(hasRecipeIngredients).map(normalizeRecipeOption).filter(hasRecipeIngredients)
+        ? response.data.filter(hasRecipeIngredients).map(normalizeRecipeOption).filter((recipe) => (
+          hasRecipeIngredients(recipe) && isCompleteRecipeForMeal(recipe, selectedMeal)
+        ))
         : [];
       if (recipeCacheRef.current.size >= 30) {
         recipeCacheRef.current.delete(recipeCacheRef.current.keys().next().value);
@@ -1044,7 +1059,16 @@ function Planner() {
     const exercise = plan?.exercises?.find((item) => String(item.activityTypeId) === String(activityTypeId));
     if (!plan || !exercise) return;
 
-    await deleteWorkoutPlanExercise(plan.id, exercise.id);
+    const linkedLogs = activities.filter((activity) => (
+      String(activity.workoutPlanExerciseId) === String(exercise.id)
+    ));
+    await Promise.all([
+      ...linkedLogs.map((activity) => deleteActivityById(activity.id)),
+      deleteWorkoutPlanExercise(plan.id, exercise.id),
+    ]);
+    setActivities((current) => current.filter((activity) => (
+      !linkedLogs.some((linked) => String(linked.id) === String(activity.id))
+    )));
     setWorkoutPlans((current) => current
       .map((item) => item.id === plan.id
         ? { ...item, exercises: item.exercises.filter((itemExercise) => itemExercise.id !== exercise.id) }
@@ -1059,6 +1083,17 @@ function Planner() {
     setError('');
     setSuccess('');
     try {
+      if (activity.workoutPlanExerciseId) {
+        const plan = workoutPlans.find((item) => String(item.planDate) === planDate);
+        if (plan) {
+          await deleteWorkoutPlanExercise(plan.id, activity.workoutPlanExerciseId);
+          setWorkoutPlans((current) => current
+            .map((item) => item.id === plan.id
+              ? { ...item, exercises: item.exercises.filter((exercise) => String(exercise.id) !== String(activity.workoutPlanExerciseId)) }
+              : item)
+            .filter((item) => item.id !== plan.id || item.exercises.length > 0));
+        }
+      }
       await deleteActivityById(activityLogId);
       setActivities((current) => current.filter((act) => act.id !== activityLogId));
       setSelectedOption(null);
@@ -1521,7 +1556,7 @@ function Planner() {
                 </Card.Body>
               </Card>
             )}
-            {!recipesLoading && recipes.length === 0 && (
+            {!recipesLoading && rankedRecipes.length === 0 && (
               <Alert variant="light" className="border">
                 {t(canSearchRecipes ? 'plannerPage.empty.noRecipes' : 'plannerPage.searchRecipesEmpty')}
               </Alert>
@@ -1548,6 +1583,9 @@ function Planner() {
                           <h3 className="h5 fw-bold mt-3">{getRecipeDisplayName(recipe)}</h3>
                           <div className="d-flex flex-wrap gap-2 mb-3">
                             <span className="text-info small fw-semibold">{t('plannerPage.savedRecipe')}</span>
+                            <span className="text-success small fw-semibold">
+                              {selectedMealLabel}
+                            </span>
                             <span className="text-secondary small">
                               {t('plannerPage.ingredientCount', { count: recipeIngredients.length })}
                             </span>
@@ -1660,7 +1698,7 @@ function Planner() {
               </Alert>
             ) : (
               <Alert variant="info">
-                {t('plannerPage.suggestion.mealMessage')} {t('plannerPage.suggestion.mealBudget')}: <strong>{suggestion.mealBudget} kcal</strong>.
+                {t('plannerPage.suggestion.mealMessage')} {t('plannerPage.filteringForMeal', { meal: selectedMealLabel })}. {t('plannerPage.suggestion.mealBudget')}: <strong>{suggestion.mealBudget} kcal</strong>.
               </Alert>
             )}
             {isExerciseMode && (suggestion.options || []).length === 0 ? (
