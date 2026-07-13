@@ -1449,6 +1449,7 @@
     "generating": "Generating...",
     "createOptions": "Create 2 options",
     "createOtherOptions": "Create 2 other options",
+    "createActivityPlan": "Create today's workout plan",
     "invalidTotal": "The current calorie total appears invalid because of older meal data. New suggestions will ignore it; remove the incorrect meals.",
     "insufficientCalories": "There are not enough calories left for another meal.",
     "loggedMealsTitle": "Meals logged for {{meal}} on this date:",
@@ -1457,7 +1458,7 @@
     "duration": "Duration: {{minutes}} minutes",
     "durationLabel": "Duration",
     "minutes": "{{minutes}} minutes",
-    "activityOptionNumber": "Option {{number}}",
+    "activityOptionNumber": "Exercise {{number}}",
     "deleting": "Deleting...",
     "removeMeal": "Remove this meal",
     "removeActivity": "Remove this activity",
@@ -1523,7 +1524,7 @@
     "logged": "Logged",
     "logging": "Logging...",
     "logActivity": "Log exercise",
-    "noActivitySuggestions": "Choose Exercise from the list and select \"Create 2 options\" to receive activity suggestions.",
+    "noActivitySuggestions": "Choose activity types and select \"Create today's workout plan\" to receive activity suggestions.",
     "mealTypes": {
       "breakfast": "Breakfast",
       "lunch": "Lunch",
@@ -1533,7 +1534,7 @@
     },
     "empty": {
       "loggedActivity": "You have logged an activity on this date. Remove the old activity if you want to change it.",
-      "selectActivity": "Choose an activity type and select \"Create 2 options\".",
+      "selectActivity": "Choose activity types and select \"Create today's workout plan\".",
       "noActivityCatalog": "No suitable activity is available in the catalog. Check the activity data or choose a specific activity from the list.",
       "loggedMeal": "You have logged {{meal}} on this date. Remove the old meal if you want to choose another option.",
       "selectMeal": "Choose a meal type and select \"Create 2 options\".",
@@ -1551,7 +1552,7 @@
     "success": {
       "mealAdded": "Added \"{{name}}\". The alternative option will not be added.",
       "mealDeleted": "The meal was unselected and removed from your diary.",
-      "activityAdded": "Logged exercise \"{{name}}\".",
+      "activityAdded": "Added exercise \"{{name}}\" to today's workout plan.",
       "activityDeleted": "The activity was removed from your diary.",
       "mealReplaced": "Replaced the old meal with \"{{name}}\"."
     },
@@ -1729,8 +1730,8 @@
     },
     "workoutCard": {
       "title": "Activities for {{date}}",
-      "description": "Data is synchronized directly from your logged activities.",
-      "empty": "There are no logged activities for this date.",
+      "description": "Activities selected for this workout plan. Completing an activity adds it to your activity log.",
+      "empty": "There are no activities in the workout plan for this date.",
       "progress": "Activity progress",
       "progressHint": "Complete your selected activities",
       "minutes": "{{count}} minutes",

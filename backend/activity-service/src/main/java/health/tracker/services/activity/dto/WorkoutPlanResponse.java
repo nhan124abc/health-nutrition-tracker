@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -15,6 +16,7 @@ public class WorkoutPlanResponse {
     private Long id;
     private Long userId;
     private String name;
+    private LocalDate planDate;
     private String description;
     private WorkoutPlan.Goal goal;
     private Integer durationWeeks;

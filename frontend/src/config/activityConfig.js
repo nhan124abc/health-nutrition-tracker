@@ -7,6 +7,8 @@ const activityConfig = {
     deleteById: (id) => `/activities/${id}`,
     workoutPlans: '/activities/workout-plans',
     workoutPlanDetail: (id) => `/activities/workout-plans/${id}`,
+    workoutPlanExercises: (id) => `/activities/workout-plans/${id}/exercises`,
+    workoutPlanExerciseDetail: (planId, exerciseId) => `/activities/workout-plans/${planId}/exercises/${exerciseId}`,
     workoutPlanActive: (id) => `/activities/workout-plans/${id}/active`,
     listTypes: '/activities/types',
     createType: '/activities/types',

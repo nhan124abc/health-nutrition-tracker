@@ -15,6 +15,7 @@ public class ActivityLogResponse {
     private Long id;
     private Long userId;
     private Integer activityTypeId;
+    private Long workoutPlanExerciseId;
     private String activityName;
     private ActivityType.Category category;
 

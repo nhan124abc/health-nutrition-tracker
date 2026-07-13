@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,6 +28,9 @@ public class WorkoutPlan {
 
     @Column(nullable = false, length = 100)
     private String name;
+
+    @Column(name = "plan_date", nullable = false)
+    private LocalDate planDate;
 
     @Column(columnDefinition = "TEXT")
     private String description;

@@ -6,6 +6,7 @@ import health.tracker.services.activity.dto.ActivityTypeRequest;
 import health.tracker.services.activity.dto.ActivityCategoryLabelRequest;
 import health.tracker.services.activity.dto.ActivityCategoryLabelCreateRequest;
 import health.tracker.services.activity.dto.WorkoutPlanRequest;
+import health.tracker.services.activity.dto.WorkoutPlanExerciseRequest;
 import health.tracker.services.activity.dto.WorkoutPlanResponse;
 import health.tracker.services.activity.entity.ActivityType;
 import health.tracker.services.activity.entity.ActivityCategoryLabel;
@@ -137,6 +138,24 @@ public class ActivityController {
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody WorkoutPlanRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(workoutPlanService.create(userId, request));
+    }
+
+    /** Add one exercise to an existing daily plan without replacing its other exercises. */
+    @PostMapping("/workout-plans/{id}/exercises")
+    public ResponseEntity<WorkoutPlanResponse> addWorkoutPlanExercise(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long id,
+            @Valid @RequestBody WorkoutPlanExerciseRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(workoutPlanService.addExercise(userId, id, request));
+    }
+
+    @DeleteMapping("/workout-plans/{planId}/exercises/{exerciseId}")
+    public ResponseEntity<Void> deleteWorkoutPlanExercise(
+            @RequestHeader("X-User-Id") Long userId,
+            @PathVariable Long planId,
+            @PathVariable Long exerciseId) {
+        workoutPlanService.deleteExercise(userId, planId, exerciseId);
+        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/workout-plans/{id}")

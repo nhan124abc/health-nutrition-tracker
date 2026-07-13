@@ -15,6 +15,7 @@ public class WorkoutPlanExerciseRequest {
     @Max(7)
     private Integer dayOfWeek;
 
+    @NotNull(message = "Activity type is required")
     private Integer activityTypeId;
 
     @NotBlank(message = "Exercise name is required")

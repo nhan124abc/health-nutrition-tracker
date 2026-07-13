@@ -131,6 +131,22 @@ export function createActivityType(payload) {
   return api.post(activityConfig.endpoints.adminTypes, payload, withAdminAuth());
 }
 
+export function addWorkoutPlanExercise(planId, payload) {
+  return api.post(activityConfig.endpoints.workoutPlanExercises(planId), payload)
+    .then((response) => {
+      notifyWorkoutPlansChanged('exercise-added', response.data?.data || response.data || { id: planId });
+      return response;
+    });
+}
+
+export function deleteWorkoutPlanExercise(planId, exerciseId) {
+  return api.delete(activityConfig.endpoints.workoutPlanExerciseDetail(planId, exerciseId))
+    .then((response) => {
+      notifyWorkoutPlansChanged('exercise-deleted', { id: planId, exerciseId });
+      return response;
+    });
+}
+
 export function createUserActivityType(payload) {
   return api.post(activityConfig.endpoints.createType, payload);
 }

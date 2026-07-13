@@ -494,6 +494,7 @@ services:
       AI_GUEST_DAILY_LIMIT: ${AI_GUEST_DAILY_LIMIT:-5}
       AI_USER_DAILY_LIMIT: ${AI_USER_DAILY_LIMIT:-50}
       NUTRITION_SERVICE_URL: http://nutrition-service:${NUTRITION_SERVICE_PORT:-8083}
+      ACTIVITY_SERVICE_URL: http://activity-service:${ACTIVITY_SERVICE_PORT:-8085}
     expose:
       - "${AI_SERVICE_PORT:-8087}"
     volumes:

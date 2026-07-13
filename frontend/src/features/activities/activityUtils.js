@@ -159,6 +159,7 @@ export function normalizeActivityFromApi(activity = {}) {
   return {
     id: activity.id ?? activity.activityLogId,
     typeId: activity.activityTypeId ?? activity.typeId ?? '',
+    workoutPlanExerciseId: activity.workoutPlanExerciseId ?? null,
     customName: activity.activityName || activity.customName || '',
     category: String(activity.category || 'OTHER').toLowerCase(),
     date: String(loggedAt).slice(0, 10),

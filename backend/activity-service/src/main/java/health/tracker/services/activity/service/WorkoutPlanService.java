@@ -39,14 +39,20 @@ public class WorkoutPlanService {
 
     @Transactional
     public WorkoutPlanResponse create(Long userId, WorkoutPlanRequest request) {
+        String planName = request.getName().trim();
+        if (workoutPlanRepository.findByUserIdAndPlanDate(userId, request.getPlanDate()).isPresent()) {
+            throw new AppException(HttpStatus.CONFLICT,
+                    "A workout plan already exists for this date; add an exercise to that plan instead");
+        }
         WorkoutPlan plan = WorkoutPlan.builder()
                 .userId(userId)
-                .name(request.getName().trim())
-                .description(request.getDescription())
-                .goal(request.getGoal())
-                .durationWeeks(request.getDurationWeeks())
-                .active(request.getActive() == null || request.getActive())
+                .name(planName)
+                .planDate(request.getPlanDate())
                 .build();
+        plan.setDescription(request.getDescription());
+        plan.setGoal(request.getGoal());
+        plan.setDurationWeeks(request.getDurationWeeks());
+        plan.setActive(request.getActive() == null || request.getActive());
         replaceExercises(plan, request.getExercises());
         return toResponse(workoutPlanRepository.save(plan));
     }
@@ -55,6 +61,7 @@ public class WorkoutPlanService {
     public WorkoutPlanResponse update(Long userId, Long id, WorkoutPlanRequest request) {
         WorkoutPlan plan = findOwned(userId, id);
         plan.setName(request.getName().trim());
+        plan.setPlanDate(request.getPlanDate());
         plan.setDescription(request.getDescription());
         plan.setGoal(request.getGoal());
         plan.setDurationWeeks(request.getDurationWeeks());
@@ -63,6 +70,35 @@ public class WorkoutPlanService {
         }
         replaceExercises(plan, request.getExercises());
         return toResponse(workoutPlanRepository.save(plan));
+    }
+
+    @Transactional
+    public WorkoutPlanResponse addExercise(Long userId, Long id, WorkoutPlanExerciseRequest request) {
+        WorkoutPlan plan = findOwned(userId, id);
+        boolean duplicate = plan.getExercises().stream().anyMatch(exercise ->
+                exercise.getDayOfWeek().equals(request.getDayOfWeek())
+                        && exercise.getActivityType() != null
+                        && exercise.getActivityType().getId().equals(request.getActivityTypeId()));
+        if (duplicate) {
+            throw new AppException(HttpStatus.CONFLICT,
+                    "This activity is already in the workout plan for the selected day");
+        }
+        plan.getExercises().add(toExercise(plan, request));
+        return toResponse(workoutPlanRepository.save(plan));
+    }
+
+    @Transactional
+    public void deleteExercise(Long userId, Long planId, Long exerciseId) {
+        WorkoutPlan plan = findOwned(userId, planId);
+        boolean removed = plan.getExercises().removeIf(exercise -> exercise.getId().equals(exerciseId));
+        if (!removed) {
+            throw new AppException(HttpStatus.NOT_FOUND, "Workout plan exercise not found: " + exerciseId);
+        }
+        if (plan.getExercises().isEmpty()) {
+            workoutPlanRepository.delete(plan);
+            return;
+        }
+        workoutPlanRepository.save(plan);
     }
 
     @Transactional
@@ -89,29 +125,29 @@ public class WorkoutPlanService {
         }
 
         for (WorkoutPlanExerciseRequest request : requests) {
-            ActivityType activityType = null;
-            if (request.getActivityTypeId() != null) {
-                activityType = activityTypeRepository.findById(request.getActivityTypeId())
-                        .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
-                                "Activity type not found: " + request.getActivityTypeId()));
-                if (activityType.isHidden()) {
-                    throw new AppException(HttpStatus.BAD_REQUEST,
-                            "Activity type is hidden: " + request.getActivityTypeId());
-                }
-            }
-
-            plan.getExercises().add(WorkoutPlanExercise.builder()
-                    .plan(plan)
-                    .dayOfWeek(request.getDayOfWeek())
-                    .activityType(activityType)
-                    .exerciseName(request.getExerciseName().trim())
-                    .sets(request.getSets())
-                    .reps(request.getReps())
-                    .durationMinutes(request.getDurationMinutes())
-                    .sortOrder(request.getSortOrder() == null ? 0 : request.getSortOrder())
-                    .notes(request.getNotes())
-                    .build());
+            plan.getExercises().add(toExercise(plan, request));
         }
+    }
+
+    private WorkoutPlanExercise toExercise(WorkoutPlan plan, WorkoutPlanExerciseRequest request) {
+        ActivityType activityType = activityTypeRepository.findById(request.getActivityTypeId())
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                        "Activity type not found: " + request.getActivityTypeId()));
+        if (activityType.isHidden()) {
+            throw new AppException(HttpStatus.BAD_REQUEST,
+                    "Activity type is hidden: " + request.getActivityTypeId());
+        }
+        return WorkoutPlanExercise.builder()
+                .plan(plan)
+                .dayOfWeek(request.getDayOfWeek())
+                .activityType(activityType)
+                .exerciseName(activityType.getName())
+                .sets(request.getSets())
+                .reps(request.getReps())
+                .durationMinutes(request.getDurationMinutes())
+                .sortOrder(request.getSortOrder() == null ? 0 : request.getSortOrder())
+                .notes(request.getNotes())
+                .build();
     }
 
     private WorkoutPlanResponse toResponse(WorkoutPlan plan) {
@@ -119,6 +155,7 @@ public class WorkoutPlanService {
                 .id(plan.getId())
                 .userId(plan.getUserId())
                 .name(plan.getName())
+                .planDate(plan.getPlanDate())
                 .description(plan.getDescription())
                 .goal(plan.getGoal())
                 .durationWeeks(plan.getDurationWeeks())
