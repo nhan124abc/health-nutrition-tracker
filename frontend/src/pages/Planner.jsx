@@ -18,7 +18,7 @@ import { createMeal, createMealPlan, getMealsByDate, deleteMealById } from '../f
 import { extractMealsFromApi, formatCalories, getMealTotals, getMealsTotals, normalizeMealFromApi } from '../features/meals/mealUtils';
 import { getProfile } from '../features/profile/profileService';
 import { extractProfileFromApi, mapProfileFromApi } from '../features/profile/profileUtils';
-import { getActivitiesByDate, createActivityLog, createWorkoutPlan, deleteActivityById, getActivityTypes } from '../features/activities/activityService';
+import { deleteWorkoutPlan, getActivitiesByDate, createWorkoutPlan, deleteActivityById, getActivityTypes, getWorkoutPlans, updateWorkoutPlan } from '../features/activities/activityService';
 import { extractActivitiesFromApi, extractActivityTypesFromApi, normalizeActivityFromApi, normalizeActivityType } from '../features/activities/activityUtils';
 import { getFoods, getRecipeSuggestions } from '../features/nutrition/nutritionService';
 import { extractFoodsFromApi, normalizeFoodFromApi } from '../features/nutrition/nutritionUtils';
@@ -114,11 +114,6 @@ function getActivityDurationMinutes(activity) {
 
   const amountMatch = String(activity?.amount || '').match(/\d+/);
   return amountMatch ? Number(amountMatch[0]) : 30;
-}
-
-function getCurrentTime() {
-  const now = new Date();
-  return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 }
 
 function getPlannerDayOfWeek(date) {
@@ -814,7 +809,7 @@ function Planner() {
         return next;
       });
     } catch (err) {
-      setError(err.response?.data?.message || t('plannerPage.errors.generate'));
+      setError(err.response?.data?.message || err.message || t('plannerPage.errors.generate'));
     } finally {
       setGenerating(false);
     }
@@ -975,23 +970,23 @@ function Planner() {
     setLoggingActivity(idx);
     setError('');
     setSuccess('');
-    const todayDate = planDate;
+    // Suggestions from AI already carry the catalog ID. Do not lose it when
+    // a localized activity name cannot be matched against the loaded catalog.
+    const resolvedActivityTypeId = matchedActivityType?.id ?? activity.activityTypeId ?? null;
 
-    const payload = {
-      activityTypeId: matchedActivityType?.id || null,
-      activityName: activity.name,
-      durationMinutes: getActivityDurationMinutes(activity),
-      userWeightKg: Number(profile?.weight) || 70,
-      loggedAt: `${todayDate}T${getCurrentTime()}:00`,
-      notes: t('plannerPage.savedNotes.activity'),
-      category: matchedActivityType?.category?.toUpperCase() || 'CARDIO',
-    };
+    if (!resolvedActivityTypeId) {
+      setError(t('plannerPage.empty.noActivityCatalog'));
+      setSaving(false);
+      setSelectingOption(false);
+      setLoggingActivity(null);
+      return;
+    }
 
     try {
       const activityDisplayName = getActivityDisplayName(activity, matchedActivityType);
-      const workoutPlanPayload = {
+      await createWorkoutPlan({
         name: `${t('plannerPage.sections.activityPlan')} - ${planDate}`,
-        description: `${t('plannerPage.savedNotes.activity')}: ${activityDisplayName}`,
+        description: t('plannerPage.sections.activityPlanDescription'),
         goal: activeGoal === 'LOSE_WEIGHT' || activeGoal === 'CUTTING'
           ? 'WEIGHT_LOSS'
           : activeGoal === 'GAIN_MUSCLE'
@@ -1001,18 +996,13 @@ function Planner() {
         active: true,
         exercises: [{
           dayOfWeek: getPlannerDayOfWeek(planDate),
-          activityTypeId: matchedActivityType?.id || activity.activityTypeId || null,
+          activityTypeId: resolvedActivityTypeId,
           exerciseName: activityDisplayName,
           durationMinutes: getActivityDurationMinutes(activity),
-          sortOrder: 0,
+          sortOrder: idx,
           notes: t('plannerPage.savedNotes.activity'),
         }],
-      };
-      const response = await createActivityLog(payload);
-      createWorkoutPlan(workoutPlanPayload).catch((planError) => {
-        console.warn('[Planner] Activity was logged, but workout plan synchronization failed:', planError);
       });
-      setActivities((current) => [...current, normalizePlannerActivityLog(response.data)]);
       setSelectedOption(idx);
       setSuccess(t('plannerPage.success.activityAdded', { name: activityDisplayName }));
     } catch (err) {
@@ -1024,12 +1014,57 @@ function Planner() {
     }
   };
 
-  const handleDeleteActivity = async (activityLogId) => {
+  const removeActivityFromDailyPlan = async (activity) => {
+    const response = await getWorkoutPlans();
+    const data = response.data;
+    const plans = Array.isArray(data) ? data : (data?.data || data?.content || []);
+    const plan = plans.find((item) => String(item.name || '').includes(planDate)
+      && (item.exercises || []).some((exercise) => (
+        String(exercise.activityTypeId) === String(activity.activityTypeId)
+        && Number(exercise.durationMinutes) === Number(activity.durationMinutes)
+      )));
+
+    if (!plan) {
+      return;
+    }
+
+    const remainingExercises = (plan.exercises || []).filter((exercise) => !(
+      String(exercise.activityTypeId) === String(activity.activityTypeId)
+      && Number(exercise.durationMinutes) === Number(activity.durationMinutes)
+    ));
+
+    if (remainingExercises.length === 0) {
+      await deleteWorkoutPlan(plan.id);
+      return;
+    }
+
+    await updateWorkoutPlan(plan.id, {
+      name: plan.name,
+      description: plan.description,
+      goal: plan.goal,
+      durationWeeks: plan.durationWeeks,
+      active: plan.active,
+      exercises: remainingExercises.map((exercise) => ({
+        dayOfWeek: exercise.dayOfWeek,
+        activityTypeId: exercise.activityTypeId,
+        exerciseName: exercise.exerciseName,
+        sets: exercise.sets,
+        reps: exercise.reps,
+        durationMinutes: exercise.durationMinutes,
+        sortOrder: exercise.sortOrder,
+        notes: exercise.notes,
+      })),
+    });
+  };
+
+  const handleDeleteActivity = async (activity) => {
+    const activityLogId = activity.id;
     setSaving(true);
     setDeletingActivityId(activityLogId);
     setError('');
     setSuccess('');
     try {
+      await removeActivityFromDailyPlan(activity);
       await deleteActivityById(activityLogId);
       setActivities((current) => current.filter((act) => act.id !== activityLogId));
       setSelectedOption(null);
@@ -1453,7 +1488,7 @@ function Planner() {
                           size="sm" 
                           className="mt-auto w-100"
                           disabled={saving}
-                          onClick={() => handleDeleteActivity(act.id)}
+                          onClick={() => handleDeleteActivity(act)}
                         >
                           {deletingActivityId === act.id ? t('plannerPage.deleting') : t('plannerPage.removeActivity')}
                         </Button>

@@ -39,14 +39,16 @@ public class WorkoutPlanService {
 
     @Transactional
     public WorkoutPlanResponse create(Long userId, WorkoutPlanRequest request) {
-        WorkoutPlan plan = WorkoutPlan.builder()
-                .userId(userId)
-                .name(request.getName().trim())
-                .description(request.getDescription())
-                .goal(request.getGoal())
-                .durationWeeks(request.getDurationWeeks())
-                .active(request.getActive() == null || request.getActive())
-                .build();
+        String planName = request.getName().trim();
+        WorkoutPlan plan = workoutPlanRepository.findByUserIdAndName(userId, planName)
+                .orElseGet(() -> WorkoutPlan.builder()
+                        .userId(userId)
+                        .name(planName)
+                        .build());
+        plan.setDescription(request.getDescription());
+        plan.setGoal(request.getGoal());
+        plan.setDurationWeeks(request.getDurationWeeks());
+        plan.setActive(request.getActive() == null || request.getActive());
         replaceExercises(plan, request.getExercises());
         return toResponse(workoutPlanRepository.save(plan));
     }
@@ -89,22 +91,20 @@ public class WorkoutPlanService {
         }
 
         for (WorkoutPlanExerciseRequest request : requests) {
-            ActivityType activityType = null;
-            if (request.getActivityTypeId() != null) {
-                activityType = activityTypeRepository.findById(request.getActivityTypeId())
-                        .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
-                                "Activity type not found: " + request.getActivityTypeId()));
-                if (activityType.isHidden()) {
-                    throw new AppException(HttpStatus.BAD_REQUEST,
-                            "Activity type is hidden: " + request.getActivityTypeId());
-                }
+            ActivityType activityType = activityTypeRepository.findById(request.getActivityTypeId())
+                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                            "Activity type not found: " + request.getActivityTypeId()));
+            if (activityType.isHidden()) {
+                throw new AppException(HttpStatus.BAD_REQUEST,
+                        "Activity type is hidden: " + request.getActivityTypeId());
             }
 
             plan.getExercises().add(WorkoutPlanExercise.builder()
                     .plan(plan)
                     .dayOfWeek(request.getDayOfWeek())
                     .activityType(activityType)
-                    .exerciseName(request.getExerciseName().trim())
+                    // The catalog is the source of truth for the exercise name.
+                    .exerciseName(activityType.getName())
                     .sets(request.getSets())
                     .reps(request.getReps())
                     .durationMinutes(request.getDurationMinutes())

@@ -290,16 +290,18 @@ public class PlannerRuleEngine {
                         .filter(id -> id != null && id > 0)
                         .distinct()
                         .toList();
+        List<String> selectedNames = context.getSelectedActivityNames() == null
+                ? List.of()
+                : context.getSelectedActivityNames().stream()
+                        .filter(name -> name != null && !name.isBlank())
+                        .distinct()
+                        .toList();
         for (Integer id : selectedActivityTypeIds) {
             findCatalogActivityById(id, activityCatalog)
                     .map(candidate -> buildActivityInfo(candidate, estimateDurationMinutes(displayActivityName(candidate)), weight))
                     .ifPresent(pool::add);
         }
-        if (context.getSelectedActivityNames() != null && !context.getSelectedActivityNames().isEmpty()) {
-            List<String> selectedNames = context.getSelectedActivityNames().stream()
-                    .filter(name -> name != null && !name.isBlank())
-                    .distinct()
-                    .toList();
+        if (!selectedNames.isEmpty()) {
             for (String name : selectedNames) {
                 boolean alreadySelectedById = selectedActivityTypeIds.stream()
                         .map(id -> findCatalogActivityById(id, activityCatalog))
@@ -313,6 +315,24 @@ public class PlannerRuleEngine {
                 findCatalogActivityByName(name, activityCatalog)
                         .map(candidate -> buildActivityInfo(candidate, duration, weight))
                         .ifPresent(pool::add);
+            }
+        }
+
+        // If the catalog service is temporarily unavailable, retain the IDs
+        // selected by the user. They are still valid catalog references for
+        // the activity service when it persists workout_plan_exercises.
+        if (pool.isEmpty() && !selectedActivityTypeIds.isEmpty()) {
+            for (int i = 0; i < selectedActivityTypeIds.size(); i++) {
+                String name = i < selectedNames.size() ? selectedNames.get(i) : "Hoạt động đã chọn";
+                int duration = estimateDurationMinutes(name);
+                double met = estimateMet(name);
+                pool.add(new ActivityInfo(
+                        selectedActivityTypeIds.get(i),
+                        name,
+                        duration,
+                        calculateCaloriesBurned(met, weight, duration),
+                        met
+                ));
             }
         }
 

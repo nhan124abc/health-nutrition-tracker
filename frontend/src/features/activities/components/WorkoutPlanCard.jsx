@@ -1,15 +1,45 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Card, Form, ListGroup, ProgressBar, Spinner } from 'react-bootstrap';
-import { getActivitiesByDate } from '../activityService';
+import { createActivityLog, getActivitiesByDate, getWorkoutPlans, updateActivityCompletion } from '../activityService';
 import { extractActivitiesFromApi, normalizeActivityFromApi } from '../activityUtils';
 import { getActivityCompletionId, readCompletionIds, toggleCompletionId } from '../../../utils/completionStorage';
 import ErrorModal from '../../../components/ErrorModal';
 import { useTranslation } from 'react-i18next';
 
-function getActivitiesForDate(data, selectedDate) {
-  return extractActivitiesFromApi(data)
-    .map(normalizeActivityFromApi)
-    .filter((activity) => activity.date === selectedDate);
+function getPlannerDayOfWeek(date) {
+  const day = new Date(`${date}T00:00:00`).getDay();
+  return day === 0 ? 7 : day;
+}
+
+function extractWorkoutPlans(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.data)) return data.data;
+  return data?.data?.content || data?.content || data?.data?.items || data?.items || [];
+}
+
+function getExercisesForDate(data, selectedDate, activityLogs) {
+  const dayOfWeek = getPlannerDayOfWeek(selectedDate);
+  return extractWorkoutPlans(data)
+    .filter((plan) => plan.active !== false)
+    // Daily plans created by Planner include the date in their name. Legacy
+    // recurring plans fall back to their configured day of week.
+    .filter((plan) => String(plan.name || '').includes(selectedDate)
+      || !(plan.name || '').match(/\d{4}-\d{2}-\d{2}/))
+    .flatMap((plan) => (plan.exercises || [])
+      .filter((exercise) => Number(exercise.dayOfWeek) === dayOfWeek)
+      .map((exercise) => {
+        const matchedLog = activityLogs.find((log) => String(log.typeId) === String(exercise.activityTypeId)
+          && Number(log.duration) === Number(exercise.durationMinutes));
+        return {
+          id: `workout-plan-${plan.id}-exercise-${exercise.id}`,
+          activityTypeId: exercise.activityTypeId,
+          customName: exercise.activityTypeName || exercise.exerciseName,
+          duration: exercise.durationMinutes,
+          planName: plan.name,
+          activityLogId: matchedLog?.id || null,
+          completed: Boolean(matchedLog?.completed),
+        };
+      }));
 }
 
 function WorkoutPlanCard({ selectedDate }) {
@@ -26,10 +56,16 @@ function WorkoutPlanCard({ selectedDate }) {
       setLoading(true);
     }
     setError('');
-    getActivitiesByDate(selectedDate)
-      .then((response) => {
+    Promise.all([getWorkoutPlans(), getActivitiesByDate(selectedDate)])
+      .then(([plansResponse, logsResponse]) => {
         if (active) {
-          setActivities(getActivitiesForDate(response.data, selectedDate));
+          const activityLogs = extractActivitiesFromApi(logsResponse.data).map(normalizeActivityFromApi);
+          const exercises = getExercisesForDate(plansResponse.data, selectedDate, activityLogs);
+          setActivities(exercises);
+          setCompletedIds((current) => [...new Set([
+            ...current,
+            ...exercises.filter((exercise) => exercise.completed).map(getActivityCompletionId),
+          ])]);
         }
       })
       .catch((err) => {
@@ -60,13 +96,11 @@ function WorkoutPlanCard({ selectedDate }) {
     };
 
     window.addEventListener('focus', refreshOnFocus);
-    window.addEventListener('activities:changed', refreshOnFocus);
     window.addEventListener('workout-plans:changed', refreshOnFocus);
     window.addEventListener('completion:changed', refreshCompletions);
 
     return () => {
       window.removeEventListener('focus', refreshOnFocus);
-      window.removeEventListener('activities:changed', refreshOnFocus);
       window.removeEventListener('workout-plans:changed', refreshOnFocus);
       window.removeEventListener('completion:changed', refreshCompletions);
     };
@@ -74,7 +108,34 @@ function WorkoutPlanCard({ selectedDate }) {
 
   const completedCount = activities.filter((item) => completedIds.includes(getActivityCompletionId(item))).length;
   const progress = activities.length ? Math.round((completedCount / activities.length) * 100) : 0;
-  const toggle = (activity) => setCompletedIds(toggleCompletionId('activities', getActivityCompletionId(activity)));
+  const toggle = async (activity) => {
+    const id = getActivityCompletionId(activity);
+    const completed = completedIds.includes(id);
+
+    try {
+      let activityLogId = activity.activityLogId;
+      if (!activityLogId && !completed) {
+        const response = await createActivityLog({
+          activityTypeId: activity.activityTypeId,
+          activityName: activity.customName,
+          durationMinutes: Number(activity.duration) || 30,
+          loggedAt: `${selectedDate}T${new Date().toTimeString().slice(0, 5)}:00`,
+          notes: activity.planName,
+        });
+        activityLogId = response.data?.id;
+        setActivities((current) => current.map((item) => (
+          item.id === activity.id ? { ...item, activityLogId } : item
+        )));
+      }
+
+      if (activityLogId) {
+        await updateActivityCompletion(activityLogId, !completed);
+      }
+      setCompletedIds(toggleCompletionId('activities', id));
+    } catch (err) {
+      setError(err.response?.data?.message || t('plansPage.workoutCard.loadError'));
+    }
+  };
 
   return (
     <Card className="border-0 shadow-sm planner-side-card">

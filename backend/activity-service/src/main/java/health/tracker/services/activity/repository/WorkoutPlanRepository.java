@@ -13,4 +13,6 @@ public interface WorkoutPlanRepository extends JpaRepository<WorkoutPlan, Long> 
     List<WorkoutPlan> findByUserIdOrderByActiveDescUpdatedAtDesc(Long userId);
 
     Optional<WorkoutPlan> findByIdAndUserId(Long id, Long userId);
+
+    Optional<WorkoutPlan> findByUserIdAndName(Long userId, String name);
 }
