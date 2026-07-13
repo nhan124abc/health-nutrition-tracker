@@ -16,6 +16,8 @@ public class PlannerSuggestRequest {
     private String gender;
     private String mealType;
     private Integer caloriesConsumed;
+    /** Budget calculated by Planner after distributing the user's remaining daily calories. */
+    private Integer mealBudgetKcal;
     private Integer dailyActivityGoalKcal;
     private Integer activityCaloriesBurned;
     private Integer suggestionOffset;

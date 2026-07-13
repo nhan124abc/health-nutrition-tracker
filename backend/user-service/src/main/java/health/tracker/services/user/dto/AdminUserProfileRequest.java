@@ -53,7 +53,7 @@ public class AdminUserProfileRequest {
     private Integer dailyCalorieGoal;
 
     @Min(value = 100, message = "Water goal must be at least 100 ml")
-    @Max(value = 10000, message = "Water goal must be at most 10,000 ml")
+    @Max(value = 4000, message = "Water goal must be at most 4,000 ml")
     private Integer dailyWaterGoalMl;
 
     @Size(max = 500, message = "Bio must not exceed 500 characters")

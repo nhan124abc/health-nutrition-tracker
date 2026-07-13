@@ -277,7 +277,7 @@ function WaterTracker() {
   const saveWaterGoal = async () => {
     const goalMl = Number(waterGoalInput) || 0;
 
-    if (goalMl < 100 || goalMl > 10000) {
+    if (goalMl < 100 || goalMl > 4000) {
       setWaterError(t('waterPage.invalidGoal'));
       return;
     }

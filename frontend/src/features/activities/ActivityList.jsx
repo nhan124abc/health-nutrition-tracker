@@ -39,7 +39,6 @@ function ActivityList() {
     metValue: '',
     icon: '',
     description: '',
-    hidden: false,
   });
   const [error, setError] = useState('');
   const currentUser = getCurrentUser();
@@ -129,7 +128,7 @@ function ActivityList() {
         metValue,
         icon: createForm.icon.trim() || null,
         description: createForm.description.trim() || null,
-        hidden: Boolean(createForm.hidden),
+        hidden: Boolean(editingActivity?.hidden),
       };
       const response = editingActivity
         ? await updateUserActivityType(editingActivity.id, payload)
@@ -154,7 +153,6 @@ function ActivityList() {
         metValue: '',
         icon: '',
         description: '',
-        hidden: false,
       });
       setEditingActivity(null);
       setShowCreateModal(false);
@@ -191,7 +189,6 @@ function ActivityList() {
       metValue: String(activity.met || '3.0'),
       icon: activity.icon || '',
       description: activity.description || '',
-      hidden: Boolean(activity.hidden),
     });
     setShowCreateModal(true);
   };
@@ -206,7 +203,6 @@ function ActivityList() {
       metValue: '',
       icon: '',
       description: '',
-      hidden: false,
     });
   };
 
@@ -254,7 +250,6 @@ function ActivityList() {
             metValue: '',
             icon: '',
             description: '',
-            hidden: false,
           });
           setShowCreateModal(true);
         }}>
@@ -342,15 +337,6 @@ function ActivityList() {
               <Col md={6}>
                 <Form.Label>{t('admin.table.met', 'MET')} <span className="text-danger">*</span></Form.Label>
                 <Form.Control inputMode="decimal" min="0.1" max="50" value={createForm.metValue} onChange={(event) => updateCreateForm('metValue', event.target.value)} required />
-              </Col>
-              <Col md={12}>
-                <Form.Check
-                  type="switch"
-                  id="activity-type-hidden"
-                  label={i18n.language?.startsWith('vi') ? 'Ẩn hoạt động này' : 'Hide this activity'}
-                  checked={Boolean(createForm.hidden)}
-                  onChange={(event) => updateCreateForm('hidden', event.target.checked)}
-                />
               </Col>
             </Row>
           </Modal.Body>

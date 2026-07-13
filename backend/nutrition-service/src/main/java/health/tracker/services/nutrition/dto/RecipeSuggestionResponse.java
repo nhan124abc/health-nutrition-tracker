@@ -11,6 +11,7 @@ import java.util.List;
 public class RecipeSuggestionResponse {
     private Long id;
     private String name;
+    private String nameVi;
     private String description;
     private Integer servings;
     private String imageUrl;

@@ -33,6 +33,7 @@ public class RecipeService {
         Recipe recipe = Recipe.builder()
                 .userId(userId)
                 .name(request.getName().trim())
+                .nameVi(request.getNameVi())
                 .description(request.getDescription())
                 .servings(Math.max(1, request.getServings()))
                 .isPublic(false)
@@ -83,8 +84,8 @@ public class RecipeService {
     @Transactional(readOnly = true)
     public List<RecipeSuggestionResponse> suggest(BigDecimal maxCalories, String keyword, List<Long> foodIds,
                                                   String goal, String mealType, int limit) {
-        int safeLimit = Math.max(1, Math.min(limit, 20));
-        int candidateLimit = Math.min(20, Math.max(safeLimit, safeLimit * 3));
+        int safeLimit = Math.max(1, Math.min(limit, 50));
+        int candidateLimit = Math.min(100, Math.max(safeLimit, safeLimit * 2));
         String normalizedKeyword = keyword == null || keyword.isBlank() ? null : keyword.trim();
 
         Map<Long, Recipe> recipes = new LinkedHashMap<>();
@@ -156,6 +157,9 @@ public class RecipeService {
         return RecipeSuggestionResponse.builder()
                 .id(recipe.getId())
                 .name(recipe.getName())
+                .nameVi(recipe.getNameVi() != null && !recipe.getNameVi().isBlank()
+                        ? recipe.getNameVi()
+                        : recipe.getName())
                 .description(recipe.getDescription())
                 .servings(recipe.getServings())
                 .imageUrl(recipe.getImageUrl())

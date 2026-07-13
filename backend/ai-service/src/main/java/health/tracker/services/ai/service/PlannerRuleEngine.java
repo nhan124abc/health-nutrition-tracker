@@ -164,7 +164,7 @@ public class PlannerRuleEngine {
 
     private static String formatActivityOption(ActivityInfo activity) {
         return String.format(
-                "    { \"activityTypeId\": %s, \"name\": \"%s\", \"amount\": \"%d phút\", \"durationMinutes\": %d, \"servingSizeG\": 0, \"calories\": %d, \"caloriesBurned\": %d, \"proteinG\": 0, \"carbsG\": 0, \"fatG\": 0 }",
+                "    { \"activityTypeId\": %s, \"name\": \"%s\", \"amount\": \"%d phút\", \"durationMinutes\": %d, \"servingSizeG\": 0, \"calories\": %d, \"caloriesBurned\": %d, \"proteinG\": 0, \"carbsG\": 0, \"fatG\": 0, \"source\": \"AI_PLAN\" }",
                 activityTypeIdJson(activity),
                 activity.name,
                 activity.durationMinutes,

@@ -10,6 +10,7 @@ import org.springframework.web.client.RestClient;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -135,6 +136,7 @@ public class NutritionCatalogClient {
                 ingredients.add(new RecipeIngredientCandidate(
                         ingredient.path("foodItemId").asLong(),
                         text(ingredient, "name", "Food"),
+                        text(ingredient, "nameVi", text(ingredient, "name", "Food")),
                         quantityG,
                         decimal(ingredient, "calories"),
                         decimal(ingredient, "proteinG"),
@@ -147,6 +149,7 @@ public class NutritionCatalogClient {
             recipes.add(new RecipeCandidate(
                     item.path("id").asLong(),
                     text(item, "name", "Recipe"),
+                    text(item, "nameVi", text(item, "name", "Recipe")),
                     text(item, "description", ""),
                     item.path("servings").asInt(1),
                     text(item, "imageUrl", ""),
@@ -190,6 +193,19 @@ public class NutritionCatalogClient {
         return value.isEmpty() ? fallback : value;
     }
 
+    public long createRecipe(long userId, String name, String nameVi, String description,
+                             List<Map<String, Object>> ingredients) {
+        Map<String, Object> payload = Map.of(
+                "name", name, "nameVi", nameVi, "description", description,
+                "servings", 1, "ingredients", ingredients);
+        JsonNode response = restClient.post().uri("/api/v1/nutrition/recipes")
+                .header("X-User-Id", String.valueOf(userId))
+                .body(payload).retrieve().body(JsonNode.class);
+        long id = response == null ? 0 : response.path("id").asLong();
+        if (id <= 0) throw new IllegalStateException("Nutrition service did not create recipe");
+        return id;
+    }
+
     public record FoodCandidate(
             long id, String name, BigDecimal servingSizeG, String servingDescription,
             BigDecimal calories, BigDecimal proteinG, BigDecimal carbsG, BigDecimal fatG,
@@ -197,13 +213,13 @@ public class NutritionCatalogClient {
     }
 
     public record RecipeCandidate(
-            long id, String name, String description, int servings, String imageUrl,
+            long id, String name, String nameVi, String description, int servings, String imageUrl,
             BigDecimal calories, BigDecimal proteinG, BigDecimal carbsG, BigDecimal fatG,
             List<RecipeIngredientCandidate> ingredients) {
     }
 
     public record RecipeIngredientCandidate(
-            long foodItemId, String name, BigDecimal quantityG, BigDecimal calories,
+            long foodItemId, String name, String nameVi, BigDecimal quantityG, BigDecimal calories,
             BigDecimal proteinG, BigDecimal carbsG, BigDecimal fatG) {
     }
 }

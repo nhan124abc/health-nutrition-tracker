@@ -50,7 +50,7 @@ function WaterSummaryCard({
             <Form.Control
               type="number"
               min="100"
-              max="10000"
+              max="4000"
               step="50"
               value={goalInput}
               onChange={(event) => onGoalInputChange(event.target.value)}

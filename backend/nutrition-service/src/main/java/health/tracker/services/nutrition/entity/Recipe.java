@@ -32,6 +32,9 @@ public class Recipe {
     @Column(nullable = false)
     private String name;
 
+    @Column(name = "name_vi")
+    private String nameVi;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
