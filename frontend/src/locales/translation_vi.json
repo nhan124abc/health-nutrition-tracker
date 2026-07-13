@@ -957,6 +957,7 @@
     "generating": "Đang tạo...",
     "createOptions": "Tạo 2 phương án",
     "createOtherOptions": "Tạo 2 phương án khác",
+    "createActivityPlan": "Tạo kế hoạch tập hôm nay",
     "invalidTotal": "Tổng calo hiện tại bất thường do dữ liệu bữa cũ. Gợi ý mới sẽ bỏ qua tổng này; bạn nên xóa các bữa bị sai.",
     "insufficientCalories": "Không còn đủ calo cho một bữa mới.",
     "loggedMealsTitle": "Bữa ăn đã ghi nhận cho {{meal}} trong ngày này:",
@@ -965,7 +966,7 @@
     "duration": "Thời lượng: {{minutes}} phút",
     "durationLabel": "Thời lượng",
     "minutes": "{{minutes}} phút",
-    "activityOptionNumber": "Phương án {{number}}",
+    "activityOptionNumber": "Bài tập {{number}}",
     "deleting": "Đang xóa...",
     "removeMeal": "Hủy chọn bữa này",
     "removeActivity": "Hủy chọn hoạt động này",
@@ -1031,7 +1032,7 @@
     "logged": "Đã ghi nhận",
     "logging": "Đang ghi nhận...",
     "logActivity": "Ghi nhận bài tập",
-    "noActivitySuggestions": "Chọn Hoạt động vận động trong danh sách và nhấn \"Tạo 2 phương án\" để nhận gợi ý bài tập.",
+    "noActivitySuggestions": "Chọn hoạt động vận động trong danh sách và nhấn \"Tạo kế hoạch tập hôm nay\" để nhận gợi ý bài tập.",
     "mealTypes": {
       "breakfast": "Bữa sáng",
       "lunch": "Bữa trưa",
@@ -1041,7 +1042,7 @@
     },
     "empty": {
       "loggedActivity": "Bạn đã ghi nhận hoạt động vận động trong ngày này. Có thể xóa hoạt động cũ nếu muốn thay đổi.",
-      "selectActivity": "Chọn loại hoạt động vận động rồi nhấn \"Tạo 2 phương án\".",
+      "selectActivity": "Chọn loại hoạt động vận động rồi nhấn \"Tạo kế hoạch tập hôm nay\".",
       "noActivityCatalog": "Chưa có hoạt động phù hợp trong danh mục. Hãy kiểm tra lại dữ liệu hoạt động hoặc chọn hoạt động cụ thể từ danh sách.",
       "loggedMeal": "Bạn đã ghi nhận bữa {{meal}} trong ngày này. Hãy xóa bữa cũ nếu muốn chọn phương án khác.",
       "selectMeal": "Chọn loại bữa rồi nhấn \"Tạo 2 phương án\".",
@@ -1059,7 +1060,7 @@
     "success": {
       "mealAdded": "Đã thêm \"{{name}}\" thành công. Phương án còn lại sẽ không được cộng thêm.",
       "mealDeleted": "Đã hủy chọn và xóa bữa ăn khỏi nhật ký thành công.",
-      "activityAdded": "Đã ghi nhận bài tập \"{{name}}\" thành công.",
+      "activityAdded": "Đã thêm bài tập \"{{name}}\" vào kế hoạch tập hôm nay.",
       "activityDeleted": "Đã xóa hoạt động khỏi nhật ký thành công.",
       "mealReplaced": "Đã thay bữa cũ bằng \"{{name}}\" thành công."
     },
@@ -1729,8 +1730,8 @@
     },
     "workoutCard": {
       "title": "Vận động ngày {{date}}",
-      "description": "Dữ liệu được đồng bộ trực tiếp từ hoạt động đã ghi nhận.",
-      "empty": "Ngày này chưa có hoạt động nào được ghi nhận.",
+      "description": "Các bài đã chọn trong kế hoạch tập. Khi hoàn thành bài tập, hệ thống sẽ ghi vào nhật ký vận động.",
+      "empty": "Ngày này chưa có bài tập nào trong kế hoạch.",
       "progress": "Tiến độ vận động",
       "progressHint": "Hoàn thành các hoạt động đã chọn",
       "minutes": "{{count}} phút",

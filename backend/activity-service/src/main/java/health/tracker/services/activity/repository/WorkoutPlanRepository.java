@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDate;
 
 @Repository
 public interface WorkoutPlanRepository extends JpaRepository<WorkoutPlan, Long> {
@@ -15,4 +16,6 @@ public interface WorkoutPlanRepository extends JpaRepository<WorkoutPlan, Long> 
     Optional<WorkoutPlan> findByIdAndUserId(Long id, Long userId);
 
     Optional<WorkoutPlan> findByUserIdAndName(Long userId, String name);
+
+    Optional<WorkoutPlan> findByUserIdAndPlanDate(Long userId, LocalDate planDate);
 }

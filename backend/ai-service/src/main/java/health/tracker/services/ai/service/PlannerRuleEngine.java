@@ -23,20 +23,19 @@ public class PlannerRuleEngine {
 
         if ("exercise".equals(mealType)) {
             List<ActivityInfo> exerciseOptions = getExerciseOptions(context, goal, weight, dayOfWeek + offset, activityCatalog);
-            if (exerciseOptions.size() < 2) {
+            if (exerciseOptions.isEmpty()) {
                 return emptyActivitySuggestionJson();
             }
-            ActivityInfo act1 = exerciseOptions.get(0);
-            ActivityInfo act2 = exerciseOptions.get(1);
 
             StringBuilder sb = new StringBuilder();
             sb.append("{\n");
             sb.append("  \"message\": \"Gợi ý hoạt động vận động lành mạnh, phù hợp với thể trạng của bạn.\",\n");
             sb.append("  \"mealBudget\": 0,\n");
             sb.append("  \"options\": [\n");
-            sb.append(formatActivityOption(act1));
-            sb.append(",\n");
-            sb.append(formatActivityOption(act2)).append("\n");
+            for (int i = 0; i < exerciseOptions.size(); i++) {
+                sb.append(formatActivityOption(exerciseOptions.get(i)));
+                sb.append(i < exerciseOptions.size() - 1 ? ",\n" : "\n");
+            }
             sb.append("  ]\n");
             sb.append("}");
             return sb.toString();
@@ -337,9 +336,11 @@ public class PlannerRuleEngine {
         }
 
         if (!pool.isEmpty()) {
-            return pickActivityOptions(onlyCatalogActivities(pool).stream()
-                    .map(activity -> adjustActivityToTarget(activity, context, weight))
-                    .toList(), index);
+            // The user explicitly selected these activities.  They are not
+            // alternatives: every selected type must become an exercise in
+            // the same daily workout plan.
+            List<ActivityInfo> selectedActivities = onlyCatalogActivities(pool);
+            return adjustActivitiesToDailyTarget(selectedActivities, context, weight);
         }
 
         List<ActivityInfo> catalogPool = buildCatalogActivityPool(goal, weight, activityCatalog);
@@ -553,6 +554,37 @@ public class PlannerRuleEngine {
                 calculateCaloriesBurned(activity.met, weight, adjustedDuration),
                 activity.met
         );
+    }
+
+    private static List<ActivityInfo> adjustActivitiesToDailyTarget(List<ActivityInfo> activities,
+                                                                     PlannerSuggestRequest context,
+                                                                     double weight) {
+        int dailyGoal = context.getDailyActivityGoalKcal() == null ? 0 : context.getDailyActivityGoalKcal();
+        int burned = context.getActivityCaloriesBurned() == null ? 0 : Math.max(0, context.getActivityCaloriesBurned());
+        int remaining = dailyGoal - burned;
+        if (activities.isEmpty() || remaining <= 0) {
+            return activities;
+        }
+
+        // Divide the remaining daily target across every exercise. This keeps
+        // a four-exercise plan near the requested total instead of assigning
+        // the full daily target to each exercise.
+        int baseTarget = Math.max(1, remaining / activities.size());
+        int remainder = Math.max(0, remaining % activities.size());
+        List<ActivityInfo> result = new ArrayList<>();
+        for (int i = 0; i < activities.size(); i++) {
+            ActivityInfo activity = activities.get(i);
+            int target = baseTarget + (i < remainder ? 1 : 0);
+            if (activity.met <= 0) {
+                result.add(activity);
+                continue;
+            }
+            int duration = (int) Math.round((target * 60.0) / (activity.met * weight));
+            duration = Math.max(10, Math.min(75, duration));
+            result.add(new ActivityInfo(activity.activityTypeId, activity.name, duration,
+                    calculateCaloriesBurned(activity.met, weight, duration), activity.met));
+        }
+        return result;
     }
 
     private static double findCatalogMet(String activityName, List<ActivityCandidate> activityCatalog) {

@@ -7,6 +7,7 @@ import health.tracker.services.activity.entity.ActivityType;
 import health.tracker.services.activity.exception.AppException;
 import health.tracker.services.activity.repository.ActivityLogRepository;
 import health.tracker.services.activity.repository.ActivityTypeRepository;
+import health.tracker.services.activity.repository.WorkoutPlanExerciseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -31,6 +32,7 @@ public class ActivityService {
 
     private final ActivityLogRepository  logRepository;
     private final ActivityTypeRepository typeRepository;
+    private final WorkoutPlanExerciseRepository workoutPlanExerciseRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     // ─── Lấy hoạt động trong ngày ─────────────────────────────────────────────
@@ -48,6 +50,7 @@ public class ActivityService {
     @Transactional
     public ActivityLogResponse log(Long userId, ActivityLogRequest request) {
         ActivityType activityType = null;
+        health.tracker.services.activity.entity.WorkoutPlanExercise workoutPlanExercise = null;
         String activityName = request.getActivityName();
         String category     = "OTHER";
 
@@ -62,6 +65,18 @@ public class ActivityService {
             activityName = activityType.getName();
             category     = activityType.getCategory().name();
         }
+        if (request.getWorkoutPlanExerciseId() != null) {
+            workoutPlanExercise = workoutPlanExerciseRepository
+                    .findByIdAndPlanUserId(request.getWorkoutPlanExerciseId(), userId)
+                    .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND,
+                            "Workout plan exercise not found: " + request.getWorkoutPlanExerciseId()));
+            if (activityType != null && !activityType.getId().equals(workoutPlanExercise.getActivityType().getId())) {
+                throw new AppException(HttpStatus.BAD_REQUEST, "Activity type does not match workout plan exercise");
+            }
+            activityType = workoutPlanExercise.getActivityType();
+            activityName = activityType.getName();
+            category = activityType.getCategory().name();
+        }
 
         // Tính calo đốt: calories = MET × weight_kg × duration_hours
         BigDecimal caloriesBurned = calculateCalories(
@@ -73,6 +88,7 @@ public class ActivityService {
         ActivityLog logEntry = ActivityLog.builder()
                 .userId(userId)
                 .activityType(activityType)
+                .workoutPlanExercise(workoutPlanExercise)
                 .activityName(activityName)
                 .category(category)
                 .durationMinutes(request.getDurationMinutes())
@@ -203,6 +219,7 @@ public class ActivityService {
         return ActivityLogResponse.builder()
                 .id(a.getId()).userId(a.getUserId())
                 .activityTypeId(a.getActivityType() != null ? a.getActivityType().getId() : null)
+                .workoutPlanExerciseId(a.getWorkoutPlanExercise() != null ? a.getWorkoutPlanExercise().getId() : null)
                 .activityName(a.getActivityName())
                 .category(a.getActivityType() != null ? a.getActivityType().getCategory() : ActivityType.Category.OTHER)
                 .durationMinutes(a.getDurationMinutes()).caloriesBurned(roundCalories(a.getCaloriesBurned()))

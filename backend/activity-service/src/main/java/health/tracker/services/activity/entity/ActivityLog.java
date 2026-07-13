@@ -32,6 +32,10 @@ public class ActivityLog {
     @JoinColumn(name = "activity_type_id")
     private ActivityType activityType;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "workout_plan_exercise_id")
+    private WorkoutPlanExercise workoutPlanExercise;
+
     /**
      * Denormalized - tên hoạt động lúc log
      */

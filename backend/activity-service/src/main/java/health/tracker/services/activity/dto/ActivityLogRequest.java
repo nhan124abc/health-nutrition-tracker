@@ -13,6 +13,8 @@ public class ActivityLogRequest {
     /** ID từ bảng activity_types (có thể null nếu người dùng nhập tên tự do) */
     private Integer activityTypeId;
 
+    private Long workoutPlanExerciseId;
+
     /**
      * Tên hoạt động — bắt buộc khi activityTypeId = null,
      * hoặc sẽ được lấy từ ActivityType nếu có.
