@@ -1361,6 +1361,20 @@ body::-webkit-scrollbar,
   gap: 0.75rem;
 }
 
+.activity-log-table {
+  min-width: 860px;
+}
+
+.activity-log-table th,
+.activity-log-table td {
+  white-space: nowrap;
+}
+
+.activity-log-table td:first-child {
+  white-space: normal;
+  min-width: 220px;
+}
+
 .sticky-panel {
   position: sticky;
   top: calc(var(--layout-header-height) + 1rem);
