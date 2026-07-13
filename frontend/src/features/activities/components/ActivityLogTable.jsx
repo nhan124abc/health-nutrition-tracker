@@ -22,22 +22,33 @@ function ActivityLogTable({ activityTypes = [], completedIds = [], language, loa
     return `${value}${suffix}`;
   };
 
+  const selectedCategory = String(selectedLog?.category || '').toLowerCase();
+  const isStrength = selectedCategory === 'strength';
+  const showsSets = ['strength', 'flexibility'].includes(selectedCategory);
+  const showsDistance = ['cardio', 'walking', 'daily', 'outdoor'].includes(selectedCategory);
+  const showsHeartRate = ['cardio', 'sports', 'outdoor'].includes(selectedCategory);
+
   const selectedLogMetrics = selectedLog ? [
     [t('common.calories'), formatValue(selectedLog.calories, ' kcal')],
     [t('activityPage.fields.durationMinutes'), formatValue(selectedLog.duration, ` ${t('common.minutes')}`)],
-    [t('activityPage.fields.distance'), formatValue(selectedLog.distance, ' km')],
-    [t('activityPage.fields.avgHeartRate'), formatValue(selectedLog.avgHeartRate, ' bpm')],
-    [t('activityPage.fields.maxHeartRate'), formatValue(selectedLog.maxHeartRate, ' bpm')],
-    [t('activityPage.fields.userWeight'), formatValue(selectedLog.userWeight, ' kg')],
+    ...(showsDistance ? [[t('activityPage.fields.distance'), formatValue(selectedLog.distance, ' km')]] : []),
+    ...(showsHeartRate ? [
+      [t('activityPage.fields.avgHeartRate'), formatValue(selectedLog.avgHeartRate, ' bpm')],
+      [t('activityPage.fields.maxHeartRate'), formatValue(selectedLog.maxHeartRate, ' bpm')],
+    ] : []),
+    ...(showsSets ? [
+      [t('activityPage.fields.sets'), formatValue(selectedLog.sets)],
+      [t('activityPage.fields.reps'), formatValue(selectedLog.reps)],
+    ] : []),
+    ...(isStrength ? [
+      [t('activityPage.fields.strengthWeight'), formatValue(selectedLog.strengthWeight, ' kg')],
+    ] : []),
   ] : [];
 
   const selectedLogRows = selectedLog ? [
     [t('activityPage.fields.activityType'), t(`activityPage.categories.${selectedLog.category}`, selectedLog.category)],
     [t('common.date'), selectedLog.date || '-'],
     [t('activityPage.fields.logTime'), selectedLog.time || '-'],
-    [t('activityPage.fields.sets'), formatValue(selectedLog.sets)],
-    [t('activityPage.fields.reps'), formatValue(selectedLog.reps)],
-    [t('activityPage.fields.strengthWeight'), formatValue(selectedLog.strengthWeight, ' kg')],
   ] : [];
 
   const openLogDetail = (log) => {
@@ -59,7 +70,7 @@ function ActivityLogTable({ activityTypes = [], completedIds = [], language, loa
             <Card.Title className="fw-bold mb-0">{t('activityPage.listTitle')}</Card.Title>
           </div>
           <div className="table-responsive">
-            <Table hover className="align-middle mb-0">
+            <Table hover className="align-middle mb-0 activity-log-table">
               <thead>
                 <tr>
                   <th>{t('common.activity')}</th>
@@ -96,7 +107,7 @@ function ActivityLogTable({ activityTypes = [], completedIds = [], language, loa
                     <td className="text-end">{log.calories}</td>
                     <td className="text-end">{log.avgHeartRate || '-'} / {log.maxHeartRate || '-'}</td>
                     <td className="text-end">
-                      {log.category === 'strength'
+                      {String(log.category).toLowerCase() === 'strength'
                         ? `${log.sets || '-'} ${t('activityPage.fields.sets')} - ${log.reps || '-'} ${t('activityPage.fields.reps')} - ${log.strengthWeight || '-'}kg`
                         : `${log.distance || '-'} km`}
                     </td>

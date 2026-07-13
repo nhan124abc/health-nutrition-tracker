@@ -84,6 +84,7 @@ public class ActivityService {
                 request.getDurationMinutes(),
                 request.getUserWeightKg() != null ? request.getUserWeightKg() : DEFAULT_WEIGHT_KG
         );
+        ActivityMetrics metrics = resolveMetrics(activityType, request);
 
         ActivityLog logEntry = ActivityLog.builder()
                 .userId(userId)
@@ -95,13 +96,13 @@ public class ActivityService {
                 .caloriesBurned(caloriesBurned)
                 .notes(request.getNotes())
                 .loggedAt(request.getLoggedAt() != null ? request.getLoggedAt() : LocalDateTime.now())
-                .distanceKm(request.getDistanceKm())
-                .avgHeartRate(request.getAvgHeartRate())
-                .maxHeartRate(request.getMaxHeartRate())
-                .sets(request.getSets())
-                .repsPerSet(request.getRepsPerSet())
-                .weightKg(request.getWeightKg())
-                .steps(request.getSteps())
+                .distanceKm(metrics.distanceKm())
+                .avgHeartRate(metrics.avgHeartRate())
+                .maxHeartRate(metrics.maxHeartRate())
+                .sets(metrics.sets())
+                .repsPerSet(metrics.repsPerSet())
+                .weightKg(metrics.weightKg())
+                .steps(metrics.steps())
                 .build();
 
         ActivityLog saved = logRepository.save(logEntry);
@@ -126,6 +127,7 @@ public class ActivityService {
             throw new AppException(HttpStatus.BAD_REQUEST,
                     "Activity type is hidden: " + request.getActivityTypeId());
         }
+        ActivityMetrics metrics = resolveMetrics(type, request);
         activity.setActivityType(type);
         activity.setActivityName(type != null ? type.getName() : request.getActivityName());
         activity.setCategory(type != null ? type.getCategory().name() : "OTHER");
@@ -134,13 +136,13 @@ public class ActivityService {
                 request.getUserWeightKg() != null ? request.getUserWeightKg() : DEFAULT_WEIGHT_KG));
         activity.setNotes(request.getNotes());
         activity.setLoggedAt(request.getLoggedAt() != null ? request.getLoggedAt() : activity.getLoggedAt());
-        activity.setDistanceKm(request.getDistanceKm());
-        activity.setAvgHeartRate(request.getAvgHeartRate());
-        activity.setMaxHeartRate(request.getMaxHeartRate());
-        activity.setSets(request.getSets());
-        activity.setRepsPerSet(request.getRepsPerSet());
-        activity.setWeightKg(request.getWeightKg());
-        activity.setSteps(request.getSteps());
+        activity.setDistanceKm(metrics.distanceKm());
+        activity.setAvgHeartRate(metrics.avgHeartRate());
+        activity.setMaxHeartRate(metrics.maxHeartRate());
+        activity.setSets(metrics.sets());
+        activity.setRepsPerSet(metrics.repsPerSet());
+        activity.setWeightKg(metrics.weightKg());
+        activity.setSteps(metrics.steps());
 
         ActivityLog saved = logRepository.save(activity);
         publishActivityEvent("CREATED", saved);
@@ -212,6 +214,67 @@ public class ActivityService {
         return met.multiply(weightKg).multiply(durationHours)
                 .setScale(0, RoundingMode.HALF_UP);
     }
+
+    /** Category-aware defaults keep API-created logs as complete as planner-created logs. */
+    private ActivityMetrics resolveMetrics(ActivityType type, ActivityLogRequest request) {
+        ActivityMetrics requested = new ActivityMetrics(
+                request.getDistanceKm(), request.getAvgHeartRate(), request.getMaxHeartRate(),
+                request.getSets(), request.getRepsPerSet(), request.getWeightKg(), request.getSteps());
+        if (type == null) {
+            return requested;
+        }
+
+        int duration = request.getDurationMinutes();
+        String name = type.getName().toLowerCase();
+        return switch (type.getCategory()) {
+            case STRENGTH -> new ActivityMetrics(null, null, null,
+                    requested.sets() != null ? requested.sets() : 4,
+                    requested.repsPerSet() != null ? requested.repsPerSet() : (name.contains("plank") ? 1 : 10),
+                    // Planner/API logs need a concrete training load. Keep a
+                    // submitted weight; otherwise start bodyweight exercises
+                    // at 5 kg and weighted strength movements at 10 kg.
+                    requested.weightKg() != null ? requested.weightKg()
+                            : BigDecimal.valueOf(name.contains("plank") || name.contains("push-up") || name.contains("pull-up") ? 5 : 10),
+                    null);
+            case WALKING, DAILY -> {
+                BigDecimal distance = requested.distanceKm() != null ? requested.distanceKm()
+                        : BigDecimal.valueOf(duration * 5.0 / 60.0).setScale(2, RoundingMode.HALF_UP);
+                yield new ActivityMetrics(distance, null, null, null, null, null,
+                        requested.steps() != null ? requested.steps() : distance.multiply(BigDecimal.valueOf(1250)).intValue());
+            }
+            case CARDIO -> {
+                double speed = name.contains("cycling") ? 18 : name.contains("swimming") ? 2.5
+                        : name.contains("rope") ? 0 : name.contains("running") ? 8 : 6;
+                BigDecimal distance = requested.distanceKm() != null ? requested.distanceKm()
+                        : speed == 0 ? null : BigDecimal.valueOf(duration * speed / 60.0).setScale(2, RoundingMode.HALF_UP);
+                yield new ActivityMetrics(distance,
+                        requested.avgHeartRate() != null ? requested.avgHeartRate() : 140,
+                        requested.maxHeartRate() != null ? requested.maxHeartRate() : 165,
+                        null, null, null, null);
+            }
+            case SPORTS -> new ActivityMetrics(requested.distanceKm(),
+                    requested.avgHeartRate() != null ? requested.avgHeartRate() : 135,
+                    requested.maxHeartRate() != null ? requested.maxHeartRate() : 165,
+                    null, null, null, null);
+            case OUTDOOR -> {
+                BigDecimal distance = requested.distanceKm() != null ? requested.distanceKm()
+                        : BigDecimal.valueOf(duration * 5.0 / 60.0).setScale(2, RoundingMode.HALF_UP);
+                yield new ActivityMetrics(distance,
+                        requested.avgHeartRate() != null ? requested.avgHeartRate() : 120,
+                        requested.maxHeartRate() != null ? requested.maxHeartRate() : 145,
+                        null, null, null,
+                        requested.steps() != null ? requested.steps() : distance.multiply(BigDecimal.valueOf(1250)).intValue());
+            }
+            case FLEXIBILITY -> new ActivityMetrics(null, null, null,
+                    requested.sets() != null ? requested.sets() : 3,
+                    requested.repsPerSet() != null ? requested.repsPerSet() : 10,
+                    null, null);
+            case OTHER -> requested;
+        };
+    }
+
+    private record ActivityMetrics(BigDecimal distanceKm, Integer avgHeartRate, Integer maxHeartRate,
+                                   Integer sets, Integer repsPerSet, BigDecimal weightKg, Integer steps) { }
 
     // ─── Mapper ───────────────────────────────────────────────────────────────
 

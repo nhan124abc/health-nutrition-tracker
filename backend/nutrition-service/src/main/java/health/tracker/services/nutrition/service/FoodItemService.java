@@ -34,7 +34,10 @@ public class FoodItemService {
     @Transactional(readOnly = true)
     public Page<FoodItemResponse> search(
             String keyword, Integer categoryId, Long userId, boolean recipeFirst, Pageable pageable) {
-        return foodItemRepository.search(keyword, categoryId, userId, recipeFirst, pageable)
+        Page<FoodItem> foods = recipeFirst
+                ? foodItemRepository.searchByRecipeUsage(keyword, categoryId, userId, pageable)
+                : foodItemRepository.search(keyword, categoryId, userId, false, pageable);
+        return foods
                 .map(this::toResponse);
     }
 

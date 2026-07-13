@@ -104,6 +104,10 @@ public class RecipeService {
         }
 
         return recipes.values().stream()
+                // A single food (for example, plain mussels) is a food log,
+                // not a meal suggestion.  Keep it out of the recipe planner
+                // so every card is a usable dish for the selected meal slot.
+                .filter(recipe -> isCompleteMeal(recipe, mealType))
                 // Reusable recipes save the planner an extra create-recipe request.
                 // Rank recipes containing the most selected foods first, then apply
                 // the nutrition-goal score within the same match tier.
@@ -114,6 +118,26 @@ public class RecipeService {
                 .limit(safeLimit)
                 .map(this::toSuggestion)
                 .toList();
+    }
+
+    private boolean isCompleteMeal(Recipe recipe, String mealType) {
+        long distinctIngredients = recipe.getIngredients().stream()
+                .map(ingredient -> ingredient.getFoodItem() == null ? null : ingredient.getFoodItem().getId())
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .count();
+        if (distinctIngredients < 2) {
+            return false;
+        }
+
+        double calories = value(recipe.getTotalCalories()).doubleValue();
+        String normalizedType = mealType == null ? "" : mealType.trim().toUpperCase();
+        double minimumCalories = switch (normalizedType) {
+            case "MORNING_SNACK", "AFTERNOON_SNACK", "EVENING_SNACK", "SNACK" -> 100;
+            case "BREAKFAST", "LUNCH", "DINNER" -> 200;
+            default -> 150;
+        };
+        return calories >= minimumCalories;
     }
 
     private int selectedFoodMatchCount(Recipe recipe, List<Long> selectedFoodIds) {

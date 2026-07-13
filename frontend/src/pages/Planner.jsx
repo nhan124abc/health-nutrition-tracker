@@ -197,13 +197,60 @@ function hasRecipeIngredients(recipe = {}) {
   return getRecipeIngredientSource(recipe).length > 0;
 }
 
+function buildActivityLogMetrics(activity, activityType, durationMinutes, userWeightKg) {
+  const category = String(activityType?.category || '').toLowerCase();
+  const name = String(activity?.name || activityType?.name || '').toLowerCase();
+  const duration = Number(durationMinutes) || 30;
+  const weight = Number(userWeightKg) || 67;
+
+  if (category === 'strength') {
+    return {
+      sets: name.includes('plank') ? 3 : 4,
+      repsPerSet: name.includes('plank') ? 1 : 10,
+      weightKg: name.includes('weight') || name.includes('gym') ? Math.round(weight * 0.35) : null,
+    };
+  }
+
+  if (category === 'walking' || category === 'daily') {
+    const distanceKm = Number((duration * 5 / 60).toFixed(2));
+    return { distanceKm, steps: Math.round(distanceKm * 1250) };
+  }
+
+  if (category === 'cardio' || category === 'sports' || category === 'outdoor') {
+    const speedKmh = name.includes('cycling') || name.includes('bike') ? 18
+      : name.includes('swim') ? 2.5
+        : name.includes('rope') ? 0
+          : name.includes('run') ? 8 : 6;
+    return {
+      ...(speedKmh > 0 ? { distanceKm: Number((duration * speedKmh / 60).toFixed(2)) } : {}),
+      avgHeartRate: category === 'sports' ? 135 : 140,
+      maxHeartRate: category === 'sports' ? 165 : 165,
+    };
+  }
+
+  return {};
+}
+
+function isCompleteRecipeForMeal(recipe = {}, mealType) {
+  const ingredients = getRecipeIngredientSource(recipe).map(normalizeRecipeIngredient);
+  const distinctFoodIds = new Set(ingredients.map((ingredient) => String(ingredient.foodItemId || ingredient.name)).filter(Boolean));
+  if (distinctFoodIds.size < 2) return false;
+
+  const minimumCalories = ['morning_snack', 'afternoon_snack', 'evening_snack', 'snack'].includes(mealType)
+    ? 100
+    : 200;
+  return Number(recipe.calories) >= minimumCalories;
+}
+
 function Planner() {
   const { i18n, t } = useTranslation();
   const [profile, setProfile] = useState(null);
   const [meals, setMeals] = useState([]);
   const [activities, setActivities] = useState([]);
   const [workoutPlans, setWorkoutPlans] = useState([]);
-  const [plannerMode, setPlannerMode] = useState('meal');
+  // Start from reusable recipes. The food API ranks ingredients by how many
+  // public recipes use them, so this is the no-AI path by default.
+  const [plannerMode, setPlannerMode] = useState('recipes');
   const [selectedMeal, setSelectedMeal] = useState('breakfast');
   const planDate = today();
   const [foodOptions, setFoodOptions] = useState([]);
@@ -329,7 +376,7 @@ function Planner() {
   );
   const rankedRecipes = useMemo(() => {
     const selectedIdSet = new Set(selectedFoodIds.map(String));
-    return recipes.filter(hasRecipeIngredients).map((recipe, originalIndex) => ({ recipe, originalIndex })).sort((leftItem, rightItem) => {
+    return recipes.filter((recipe) => hasRecipeIngredients(recipe) && isCompleteRecipeForMeal(recipe, selectedMeal)).map((recipe, originalIndex) => ({ recipe, originalIndex })).sort((leftItem, rightItem) => {
       const left = leftItem.recipe;
       const right = rightItem.recipe;
       const matchCount = (recipe) => getRecipeIngredientSource(recipe).map(normalizeRecipeIngredient).filter(
@@ -415,16 +462,6 @@ function Planner() {
     return t('plannerPage.generatedDishName', { ingredients: ingredientNames.join(', ') });
   };
 
-  const getPreparationSteps = (option) => {
-    if (Array.isArray(option?.preparationSteps) && option.preparationSteps.length > 0) {
-      return option.preparationSteps.map((step) => String(step || '').trim()).filter(Boolean);
-    }
-    if (option?.preparation) {
-      return [String(option.preparation).trim()].filter(Boolean);
-    }
-    return [];
-  };
-
   function getRecipeDisplayName(recipe) {
     // Prefer explicit Vietnamese name if available
     if (isVietnamese(i18n.language) && recipe?.nameVi) {
@@ -501,7 +538,9 @@ function Planner() {
       setError('');
       const response = await getRecipeSuggestions(params, { signal });
       const normalizedRecipes = Array.isArray(response.data)
-        ? response.data.filter(hasRecipeIngredients).map(normalizeRecipeOption).filter(hasRecipeIngredients)
+        ? response.data.filter(hasRecipeIngredients).map(normalizeRecipeOption).filter((recipe) => (
+          hasRecipeIngredients(recipe) && isCompleteRecipeForMeal(recipe, selectedMeal)
+        ))
         : [];
       if (recipeCacheRef.current.size >= 30) {
         recipeCacheRef.current.delete(recipeCacheRef.current.keys().next().value);
@@ -846,10 +885,6 @@ function Planner() {
     setMealSuccessPopup(null);
     try {
       const optionDisplayName = getOptionDisplayName(option);
-      const preparationSteps = getPreparationSteps(option);
-      const preparationNote = preparationSteps.length > 0
-        ? `\n${t('plannerPage.cookingMethod')}: ${preparationSteps.join(' ')}`
-        : '';
       const optionCalories = Number(option.calories) || 0;
       const fallbackMealBudgetLimit = isRecipeMode
         ? Math.round(selectedMealBudget * 1.12)
@@ -859,22 +894,10 @@ function Planner() {
         throw new Error(t('plannerPage.errors.overBudget'));
       }
 
-      const mealItems = option.recipeId ? [{
-        itemType: 'RECIPE',
-        foodItemId: null,
-        recipeId: option.recipeId,
-        foodName: option.name,
-        name: option.name,
-        nameVi: option.nameVi || '',
-        servingSizeG: Number(option.servingSizeG) || 100,
-        quantity: 1,
-        calories: Number(option.calories) || 0,
-        proteinG: Number(option.proteinG) || 0,
-        carbsG: Number(option.carbsG) || 0,
-        fatG: Number(option.fatG) || 0,
-        fiberG: Number(option.fiberG) || 0,
-        sodiumMg: Number(option.sodiumMg) || 0,
-      }] : buildGeneratedMealItems(option);
+      // Expand saved recipes into their ingredients.  A meal diary must keep
+      // real food-item IDs for each ingredient; storing one opaque RECIPE row
+      // prevented food-level history, reporting and editing.
+      const mealItems = buildGeneratedMealItems(option);
 
       if (mealItems.length === 0) {
         throw new Error(t('plannerPage.errors.selectFoodBeforeSave'));
@@ -896,7 +919,7 @@ function Planner() {
         mealType: selectedMeal.toUpperCase(),
         mealDate: planDate,
         mealTime: null,
-        notes: `${t('plannerPage.savedNotes.meal')}: ${optionDisplayName}${preparationNote}`,
+        notes: `${t('plannerPage.savedNotes.meal')}: ${optionDisplayName}`,
         items: mealItems,
       };
       const replacedMealIds = loggedMealsForSlot.map((meal) => meal.id).filter(Boolean);
@@ -905,7 +928,7 @@ function Planner() {
       }
       const mealPlanPayload = {
         name: `${selectedMealLabel} - ${planDate}`,
-        description: `${t('plannerPage.savedNotes.meal')}: ${optionDisplayName}${preparationNote}`,
+        description: `${t('plannerPage.savedNotes.meal')}: ${optionDisplayName}`,
         startDate: planDate,
         endDate: planDate,
         active: true,
@@ -983,13 +1006,17 @@ function Planner() {
 
     try {
       const activityDisplayName = getActivityDisplayName(activity, matchedActivityType);
+      const durationMinutes = getActivityDurationMinutes(activity);
+      const activityMetrics = buildActivityLogMetrics(activity, matchedActivityType, durationMinutes, profile?.weight);
       const exercise = {
         dayOfWeek: getPlannerDayOfWeek(planDate),
         activityTypeId: resolvedActivityTypeId,
         exerciseName: activityDisplayName,
-        durationMinutes: getActivityDurationMinutes(activity),
+        durationMinutes,
+        sets: activityMetrics.sets || null,
+        reps: activityMetrics.repsPerSet || null,
         sortOrder: idx,
-        notes: t('plannerPage.savedNotes.activity'),
+        notes: JSON.stringify({ activityLogDefaults: activityMetrics }),
       };
       const dailyPlan = workoutPlans.find((plan) => String(plan.planDate) === planDate);
       const response = dailyPlan
@@ -1021,6 +1048,7 @@ function Planner() {
         loggedAt: `${planDate}T${new Date().toTimeString().slice(0, 5)}:00`,
         workoutPlanExerciseId: savedExercise?.id || null,
         notes: t('plannerPage.savedNotes.activity'),
+        ...activityMetrics,
       });
       const savedActivity = normalizePlannerActivityLog(activityResponse.data?.data || activityResponse.data);
       setWorkoutPlans((current) => {
@@ -1044,7 +1072,16 @@ function Planner() {
     const exercise = plan?.exercises?.find((item) => String(item.activityTypeId) === String(activityTypeId));
     if (!plan || !exercise) return;
 
-    await deleteWorkoutPlanExercise(plan.id, exercise.id);
+    const linkedLogs = activities.filter((activity) => (
+      String(activity.workoutPlanExerciseId) === String(exercise.id)
+    ));
+    await Promise.all([
+      ...linkedLogs.map((activity) => deleteActivityById(activity.id)),
+      deleteWorkoutPlanExercise(plan.id, exercise.id),
+    ]);
+    setActivities((current) => current.filter((activity) => (
+      !linkedLogs.some((linked) => String(linked.id) === String(activity.id))
+    )));
     setWorkoutPlans((current) => current
       .map((item) => item.id === plan.id
         ? { ...item, exercises: item.exercises.filter((itemExercise) => itemExercise.id !== exercise.id) }
@@ -1059,6 +1096,17 @@ function Planner() {
     setError('');
     setSuccess('');
     try {
+      if (activity.workoutPlanExerciseId) {
+        const plan = workoutPlans.find((item) => String(item.planDate) === planDate);
+        if (plan) {
+          await deleteWorkoutPlanExercise(plan.id, activity.workoutPlanExerciseId);
+          setWorkoutPlans((current) => current
+            .map((item) => item.id === plan.id
+              ? { ...item, exercises: item.exercises.filter((exercise) => String(exercise.id) !== String(activity.workoutPlanExerciseId)) }
+              : item)
+            .filter((item) => item.id !== plan.id || item.exercises.length > 0));
+        }
+      }
       await deleteActivityById(activityLogId);
       setActivities((current) => current.filter((act) => act.id !== activityLogId));
       setSelectedOption(null);
@@ -1397,8 +1445,8 @@ function Planner() {
           )}
           {!isRecipeMode && (
             <>
-              <Button className="w-100" variant={isExerciseMode ? 'primary' : 'success'} onClick={generate} disabled={generating || (!isExerciseMode && availableCaloriesForSelectedMeal < 100 && !hasInvalidDailyTotal)}><FaRobot className="me-2" />{generating ? t('plannerPage.generating') : t(isExerciseMode ? 'plannerPage.createActivityPlan' : 'plannerPage.createOptions')}</Button>
-              {suggestion && <Button className="w-100 mt-2" variant={isExerciseMode ? 'outline-primary' : 'outline-success'} onClick={generate} disabled={generating}><FaRobot className="me-2" />{t(isExerciseMode ? 'plannerPage.createActivityPlan' : 'plannerPage.createOtherOptions')}</Button>}
+              {!suggestion && <Button className="w-100" variant={isExerciseMode ? 'primary' : 'success'} onClick={generate} disabled={generating || (!isExerciseMode && availableCaloriesForSelectedMeal < 100 && !hasInvalidDailyTotal)}><FaRobot className="me-2" />{generating ? t('plannerPage.generating') : t(isExerciseMode ? 'plannerPage.createActivityPlan' : 'plannerPage.createOptions')}</Button>}
+              {suggestion && <Button className="w-100" variant={isExerciseMode ? 'outline-primary' : 'outline-success'} onClick={generate} disabled={generating}><FaRobot className="me-2" />{t('plannerPage.createOtherOptions')}</Button>}
             </>
           )}
           {hasInvalidDailyTotal && <Alert variant="danger" className="mt-3 mb-0 py-2">{t('plannerPage.invalidTotal')}</Alert>}
@@ -1521,7 +1569,7 @@ function Planner() {
                 </Card.Body>
               </Card>
             )}
-            {!recipesLoading && recipes.length === 0 && (
+            {!recipesLoading && rankedRecipes.length === 0 && (
               <Alert variant="light" className="border">
                 {t(canSearchRecipes ? 'plannerPage.empty.noRecipes' : 'plannerPage.searchRecipesEmpty')}
               </Alert>
@@ -1548,6 +1596,9 @@ function Planner() {
                           <h3 className="h5 fw-bold mt-3">{getRecipeDisplayName(recipe)}</h3>
                           <div className="d-flex flex-wrap gap-2 mb-3">
                             <span className="text-info small fw-semibold">{t('plannerPage.savedRecipe')}</span>
+                            <span className="text-success small fw-semibold">
+                              {selectedMealLabel}
+                            </span>
                             <span className="text-secondary small">
                               {t('plannerPage.ingredientCount', { count: recipeIngredients.length })}
                             </span>
@@ -1660,7 +1711,7 @@ function Planner() {
               </Alert>
             ) : (
               <Alert variant="info">
-                {t('plannerPage.suggestion.mealMessage')} {t('plannerPage.suggestion.mealBudget')}: <strong>{suggestion.mealBudget} kcal</strong>.
+                {t('plannerPage.suggestion.mealMessage')} {t('plannerPage.filteringForMeal', { meal: selectedMealLabel })}. {t('plannerPage.suggestion.mealBudget')}: <strong>{suggestion.mealBudget} kcal</strong>.
               </Alert>
             )}
             {isExerciseMode && (suggestion.options || []).length === 0 ? (
@@ -1682,7 +1733,6 @@ function Planner() {
                 const activityDurationMinutes = loggedActivity?.durationMinutes || getActivityDurationMinutes(option);
                 const ingredientCount = Array.isArray(option.ingredients) ? option.ingredients.length : 0;
                 const optionDisplayName = isExercise ? option.name : getOptionDisplayName(option);
-                const preparationSteps = isExercise ? [] : getPreparationSteps(option);
                 const isBlockedByOtherSelection = !isExercise && selectedOption !== null;
                 return (
                   <Col md={6} key={`${option.name}-${index}`}>
@@ -1741,19 +1791,6 @@ function Planner() {
                             </p>
                           </div>
                         )}
-                        {!isExercise && preparationSteps.length > 0 && (
-                          <div className="mb-3">
-                            <div className="text-uppercase text-secondary small fw-semibold mb-1">
-                              {t('plannerPage.cookingMethod')}
-                            </div>
-                            <ol className="small text-secondary ps-3 mb-0">
-                              {preparationSteps.map((step, stepIndex) => (
-                                <li key={`${option.name}-prep-${stepIndex}`}>{step}</li>
-                              ))}
-                            </ol>
-                          </div>
-                        )}
-
                         {!isExercise && (
                           <div className="quick-grid mb-3">
                             <span>{t('common.protein')}<strong>{option.proteinG}g</strong></span>

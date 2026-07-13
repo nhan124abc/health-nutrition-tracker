@@ -32,11 +32,7 @@ function ActivityTracker() {
     try { return JSON.parse(localStorage.getItem('activeGoalPlan'))?.dailyActivityGoalKcal || 0; } catch { return 0; }
   });
 
-  const completedLogs = useMemo(
-    () => logs.filter((log) => log.completed),
-    [logs]
-  );
-  const summary = useMemo(() => getActivitySummary(completedLogs), [completedLogs]);
+  const summary = useMemo(() => getActivitySummary(logs), [logs]);
 
   useEffect(() => {
     let isMounted = true;
@@ -141,8 +137,8 @@ function ActivityTracker() {
         <Col lg={4}>
           <ActivitySummaryCard
             activityGoal={activityGoal}
-            logCount={completedLogs.length}
-            logs={completedLogs}
+            logCount={logs.length}
+            logs={logs}
             summary={summary}
             t={t}
           />
