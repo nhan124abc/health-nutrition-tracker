@@ -38,7 +38,7 @@ function hasValidProfileValues(profile = {}, fullName = '') {
     && Number.isFinite(weight) && weight >= 2 && weight <= 500
     && Number.isFinite(targetWeight) && targetWeight >= 2 && targetWeight <= 500
     && (profile.dailyWaterGoal === '' || profile.dailyWaterGoal == null
-      || (Number.isFinite(dailyWaterGoal) && dailyWaterGoal >= 100 && dailyWaterGoal <= 10000))
+      || (Number.isFinite(dailyWaterGoal) && dailyWaterGoal >= 100 && dailyWaterGoal <= 4000))
     && Boolean(profile.gender && profile.activityLevel && profile.healthGoal);
 }
 
@@ -482,7 +482,7 @@ function AdminProfile() {
                           value={healthProfile[name]}
                           onChange={handleHealthProfileChange}
                           disabled={savingProfile}
-                          max={name === 'birthDate' ? getMinimumAllowedBirthDate(16) : undefined}
+                          max={name === 'birthDate' ? getMinimumAllowedBirthDate(16) : name === 'dailyWaterGoal' ? 4000 : undefined}
                           min={name === 'height' ? 30 : name === 'weight' || name === 'targetWeight' ? 2 : name === 'dailyWaterGoal' ? 100 : undefined}
                           step={type === 'number' ? '0.1' : undefined}
                           required={requiredProfileFieldNames.has(name)}

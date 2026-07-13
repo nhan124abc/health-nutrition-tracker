@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Card, Form, ListGroup, ProgressBar, Spinner } from 'react-bootstrap';
-import { createActivityLog, getActivitiesByDate, getWorkoutPlans, updateActivityCompletion } from '../activityService';
-import { extractActivitiesFromApi, normalizeActivityFromApi } from '../activityUtils';
+import { Card, ListGroup, Spinner } from 'react-bootstrap';
+import { getWorkoutPlans } from '../activityService';
 import ErrorModal from '../../../components/ErrorModal';
 import { useTranslation } from 'react-i18next';
 
@@ -16,7 +15,11 @@ function extractWorkoutPlans(data) {
   return data?.data?.content || data?.content || data?.data?.items || data?.items || [];
 }
 
-function getExercisesForDate(data, selectedDate, activityLogs) {
+function getActivityLogDefaults(notes) {
+  try { return JSON.parse(notes || '')?.activityLogDefaults || {}; } catch { return {}; }
+}
+
+function getExercisesForDate(data, selectedDate) {
   const dayOfWeek = getPlannerDayOfWeek(selectedDate);
   return extractWorkoutPlans(data)
     .filter((plan) => plan.active !== false)
@@ -24,16 +27,15 @@ function getExercisesForDate(data, selectedDate, activityLogs) {
     .flatMap((plan) => (plan.exercises || [])
       .filter((exercise) => Number(exercise.dayOfWeek) === dayOfWeek)
       .map((exercise) => {
-        const matchedLog = activityLogs.find((log) => String(log.workoutPlanExerciseId) === String(exercise.id));
+        const defaults = getActivityLogDefaults(exercise.notes);
         return {
           id: `workout-plan-${plan.id}-exercise-${exercise.id}`,
           exerciseId: exercise.id,
           activityTypeId: exercise.activityTypeId,
           customName: exercise.activityTypeName || exercise.exerciseName,
           duration: exercise.durationMinutes,
+          defaults,
           planName: plan.name,
-          activityLogId: matchedLog?.id || null,
-          completed: Boolean(matchedLog?.completed),
         };
       }));
 }
@@ -43,7 +45,6 @@ function WorkoutPlanCard({ selectedDate }) {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [savingActivityId, setSavingActivityId] = useState(null);
 
   const loadActivities = useCallback((showLoading = true) => {
     let active = true;
@@ -52,11 +53,10 @@ function WorkoutPlanCard({ selectedDate }) {
       setLoading(true);
     }
     setError('');
-    Promise.all([getWorkoutPlans(), getActivitiesByDate(selectedDate)])
-      .then(([plansResponse, logsResponse]) => {
+    getWorkoutPlans()
+      .then((plansResponse) => {
         if (active) {
-          const activityLogs = extractActivitiesFromApi(logsResponse.data).map(normalizeActivityFromApi);
-          const exercises = getExercisesForDate(plansResponse.data, selectedDate, activityLogs);
+          const exercises = getExercisesForDate(plansResponse.data, selectedDate);
           setActivities(exercises);
         }
       })
@@ -90,41 +90,6 @@ function WorkoutPlanCard({ selectedDate }) {
     };
   }, [loadActivities]);
 
-  const completedCount = activities.filter((item) => item.completed).length;
-  const progress = activities.length ? Math.round((completedCount / activities.length) * 100) : 0;
-  const toggle = async (activity) => {
-    const completed = activity.completed;
-    setSavingActivityId(activity.id);
-
-    try {
-      let activityLogId = activity.activityLogId;
-      if (!activityLogId && !completed) {
-        const response = await createActivityLog({
-          activityTypeId: activity.activityTypeId,
-          activityName: activity.customName,
-          durationMinutes: Number(activity.duration) || 30,
-          loggedAt: `${selectedDate}T${new Date().toTimeString().slice(0, 5)}:00`,
-          workoutPlanExerciseId: activity.exerciseId,
-        });
-        activityLogId = response.data?.id;
-        setActivities((current) => current.map((item) => (
-          item.id === activity.id ? { ...item, activityLogId, completed: !completed } : item
-        )));
-      }
-
-      if (activityLogId) {
-        await updateActivityCompletion(activityLogId, !completed);
-        setActivities((current) => current.map((item) => (
-          item.id === activity.id ? { ...item, completed: !completed } : item
-        )));
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || t('plansPage.workoutCard.loadError'));
-    } finally {
-      setSavingActivityId(null);
-    }
-  };
-
   return (
     <Card className="border-0 shadow-sm planner-side-card">
       <Card.Body>
@@ -137,39 +102,26 @@ function WorkoutPlanCard({ selectedDate }) {
         {!loading && activities.length === 0 && <div className="text-secondary border rounded p-3">{t('plansPage.workoutCard.empty')}</div>}
         {!loading && activities.length > 0 && (
           <section className="plan-checklist">
-            <div className="plan-checklist-header">
-              <div>
-                <h3 className="h5 fw-bold mb-1">{t('plansPage.workoutCard.progress')}</h3>
-                <div className="text-secondary small">{t('plansPage.workoutCard.progressHint')}</div>
-              </div>
-              <strong className="plan-progress-value">{completedCount}/{activities.length}</strong>
-            </div>
-            <ProgressBar now={progress} className="plan-progress" />
             <ListGroup variant="flush" className="plan-checklist-items">
               {activities.map((activity) => {
                 const id = activity.id;
-                const completed = activity.completed;
-                const saving = savingActivityId === id;
                 const details = activity.duration
                   ? t('plansPage.workoutCard.minutes', { count: activity.duration })
                   : activity.planName || '';
+                const metrics = [
+                  activity.defaults?.sets && activity.defaults?.repsPerSet ? `${activity.defaults.sets} sets × ${activity.defaults.repsPerSet} reps` : null,
+                  activity.defaults?.distanceKm ? `${activity.defaults.distanceKm} km` : null,
+                  activity.defaults?.avgHeartRate ? `${activity.defaults.avgHeartRate} bpm` : null,
+                  activity.defaults?.steps ? `${activity.defaults.steps} steps` : null,
+                ].filter(Boolean).join(' · ');
 
                 return (
-                  <ListGroup.Item className={`plan-checklist-item ${completed ? 'is-completed' : ''}`} key={id}>
+                  <ListGroup.Item className="plan-checklist-item" key={id}>
                     <div className="d-flex justify-content-between align-items-center gap-3">
                       <div>
                         <div className="fw-semibold">{activity.customName}</div>
                         <div className="text-secondary">{details}</div>
-                      </div>
-                      <div className="d-flex align-items-center gap-2">
-                        {saving && <Spinner animation="border" size="sm" role="status" aria-label={t('buttons.saving')} />}
-                        <Form.Check
-                          checked={completed}
-                          disabled={saving}
-                          label={saving ? t('buttons.saving') : t('plansPage.complete')}
-                          onChange={() => toggle(activity)}
-                          title={t('plansPage.workoutCard.completeTitle')}
-                        />
+                        {metrics && <div className="text-secondary small">{metrics}</div>}
                       </div>
                     </div>
                   </ListGroup.Item>

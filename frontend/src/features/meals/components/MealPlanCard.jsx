@@ -1,145 +1,58 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Card, Form, ListGroup, ProgressBar, Spinner } from 'react-bootstrap';
-import { getMealsByDate } from '../mealService';
-import { extractMealsFromApi, getMealTotals, normalizeMealFromApi } from '../mealUtils';
-import { getMealCompletionId, readCompletionIds, toggleCompletionId } from '../../../utils/completionStorage';
+import { Card, ListGroup, Spinner } from 'react-bootstrap';
+import { getMealPlans } from '../mealService';
 import ErrorModal from '../../../components/ErrorModal';
 import { useTranslation } from 'react-i18next';
 
 const labels = {
-  breakfast: 'plansPage.mealCard.types.breakfast',
-  morning_snack: 'plansPage.mealCard.types.morningSnack',
-  lunch: 'plansPage.mealCard.types.lunch',
-  afternoon_snack: 'plansPage.mealCard.types.afternoonSnack',
-  dinner: 'plansPage.mealCard.types.dinner',
-  evening_snack: 'plansPage.mealCard.types.eveningSnack',
+  BREAKFAST: 'plansPage.mealCard.types.breakfast', MORNING_SNACK: 'plansPage.mealCard.types.morningSnack',
+  LUNCH: 'plansPage.mealCard.types.lunch', AFTERNOON_SNACK: 'plansPage.mealCard.types.afternoonSnack',
+  DINNER: 'plansPage.mealCard.types.dinner', EVENING_SNACK: 'plansPage.mealCard.types.eveningSnack',
 };
 
-function getMealTitle(meal) {
-  return (meal.items || [])
-    .map((item) => item.name)
-    .filter(Boolean)
-    .join(', ');
-}
+function plansFrom(data) { return Array.isArray(data) ? data : (data?.data || data?.content || data?.items || []); }
 
-function getEntriesForDate(data, selectedDate) {
-  return extractMealsFromApi(data)
-    .map(normalizeMealFromApi)
-    .filter((meal) => meal.date === selectedDate)
-    .map((meal) => ({
-      ...meal,
-      foodName: getMealTitle(meal),
-      calories: getMealTotals(meal).calories,
+function entriesForDate(plans, date) {
+  return plans.filter((plan) => plan.active !== false).flatMap((plan) => {
+    const byType = (plan.entries || []).filter((entry) => String(entry.planDate).slice(0, 10) === date)
+      .reduce((groups, entry) => ({ ...groups, [entry.mealType]: [...(groups[entry.mealType] || []), entry] }), {});
+    return Object.values(byType).map((entries) => ({
+      id: `${plan.id}-${entries[0].mealType}`,
+      mealType: entries[0].mealType,
+      // One plan / meal slot is displayed as one meal, including legacy plans
+      // that were accidentally saved with one entry per ingredient.
+      foodName: entries[0].recipeId ? entries[0].foodName : (String(plan.description || '').split(':').slice(1).join(':').trim() || entries[0].foodName),
+      calories: entries.reduce((sum, entry) => sum + (Number(entry.calories) || 0), 0),
     }));
+  });
 }
 
 function MealPlanCard({ selectedDate }) {
   const { t } = useTranslation();
-  const [planEntries, setPlanEntries] = useState([]);
+  const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [completedIds, setCompletedIds] = useState(() => readCompletionIds('meals'));
+  const load = useCallback(() => getMealPlans().then((response) => {
+    setEntries(entriesForDate(plansFrom(response.data), selectedDate));
+  }).catch((err) => {
+    setEntries([]); setError(err.response?.data?.message || t('plansPage.mealCard.loadError'));
+  }).finally(() => setLoading(false)), [selectedDate, t]);
 
-  const loadMeals = useCallback((showLoading = true) => {
-    let active = true;
-
-    if (showLoading) {
-      setLoading(true);
-    }
-    setError('');
-    getMealsByDate(selectedDate)
-      .then((response) => {
-        if (active) {
-          setPlanEntries(getEntriesForDate(response.data, selectedDate));
-        }
-      })
-      .catch((err) => {
-        if (active) {
-          setPlanEntries([]);
-          setError(err.response?.data?.message || t('plansPage.mealCard.loadError'));
-        }
-      })
-      .finally(() => {
-        if (active) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [selectedDate, t]);
-
-  useEffect(() => loadMeals(true), [loadMeals]);
-
+  useEffect(() => { setLoading(true); load(); }, [load]);
   useEffect(() => {
-    const refreshOnFocus = () => loadMeals(false);
-    const refreshCompletions = (event) => {
-      if (!event.detail?.scope || event.detail.scope === 'meals') {
-        setCompletedIds(readCompletionIds('meals'));
-      }
-    };
+    const refresh = () => load();
+    window.addEventListener('focus', refresh);
+    window.addEventListener('meal-plans:changed', refresh);
+    return () => { window.removeEventListener('focus', refresh); window.removeEventListener('meal-plans:changed', refresh); };
+  }, [load]);
 
-    window.addEventListener('focus', refreshOnFocus);
-    window.addEventListener('meals:changed', refreshOnFocus);
-    window.addEventListener('meal-plans:changed', refreshOnFocus);
-    window.addEventListener('completion:changed', refreshCompletions);
-
-    return () => {
-      window.removeEventListener('focus', refreshOnFocus);
-      window.removeEventListener('meals:changed', refreshOnFocus);
-      window.removeEventListener('meal-plans:changed', refreshOnFocus);
-      window.removeEventListener('completion:changed', refreshCompletions);
-    };
-  }, [loadMeals]);
-
-  const completedCount = planEntries.filter((meal) => completedIds.includes(getMealCompletionId(meal))).length;
-  const progress = planEntries.length ? Math.round((completedCount / planEntries.length) * 100) : 0;
-  const toggle = (meal) => setCompletedIds(toggleCompletionId('meals', getMealCompletionId(meal)));
-
-  return (
-    <Card className="border-0 shadow-sm planner-side-card">
-      <Card.Body>
-        <div className="mb-3">
-          <h2 className="h5 fw-bold mb-1">{t('plansPage.mealCard.title', { date: selectedDate })}</h2>
-          <p className="text-secondary mb-0">{t('plansPage.mealCard.description')}</p>
-        </div>
-        <ErrorModal error={error} onClose={() => setError('')} />
-        {loading && <div className="text-center py-4"><Spinner animation="border" size="sm" /></div>}
-        {!loading && planEntries.length === 0 && <div className="text-secondary border rounded p-3">{t('plansPage.mealCard.empty')}</div>}
-        {!loading && planEntries.length > 0 && (
-          <section className="plan-checklist">
-            <div className="plan-checklist-header">
-              <div>
-                <h3 className="h5 fw-bold mb-1">{t('plansPage.mealCard.progress')}</h3>
-                <div className="text-secondary small">{t('plansPage.mealCard.progressHint')}</div>
-              </div>
-              <strong className="plan-progress-value">{completedCount}/{planEntries.length}</strong>
-            </div>
-            <ProgressBar now={progress} variant="success" className="plan-progress" />
-            <ListGroup variant="flush" className="plan-checklist-items">
-              {planEntries.map((meal) => {
-                const id = getMealCompletionId(meal);
-                const completed = completedIds.includes(id);
-
-                return (
-                  <ListGroup.Item className={`plan-checklist-item ${completed ? 'is-completed' : ''}`} key={id}>
-                    <div className="d-flex justify-content-between align-items-center gap-3">
-                      <div>
-                        <div className="fw-semibold">{labels[meal.type] ? t(labels[meal.type]) : meal.type}</div>
-                        <div className="text-secondary">{meal.foodName || meal.planName || t('plansPage.mealCard.noFood')} - {Math.round(Number(meal.calories) || 0)} kcal</div>
-                      </div>
-                      <Form.Check checked={completed} label={t('plansPage.complete')} onChange={() => toggle(meal)} title={t('plansPage.mealCard.completeTitle')} />
-                    </div>
-                  </ListGroup.Item>
-                );
-              })}
-            </ListGroup>
-          </section>
-        )}
-      </Card.Body>
-    </Card>
-  );
+  return <Card className="border-0 shadow-sm planner-side-card"><Card.Body>
+    <div className="mb-3"><h2 className="h5 fw-bold mb-1">{t('plansPage.mealCard.title', { date: selectedDate })}</h2><p className="text-secondary mb-0">{t('plansPage.mealCard.description')}</p></div>
+    <ErrorModal error={error} onClose={() => setError('')} />
+    {loading && <div className="text-center py-4"><Spinner animation="border" size="sm" /></div>}
+    {!loading && entries.length === 0 && <div className="text-secondary border rounded p-3">{t('plansPage.mealCard.empty')}</div>}
+    {!loading && entries.length > 0 && <ListGroup variant="flush" className="plan-checklist-items">{entries.map((entry) => <ListGroup.Item className="plan-checklist-item" key={entry.id}><div><div className="fw-semibold">{labels[entry.mealType] ? t(labels[entry.mealType]) : entry.mealType}</div><div className="text-secondary">{entry.foodName || t('plansPage.mealCard.noFood')} - {Math.round(entry.calories)} kcal</div></div></ListGroup.Item>)}</ListGroup>}
+  </Card.Body></Card>;
 }
 
 export default MealPlanCard;

@@ -17,6 +17,8 @@ const goalValueToApi = {
 };
 
 const goalsWithTargetChange = new Set(['LOSE_WEIGHT', 'GAIN_WEIGHT', 'GAIN_MUSCLE', 'CUTTING']);
+const MAX_TARGET_CHANGE_KG = 25;
+const MAX_TARGET_WEEKS = 52;
 
 function needsTargetChange(goal) {
   return goalsWithTargetChange.has(goal);
@@ -60,8 +62,8 @@ function GoalPlanner() {
     const targetChangeKg = Number(form.targetChangeKg);
     const targetWeeks = form.targetWeeks === '' ? null : Number(form.targetWeeks);
     if (!form.goal
-      || (showTargetChange && (!Number.isFinite(targetChangeKg) || targetChangeKg <= 0))
-      || (targetWeeks != null && (!Number.isInteger(targetWeeks) || targetWeeks < 1 || targetWeeks > 104))) {
+      || (showTargetChange && (!Number.isFinite(targetChangeKg) || targetChangeKg < 0.1 || targetChangeKg > MAX_TARGET_CHANGE_KG))
+      || (targetWeeks != null && (!Number.isInteger(targetWeeks) || targetWeeks < 1 || targetWeeks > MAX_TARGET_WEEKS))) {
       setError(t('goalPlannerPage.errors.invalidForm'));
       return;
     }
@@ -150,12 +152,12 @@ function GoalPlanner() {
                     {t('goalPlannerPage.form.targetChange')}
                     <span className="text-danger ms-1">*</span>
                   </Form.Label>
-                  <Form.Control type="number" min="0.1" step="0.1" value={form.targetChangeKg} onChange={(event) => setForm({ ...form, targetChangeKg: event.target.value })} required />
+                  <Form.Control type="number" min="0.1" max={MAX_TARGET_CHANGE_KG} step="0.1" value={form.targetChangeKg} onChange={(event) => setForm({ ...form, targetChangeKg: event.target.value })} required />
                 </Form.Group>
               )}
               <Form.Group className="mb-3">
                 <Form.Label>{t('goalPlannerPage.form.targetWeeks')}</Form.Label>
-                <Form.Control type="number" min="1" max="104" value={form.targetWeeks} onChange={(event) => setForm({ ...form, targetWeeks: event.target.value })} />
+                <Form.Control type="number" min="1" max={MAX_TARGET_WEEKS} value={form.targetWeeks} onChange={(event) => setForm({ ...form, targetWeeks: event.target.value })} />
               </Form.Group>
               <Button type="submit" variant="success" className="w-100" disabled={loading}>
                 {loading ? t('goalPlannerPage.form.calculating') : t('goalPlannerPage.form.createOptions')}

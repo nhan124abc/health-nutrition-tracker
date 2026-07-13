@@ -276,7 +276,11 @@ public class AiChatService {
         int budget = calculateMealBudget(context);
         int calorieBuffer = calculateCalorieBuffer(budget);
         try {
-            List<NutritionCatalogClient.RecipeCandidate> recipes = getUsableRecipeSuggestions(context, budget + calorieBuffer);
+            // A recipe must fit the real meal budget. The UI must never
+            // receive an option that will be rejected later on selection.
+            List<NutritionCatalogClient.RecipeCandidate> recipes = getUsableRecipeSuggestions(context, budget);
+            // Return the two existing recipes required by the planner before
+            // considering any AI-generated fallback.
             if (recipes.size() >= 2) {
                 log.info("Generated planner suggestions from nutrition recipes for userId={}, budget={}",
                         userId, budget);
@@ -317,6 +321,7 @@ public class AiChatService {
                     .content();
 
             String normalized = validateAndNormalizePlan(raw, budget, calorieBuffer, context, foods, builder);
+            normalized = persistGeneratedRecipes(userId, context, normalized);
             log.info("Generated planner suggestions with AI model={} for userId={}, budget={}",
                     model, userId, budget);
             return normalized;
@@ -333,6 +338,35 @@ public class AiChatService {
             log.warn("AI planner failed; using rule fallback: {}", exception.getMessage());
             return generateFallbackPlan(context);
         }
+    }
+
+    /** Save validated AI dishes as reusable recipes before returning them to Planner. */
+    private String persistGeneratedRecipes(String userId, PlannerSuggestRequest context, String planJson) throws Exception {
+        List<Long> selectedIds = normalizedLongList(context.getSelectedFoodIds());
+        if (userId == null || selectedIds.isEmpty() || selectedIds.size() > 2) return planJson;
+
+        long ownerId;
+        try { ownerId = Long.parseLong(userId); } catch (NumberFormatException exception) { return planJson; }
+        ObjectNode plan = (ObjectNode) objectMapper.readTree(planJson);
+        for (JsonNode optionNode : plan.withArray("options")) {
+            if (!(optionNode instanceof ObjectNode option)) continue;
+            List<Map<String, Object>> ingredients = new java.util.ArrayList<>();
+            for (JsonNode ingredient : option.withArray("ingredients")) {
+                ingredients.add(Map.of(
+                        "foodItemId", ingredient.path("foodItemId").asLong(),
+                        "quantityG", ingredient.path("servingSizeG").decimalValue()));
+            }
+            long recipeId = nutritionCatalogClient.createRecipe(
+                    ownerId,
+                    option.path("nameEn").asText(option.path("name").asText()),
+                    option.path("nameVi").asText(option.path("name").asText()),
+                    option.path("preparation").asText(),
+                    ingredients);
+            option.put("recipeId", recipeId);
+            option.put("source", "AI_SAVED_RECIPE");
+        }
+        plan.put("source", "AI_SAVED_RECIPE");
+        return objectMapper.writeValueAsString(plan);
     }
 
     private String generateCatalogFoodPlan(PlannerSuggestRequest context, int budget, int calorieBuffer) throws Exception {
@@ -485,6 +519,9 @@ public class AiChatService {
         int goal = context.getDailyCalorieGoal() == null ? 2000 : context.getDailyCalorieGoal();
         int consumed = context.getCaloriesConsumed() == null ? 0 : context.getCaloriesConsumed();
         int remaining = Math.max(100, goal - consumed);
+        if (context.getMealBudgetKcal() != null && context.getMealBudgetKcal() > 0) {
+            return Math.max(100, Math.min(context.getMealBudgetKcal(), remaining));
+        }
         String mealType = context.getMealType() == null ? "lunch" : context.getMealType().toLowerCase();
         double share = switch (mealType) {
             case "breakfast" -> 0.25;
@@ -534,7 +571,8 @@ public class AiChatService {
                   "source": "AI",
                   "options": [
                     {
-                      "name": "dish name in Vietnamese",
+                      "nameEn": "short natural English dish name",
+                      "nameVi": "tên món tiếng Việt tự nhiên",
                       "preparation": "2-3 sentence cooking method in Vietnamese",
                       "preparationSteps": ["short step 1", "short step 2", "short step 3"],
                       "ingredients": [
@@ -543,7 +581,8 @@ public class AiChatService {
                       ]
                     },
                     {
-                      "name": "another dish name in Vietnamese",
+                      "nameEn": "another short natural English dish name",
+                      "nameVi": "tên món tiếng Việt tự nhiên khác",
                       "preparation": "2-3 sentence cooking method in Vietnamese",
                       "preparationSteps": ["short step 1", "short step 2", "short step 3"],
                       "ingredients": [
@@ -602,12 +641,15 @@ public class AiChatService {
 
         for (int i = 0; i < 2; i++) {
             JsonNode option = options.get(i);
-            String name = option.path("name").asText("").trim();
+            String nameEn = option.path("nameEn").asText("").trim();
+            String nameVi = option.path("nameVi").asText("").trim();
+            if (nameEn.isBlank()) nameEn = option.path("name").asText("").trim();
+            if (nameVi.isBlank()) nameVi = nameEn;
             JsonNode ingredientsNode = option.path("ingredients");
-            if (name.isBlank() || !(ingredientsNode instanceof ArrayNode ingredients) || ingredients.isEmpty()) {
-                throw new IllegalArgumentException("AI response must contain dish name and ingredients");
+            if (nameEn.isBlank() || !(ingredientsNode instanceof ArrayNode ingredients) || ingredients.isEmpty()) {
+                throw new IllegalArgumentException("AI response must contain English/Vietnamese dish names and ingredients");
             }
-            if (isExcluded(name, context)) {
+            if (isExcluded(nameEn, context) || isExcluded(nameVi, context)) {
                 throw new IllegalArgumentException("AI repeated an excluded meal");
             }
 
@@ -634,7 +676,9 @@ public class AiChatService {
             dishScale = dishScale.min(BigDecimal.valueOf(2.5)).max(BigDecimal.valueOf(0.5));
 
             ObjectNode normalized = normalizedOptions.addObject();
-            normalized.put("name", name);
+            normalized.put("name", nameEn);
+            normalized.put("nameEn", nameEn);
+            normalized.put("nameVi", nameVi);
             normalized.put("amount", "1 phần");
             String preparation = normalizePreparation(option);
             ArrayNode preparationSteps = normalized.putArray("preparationSteps");
@@ -686,7 +730,7 @@ public class AiChatService {
             }
 
             if (preparation == null) {
-                List<String> fallbackSteps = buildAiPreparationSteps(builder, name, ingredientNames)
+                List<String> fallbackSteps = buildAiPreparationSteps(builder, nameVi, ingredientNames)
                         .orElseGet(() -> buildPreparationStepsFromFoodNames(ingredientNames));
                 preparation = String.join(" ", fallbackSteps);
                 fallbackSteps.forEach(preparationSteps::add);
@@ -735,8 +779,11 @@ public class AiChatService {
         ArrayNode options = result.putArray("options");
         for (NutritionCatalogClient.RecipeCandidate recipe : recipes) {
             ObjectNode option = options.addObject();
+            String displayNameVi = recipeDisplayName(recipe);
             option.put("recipeId", recipe.id());
             option.put("name", recipe.name());
+            option.put("nameEn", recipe.name());
+            option.put("nameVi", displayNameVi);
             option.put("description", recipe.description());
             List<String> fallbackSteps = buildPreparationStepsFromFoodNames(
                     recipe.ingredients().stream()
@@ -767,6 +814,7 @@ public class AiChatService {
                 ObjectNode normalizedIngredient = ingredients.addObject();
                 normalizedIngredient.put("foodItemId", ingredient.foodItemId());
                 normalizedIngredient.put("name", ingredient.name());
+                normalizedIngredient.put("nameVi", ingredient.nameVi());
                 normalizedIngredient.put("servingSizeG", ingredient.quantityG().setScale(0, RoundingMode.HALF_UP));
                 normalizedIngredient.put("quantity", 1);
                 normalizedIngredient.put("calories", ingredient.calories().setScale(0, RoundingMode.HALF_UP));
@@ -778,6 +826,39 @@ public class AiChatService {
             }
         }
         return objectMapper.writeValueAsString(result);
+    }
+
+    /**
+     * Seed recipes may have generic titles such as "Món Cá cơm ăn kèm".
+     * Use the actual ingredient combination for the Vietnamese display name,
+     * so distinct recipes can never appear as the same option in Planner.
+     */
+    private String recipeDisplayName(NutritionCatalogClient.RecipeCandidate recipe) {
+        List<String> ingredients = recipe.ingredients().stream()
+                .map(ingredient -> normalize(ingredient.nameVi()) != null ? ingredient.nameVi() : ingredient.name())
+                .filter(name -> normalize(name) != null)
+                .distinct()
+                .toList();
+        if (ingredients.isEmpty()) {
+            return recipe.nameVi();
+        }
+
+        String savedName = normalize(recipe.nameVi());
+        boolean genericName = savedName == null
+                || savedName.toLowerCase().startsWith("món ")
+                || savedName.toLowerCase().startsWith("công thức với");
+        if (!genericName) {
+            return savedName;
+        }
+        if (ingredients.size() == 1) {
+            return ingredients.get(0);
+        }
+        if (ingredients.size() == 2) {
+            return ingredients.get(0) + " với " + ingredients.get(1);
+        }
+        return ingredients.get(0) + " với "
+                + String.join(", ", ingredients.subList(1, ingredients.size() - 1))
+                + " và " + ingredients.get(ingredients.size() - 1);
     }
 
     private List<NutritionCatalogClient.RecipeCandidate> getMatchingRecipes(PlannerSuggestRequest context,
@@ -817,7 +898,7 @@ public class AiChatService {
         return getMatchingRecipes(context, maxCalories).stream()
                 .filter(recipe -> !isExcluded(recipe.name(), context))
                 .filter(recipe -> matchesRequestedFoods(recipe, context))
-                .limit(2)
+            .limit(2)
                 .toList();
     }
 

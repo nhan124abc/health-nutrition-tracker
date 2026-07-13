@@ -2,6 +2,7 @@ package health.tracker.services.user.dto;
 
 import health.tracker.services.user.entity.UserProfile;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -34,10 +35,11 @@ public class GuestGoalPlanRequest {
     private UserProfile.ActivityLevel activityLevel;
 
     @NotNull
-    @DecimalMin("0.0")
+    @DecimalMin("0.1")
+    @DecimalMax("25.0")
     private BigDecimal targetChangeKg;
 
     @Min(1)
-    @Max(104)
+    @Max(52)
     private Integer targetWeeks;
 }

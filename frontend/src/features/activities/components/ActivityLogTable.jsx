@@ -100,22 +100,7 @@ function ActivityLogTable({ activityTypes = [], completedIds = [], language, loa
                         ? `${log.sets || '-'} ${t('activityPage.fields.sets')} - ${log.reps || '-'} ${t('activityPage.fields.reps')} - ${log.strengthWeight || '-'}kg`
                         : `${log.distance || '-'} km`}
                     </td>
-                    <td className="text-end">
-                      <Button
-                        variant="link"
-                        size="sm"
-                        className="completion-action"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onToggleComplete?.(log);
-                        }}
-                        aria-pressed={completed}
-                        aria-label={t(completed ? 'activityPage.activityCompleted' : 'activityPage.markActivityCompleted')}
-                        title={t(completed ? 'activityPage.activityCompleted' : 'activityPage.markActivityCompleted')}
-                      >
-                        <FaCheck />
-                      </Button>
-                    </td>
+                    <td className="text-end"><Button variant="link" size="sm" className="completion-action" onClick={(event) => { event.stopPropagation(); onToggleComplete?.(log); }} aria-pressed={completed} aria-label={t(completed ? 'activityPage.activityCompleted' : 'activityPage.markActivityCompleted')} title={t(completed ? 'activityPage.activityCompleted' : 'activityPage.markActivityCompleted')}><FaCheck /></Button></td>
                   </tr>
                   );
                 })}

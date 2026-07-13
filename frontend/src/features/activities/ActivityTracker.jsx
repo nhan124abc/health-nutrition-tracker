@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import GoalFireworks from '../../components/GoalFireworks';
 import ErrorModal from '../../components/ErrorModal';
 import ActivityLogTable from './components/ActivityLogTable';
 import ActivitySummaryCard from './components/ActivitySummaryCard';
@@ -28,9 +27,7 @@ function ActivityTracker() {
   const [activityTypes, setActivityTypes] = useState([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
   const [activityError, setActivityError] = useState('');
-  const [showFireworks, setShowFireworks] = useState(false);
   const [updatingCompletionId, setUpdatingCompletionId] = useState(null);
-  const wasActivityGoalComplete = useRef(false);
   const [activityGoal] = useState(() => {
     try { return JSON.parse(localStorage.getItem('activeGoalPlan'))?.dailyActivityGoalKcal || 0; } catch { return 0; }
   });
@@ -40,26 +37,6 @@ function ActivityTracker() {
     [logs]
   );
   const summary = useMemo(() => getActivitySummary(completedLogs), [completedLogs]);
-
-  useEffect(() => {
-    const isComplete = !loadingLogs
-      && selectedDate === getTodayDate()
-      && activityGoal > 0
-      && summary.calories >= activityGoal;
-    let timeoutId;
-
-    if (isComplete && !wasActivityGoalComplete.current) {
-      setShowFireworks(true);
-      timeoutId = window.setTimeout(() => setShowFireworks(false), 2400);
-    }
-
-    wasActivityGoalComplete.current = isComplete;
-    return () => {
-      if (timeoutId) {
-        window.clearTimeout(timeoutId);
-      }
-    };
-  }, [activityGoal, loadingLogs, selectedDate, summary.calories]);
 
   useEffect(() => {
     let isMounted = true;
@@ -125,30 +102,18 @@ function ActivityTracker() {
 
   const toggleActivityCompleted = async (activity) => {
     if (!activity.id || updatingCompletionId === activity.id) return;
-    const nextCompleted = !activity.completed;
     setUpdatingCompletionId(activity.id);
-    setActivityError('');
-
     try {
-      const response = await updateActivityCompletion(activity.id, nextCompleted);
-      const updatedActivity = normalizeActivityFromApi(response.data?.data ?? response.data);
-      setLogs((current) => current.map((item) => (
-        item.id === activity.id ? { ...item, ...updatedActivity } : item
-      )));
-      if (nextCompleted) {
-        setShowFireworks(true);
-        window.setTimeout(() => setShowFireworks(false), 2400);
-      }
+      const response = await updateActivityCompletion(activity.id, !activity.completed);
+      const updated = normalizeActivityFromApi(response.data?.data || response.data);
+      setLogs((current) => current.map((item) => item.id === activity.id ? { ...item, ...updated } : item));
     } catch (error) {
       setActivityError(error.response?.data?.message || t('activityPage.completeError'));
-    } finally {
-      setUpdatingCompletionId(null);
-    }
+    } finally { setUpdatingCompletionId(null); }
   };
 
   return (
     <>
-      <GoalFireworks visible={showFireworks} />
       <ErrorModal error={activityError} onClose={() => setActivityError('')} />
       <div className="page-heading">
         <div>

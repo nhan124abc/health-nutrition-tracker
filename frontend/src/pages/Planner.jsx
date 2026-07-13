@@ -18,11 +18,11 @@ import { createMeal, createMealPlan, getMealsByDate, deleteMealById } from '../f
 import { extractMealsFromApi, formatCalories, getMealTotals, getMealsTotals, normalizeMealFromApi } from '../features/meals/mealUtils';
 import { getProfile } from '../features/profile/profileService';
 import { extractProfileFromApi, mapProfileFromApi } from '../features/profile/profileUtils';
-import { addWorkoutPlanExercise, deleteWorkoutPlanExercise, getActivitiesByDate, createWorkoutPlan, deleteActivityById, getActivityTypes, getWorkoutPlans } from '../features/activities/activityService';
+import { addWorkoutPlanExercise, createActivityLog, deleteWorkoutPlanExercise, getActivitiesByDate, createWorkoutPlan, deleteActivityById, getActivityTypes, getWorkoutPlans } from '../features/activities/activityService';
 import { extractActivitiesFromApi, extractActivityTypesFromApi, normalizeActivityFromApi, normalizeActivityType } from '../features/activities/activityUtils';
 import { getFoods, getRecipeSuggestions } from '../features/nutrition/nutritionService';
 import { extractFoodsFromApi, normalizeFoodFromApi } from '../features/nutrition/nutritionUtils';
-import { getLocalizedName } from '../utils/localizedName';
+import { getLocalizedName, isVietnamese } from '../utils/localizedName';
 import { isVietnameseSearchLanguage, valuesMatchSearch } from '../utils/searchText';
 
 const goalToApi = {
@@ -89,10 +89,15 @@ function getMealShare(mealType) {
   return 0.38;
 }
 
-function getMealBudget(goalCalories, consumedCalories, mealType) {
+function getMealBudget(goalCalories, consumedCalories, mealType, loggedMealTypes = []) {
   const remainingCalories = Math.max(100, goalCalories - consumedCalories);
-  const mealShareBudget = Math.round(goalCalories * getMealShare(mealType));
-  return Math.max(100, Math.min(mealShareBudget, remainingCalories));
+  const mealSlots = ['breakfast', 'lunch', 'dinner', 'afternoon_snack'];
+  // Reallocate the calories of completed slots across the slots that are
+  // still empty, so the daily total can reach the person's actual target.
+  const remainingSlots = mealSlots.filter((slot) => slot === mealType || !loggedMealTypes.includes(slot));
+  const shareTotal = remainingSlots.reduce((sum, slot) => sum + getMealShare(slot), 0) || 1;
+  const distributedBudget = Math.round(remainingCalories * getMealShare(mealType) / shareTotal);
+  return Math.max(100, Math.min(distributedBudget, remainingCalories));
 }
 
 function calculateActivityPreviewCalories(activity, activityType, weightKg) {
@@ -316,7 +321,12 @@ function Planner() {
     ? 0
     : Math.max(0, Math.round(totals.calories - loggedSlotCalories));
   const availableCaloriesForSelectedMeal = Math.max(0, calorieGoal - effectiveCaloriesConsumed);
-  const selectedMealBudget = getMealBudget(calorieGoal, effectiveCaloriesConsumed, selectedMeal);
+  const selectedMealBudget = getMealBudget(
+    calorieGoal,
+    effectiveCaloriesConsumed,
+    selectedMeal,
+    [...new Set(meals.map((meal) => meal.type))]
+  );
   const rankedRecipes = useMemo(() => {
     const selectedIdSet = new Set(selectedFoodIds.map(String));
     return recipes.filter(hasRecipeIngredients).map((recipe, originalIndex) => ({ recipe, originalIndex })).sort((leftItem, rightItem) => {
@@ -416,6 +426,10 @@ function Planner() {
   };
 
   function getRecipeDisplayName(recipe) {
+    // Prefer explicit Vietnamese name if available
+    if (isVietnamese(i18n.language) && recipe?.nameVi) {
+      return recipe.nameVi;
+    }
     const originalName = String(recipe?.name || '').trim();
     if (textMatchesLanguage(originalName, i18n.language)) return originalName;
     const ingredientNames = getRecipeIngredientSource(recipe)
@@ -435,6 +449,7 @@ function Planner() {
     return {
       recipeId: getRecipeId(recipe),
       name: recipe.name,
+      nameVi: recipe.nameVi || '',
       description: recipe.description || '',
       servings: Number(recipe.servings) || 1,
       amount: '',
@@ -458,8 +473,14 @@ function Planner() {
     const requestId = ++recipeRequestIdRef.current;
     try {
       const params = {
-        maxCalories: Math.max(Math.round(selectedMealBudget * 1.12), 300),
-        limit: 12,
+        // Never show a saved recipe that cannot be selected with today's
+        // actual remaining calories. Previously the 12% display buffer let
+        // a 538 kcal option appear while only 487 kcal remained.
+        maxCalories: Math.max(1, Math.min(
+          Math.round(selectedMealBudget * 1.12),
+          Math.floor(availableCaloriesForSelectedMeal)
+        )),
+        limit: 40,
         goal: activeGoal,
         mealType: mealTypeToApi[selectedMeal] || selectedMeal.toUpperCase(),
       };
@@ -494,7 +515,7 @@ function Planner() {
     } finally {
       if (requestId === recipeRequestIdRef.current) setRecipesLoading(false);
     }
-  }, [activeGoal, canSearchRecipes, normalizeRecipeOption, normalizedRecipeSearchTerm, selectedFoodIds.length, selectedFoodKey, selectedMeal, selectedMealBudget, t]);
+  }, [activeGoal, availableCaloriesForSelectedMeal, canSearchRecipes, normalizeRecipeOption, normalizedRecipeSearchTerm, selectedFoodIds.length, selectedFoodKey, selectedMeal, selectedMealBudget, t]);
 
   const toggleFoodName = (name) => {
     setSelectedFoodNames((current) => {
@@ -775,6 +796,7 @@ function Planner() {
       const response = await getAiPlanSuggestions({
         dailyCalorieGoal: calorieGoal,
         caloriesConsumed: effectiveCaloriesConsumed,
+        mealBudgetKcal: selectedMealBudget,
         mealType: effectiveMealType,
         goal: activeGoal,
         weightKg,
@@ -842,6 +864,8 @@ function Planner() {
         foodItemId: null,
         recipeId: option.recipeId,
         foodName: option.name,
+        name: option.name,
+        nameVi: option.nameVi || '',
         servingSizeG: Number(option.servingSizeG) || 100,
         quantity: 1,
         calories: Number(option.calories) || 0,
@@ -856,27 +880,17 @@ function Planner() {
         throw new Error(t('plannerPage.errors.selectFoodBeforeSave'));
       }
 
-      const mealPlanEntries = option.recipeId ? [{
+      const mealPlanEntries = [{
         planDate,
         mealType: mealTypeToApi[selectedMeal] || selectedMeal.toUpperCase(),
         foodItemId: null,
-        recipeId: option.recipeId,
-        foodName: option.name,
+        recipeId: option.recipeId || null,
+        foodName: optionDisplayName,
         servingSizeG: Number(option.servingSizeG) || 100,
         quantity: 1,
-        calories: Number(option.calories) || 0,
+        calories: Number(option.calories) || mealItems.reduce((sum, item) => sum + (Number(item.calories) || 0), 0),
         notes: '',
-      }] : mealItems.map((item) => ({
-        planDate,
-        mealType: mealTypeToApi[selectedMeal] || selectedMeal.toUpperCase(),
-        foodItemId: item.foodItemId,
-        recipeId: null,
-        foodName: item.foodName,
-        servingSizeG: item.servingSizeG,
-        quantity: item.quantity,
-        calories: item.calories,
-        notes: optionDisplayName,
-      }));
+      }];
 
       const payload = {
         mealType: selectedMeal.toUpperCase(),
@@ -996,10 +1010,24 @@ function Planner() {
           exercises: [exercise],
         });
       const savedPlan = response.data?.data || response.data;
+      const savedExercise = (savedPlan.exercises || []).find((item) => (
+        String(item.activityTypeId) === String(resolvedActivityTypeId)
+        && item.exerciseName === activityDisplayName
+      ));
+      const activityResponse = await createActivityLog({
+        activityTypeId: resolvedActivityTypeId,
+        activityName: activityDisplayName,
+        durationMinutes: exercise.durationMinutes,
+        loggedAt: `${planDate}T${new Date().toTimeString().slice(0, 5)}:00`,
+        workoutPlanExerciseId: savedExercise?.id || null,
+        notes: t('plannerPage.savedNotes.activity'),
+      });
+      const savedActivity = normalizePlannerActivityLog(activityResponse.data?.data || activityResponse.data);
       setWorkoutPlans((current) => {
         const withoutSaved = current.filter((plan) => String(plan.id) !== String(savedPlan.id));
         return [...withoutSaved, savedPlan];
       });
+      setActivities((current) => [...current, savedActivity]);
       setSelectedOption(idx);
       setSuccess(t('plannerPage.success.activityAdded', { name: activityDisplayName }));
     } catch (err) {
@@ -1127,12 +1155,12 @@ function Planner() {
               )}
             </Form.Group>
           </section>
-          {!isExerciseMode && (
+          {!isExerciseMode && !isRecipeMode && (
             <section className="planner-control-section">
               <div className="planner-section-heading">
                 <span><FaUtensils /></span>
                 <div>
-                  <h2>{isRecipeMode ? t('plannerPage.sections.recipeFilter') : t('plannerPage.sections.food')}</h2>
+                  <h2>{t('plannerPage.sections.food')}</h2>
                 </div>
               </div>
               <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
@@ -1232,26 +1260,32 @@ function Planner() {
                 </Button>
               </div>
               <Form.Text muted>{t('plannerPage.selectedFoodsHint', { count: selectedFoodCount, max: maxSelectedFoods })}</Form.Text>
-              {isRecipeMode && (
-                <div className="mt-3">
-                  <Form.Label className="mb-2">{t('plannerPage.searchRecipes')}</Form.Label>
-                  <InputGroup className="planner-food-search">
-                    <InputGroup.Text><FaSearch /></InputGroup.Text>
-                    <Form.Control
-                      value={recipeSearchTerm}
-                      onChange={(event) => {
-                        setRecipeSearchTerm(event.target.value);
-                        setSelectedRecipeId(null);
-                      }}
-                      placeholder={t('plannerPage.searchRecipesPlaceholder')}
-                      aria-label={t('plannerPage.searchRecipes')}
-                    />
-                  </InputGroup>
-                  <Form.Text muted>{t('plannerPage.searchRecipesHint')}</Form.Text>
-                </div>
-              )}
             </section>
           )}
+          {isRecipeMode && (
+            <section className="planner-control-section">
+              <div className="planner-section-heading">
+                <span><FaBookOpen /></span>
+                <div>
+                  <h2>{t('plannerPage.searchRecipes')}</h2>
+                </div>
+              </div>
+              <InputGroup className="planner-food-search">
+                <InputGroup.Text><FaSearch /></InputGroup.Text>
+                <Form.Control
+                  value={recipeSearchTerm}
+                  onChange={(event) => {
+                    setRecipeSearchTerm(event.target.value);
+                    setSelectedRecipeId(null);
+                  }}
+                  placeholder={t('plannerPage.searchRecipesPlaceholder')}
+                  aria-label={t('plannerPage.searchRecipes')}
+                />
+              </InputGroup>
+              <Form.Text muted>{t('plannerPage.searchRecipesHint')}</Form.Text>
+            </section>
+          )}
+
           {isExerciseMode && (
             <section className="planner-control-section">
               <div className="planner-section-heading">

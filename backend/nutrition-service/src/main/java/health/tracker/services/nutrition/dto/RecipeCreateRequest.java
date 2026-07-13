@@ -18,6 +18,9 @@ public class RecipeCreateRequest {
     @Size(max = 255)
     private String name;
 
+    @Size(max = 255)
+    private String nameVi;
+
     private String description;
 
     @NotNull
