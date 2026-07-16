@@ -52,20 +52,55 @@ function withImageCacheBust(url, version) {
   return `${url}${url.includes('?') ? '&' : '?'}v=${version}`;
 }
 
-const menuItems = [
-  { to: '/dashboard', labelKey: 'nav.dashboard', icon: FaHome },
-  { to: '/goals', labelKey: 'nav.goals', icon: FaBullseye },
-  { to: '/planner', labelKey: 'nav.planner', icon: FaRobot },
-  { to: '/plans', labelKey: 'nav.plans', icon: FaCalendarAlt },
-  { to: '/meals', labelKey: 'nav.diary', icon: FaUtensils },
-  { to: '/water', labelKey: 'nav.water', icon: FaTint },
-  { to: '/activity', labelKey: 'nav.activity', icon: FaDumbbell },
-  { to: '/activities', labelKey: 'nav.activityList', icon: FaRunning },
-  { to: '/nutrition', labelKey: 'nav.nutrition', icon: FaSearch },
-  { to: '/reports', labelKey: 'nav.statistics', icon: FaChartLine },
-  { to: '/body-metrics', labelKey: 'nav.bodyMetrics', icon: FaWeight },
-  { to: '/profile', labelKey: 'nav.profile', icon: FaUserCircle },
-  { to: '/settings', labelKey: 'nav.settings', icon: FaCog },
+const menuGroups = [
+  {
+    labelKey: 'sidebar.groups.today',
+    defaultLabel: 'Today',
+    defaultLabelVi: 'H\u00f4m nay',
+    items: [
+      { to: '/dashboard', labelKey: 'nav.dashboard', icon: FaHome },
+      { to: '/meals', labelKey: 'nav.diary', icon: FaUtensils },
+      { to: '/water', labelKey: 'nav.water', icon: FaTint },
+      { to: '/activity', labelKey: 'nav.activity', icon: FaDumbbell },
+    ],
+  },
+  {
+    labelKey: 'sidebar.groups.planning',
+    defaultLabel: 'Planning',
+    defaultLabelVi: 'K\u1ebf ho\u1ea1ch',
+    items: [
+      { to: '/goals', labelKey: 'nav.goals', icon: FaBullseye },
+      { to: '/planner', labelKey: 'nav.planner', icon: FaRobot },
+      { to: '/plans', labelKey: 'nav.plans', icon: FaCalendarAlt },
+    ],
+  },
+  {
+    labelKey: 'sidebar.groups.library',
+    defaultLabel: 'Library',
+    defaultLabelVi: 'D\u1eef li\u1ec7u',
+    items: [
+      { to: '/nutrition', labelKey: 'nav.nutrition', icon: FaSearch },
+      { to: '/activities', labelKey: 'nav.activityList', icon: FaRunning },
+    ],
+  },
+  {
+    labelKey: 'sidebar.groups.progress',
+    defaultLabel: 'Progress',
+    defaultLabelVi: 'Ti\u1ebfn \u0111\u1ed9',
+    items: [
+      { to: '/reports', labelKey: 'nav.statistics', icon: FaChartLine },
+      { to: '/body-metrics', labelKey: 'nav.bodyMetrics', icon: FaWeight },
+    ],
+  },
+  {
+    labelKey: 'sidebar.groups.account',
+    defaultLabel: 'Account',
+    defaultLabelVi: 'T\u00e0i kho\u1ea3n',
+    items: [
+      { to: '/profile', labelKey: 'nav.profile', icon: FaUserCircle },
+      { to: '/settings', labelKey: 'nav.settings', icon: FaCog },
+    ],
+  },
 ];
 
 function MainLayout() {
@@ -100,7 +135,7 @@ function MainLayout() {
   });
   const location = useLocation();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const aiChatWindowRef = useRef(null);
   const profileButtonRef = useRef(null);
 
@@ -372,24 +407,33 @@ function MainLayout() {
 
   const renderSidebarNav = () => (
     <Nav className="layout-sidebar-nav flex-column">
-      {menuItems.map((item) => {
-        const Icon = item.icon;
-        const label = t(item.labelKey);
+      {menuGroups.map((group) => (
+        <div className="layout-sidebar-group" key={group.labelKey}>
+          <div className="layout-sidebar-group-title">
+            {t(group.labelKey, {
+              defaultValue: i18n.language?.startsWith('vi') ? group.defaultLabelVi : group.defaultLabel,
+            })}
+          </div>
+          {group.items.map((item) => {
+            const Icon = item.icon;
+            const label = t(item.labelKey);
 
-        return (
-          <Nav.Link
-            as={NavLink}
-            to={item.to}
-            end={item.to === '/dashboard'}
-            key={item.to}
-            className="layout-sidebar-link"
-            aria-label={label}
-          >
-            <Icon className="layout-sidebar-icon" />
-            <span className="layout-sidebar-label">{label}</span>
-          </Nav.Link>
-        );
-      })}
+            return (
+              <Nav.Link
+                as={NavLink}
+                to={item.to}
+                end={item.to === '/dashboard'}
+                key={item.to}
+                className="layout-sidebar-link"
+                aria-label={label}
+              >
+                <Icon className="layout-sidebar-icon" />
+                <span className="layout-sidebar-label">{label}</span>
+              </Nav.Link>
+            );
+          })}
+        </div>
+      ))}
     </Nav>
   );
 
