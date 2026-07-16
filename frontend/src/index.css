@@ -524,6 +524,43 @@ body::-webkit-scrollbar,
   gap: 0.25rem;
 }
 
+.layout-sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.layout-sidebar-group + .layout-sidebar-group {
+  margin-top: 0.85rem;
+}
+
+.layout-sidebar-group-title {
+  color: #8a949e;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  padding: 0 0.9rem;
+  text-transform: uppercase;
+  transition: opacity 0.16s ease, height 0.16s ease, margin 0.16s ease;
+  white-space: nowrap;
+}
+
+.sidebar-collapsed .layout-sidebar-group {
+  align-items: stretch;
+}
+
+.sidebar-collapsed .layout-sidebar-group + .layout-sidebar-group {
+  margin-top: 0.45rem;
+}
+
+.sidebar-collapsed .layout-sidebar-group-title {
+  height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0;
+}
+
 .layout-sidebar-link {
   align-items: center;
   border-radius: 0.75rem;
