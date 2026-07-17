@@ -57,6 +57,130 @@ function withImageCacheBust(url, version) {
   return `${url}${url.includes('?') ? '&' : '?'}v=${version}`;
 }
 
+function ProfilePrintDocument({ account, bmi, metrics = [], profile, t }) {
+  const formatValue = (value, unit = '') => {
+    if (value === null || value === undefined || value === '') {
+      return '-';
+    }
+
+    return unit ? `${value} ${unit}` : value;
+  };
+  const formatMetricValue = (value, unit = '') => formatValue(value, unit);
+  const formatMetricDate = (metric) => String(metric.recordedAt || metric.date || '-').slice(0, 10);
+  const formatMeasurements = (metric) => {
+    const waist = metric.waistCm ?? metric.waist ?? '-';
+    const hip = metric.hipCm ?? metric.hip ?? '-';
+    const chest = metric.chestCm ?? metric.chest ?? '-';
+
+    return `${waist}/${hip}/${chest} cm`;
+  };
+  const printableMetrics = metrics.slice(0, 10);
+
+  const profileRows = [
+    [t('profilePage.fields.username'), profile.username],
+    [t('profile.birthDate'), profile.birthDate],
+    [t('profile.gender'), profile.gender ? t(`profile.${profile.gender}`) : ''],
+    [
+      t('profile.activityLevel'),
+      profile.activityLevel
+        ? t(`profile.${profile.activityLevel === 'very_active' ? 'veryActive' : profile.activityLevel}`)
+        : '',
+    ],
+    [t('profile.height'), formatValue(profile.height, 'cm')],
+    [t('profile.weight'), formatValue(profile.weight, 'kg')],
+    [t('profilePage.fields.targetWeight'), formatValue(profile.targetWeight, 'kg')],
+  ];
+
+  const healthRows = [
+    ['BMI', bmi],
+    [t('health.bmr', 'BMR'), formatValue(profile.bmr, 'kcal')],
+    [t('health.tdee'), formatValue(profile.tdee, 'kcal')],
+    [t('common.goal'), profile.healthGoal ? t(`profilePage.goals.${profile.healthGoal}`) : ''],
+    [t('common.calories'), formatValue(profile.dailyCalorieGoal, 'kcal')],
+    [t('common.water'), formatValue(profile.dailyWaterGoal, 'ml')],
+    [t('common.protein'), formatValue(profile.dailyProteinGoal, 'g')],
+    [t('common.carbs'), formatValue(profile.dailyCarbsGoal, 'g')],
+    [t('common.fat'), formatValue(profile.dailyFatGoal, 'g')],
+  ];
+
+  return (
+    <section className="profile-print-document" aria-label={t('profilePage.printProfile')}>
+      <header className="profile-print-header">
+        <div>
+          <h1>{t('profilePage.healthProfile')}</h1>
+          <p>{new Date().toLocaleDateString()}</p>
+        </div>
+        {account?.email && <strong>{account.email}</strong>}
+      </header>
+
+      <div className="profile-print-section">
+        <h2>{t('profilePage.healthProfile')}</h2>
+        <div className="profile-print-grid">
+          {profileRows.map(([label, value]) => (
+            <div className="profile-print-row" key={label}>
+              <span>{label}</span>
+              <strong>{value || '-'}</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="profile-print-section">
+        <h2>{t('common.goal')}</h2>
+        <div className="profile-print-grid">
+          {healthRows.map(([label, value]) => (
+            <div className="profile-print-row" key={label}>
+              <span>{label}</span>
+              <strong>{value || '-'}</strong>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {profile.bio && (
+        <div className="profile-print-section">
+          <h2>{t('common.bio')}</h2>
+          <p className="profile-print-note">{profile.bio}</p>
+        </div>
+      )}
+
+      <div className="profile-print-section">
+        <h2>{t('profilePage.metricHistory')}</h2>
+        {printableMetrics.length === 0 ? (
+          <p className="profile-print-note">{t('profilePage.noMetrics')}</p>
+        ) : (
+          <table className="profile-print-table">
+            <thead>
+              <tr>
+                <th>{t('common.date')}</th>
+                <th>{t('common.weight')}</th>
+                <th>{t('bodyMetricsPage.table.bodyFat')}</th>
+                <th>{t('bodyMetricsPage.table.bmi')}</th>
+                <th>{t('bodyMetricsPage.table.bmr')}</th>
+                <th>{t('bodyMetricsPage.table.tdee')}</th>
+                <th>{t('bodyMetricsPage.table.measurements')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {printableMetrics.map((metric, index) => (
+                <tr key={metric.id || `${formatMetricDate(metric)}-${index}`}>
+                  <td>{formatMetricDate(metric)}</td>
+                  <td>{formatMetricValue(metric.weightKg ?? metric.weight, 'kg')}</td>
+                  <td>{formatMetricValue(metric.bodyFatPercentage ?? metric.bodyFat, '%')}</td>
+                  <td>{formatMetricValue(metric.bmi)}</td>
+                  <td>{formatMetricValue(metric.bmr, 'kcal')}</td>
+                  <td>{formatMetricValue(metric.tdee, 'kcal')}</td>
+                  <td>{formatMeasurements(metric)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function updateStoredAccount(accountPatch = {}) {
   const currentUser = getCurrentUser();
 
@@ -323,7 +447,14 @@ function Profile() {
   };
 
   const printProfile = () => {
+    const cleanupPrintMode = () => {
+      document.body.classList.remove('printing-profile');
+    };
+
+    document.body.classList.add('printing-profile');
+    window.addEventListener('afterprint', cleanupPrintMode, { once: true });
     window.print();
+    window.setTimeout(cleanupPrintMode, 1000);
   };
 
   return (
@@ -337,6 +468,16 @@ function Profile() {
           {t('profilePage.printProfile')}
         </Button>
       </div>
+
+      {!loading && (
+        <ProfilePrintDocument
+          account={account}
+          bmi={bmi}
+          metrics={metrics}
+          profile={profile}
+          t={t}
+        />
+      )}
 
       <ErrorModal error={error} onClose={() => setError('')} />
       <ErrorModal
