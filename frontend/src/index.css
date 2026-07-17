@@ -4141,6 +4141,10 @@ tr.is-completed {
   flex: 0 0 auto;
 }
 
+.profile-print-document {
+  display: none;
+}
+
 @media (max-width: 991.98px) {
   .premium-hero {
     min-height: auto;
@@ -4191,5 +4195,144 @@ tr.is-completed {
 
   .premium-macro-panel {
     grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  @page profile-print {
+    margin: 14mm;
+    size: A4;
+  }
+
+  body.printing-profile {
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  body.printing-profile * {
+    visibility: hidden !important;
+  }
+
+  body.printing-profile .profile-print-document,
+  body.printing-profile .profile-print-document * {
+    visibility: visible !important;
+  }
+
+  body.printing-profile .profile-print-document {
+    background: #fff;
+    color: #111;
+    display: block !important;
+    font-family: Arial, sans-serif;
+    left: 0;
+    line-height: 1.35;
+    position: absolute;
+    top: 0;
+    width: 100%;
+    page: profile-print;
+  }
+
+  .profile-print-header {
+    align-items: flex-start;
+    border-bottom: 2px solid #111;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+  }
+
+  .profile-print-header h1 {
+    font-size: 22px;
+    font-weight: 800;
+    margin: 0 0 4px;
+  }
+
+  .profile-print-header p,
+  .profile-print-header strong {
+    color: #333;
+    font-size: 12px;
+    margin: 0;
+  }
+
+  .profile-print-section {
+    break-inside: avoid;
+    margin-bottom: 18px;
+  }
+
+  .profile-print-section h2 {
+    border-bottom: 1px solid #d7d7d7;
+    font-size: 15px;
+    font-weight: 800;
+    margin: 0 0 10px;
+    padding-bottom: 6px;
+  }
+
+  .profile-print-grid {
+    display: grid;
+    gap: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-print-row {
+    border-bottom: 1px solid #e4e4e4;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 44% 1fr;
+    min-height: 32px;
+    padding: 7px 10px;
+  }
+
+  .profile-print-row:nth-child(odd) {
+    border-right: 1px solid #e4e4e4;
+  }
+
+  .profile-print-row span {
+    color: #555;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .profile-print-row strong {
+    color: #111;
+    font-size: 12px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+  }
+
+  .profile-print-note {
+    border: 1px solid #e4e4e4;
+    color: #111;
+    font-size: 12px;
+    margin: 0;
+    padding: 10px;
+    white-space: pre-wrap;
+  }
+
+  .profile-print-table {
+    border-collapse: collapse;
+    font-size: 11px;
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  .profile-print-table th,
+  .profile-print-table td {
+    border: 1px solid #e4e4e4;
+    overflow-wrap: anywhere;
+    padding: 7px 8px;
+    text-align: right;
+    vertical-align: top;
+  }
+
+  .profile-print-table th {
+    background: #f3f3f3 !important;
+    color: #333;
+    font-weight: 800;
+  }
+
+  .profile-print-table th:first-child,
+  .profile-print-table td:first-child {
+    text-align: left;
+    width: 15%;
   }
 }
