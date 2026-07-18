@@ -13,9 +13,11 @@ import java.time.YearMonth;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -24,12 +26,17 @@ class AdminSystemAnalyticsServiceTest {
     @Mock
     private AdminSystemAnalyticsRepository repository;
 
+    @Mock
+    private AnalyticsCacheService analyticsCacheService;
+
     @InjectMocks
     private AdminSystemAnalyticsService service;
 
     @Test
     void returnsDatabaseBackedSystemAnalytics() {
         LocalDate today = LocalDate.now();
+        when(analyticsCacheService.adminSystemAnalyticsKey()).thenReturn("analytics:admin:system-analytics");
+        when(analyticsCacheService.getAdminSystemAnalytics(anyString())).thenReturn(Optional.empty());
         when(repository.countUsers()).thenReturn(20L);
         when(repository.countActiveUsers()).thenReturn(15L);
         when(repository.countLogsBetween(today, today.plusDays(1))).thenReturn(12L);

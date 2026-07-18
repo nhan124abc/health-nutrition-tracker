@@ -23,13 +23,22 @@ public class WorkoutPlanService {
 
     private final WorkoutPlanRepository workoutPlanRepository;
     private final ActivityTypeRepository activityTypeRepository;
+    private final ActivityCacheService activityCacheService;
 
     @Transactional(readOnly = true)
     public List<WorkoutPlanResponse> list(Long userId) {
-        return workoutPlanRepository.findByUserIdOrderByActiveDescUpdatedAtDesc(userId)
+        String cacheKey = activityCacheService.workoutPlansKey(userId);
+        List<WorkoutPlanResponse> cached = activityCacheService.getWorkoutPlans(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
+        List<WorkoutPlanResponse> response = workoutPlanRepository.findByUserIdOrderByActiveDescUpdatedAtDesc(userId)
                 .stream()
                 .map(this::toResponse)
                 .toList();
+        activityCacheService.putWorkoutPlans(cacheKey, response);
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -54,7 +63,9 @@ public class WorkoutPlanService {
         plan.setDurationWeeks(request.getDurationWeeks());
         plan.setActive(request.getActive() == null || request.getActive());
         replaceExercises(plan, request.getExercises());
-        return toResponse(workoutPlanRepository.save(plan));
+        WorkoutPlan saved = workoutPlanRepository.save(plan);
+        activityCacheService.evictAllActivityCaches();
+        return toResponse(saved);
     }
 
     @Transactional
@@ -69,7 +80,9 @@ public class WorkoutPlanService {
             plan.setActive(request.getActive());
         }
         replaceExercises(plan, request.getExercises());
-        return toResponse(workoutPlanRepository.save(plan));
+        WorkoutPlan saved = workoutPlanRepository.save(plan);
+        activityCacheService.evictAllActivityCaches();
+        return toResponse(saved);
     }
 
     @Transactional
@@ -84,7 +97,9 @@ public class WorkoutPlanService {
                     "This activity is already in the workout plan for the selected day");
         }
         plan.getExercises().add(toExercise(plan, request));
-        return toResponse(workoutPlanRepository.save(plan));
+        WorkoutPlan saved = workoutPlanRepository.save(plan);
+        activityCacheService.evictAllActivityCaches();
+        return toResponse(saved);
     }
 
     @Transactional
@@ -96,21 +111,26 @@ public class WorkoutPlanService {
         }
         if (plan.getExercises().isEmpty()) {
             workoutPlanRepository.delete(plan);
+            activityCacheService.evictAllActivityCaches();
             return;
         }
         workoutPlanRepository.save(plan);
+        activityCacheService.evictAllActivityCaches();
     }
 
     @Transactional
     public WorkoutPlanResponse setActive(Long userId, Long id, boolean active) {
         WorkoutPlan plan = findOwned(userId, id);
         plan.setActive(active);
-        return toResponse(workoutPlanRepository.save(plan));
+        WorkoutPlan saved = workoutPlanRepository.save(plan);
+        activityCacheService.evictAllActivityCaches();
+        return toResponse(saved);
     }
 
     @Transactional
     public void delete(Long userId, Long id) {
         workoutPlanRepository.delete(findOwned(userId, id));
+        activityCacheService.evictAllActivityCaches();
     }
 
     private WorkoutPlan findOwned(Long userId, Long id) {

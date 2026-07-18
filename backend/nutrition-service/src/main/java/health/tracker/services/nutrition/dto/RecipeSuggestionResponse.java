@@ -2,12 +2,16 @@ package health.tracker.services.nutrition.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RecipeSuggestionResponse {
     private Long id;
     private String name;
@@ -23,6 +27,8 @@ public class RecipeSuggestionResponse {
 
     @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class Ingredient {
         private Long foodItemId;
         private String name;

@@ -22,6 +22,7 @@ public class FoodItemService {
 
     private final FoodItemRepository    foodItemRepository;
     private final FoodCategoryRepository categoryRepository;
+    private final NutritionCacheService nutritionCacheService;
 
     // ─── Search ───────────────────────────────────────────────────────────────
 
@@ -34,11 +35,18 @@ public class FoodItemService {
     @Transactional(readOnly = true)
     public Page<FoodItemResponse> search(
             String keyword, Integer categoryId, Long userId, boolean recipeFirst, Pageable pageable) {
+        String cacheKey = nutritionCacheService.foodSearchKey(keyword, categoryId, userId, recipeFirst, pageable);
+        Page<FoodItemResponse> cached = nutritionCacheService.getFoodSearch(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
         Page<FoodItem> foods = recipeFirst
                 ? foodItemRepository.searchByRecipeUsage(keyword, categoryId, userId, pageable)
                 : foodItemRepository.search(keyword, categoryId, userId, false, pageable);
-        return foods
-                .map(this::toResponse);
+        Page<FoodItemResponse> response = foods.map(this::toResponse);
+        nutritionCacheService.putFoodSearch(cacheKey, response);
+        return response;
     }
 
     // ─── Get By ID ────────────────────────────────────────────────────────────
@@ -103,6 +111,7 @@ public class FoodItemService {
                 .build();
 
         FoodItem saved = foodItemRepository.save(food);
+        nutritionCacheService.evictAllNutritionCaches();
         log.info("New food item created by userId={}: '{}'", createdByUserId, saved.getName());
         return toResponse(saved);
     }
@@ -167,7 +176,9 @@ public class FoodItemService {
         food.setSodiumMg(request.getSodiumMg() != null ? request.getSodiumMg() : java.math.BigDecimal.ZERO);
         food.setImageUrl(request.getImageUrl());
 
-        return toResponse(foodItemRepository.save(food));
+        FoodItem saved = foodItemRepository.save(food);
+        nutritionCacheService.evictAllNutritionCaches();
+        return toResponse(saved);
     }
 
     @Transactional
@@ -176,6 +187,7 @@ public class FoodItemService {
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Food item not found: " + id));
         food.setPublic(false);
         foodItemRepository.save(food);
+        nutritionCacheService.evictAllNutritionCaches();
     }
 
     @Transactional
@@ -191,6 +203,7 @@ public class FoodItemService {
 
         food.setPublic(false);
         foodItemRepository.save(food);
+        nutritionCacheService.evictAllNutritionCaches();
     }
 
     @Transactional
@@ -198,7 +211,9 @@ public class FoodItemService {
         FoodItem food = foodItemRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Food item not found: " + id));
         food.setPublic(false);
-        return toResponse(foodItemRepository.save(food));
+        FoodItem saved = foodItemRepository.save(food);
+        nutritionCacheService.evictAllNutritionCaches();
+        return toResponse(saved);
     }
 
     @Transactional
@@ -206,7 +221,9 @@ public class FoodItemService {
         FoodItem food = foodItemRepository.findById(id)
                 .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "Food item not found: " + id));
         food.setPublic(true);
-        return toResponse(foodItemRepository.save(food));
+        FoodItem saved = foodItemRepository.save(food);
+        nutritionCacheService.evictAllNutritionCaches();
+        return toResponse(saved);
     }
 
     private FoodItemResponse toResponse(FoodItem f) {

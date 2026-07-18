@@ -22,6 +22,7 @@ public class ActivityTypeService {
 
     private final ActivityTypeRepository typeRepository;
     private final ActivityCategoryLabelRepository categoryLabelRepository;
+    private final ActivityCacheService activityCacheService;
 
     @Transactional(readOnly = true)
     public List<ActivityType> getVisibleTypes(ActivityType.Category category) {
@@ -34,29 +35,53 @@ public class ActivityTypeService {
             return List.of();
         }
 
+        String cacheKey = activityCacheService.visibleTypesKey(category, userId);
+        List<ActivityType> cached = activityCacheService.getActivityTypes(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
         List<ActivityType> types = typeRepository.findVisibleForUser(category, userId);
-        return types.stream()
+        List<ActivityType> response = types.stream()
                 .filter(type -> !isCategoryHidden(type.getCategory()))
                 .toList();
+        activityCacheService.putActivityTypes(cacheKey, response);
+        return response;
     }
 
     @Transactional(readOnly = true)
     public List<ActivityType> getAdminTypes(ActivityType.Category category, Boolean hidden) {
-        return typeRepository.findAll().stream()
+        String cacheKey = activityCacheService.adminTypesKey(category, hidden);
+        List<ActivityType> cached = activityCacheService.getActivityTypes(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
+        List<ActivityType> response = typeRepository.findAll().stream()
                 .filter(type -> category == null || type.getCategory() == category)
                 .filter(type -> hidden == null || type.isHidden() == hidden)
                 .sorted(Comparator.comparing(ActivityType::getCategory).thenComparing(ActivityType::getName))
                 .toList();
+        activityCacheService.putActivityTypes(cacheKey, response);
+        return response;
     }
 
     @Transactional(readOnly = true)
     public List<ActivityCategoryResponse> getAdminCategories() {
-        return List.of(ActivityType.Category.values()).stream()
+        String cacheKey = activityCacheService.adminCategoryResponsesKey();
+        List<ActivityCategoryResponse> cached = activityCacheService.getCategoryResponses(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
+        List<ActivityCategoryResponse> response = List.of(ActivityType.Category.values()).stream()
                 .filter(category -> typeRepository.countByCategory(category) > 0
                         || categoryLabelRepository.existsById(category))
                 .map(this::toCategoryResponse)
-                .sorted(Comparator.comparing(response -> response.getCategory().name()))
+                .sorted(Comparator.comparing(categoryResponse -> categoryResponse.getCategory().name()))
                 .toList();
+        activityCacheService.putCategoryResponses(cacheKey, response);
+        return response;
     }
 
     @Transactional
@@ -70,6 +95,7 @@ public class ActivityTypeService {
         label.setName(request.getName().trim());
         label.setNameVi(trimToNull(request.getNameVi()));
         categoryLabelRepository.save(label);
+        activityCacheService.evictAllActivityCaches();
 
         return toCategoryResponse(category);
     }
@@ -85,6 +111,7 @@ public class ActivityTypeService {
                         .build());
         label.setHidden(true);
         categoryLabelRepository.save(label);
+        activityCacheService.evictAllActivityCaches();
 
         return toCategoryResponse(category);
     }
@@ -99,6 +126,7 @@ public class ActivityTypeService {
                         .build());
         label.setHidden(false);
         categoryLabelRepository.save(label);
+        activityCacheService.evictAllActivityCaches();
 
         return toCategoryResponse(category);
     }
@@ -107,6 +135,7 @@ public class ActivityTypeService {
     public void deleteCategory(ActivityType.Category category) {
         validateEmptyCategory(category, "delete");
         categoryLabelRepository.deleteById(category);
+        activityCacheService.evictAllActivityCaches();
     }
 
     @Transactional(readOnly = true)
@@ -141,7 +170,9 @@ public class ActivityTypeService {
                 .createdByUserId(createdByUserId)
                 .hidden(system && request.getHidden() != null && request.getHidden())
                 .build();
-        return typeRepository.save(type);
+        ActivityType saved = typeRepository.save(type);
+        activityCacheService.evictAllActivityCaches();
+        return saved;
     }
 
     @Transactional
@@ -181,7 +212,9 @@ public class ActivityTypeService {
         if (request.getHidden() != null) {
             type.setHidden(request.getHidden());
         }
-        return typeRepository.save(type);
+        ActivityType saved = typeRepository.save(type);
+        activityCacheService.evictAllActivityCaches();
+        return saved;
     }
 
     @Transactional
@@ -189,6 +222,7 @@ public class ActivityTypeService {
         ActivityType type = findById(id);
         type.setHidden(true);
         typeRepository.save(type);
+        activityCacheService.evictAllActivityCaches();
     }
 
     @Transactional
@@ -203,20 +237,25 @@ public class ActivityTypeService {
 
         type.setHidden(true);
         typeRepository.save(type);
+        activityCacheService.evictAllActivityCaches();
     }
 
     @Transactional
     public ActivityType hide(Integer id) {
         ActivityType type = findById(id);
         type.setHidden(true);
-        return typeRepository.save(type);
+        ActivityType saved = typeRepository.save(type);
+        activityCacheService.evictAllActivityCaches();
+        return saved;
     }
 
     @Transactional
     public ActivityType restore(Integer id) {
         ActivityType type = findById(id);
         type.setHidden(false);
-        return typeRepository.save(type);
+        ActivityType saved = typeRepository.save(type);
+        activityCacheService.evictAllActivityCaches();
+        return saved;
     }
 
     private ActivityType findById(Integer id) {

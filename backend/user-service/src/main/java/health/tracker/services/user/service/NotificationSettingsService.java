@@ -17,13 +17,22 @@ public class NotificationSettingsService {
     private static final List<String> DEFAULT_MEAL_REMINDER_TIMES = List.of("08:00", "12:00", "18:00");
 
     private final UserNotificationSettingRepository repository;
+    private final UserCacheService userCacheService;
 
     @Transactional
     public NotificationSettingsResponse getSettings(Long userId) {
+        String cacheKey = userCacheService.notificationSettingsKey(userId);
+        NotificationSettingsResponse cached = userCacheService.getNotificationSettings(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
         UserNotificationSetting setting = repository.findByUserId(userId)
                 .orElseGet(() -> repository.save(defaultSetting(userId)));
         normalizeBodyMetricReminderInterval(setting);
-        return toResponse(repository.save(setting));
+        NotificationSettingsResponse response = toResponse(repository.save(setting));
+        userCacheService.putNotificationSettings(cacheKey, response);
+        return response;
     }
 
     @Transactional
@@ -51,7 +60,9 @@ public class NotificationSettingsService {
         }
         normalizeBodyMetricReminderInterval(setting);
 
-        return toResponse(repository.save(setting));
+        NotificationSettingsResponse response = toResponse(repository.save(setting));
+        userCacheService.evictAllUserCaches();
+        return response;
     }
 
     private UserNotificationSetting defaultSetting(Long userId) {

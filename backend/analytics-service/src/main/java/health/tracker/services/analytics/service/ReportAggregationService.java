@@ -27,10 +27,12 @@ public class ReportAggregationService {
     private final WeeklyReportRepository weeklyRepository;
     private final MonthlyReportRepository monthlyRepository;
     private final DailySummarySyncService dailySummarySyncService;
+    private final AnalyticsCacheService analyticsCacheService;
 
     @Scheduled(cron = "${analytics.reports.cron:0 10 0 * * *}")
     @Transactional
     public void refreshRecentReports() {
+        analyticsCacheService.evictAllAnalyticsCaches();
         LocalDate today = LocalDate.now();
         LocalDate currentWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         YearMonth currentMonth = YearMonth.from(today);
@@ -45,6 +47,12 @@ public class ReportAggregationService {
     @Transactional
     public WeeklyReport aggregateWeek(Long userId, LocalDate weekStart) {
         LocalDate normalizedStart = weekStart.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        String cacheKey = analyticsCacheService.weeklyReportKey(userId, normalizedStart);
+        WeeklyReport cached = analyticsCacheService.getWeeklyReport(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
         LocalDate weekEnd = normalizedStart.plusDays(6);
         dailySummarySyncService.syncRange(userId, normalizedStart, weekEnd);
         List<DailySummary> days = dailyRepository
@@ -55,11 +63,19 @@ public class ReportAggregationService {
         report.setWeekStartDate(normalizedStart);
         report.setWeekEndDate(weekEnd);
         applyWeeklyValues(report, days);
-        return weeklyRepository.save(report);
+        WeeklyReport saved = weeklyRepository.save(report);
+        analyticsCacheService.putWeeklyReport(cacheKey, saved);
+        return saved;
     }
 
     @Transactional
     public MonthlyReport aggregateMonth(Long userId, YearMonth month) {
+        String cacheKey = analyticsCacheService.monthlyReportKey(userId, month);
+        MonthlyReport cached = analyticsCacheService.getMonthlyReport(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
         dailySummarySyncService.syncRange(userId, month.atDay(1), month.atEndOfMonth());
         List<DailySummary> days = dailyRepository.findByUserIdAndSummaryDateBetweenOrderBySummaryDateAsc(
                 userId, month.atDay(1), month.atEndOfMonth());
@@ -81,7 +97,9 @@ public class ReportAggregationService {
         report.setWeightEndKg(lastWeight(days));
         report.setGoalMetDays((int) days.stream().filter(DailySummary::isCalorieGoalMet).count());
         report.setDataDaysCount(count);
-        return monthlyRepository.save(report);
+        MonthlyReport saved = monthlyRepository.save(report);
+        analyticsCacheService.putMonthlyReport(cacheKey, saved);
+        return saved;
     }
 
     private void applyWeeklyValues(WeeklyReport report, List<DailySummary> days) {
