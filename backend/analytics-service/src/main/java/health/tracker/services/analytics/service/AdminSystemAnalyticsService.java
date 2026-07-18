@@ -22,9 +22,16 @@ public class AdminSystemAnalyticsService {
     private static final DateTimeFormatter MONTH_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM");
 
     private final AdminSystemAnalyticsRepository repository;
+    private final AnalyticsCacheService analyticsCacheService;
 
     @Transactional(readOnly = true)
     public AdminSystemAnalyticsResponse getAnalytics() {
+        String cacheKey = analyticsCacheService.adminSystemAnalyticsKey();
+        AdminSystemAnalyticsResponse cached = analyticsCacheService.getAdminSystemAnalytics(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
         LocalDate today = LocalDate.now();
         LocalDate tomorrow = today.plusDays(1);
         long totalUsers = repository.countUsers();
@@ -57,7 +64,7 @@ public class AdminSystemAnalyticsService {
                 adoption.put(feature, percentage(users, activeUsers))
         );
 
-        return new AdminSystemAnalyticsResponse(
+        AdminSystemAnalyticsResponse response = new AdminSystemAnalyticsResponse(
                 new AdminSystemAnalyticsResponse.Stats(
                         totalUsers,
                         activeUsers,
@@ -72,6 +79,8 @@ public class AdminSystemAnalyticsService {
                 repository.countSystemUsage(),
                 adoption
         );
+        analyticsCacheService.putAdminSystemAnalytics(cacheKey, response);
+        return response;
     }
 
     private int percentage(long value, long total) {

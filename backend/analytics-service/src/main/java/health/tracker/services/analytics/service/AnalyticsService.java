@@ -32,41 +32,74 @@ public class AnalyticsService {
     private final NutritionTrendRepository trendRepository;
     private final HealthInsightRepository insightRepository;
     private final DailySummarySyncService dailySummarySyncService;
+    private final AnalyticsCacheService analyticsCacheService;
 
     // ─── Query ────────────────────────────────────────────────────────────────
 
     @Transactional
     public DailySummaryResponse getDailySummary(Long userId, LocalDate date) {
+        String cacheKey = analyticsCacheService.dailyKey(userId, date);
+        DailySummaryResponse cached = analyticsCacheService.getDaily(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
         DailySummary summary = dailySummarySyncService.syncDay(userId, date);
 
         UserStreak streak = streakRepository.findByUserId(userId).orElse(null);
-        return toResponse(summary, streak);
+        DailySummaryResponse response = toResponse(summary, streak);
+        analyticsCacheService.putDaily(cacheKey, response);
+        return response;
     }
 
     @Transactional
     public List<DailySummaryResponse> getRange(Long userId, LocalDate from, LocalDate to) {
+        String cacheKey = analyticsCacheService.rangeKey(userId, from, to);
+        List<DailySummaryResponse> cached = analyticsCacheService.getRange(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
         dailySummarySyncService.syncRange(userId, from, to);
-        return summaryRepository
+        List<DailySummaryResponse> response = summaryRepository
                 .findByUserIdAndSummaryDateBetweenOrderBySummaryDateAsc(userId, from, to)
                 .stream()
                 .map(s -> toResponse(s, null))
                 .toList();
+        analyticsCacheService.putRange(cacheKey, response);
+        return response;
     }
 
     @Transactional(readOnly = true)
     public Map<String, Object> getStreakSummary(Long userId) {
+        String cacheKey = analyticsCacheService.streakKey(userId);
+        Map<String, Object> cached = analyticsCacheService.getStreak(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
         List<DailySummary> days = summaryRepository.findByUserIdOrderBySummaryDateAsc(userId);
-        return Map.of(
+        Map<String, Object> response = Map.of(
                 "logging", streakValues(days, day -> day.getMealCount() > 0 || day.getActivityCount() > 0 || day.getWaterIntakeMl() > 0),
                 "goal", streakValues(days, DailySummary::isCalorieGoalMet),
                 "activity", streakValues(days, day -> day.getActivityCount() > 0)
         );
+        analyticsCacheService.putStreak(cacheKey, response);
+        return response;
     }
 
     @Transactional(readOnly = true)
     public List<NutritionTrend> getNutritionTrends(Long userId, YearMonth month) {
-        return trendRepository.findByUserIdAndPeriodStartAndPeriodEndOrderByFrequencyDesc(
+        String cacheKey = analyticsCacheService.nutritionTrendsKey(userId, month);
+        List<NutritionTrend> cached = analyticsCacheService.getNutritionTrends(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
+        List<NutritionTrend> response = trendRepository.findByUserIdAndPeriodStartAndPeriodEndOrderByFrequencyDesc(
                 userId, month.atDay(1), month.atEndOfMonth());
+        analyticsCacheService.putNutritionTrends(cacheKey, response);
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -145,6 +178,7 @@ public class AnalyticsService {
             updateNutritionTrends(event, userId, mealDate, direction);
             createInsights(summary);
             if (direction > 0) updateStreak(userId, mealDate);
+            analyticsCacheService.evictAllAnalyticsCaches();
 
             log.debug("Daily summary updated from meal.logged event: userId={}, date={}", userId, mealDate);
         } catch (Exception e) {
@@ -176,6 +210,7 @@ public class AnalyticsService {
             summaryRepository.save(summary);
             createInsights(summary);
             if (direction > 0) updateStreak(userId, activityDate);
+            analyticsCacheService.evictAllAnalyticsCaches();
             log.debug("Daily summary updated from activity.logged: userId={}, date={}", userId, activityDate);
         } catch (Exception e) {
             log.error("Error processing activity.logged event: {}", e.getMessage(), e);
@@ -193,6 +228,7 @@ public class AnalyticsService {
                 .orElseGet(() -> buildEmpty(userId, date));
         summary.setWaterIntakeMl(Math.max(0, summary.getWaterIntakeMl() + toInt(event.get("amountMl")) * direction));
         summaryRepository.save(summary);
+        analyticsCacheService.evictAllAnalyticsCaches();
     }
 
     @KafkaListener(topics = "body-metric.recorded", groupId = "analytics-service-group")
@@ -204,6 +240,7 @@ public class AnalyticsService {
                 .orElseGet(() -> buildEmpty(userId, date));
         summary.setWeightKg(toBigDecimal(event.get("weightKg")));
         summaryRepository.save(summary);
+        analyticsCacheService.evictAllAnalyticsCaches();
     }
 
     @KafkaListener(topics = "profile.snapshot", groupId = "analytics-service-group")
@@ -221,6 +258,7 @@ public class AnalyticsService {
         }
         summaryRepository.save(summary);
         createInsights(summary);
+        analyticsCacheService.evictAllAnalyticsCaches();
     }
 
     // ─── Streak ───────────────────────────────────────────────────────────────

@@ -28,6 +28,7 @@ public class GoalPlanService {
 
     private final UserProfileRepository profileRepository;
     private final NutritionGoalCalculator calculator;
+    private final UserCacheService userCacheService;
 
     @Transactional(readOnly = true)
     public GoalPlanResponse suggest(Long userId, GoalPlanRequest request) {
@@ -121,6 +122,7 @@ public class GoalPlanService {
         profile.setDailyCarbsGoalG(targets.dailyCarbsGoalG());
         profile.setDailyFatGoalG(targets.dailyFatGoalG());
         profileRepository.save(profile);
+        userCacheService.evictAllUserCaches();
         return selected;
     }
 

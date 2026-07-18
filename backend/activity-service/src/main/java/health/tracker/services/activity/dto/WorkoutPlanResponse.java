@@ -2,8 +2,10 @@ package health.tracker.services.activity.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import health.tracker.services.activity.entity.WorkoutPlan;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.time.LocalDate;
@@ -11,6 +13,8 @@ import java.util.List;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class WorkoutPlanResponse {
 
     private Long id;
@@ -31,6 +35,8 @@ public class WorkoutPlanResponse {
 
     @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class Exercise {
         private Long id;
         private Integer dayOfWeek;

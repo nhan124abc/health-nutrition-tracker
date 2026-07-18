@@ -32,6 +32,7 @@ public class AdminUserProfileService {
     private final BodyMetricRepository metricRepository;
     private final WaterLogRepository waterLogRepository;
     private final NutritionGoalCalculator nutritionGoalCalculator;
+    private final UserCacheService userCacheService;
 
     @Transactional(readOnly = true)
     public Page<UserProfileResponse> getUsers(int page, int size, String search, Boolean hidden) {
@@ -88,7 +89,9 @@ public class AdminUserProfileService {
                 .build();
 
         applyNutritionTargets(profile, request.getDailyCalorieGoal());
-        return toProfileResponse(profileRepository.save(profile));
+        UserProfile saved = profileRepository.save(profile);
+        userCacheService.evictAllUserCaches();
+        return toProfileResponse(saved);
     }
 
     @Transactional
@@ -111,7 +114,9 @@ public class AdminUserProfileService {
         if (request.getHidden() != null) profile.setHidden(request.getHidden());
 
         applyNutritionTargets(profile, request.getDailyCalorieGoal());
-        return toProfileResponse(profileRepository.save(profile));
+        UserProfile saved = profileRepository.save(profile);
+        userCacheService.evictAllUserCaches();
+        return toProfileResponse(saved);
     }
 
     @Transactional
@@ -120,20 +125,25 @@ public class AdminUserProfileService {
         metricRepository.deleteByUserId(userId);
         waterLogRepository.deleteByUserId(userId);
         profileRepository.delete(profile);
+        userCacheService.evictAllUserCaches();
     }
 
     @Transactional
     public UserProfileResponse hideUser(Long userId) {
         UserProfile profile = findByUserId(userId);
         profile.setHidden(true);
-        return toProfileResponse(profileRepository.save(profile));
+        UserProfile saved = profileRepository.save(profile);
+        userCacheService.evictAllUserCaches();
+        return toProfileResponse(saved);
     }
 
     @Transactional
     public UserProfileResponse restoreUser(Long userId) {
         UserProfile profile = findByUserId(userId);
         profile.setHidden(false);
-        return toProfileResponse(profileRepository.save(profile));
+        UserProfile saved = profileRepository.save(profile);
+        userCacheService.evictAllUserCaches();
+        return toProfileResponse(saved);
     }
 
     private int normalizeSize(int size) {

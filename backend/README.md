@@ -1020,7 +1020,7 @@ Chạy theo thứ tự **từ dưới lên** (dependencies trước):
 3. nutrition-service (port 8083)   — cần MySQL
 4. meal-service      (port 8084)   — cần MySQL + Redis + Kafka
 5. activity-service  (port 8085)   — cần MySQL
-6. analytics-service (port 8086)   — cần MySQL + Kafka
+6. analytics-service (port 8086)   — cần MySQL + Redis + Kafka
 7. api-gateway       (port 8080)   — cần tất cả services trên
 ```
 

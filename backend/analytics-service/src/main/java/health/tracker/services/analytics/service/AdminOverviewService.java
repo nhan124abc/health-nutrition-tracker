@@ -17,9 +17,16 @@ public class AdminOverviewService {
     private static final int RECENT_ACTIVITY_LIMIT = 10;
 
     private final AdminOverviewRepository repository;
+    private final AnalyticsCacheService analyticsCacheService;
 
     @Transactional(readOnly = true)
     public AdminOverviewResponse getOverview() {
+        String cacheKey = analyticsCacheService.adminOverviewKey();
+        AdminOverviewResponse cached = analyticsCacheService.getAdminOverview(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
         long todayLogs = repository.countTodayLogs();
 
         Map<String, String> trends = new LinkedHashMap<>();
@@ -39,7 +46,7 @@ public class AdminOverviewService {
         dataHealth.put("exercises", repository.exerciseDataHealth());
         dataHealth.put("users", repository.userDataHealth());
 
-        return new AdminOverviewResponse(
+        AdminOverviewResponse response = new AdminOverviewResponse(
                 repository.countUsers(),
                 repository.countFoods(),
                 repository.countExercises(),
@@ -48,6 +55,8 @@ public class AdminOverviewService {
                 repository.findRecentActivities(RECENT_ACTIVITY_LIMIT),
                 dataHealth
         );
+        analyticsCacheService.putAdminOverview(cacheKey, response);
+        return response;
     }
 
     private String formatTrend(long current, long previous) {

@@ -9,8 +9,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -19,11 +21,16 @@ class AdminOverviewServiceTest {
     @Mock
     private AdminOverviewRepository repository;
 
+    @Mock
+    private AnalyticsCacheService analyticsCacheService;
+
     @InjectMocks
     private AdminOverviewService service;
 
     @Test
     void returnsDatabaseOverviewWithCalculatedTrends() {
+        when(analyticsCacheService.adminOverviewKey()).thenReturn("analytics:admin:overview");
+        when(analyticsCacheService.getAdminOverview(anyString())).thenReturn(Optional.empty());
         when(repository.countUsers()).thenReturn(12L);
         when(repository.countFoods()).thenReturn(24L);
         when(repository.countExercises()).thenReturn(8L);

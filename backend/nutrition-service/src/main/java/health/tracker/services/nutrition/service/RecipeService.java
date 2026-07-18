@@ -27,6 +27,7 @@ public class RecipeService {
 
     private final RecipeRepository recipeRepository;
     private final FoodItemRepository foodItemRepository;
+    private final NutritionCacheService nutritionCacheService;
 
     @Transactional
     public RecipeSuggestionResponse create(Long userId, RecipeCreateRequest request) {
@@ -78,12 +79,20 @@ public class RecipeService {
         recipe.setTotalProteinG(protein);
         recipe.setTotalCarbsG(carbs);
         recipe.setTotalFatG(fat);
-        return toSuggestion(recipeRepository.save(recipe));
+        Recipe saved = recipeRepository.save(recipe);
+        nutritionCacheService.evictAllNutritionCaches();
+        return toSuggestion(saved);
     }
 
     @Transactional(readOnly = true)
     public List<RecipeSuggestionResponse> suggest(BigDecimal maxCalories, String keyword, List<Long> foodIds,
                                                   String goal, String mealType, int limit) {
+        String cacheKey = nutritionCacheService.recipeSuggestionKey(maxCalories, keyword, foodIds, goal, mealType, limit);
+        List<RecipeSuggestionResponse> cached = nutritionCacheService.getRecipeSuggestions(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
         int safeLimit = Math.max(1, Math.min(limit, 50));
         int candidateLimit = Math.min(100, Math.max(safeLimit, safeLimit * 2));
         String normalizedKeyword = keyword == null || keyword.isBlank() ? null : keyword.trim();
@@ -103,7 +112,7 @@ public class RecipeService {
                     .forEach(recipe -> recipes.putIfAbsent(recipe.getId(), recipe));
         }
 
-        return recipes.values().stream()
+        List<RecipeSuggestionResponse> response = recipes.values().stream()
                 // A single food (for example, plain mussels) is a food log,
                 // not a meal suggestion.  Keep it out of the recipe planner
                 // so every card is a usable dish for the selected meal slot.
@@ -118,6 +127,8 @@ public class RecipeService {
                 .limit(safeLimit)
                 .map(this::toSuggestion)
                 .toList();
+        nutritionCacheService.putRecipeSuggestions(cacheKey, response);
+        return response;
     }
 
     private boolean isCompleteMeal(Recipe recipe, String mealType) {

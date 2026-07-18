@@ -36,6 +36,7 @@ public class UserProfileService {
     private final NutritionGoalCalculator nutritionGoalCalculator;
     private final WaterLogRepository waterLogRepository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final UserCacheService userCacheService;
 
     // ─── Profile ──────────────────────────────────────────────────────────────
 
@@ -44,6 +45,12 @@ public class UserProfileService {
      */
     @Transactional
     public UserProfileResponse getOrCreateProfile(Long userId) {
+        String cacheKey = userCacheService.profileKey(userId);
+        UserProfileResponse cached = userCacheService.getProfile(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
         UserProfile profile = profileRepository.findByUserId(userId)
                 .orElseGet(() -> {
                     log.info("Creating new profile for userId={}", userId);
@@ -51,7 +58,9 @@ public class UserProfileService {
                             UserProfile.builder().userId(userId).build()
                     );
                 });
-        return toProfileResponse(profile);
+        UserProfileResponse response = toProfileResponse(profile);
+        userCacheService.putProfile(cacheKey, response);
+        return response;
     }
 
     /**
@@ -85,6 +94,7 @@ public class UserProfileService {
         applyNutritionTargets(profile, request.getDailyCalorieGoal());
 
         UserProfile saved = profileRepository.save(profile);
+        userCacheService.evictAllUserCaches();
         publishProfileSnapshot(saved, LocalDate.now());
         return toProfileResponse(saved);
     }
@@ -102,6 +112,7 @@ public class UserProfileService {
                 .loggedAt(request.getLoggedAt())
                 .build();
         WaterLog savedWaterlog = waterLogRepository.save(waterlog);
+        userCacheService.evictAllUserCaches();
         publishWaterEvent("CREATED", savedWaterlog);
         return toWaterLogResponse(savedWaterlog);
     }
@@ -109,6 +120,12 @@ public class UserProfileService {
     @Transactional
     public DailyWaterResponse getTodayWater(Long userId) {
             LocalDate today = LocalDate.now();
+            String cacheKey = userCacheService.dailyWaterKey(userId, today);
+            DailyWaterResponse cached = userCacheService.getDailyWater(cacheKey).orElse(null);
+            if (cached != null) {
+                return cached;
+            }
+
             LocalDateTime start = today.atStartOfDay();
             LocalDateTime end = today.plusDays(1).atStartOfDay();
 
@@ -120,11 +137,13 @@ public class UserProfileService {
             UserProfile profile = profileRepository.findByUserId(userId)
                     .orElseGet(()-> profileRepository.save(UserProfile.builder().userId(userId).build()));
 
-            return DailyWaterResponse.builder()
+            DailyWaterResponse response = DailyWaterResponse.builder()
                     .date(today)
                     .totalAmountMl(totalAmountMl)
                     .goalMl(profile.getDailyWaterGoalMl())
                     .build();
+            userCacheService.putDailyWater(cacheKey, response);
+            return response;
         }
 
     @Transactional(readOnly = true)
@@ -147,6 +166,7 @@ public class UserProfileService {
 
         publishWaterEvent("DELETED", waterLog);
         waterLogRepository.delete(waterLog);
+        userCacheService.evictAllUserCaches();
         log.info("Water deleted: id={}, userId={}", waterId, userId);
     }
 
@@ -162,6 +182,7 @@ public class UserProfileService {
         }
 
         WaterLog savedWater = waterLogRepository.save(water);
+        userCacheService.evictAllUserCaches();
         publishWaterEvent("CREATED", savedWater);
         log.info("Water updated: id={}, userId={}", waterId, userId);
         return toWaterLogResponse(savedWater);
@@ -190,6 +211,7 @@ public class UserProfileService {
 
         BodyMetric savedMetric = metricRepository.save(metric);
         syncProfileFromLatestMetric(profile, savedMetric.getRecordedAt());
+        userCacheService.evictAllUserCaches();
         publishMetricEvent(savedMetric);
         return toMetricResponse(savedMetric);
     }
@@ -217,6 +239,7 @@ public class UserProfileService {
 
         BodyMetric savedMetric = metricRepository.save(metric);
         syncProfileFromLatestMetric(profile, savedMetric.getRecordedAt());
+        userCacheService.evictAllUserCaches();
         publishMetricEvent(savedMetric);
         log.info("Body metric updated: id={}, userId={}", metricId, userId);
         return toMetricResponse(savedMetric);
@@ -230,6 +253,7 @@ public class UserProfileService {
         metricRepository.delete(metric);
         metricRepository.flush();
         syncProfileFromLatestMetric(getOrCreateProfileEntity(userId), LocalDate.now());
+        userCacheService.evictAllUserCaches();
         log.info("Body metric deleted: id={}, userId={}", metricId, userId);
     }
 

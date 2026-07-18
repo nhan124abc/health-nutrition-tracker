@@ -2,12 +2,16 @@ package health.tracker.services.nutrition.dto;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FoodItemResponse {
 
     private Long id;
@@ -48,6 +52,8 @@ public class FoodItemResponse {
 
     @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class CategoryInfo {
         private Integer id;
         private String name;

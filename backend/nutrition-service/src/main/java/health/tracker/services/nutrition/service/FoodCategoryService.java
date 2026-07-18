@@ -18,17 +18,32 @@ public class FoodCategoryService {
 
     private final FoodCategoryRepository categoryRepository;
     private final FoodItemRepository foodItemRepository;
+    private final NutritionCacheService nutritionCacheService;
 
     @Transactional(readOnly = true)
     public List<FoodCategory> getVisibleCategories() {
-        return categoryRepository.findByHiddenFalseOrderByNameAsc();
+        String cacheKey = nutritionCacheService.visibleCategoriesKey();
+        List<FoodCategory> cached = nutritionCacheService.getCategories(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+        List<FoodCategory> categories = categoryRepository.findByHiddenFalseOrderByNameAsc();
+        nutritionCacheService.putCategories(cacheKey, categories);
+        return categories;
     }
 
     @Transactional(readOnly = true)
     public List<FoodCategory> getAdminCategories(Boolean hidden) {
-        return categoryRepository.findAllByOrderByNameAsc().stream()
+        String cacheKey = nutritionCacheService.adminCategoriesKey(hidden);
+        List<FoodCategory> cached = nutritionCacheService.getCategories(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+        List<FoodCategory> categories = categoryRepository.findAllByOrderByNameAsc().stream()
                 .filter(category -> hidden == null || category.isHidden() == hidden)
                 .toList();
+        nutritionCacheService.putCategories(cacheKey, categories);
+        return categories;
     }
 
     @Transactional(readOnly = true)
@@ -51,7 +66,9 @@ public class FoodCategoryService {
                 .hidden(request.getHidden() != null && request.getHidden())
                 .build();
         validateCanBeHidden(category);
-        return categoryRepository.save(category);
+        FoodCategory saved = categoryRepository.save(category);
+        nutritionCacheService.evictAllNutritionCaches();
+        return saved;
     }
 
     @Transactional
@@ -70,7 +87,9 @@ public class FoodCategoryService {
             category.setHidden(request.getHidden());
             validateCanBeHidden(category);
         }
-        return categoryRepository.save(category);
+        FoodCategory saved = categoryRepository.save(category);
+        nutritionCacheService.evictAllNutritionCaches();
+        return saved;
     }
 
     @Transactional
@@ -82,6 +101,7 @@ public class FoodCategoryService {
                     "Cannot delete category because " + linkedFoodCount + " food item(s) are linked");
         }
         categoryRepository.delete(category);
+        nutritionCacheService.evictAllNutritionCaches();
     }
 
     @Transactional
@@ -89,14 +109,18 @@ public class FoodCategoryService {
         FoodCategory category = findById(id);
         category.setHidden(true);
         validateCanBeHidden(category);
-        return categoryRepository.save(category);
+        FoodCategory saved = categoryRepository.save(category);
+        nutritionCacheService.evictAllNutritionCaches();
+        return saved;
     }
 
     @Transactional
     public FoodCategory restore(Integer id) {
         FoodCategory category = findById(id);
         category.setHidden(false);
-        return categoryRepository.save(category);
+        FoodCategory saved = categoryRepository.save(category);
+        nutritionCacheService.evictAllNutritionCaches();
+        return saved;
     }
 
     private FoodCategory findById(Integer id) {

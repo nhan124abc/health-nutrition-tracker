@@ -507,10 +507,10 @@ public class PlannerRuleEngine {
         return List.of("CARDIO", "WALKING", "FLEXIBILITY", "SPORTS", "OUTDOOR", "DAILY").contains(category);
     }
 
-    private static ActivityInfo buildActivityInfo(String name, int durationMinutes, double weight,
-                                                  List<ActivityCandidate> activityCatalog) {
-        return resolveActivityInfo(new ActivityInfo(name, durationMinutes, 0), weight, activityCatalog);
-    }
+    // private static ActivityInfo buildActivityInfo(String name, int durationMinutes, double weight,
+    //                                               List<ActivityCandidate> activityCatalog) {
+    //     return resolveActivityInfo(new ActivityInfo(name, durationMinutes, 0), weight, activityCatalog);
+    // }
 
     private static ActivityInfo resolveActivityInfo(ActivityInfo activity, double weight,
                                                     List<ActivityCandidate> activityCatalog) {

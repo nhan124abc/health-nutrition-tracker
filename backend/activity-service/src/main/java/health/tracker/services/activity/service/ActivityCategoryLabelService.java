@@ -21,14 +21,23 @@ public class ActivityCategoryLabelService {
 
     private final ActivityCategoryLabelRepository labelRepository;
     private final ActivityTypeRepository typeRepository;
+    private final ActivityCacheService activityCacheService;
 
     @Transactional(readOnly = true)
     public List<ActivityCategoryLabel> list(boolean includeHidden) {
-        return labelRepository.findAll().stream()
+        String cacheKey = activityCacheService.categoryLabelsKey(includeHidden);
+        List<ActivityCategoryLabel> cached = activityCacheService.getCategoryLabels(cacheKey).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
+
+        List<ActivityCategoryLabel> response = labelRepository.findAll().stream()
                 .filter(label -> includeHidden || !label.isHidden())
                 .peek(this::attachCount)
                 .sorted(Comparator.comparingInt(label -> label.getCategory().ordinal()))
                 .toList();
+        activityCacheService.putCategoryLabels(cacheKey, response);
+        return response;
     }
 
     @Transactional
@@ -44,7 +53,9 @@ public class ActivityCategoryLabelService {
                 .nameVi(trimToNull(request.getNameVi()))
                 .hidden(request.getHidden() != null && request.getHidden())
                 .build();
-        return attachCount(labelRepository.save(label));
+        ActivityCategoryLabel saved = attachCount(labelRepository.save(label));
+        activityCacheService.evictAllActivityCaches();
+        return saved;
     }
 
     @Transactional
@@ -57,14 +68,18 @@ public class ActivityCategoryLabelService {
         if (request.getHidden() != null) {
             label.setHidden(request.getHidden());
         }
-        return attachCount(labelRepository.save(label));
+        ActivityCategoryLabel saved = attachCount(labelRepository.save(label));
+        activityCacheService.evictAllActivityCaches();
+        return saved;
     }
 
     @Transactional
     public ActivityCategoryLabel setHidden(ActivityType.Category category, boolean hidden) {
         ActivityCategoryLabel label = find(category);
         label.setHidden(hidden);
-        return attachCount(labelRepository.save(label));
+        ActivityCategoryLabel saved = attachCount(labelRepository.save(label));
+        activityCacheService.evictAllActivityCaches();
+        return saved;
     }
 
     @Transactional
@@ -77,6 +92,7 @@ public class ActivityCategoryLabelService {
                     "Cannot delete activity category because " + linkedCount + " activity type(s) are linked");
         }
         labelRepository.delete(label);
+        activityCacheService.evictAllActivityCaches();
     }
 
     private ActivityCategoryLabel find(ActivityType.Category category) {
