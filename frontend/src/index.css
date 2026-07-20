@@ -4162,39 +4162,146 @@ tr.is-completed {
 }
 
 @media (max-width: 575.98px) {
+  .premium-home-header {
+    padding: 0.55rem 0;
+  }
+
+  .premium-home-header .container {
+    gap: 0.5rem !important;
+  }
+
+  .premium-home-brand {
+    font-size: 0.92rem;
+    gap: 0.45rem;
+    line-height: 1.15;
+  }
+
+  .premium-home-brand img {
+    border-radius: 0.85rem;
+    height: 48px;
+    width: 48px;
+  }
+
   .premium-home-header .btn {
+    font-size: 0.9rem;
     padding-left: 0.65rem;
     padding-right: 0.65rem;
   }
 
+  .premium-hero {
+    padding: 1rem 0 2rem;
+  }
+
   .premium-hero h1 {
-    font-size: 3rem;
+    font-size: 2.45rem;
+    margin-bottom: 1rem;
+  }
+
+  .premium-hero-actions {
+    margin-bottom: 1rem;
+  }
+
+  .premium-hero-actions .btn {
+    font-size: 1rem;
+    padding: 0.6rem 0.85rem;
+  }
+
+  .premium-hero-points {
+    gap: 0.5rem;
+  }
+
+  .premium-hero-points span {
+    font-size: 0.9rem;
+    padding: 0.45rem 0.65rem;
   }
 
   .premium-product-stage {
-    min-height: 460px;
+    display: grid;
+    gap: 0.75rem;
+    min-height: auto;
+    padding-top: 0.25rem;
+  }
+
+  .premium-product-stage::before,
+  .premium-product-stage::after {
+    display: none;
   }
 
   .premium-product-card {
-    width: 88%;
+    border-radius: 1.25rem;
+    box-shadow: 0 1rem 2rem rgba(62, 45, 40, 0.12);
+    gap: 0.75rem;
+    left: auto;
+    margin: 0 auto;
+    max-width: 320px;
+    padding: 0.9rem;
+    position: relative;
+    top: auto;
+    transform: none;
+    width: 100%;
+  }
+
+  .premium-product-top {
+    min-height: auto;
+  }
+
+  .premium-product-top span,
+  .premium-macro-panel span,
+  .premium-floating-card span {
+    font-size: 0.78rem;
+  }
+
+  .premium-product-top strong {
+    font-size: 2rem;
+  }
+
+  .premium-product-plate {
+    max-width: 190px;
+    width: 68%;
+  }
+
+  .premium-plate-ring {
+    font-size: 1.5rem;
+  }
+
+  .premium-macro-panel {
+    gap: 0.45rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .premium-macro-panel div {
+    border-radius: 0.85rem;
+    padding: 0.55rem 0.35rem;
+  }
+
+  .premium-macro-panel strong {
+    font-size: 0.9rem;
   }
 
   .premium-floating-card {
+    border-radius: 0.9rem;
+    box-shadow: 0 0.75rem 1.5rem rgba(62, 45, 40, 0.1);
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0.65rem 0.75rem;
     position: relative;
+    width: 100%;
+  }
+
+  .premium-floating-card svg {
+    font-size: 1.1rem;
+  }
+
+  .premium-floating-card strong {
+    font-size: 0.95rem;
   }
 
   .premium-floating-card-left,
   .premium-floating-card-right {
     bottom: auto;
     left: auto;
-    margin: 0.75rem auto 0;
     right: auto;
     top: auto;
-    width: 88%;
-  }
-
-  .premium-macro-panel {
-    grid-template-columns: 1fr;
   }
 }
 
