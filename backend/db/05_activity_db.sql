@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     id                  BIGINT          NOT NULL AUTO_INCREMENT,
     user_id             BIGINT          NOT NULL COMMENT 'Tham chiếu auth_db.users.id',
     activity_type_id    INT             NULL,
+    workout_plan_exercise_id BIGINT     NULL,
 
     -- Denormalized từ activity_types
     activity_name       VARCHAR(100)    NOT NULL COMMENT 'Tên hoạt động lúc log',
@@ -127,6 +128,7 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     PRIMARY KEY (id),
     INDEX idx_activity_logs_user (user_id),
     INDEX idx_activity_logs_date (user_id, logged_at),
+    INDEX idx_activity_logs_plan_exercise (workout_plan_exercise_id),
     CONSTRAINT fk_activity_logs_type FOREIGN KEY (activity_type_id) REFERENCES activity_types (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Nhật ký hoạt động thể chất';
@@ -138,6 +140,7 @@ CREATE TABLE IF NOT EXISTS workout_plans (
     id          BIGINT          NOT NULL AUTO_INCREMENT,
     user_id     BIGINT          NOT NULL,
     name        VARCHAR(100)    NOT NULL COMMENT 'VD: "Lịch tập 5 ngày/tuần"',
+    plan_date   DATE            NOT NULL COMMENT 'Ngày thực hiện kế hoạch',
     description TEXT            NULL,
     goal        ENUM('WEIGHT_LOSS','MUSCLE_GAIN','ENDURANCE','GENERAL_FITNESS') NULL,
     duration_weeks INT          NULL COMMENT 'Số tuần thực hiện',
@@ -146,7 +149,8 @@ CREATE TABLE IF NOT EXISTS workout_plans (
     updated_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
-    INDEX idx_workout_plans_user (user_id)
+    INDEX idx_workout_plans_user (user_id),
+    UNIQUE KEY uq_workout_plans_user_date (user_id, plan_date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Kế hoạch tập luyện';
 
@@ -171,23 +175,7 @@ CREATE TABLE IF NOT EXISTS workout_plan_exercises (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Bài tập trong kế hoạch luyện tập';
 
--- --------------------------------------------------------
--- Bảng step_logs: số bước chân hàng ngày (từ thiết bị đeo)
--- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS step_logs (
-    id          BIGINT      NOT NULL AUTO_INCREMENT,
-    user_id     BIGINT      NOT NULL,
-    log_date    DATE        NOT NULL,
-    steps       INT         NOT NULL DEFAULT 0,
-    distance_km DECIMAL(6,2) NULL,
-    calories    DECIMAL(6,2) NULL,
-    source      VARCHAR(50) NULL COMMENT 'VD: fitbit, apple_health, manual',
-    created_at  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
-    PRIMARY KEY (id),
-    UNIQUE KEY uq_step_logs_user_date (user_id, log_date),
-    INDEX idx_step_logs_user (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='Số bước chân hàng ngày';
+ALTER TABLE activity_logs
+    ADD CONSTRAINT fk_activity_logs_plan_exercise
+    FOREIGN KEY (workout_plan_exercise_id) REFERENCES workout_plan_exercises(id) ON DELETE SET NULL;
 

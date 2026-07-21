@@ -47,23 +47,3 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='JWT Refresh Token';
 
--- --------------------------------------------------------
--- Bảng login_audit: lịch sử đăng nhập (bảo mật)
--- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS login_audit (
-    id          BIGINT          NOT NULL AUTO_INCREMENT,
-    user_id     BIGINT          NULL COMMENT 'NULL nếu tài khoản không tồn tại',
-    email       VARCHAR(255)    NOT NULL,
-    ip_address  VARCHAR(45)     NULL,
-    user_agent  TEXT            NULL,
-    success     TINYINT(1)      NOT NULL DEFAULT 0,
-    fail_reason VARCHAR(255)    NULL,
-    created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    PRIMARY KEY (id),
-    INDEX idx_login_audit_user (user_id),
-    INDEX idx_login_audit_email (email),
-    INDEX idx_login_audit_created (created_at)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='Lịch sử đăng nhập';
-

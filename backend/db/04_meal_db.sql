@@ -125,21 +125,3 @@ CREATE TABLE IF NOT EXISTS meal_plan_entries (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   COMMENT='Chi tiết từng bữa trong kế hoạch ăn';
 
--- --------------------------------------------------------
--- Bảng favorite_foods: thực phẩm yêu thích của người dùng
--- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS favorite_foods (
-    id              BIGINT      NOT NULL AUTO_INCREMENT,
-    user_id         BIGINT      NOT NULL,
-    food_item_id    BIGINT      NULL COMMENT 'nutrition_db.food_items.id',
-    recipe_id       BIGINT      NULL COMMENT 'nutrition_db.recipes.id',
-    item_type       ENUM('FOOD', 'RECIPE') NOT NULL DEFAULT 'FOOD',
-    food_name       VARCHAR(255) NOT NULL COMMENT 'Denormalized',
-    added_at        DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    PRIMARY KEY (id),
-    UNIQUE KEY uq_favorite_user_food (user_id, food_item_id),
-    INDEX idx_favorites_user (user_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-  COMMENT='Thực phẩm yêu thích';
-
