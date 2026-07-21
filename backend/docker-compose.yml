@@ -108,7 +108,6 @@ services:
       - ./db/05_activity_db.sql:/docker-entrypoint-initdb.d/05_activity_db.sql:ro
       - ./db/06_analytics_db.sql:/docker-entrypoint-initdb.d/06_analytics_db.sql:ro
       - ./db/07_ai_db.sql:/docker-entrypoint-initdb.d/07_ai_db.sql:ro
-      - ./db/08_demo_seed.sql:/docker-entrypoint-initdb.d/08_demo_seed.sql:ro
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci

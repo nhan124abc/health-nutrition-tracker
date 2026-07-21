@@ -47,4 +47,3 @@ public class RefreshToken {
         return LocalDateTime.now().isAfter(expiryDate);
     }
 }
-

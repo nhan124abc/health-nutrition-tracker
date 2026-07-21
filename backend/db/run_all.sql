@@ -14,7 +14,6 @@ SOURCE 04_meal_db.sql;
 SOURCE 05_activity_db.sql;
 SOURCE 06_analytics_db.sql;
 SOURCE 07_ai_db.sql;
-SOURCE 11_user_catalog_created_by.sql;
 
 SELECT 'All databases and schemas created successfully!' AS status;
 
